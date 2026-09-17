@@ -5,6 +5,16 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
+  ignore:
+    # json 3.0 made every argument after `source` keyword-only, but
+    # activesupport 8.1.3.1 still calls `JSON.parse(json, options)` with two
+    # positional arguments. ActiveSupport::JSON.decode then raises
+    # ArgumentError, which breaks every JSON-serialised column — Solid Queue's
+    # job arguments included, so bin/jobs crash-loops on boot.
+    # Lift this once Rails ships a version that supports json 3.
+  - dependency-name: json
+    versions:
+    - ">= 3.0"
 - package-ecosystem: github-actions
   directory: "/"
   schedule:

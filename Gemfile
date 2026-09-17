@@ -44,7 +44,13 @@ gem "kamal", require: false
 gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-gem "image_processing", "~> 1.2"
+# 2.x fixes remote code execution through unsafe loader/saver options and through
+# operation names taken from user input — which is exactly how this application
+# uses it, watermarking images produced from a client's prompt.
+gem "image_processing", "~> 2.1"
+# From image_processing 2.0 the backend is a soft dependency: without this line
+# the watermarking code raises LoadError at runtime rather than at boot.
+gem "ruby-vips"
 
 # --- Application dependencies (see docs/SPEC.md, "Stack technique") -----------
 
