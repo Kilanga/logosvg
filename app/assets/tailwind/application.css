@@ -1,0 +1,295 @@
+@import "tailwindcss";
+
+/* Tailwind v4 scans these for class names. Listed explicitly so a class used
+   only in a mailer or a Stimulus controller is never dropped from the build. */
+@source "../../views";
+@source "../../helpers";
+@source "../../javascript";
+@source "../../mailers";
+
+/* ---------------------------------------------------------------------------
+   Typefaces — served by the application, never by Google Fonts (GDPR).
+   Logical paths are flat because app/assets/fonts is its own asset root.
+   --------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("BarlowCondensed-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("BarlowCondensed-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Figtree is a variable font: one file covers the whole 400-700 range the
+   interface uses, so the weight is declared as an axis rather than as four
+   separate faces. Barlow Condensed above is a static family, hence two files. */
+@font-face {
+  font-family: "Figtree";
+  src: url("Figtree.woff2") format("woff2-variations");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------------------------------------------------------------------------
+   Design tokens (docs/SPEC.md, "Tokens visuels")
+   --------------------------------------------------------------------------- */
+
+@theme {
+  --color-paper: #f2f4f3;
+  --color-surface: #ffffff;
+  --color-ink: #1d2433;
+  --color-muted: #505a67;
+  --color-line: #c8d0d4;
+  --color-emulsion: #1f5f7a;
+
+  /* Paired foreground/background tokens: never used apart. */
+  --color-success: #1e6b40;
+  --color-success-bg: #e4f2ea;
+  --color-warning: #6b4200;
+  --color-warning-bg: #fff3dc;
+
+  /* Darker emulsion for hover, kept accessible on paper. */
+  --color-emulsion-deep: #174a60;
+
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-sans: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Screen printing is about crisp registration, not soft corners. */
+  --radius-none: 0px;
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+
+  /* Minimum touch target required by the spec. */
+  --spacing-touch: 2.75rem; /* 44px */
+
+  --tracking-label: 0.08em;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    /* Tabular figures everywhere: quantities, ink counts and prices line up. */
+    font-variant-numeric: tabular-nums;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  /* One visible focus treatment for the whole application. Squared off and
+     offset so it reads as a registration frame rather than a glow. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-emulsion);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  ::selection {
+    background-color: var(--color-emulsion);
+    color: var(--color-surface);
+  }
+
+  /* Forms inherit the interface face rather than the browser's. */
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Components — only the pieces repeated across many screens. Anything used
+   once stays as utilities in the template.
+   --------------------------------------------------------------------------- */
+
+@layer components {
+  /* The silkscreen mesh behind every design preview: emulsion lines at 8%,
+     every 8px, at the 45° angle of a stretched screen. */
+  .screen-tint {
+    background-color: var(--color-surface);
+    background-image: repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--color-emulsion) 8%, transparent) 0 1px,
+      transparent 1px 8px
+    );
+  }
+
+  /* Registration mark — the crosshair a printer aligns each screen against.
+     Used as a section marker and as the empty-state figure. */
+  .registration-mark {
+    position: relative;
+    display: inline-block;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    flex: none;
+  }
+
+  .registration-mark::before,
+  .registration-mark::after {
+    content: "";
+    position: absolute;
+    background-color: currentColor;
+  }
+
+  .registration-mark::before {
+    inset-block: 0;
+    inset-inline-start: calc(50% - 0.5px);
+    inline-size: 1px;
+  }
+
+  .registration-mark::after {
+    inset-inline: 0;
+    inset-block-start: calc(50% - 0.5px);
+    block-size: 1px;
+  }
+
+  /* Small uppercase label, the way a technical sheet titles a field. */
+  .label-rule {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label);
+    color: var(--color-muted);
+  }
+
+  /* Flat panel with a hairline, never a drop shadow. */
+  .panel {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-xs);
+  }
+
+  /* Buttons: square, solid, no gradient. Always at least 44px tall. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-block-size: var(--spacing-touch);
+    padding-inline: 1.25rem;
+    border-radius: var(--radius-xs);
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  }
+
+  .btn-primary {
+    background-color: var(--color-emulsion);
+    color: var(--color-surface);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-emulsion-deep);
+  }
+
+  .btn-secondary {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    border: 1px solid var(--color-line);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--color-ink);
+  }
+
+  /* Status pills: paired tokens only, so contrast is always at least 4.5:1. */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-xs);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label);
+  }
+
+  .pill-success {
+    background-color: var(--color-success-bg);
+    color: var(--color-success);
+  }
+
+  .pill-warning {
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning);
+  }
+
+  /* An attached file, in the order email and on the print request screens.
+     Deliberately not a .pill: a filename is data, and uppercasing it would
+     misrepresent it. */
+  .chip-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-xs);
+    background-color: var(--color-paper);
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+
+  /* Skip link: off-screen until focused. */
+  .skip-link {
+    position: absolute;
+    inset-inline-start: -9999px;
+    z-index: 100;
+  }
+
+  .skip-link:focus {
+    inset-inline-start: 1rem;
+    inset-block-start: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-ink);
+    color: var(--color-surface);
+    border-radius: var(--radius-xs);
+  }
+}

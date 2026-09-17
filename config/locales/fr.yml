@@ -1,0 +1,302 @@
+# Tout texte visible de l'application vit ici. Aucune chaîne française ne doit
+# apparaître dans une vue, un modèle, un mailer ou un contrôleur.
+#
+# La gem rails-i18n ne fait pas partie de la stack retenue : les traductions du
+# socle Rails (dates, nombres, erreurs de validation) sont donc écrites ici.
+
+fr:
+  # --- Socle Rails -----------------------------------------------------------
+  date:
+    formats:
+      default: "%d/%m/%Y"
+      short: "%-d %b"
+      long: "%-d %B %Y"
+    day_names: [dimanche, lundi, mardi, mercredi, jeudi, vendredi, samedi]
+    abbr_day_names: [dim, lun, mar, mer, jeu, ven, sam]
+    month_names: [~, janvier, février, mars, avril, mai, juin, juillet, août, septembre, octobre, novembre, décembre]
+    abbr_month_names: [~, janv., févr., mars, avr., mai, juin, juil., août, sept., oct., nov., déc.]
+    order: [day, month, year]
+
+  time:
+    formats:
+      default: "%d/%m/%Y à %H:%M"
+      short: "%-d %b, %H:%M"
+      long: "%A %-d %B %Y à %H:%M"
+    am: "du matin"
+    pm: "de l'après-midi"
+
+  support:
+    array:
+      words_connector: ", "
+      two_words_connector: " et "
+      last_word_connector: " et "
+
+  number:
+    format:
+      separator: ","
+      delimiter: " "
+      precision: 2
+      significant: false
+      strip_insignificant_zeros: false
+    currency:
+      format:
+        format: "%n %u"
+        unit: "€"
+        separator: ","
+        delimiter: " "
+        precision: 2
+    human:
+      format:
+        delimiter: " "
+        precision: 3
+        significant: true
+        strip_insignificant_zeros: true
+      storage_units:
+        format: "%n %u"
+        units:
+          byte:
+            one: "octet"
+            other: "octets"
+          kb: "ko"
+          mb: "Mo"
+          gb: "Go"
+          tb: "To"
+
+  datetime:
+    distance_in_words:
+      half_a_minute: "trente secondes"
+      less_than_x_seconds:
+        one: "moins d'une seconde"
+        other: "moins de %{count} secondes"
+      x_seconds:
+        one: "une seconde"
+        other: "%{count} secondes"
+      less_than_x_minutes:
+        one: "moins d'une minute"
+        other: "moins de %{count} minutes"
+      x_minutes:
+        one: "une minute"
+        other: "%{count} minutes"
+      about_x_hours:
+        one: "environ une heure"
+        other: "environ %{count} heures"
+      x_days:
+        one: "un jour"
+        other: "%{count} jours"
+      about_x_months:
+        one: "environ un mois"
+        other: "environ %{count} mois"
+      x_months:
+        one: "un mois"
+        other: "%{count} mois"
+      about_x_years:
+        one: "environ un an"
+        other: "environ %{count} ans"
+      over_x_years:
+        one: "plus d'un an"
+        other: "plus de %{count} ans"
+      almost_x_years:
+        one: "presque un an"
+        other: "presque %{count} ans"
+
+  errors:
+    format: "%{attribute} %{message}"
+    messages:
+      blank: "doit être renseigné"
+      present: "doit être vide"
+      confirmation: "ne correspond pas à %{attribute}"
+      invalid: "n'est pas valide"
+      taken: "est déjà utilisé"
+      accepted: "doit être accepté"
+      too_long:
+        one: "est trop long (1 caractère maximum)"
+        other: "est trop long (%{count} caractères maximum)"
+      too_short:
+        one: "est trop court (1 caractère minimum)"
+        other: "est trop court (%{count} caractères minimum)"
+      wrong_length:
+        one: "ne fait pas la bonne longueur (1 caractère attendu)"
+        other: "ne fait pas la bonne longueur (%{count} caractères attendus)"
+      not_a_number: "n'est pas un nombre"
+      not_an_integer: "doit être un nombre entier"
+      greater_than: "doit être supérieur à %{count}"
+      greater_than_or_equal_to: "doit être supérieur ou égal à %{count}"
+      less_than: "doit être inférieur à %{count}"
+      less_than_or_equal_to: "doit être inférieur ou égal à %{count}"
+      equal_to: "doit être égal à %{count}"
+      other_than: "doit être différent de %{count}"
+      inclusion: "n'est pas une valeur autorisée"
+      exclusion: "n'est pas disponible"
+      required: "doit exister"
+      too_many: "en compte trop (%{count} maximum)"
+    template:
+      header:
+        one: "Ce formulaire n'a pas pu être enregistré : une erreur."
+        other: "Ce formulaire n'a pas pu être enregistré : %{count} erreurs."
+      body: "Vérifiez les champs suivants :"
+
+  helpers:
+    submit:
+      create: "Créer"
+      update: "Enregistrer"
+      submit: "Envoyer"
+
+  # --- Application -----------------------------------------------------------
+  platform:
+    # Le nom vient de config/settings.yml (décision ouverte) : il est injecté
+    # dans ces phrases plutôt que recopié.
+    tagline: "Le design imprimable, décrit puis vectorisé"
+
+  layout:
+    skip_to_content: "Aller au contenu"
+    main_navigation: "Navigation principale"
+    user_menu: "Menu du compte"
+    close: "Fermer"
+    open_menu: "Ouvrir le menu"
+
+  nav:
+    home: "Accueil"
+    printers: "Imprimeurs"
+    designers: "Graphistes"
+    create: "Créer un design"
+    sign_in: "Se connecter"
+    sign_up: "Créer un compte"
+    sign_out: "Se déconnecter"
+    my_space: "Mon espace"
+    workshop: "Atelier"
+    studio: "Studio"
+    admin: "Administration"
+
+  footer:
+    legal_notice: "Mentions légales"
+    terms: "Conditions générales d'utilisation"
+    subscription_terms: "CGV des abonnements"
+    designer_terms: "Conditions graphistes"
+    privacy: "Politique de confidentialité"
+    ranking: "Classement de l'annuaire"
+    rights: "Tous droits réservés"
+
+  flash:
+    unauthorized: "Vous n'avez pas accès à cette page."
+    not_found: "Cette page n'existe pas ou n'existe plus."
+
+  states:
+    empty:
+      title: "Rien à afficher pour l'instant"
+      body: "Les éléments apparaîtront ici dès qu'il y en aura."
+    error:
+      title: "Quelque chose s'est mal passé"
+      body: "Réessayez dans un instant. Si le problème persiste, écrivez-nous."
+    loading: "Chargement en cours"
+
+  public:
+    home:
+      # Clés absolues : utilisées par le partiel _separation_demo.
+      demo:
+        before_label: "Image IA — pixels"
+        before_colors: "12 480 couleurs"
+        before_body: "Dégradés, contours flous, fond bruité. Rien de séparable en écrans."
+        after_label: "Vectorisé — aplats"
+        after_screens:
+          one: "%{count} écran"
+          other: "%{count} écrans"
+        ink_names:
+          blue: "Bleu émulsion"
+          orange: "Orange brique"
+          yellow: "Jaune blé"
+
+      show:
+        eyebrow: "Pour les ateliers d'impression textile"
+        headline_lead: "Ils décrivent leur idée."
+        headline_accent: "Vous recevez un fichier imprimable."
+        subhead: >-
+          L'IA génère un visuel en aplats, borné aux couleurs que votre atelier
+          sait imprimer. Le service le vectorise. Vous recevez une demande
+          complète, prête à chiffrer.
+        cta_primary: "Référencer mon atelier"
+        cta_secondary: "Voir comment ça marche"
+
+        how:
+          title: "Comment ça marche"
+          steps:
+            - title: "Le client décrit"
+              body: >-
+                Depuis votre lien ou votre QR code, il écrit son idée en une
+                phrase et choisit un nombre de couleurs.
+            - title: "L'IA génère en aplats"
+              body: >-
+                Le visuel est produit directement en couleurs pleines, sans
+                dégradé, dans la limite de votre sérigraphie.
+            - title: "Le service vectorise"
+              body: >-
+                Le résultat devient un SVG contrôlé, avec sa palette d'encres
+                et le nombre d'écrans à insoler.
+            - title: "Vous chiffrez"
+              body: >-
+                La demande arrive par email avec les fichiers. Vous répondez
+                avec votre devis, directement au client.
+
+        email:
+          title: "L'email que vous recevez"
+          body: >-
+            Tout est déjà là : le fichier vectoriel prêt pour la sortie écran,
+            la palette d'encres et les caractéristiques de la commande. Un
+            bouton confirme la réception, et le client voit que son atelier a
+            pris la demande en main.
+          headers:
+            - label: "De"
+              value: "Camille Rousseau"
+            - label: "À"
+              value: "commandes@votre-atelier.fr"
+            - label: "Objet"
+              value: "Demande d'impression — 24 t-shirts, 3 encres"
+          specs:
+            - label: "Textile"
+              value: "Fourni par l'atelier"
+            - label: "Emplacement"
+              value: "Poitrine, 28 cm"
+            - label: "Encres"
+              value: "3 écrans"
+            - label: "Tailles"
+              value: "S·4 M·8 L·8 XL·4"
+            - label: "Quantité"
+              value: "24 pièces"
+            - label: "Souhaitée le"
+              value: "14/10/2026"
+          attachments_label: "Pièces jointes"
+          attachments:
+            - "design.svg"
+            - "apercu.png"
+          confirm_button: "J'ai bien reçu cette demande"
+
+        plans:
+          title: "Abonnements"
+          highlighted: "Mis en avant"
+          # ⚠ DÉCISION OUVERTE : prix des deux abonnements et période d'essai.
+          # Aucun montant n'est affiché tant qu'il n'est pas arrêté.
+          price_pending: "Tarif à définir"
+          items:
+            - name: "Référencement"
+              summary: "Votre fiche dans l'annuaire, votre lien client et votre QR code."
+              features:
+                - "Fiche publique avec carte, photos et filtres"
+                - "Lien personnel et QR code à partager"
+                - "Affiche comptoir imprimable"
+                - "Demandes d'impression par email, fichiers joints"
+                - "Suivi des statuts dans votre espace"
+            - name: "Atelier+"
+              summary: "Tout le Référencement, plus la visibilité et les chiffres."
+              features:
+                - "Étiquette « Mis en avant » dans l'annuaire"
+                - "Votre couleur de marque sur l'écran de création"
+                - "Statistiques de votre lien client"
+                - "Priorité d'affichage à compatibilité égale"
+
+        designers:
+          title: "Vous êtes graphiste ?"
+          body: >-
+            Avant d'envoyer son design à l'atelier, un client peut payer une
+            vérification : simple contrôle, retouche ou création sur mesure.
+            Vous choisissez les niveaux que vous acceptez, et vous êtes payé à
+            la validation.
+          cta: "Rejoindre les graphistes"

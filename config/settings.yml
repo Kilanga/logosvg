@@ -1,0 +1,100 @@
+# Réglages métier de l'application, lus via Rails.application.config.tshirt
+# (voir config/application.rb). Aucune de ces valeurs ne doit être recopiée en
+# dur dans le code : on passe toujours par cette configuration.
+#
+# ⚠ DÉCISION OUVERTE : valeur provisoire, à trancher avant la mise en
+#   production. Voir « Décisions ouvertes » dans docs/SPEC.md.
+#
+# Les secrets (clés d'API, identifiants Stripe) n'ont PAS leur place ici :
+# ils vivent dans les credentials Rails ou dans les variables d'environnement.
+
+shared:
+  # --- Identité ------------------------------------------------------------
+  # ⚠ DÉCISION OUVERTE : nom de la plateforme et nom de domaine.
+  platform_name: "T-shirt IA"
+  support_email: "contact@example.invalid"
+
+  # --- Génération de designs ----------------------------------------------
+  generation:
+    # Confirmé par le cahier des charges (« 5 par jour, configurable »).
+    quota_per_day: 5
+    # Bornes imposées par le microservice FastAPI.
+    prompt_min_length: 3
+    prompt_max_length: 300
+    colors_min: 1
+    colors_max: 6
+    # Appel HTTP : 20 s de délai réseau, sondage toutes les 2 s, 5 min au total.
+    http_timeout_seconds: 20
+    poll_interval_seconds: 2
+    poll_timeout_seconds: 300
+
+  # --- Revues graphistes ---------------------------------------------------
+  reviews:
+    # ⚠ DÉCISION OUVERTE : les prix des niveaux sont-ils fixés par la
+    #   plateforme (hypothèse retenue) ou par chaque graphiste ?
+    prices_set_by: platform
+    # ⚠ DÉCISION OUVERTE : taux de commission de la plateforme sur les revues.
+    platform_fee_rate: 0.20
+    # ⚠ DÉCISION OUVERTE : délais. Valeurs issues du cahier des charges, à
+    #   confirmer.
+    auto_accept_days: 7
+    proposal_expiry_hours: 72
+    proposal_reminder_hours: 24
+    designer_claim_timeout_hours: 12
+    # ⚠ DÉCISION OUVERTE : seuil d'alerte du taux de renvoi sur 30 jours.
+    return_rate_alert_threshold: 0.25
+    # ⚠ DÉCISION OUVERTE : auto-facturation par la plateforme, ou factures
+    #   déposées par les graphistes ?
+    self_billing: true
+
+  # --- Demandes d'impression ----------------------------------------------
+  print_requests:
+    # ⚠ DÉCISION OUVERTE : délais de relance et d'expiration.
+    reminder_after_hours: 48
+    expire_after_days: 5
+    confirmation_token_valid_days: 30
+
+  # --- Abonnements imprimeurs ---------------------------------------------
+  subscriptions:
+    # Les identifiants de prix Stripe viennent de l'environnement
+    # (STRIPE_PRICE_LISTING, STRIPE_PRICE_ATELIER_PLUS) : jamais ici.
+    # ⚠ DÉCISION OUVERTE : montants affichés et période d'essai éventuelle.
+    trial_period_days: 0
+    # Une fiche en past_due reste visible 7 jours, puis elle est masquée.
+    past_due_grace_days: 7
+
+  # --- Fichiers ------------------------------------------------------------
+  uploads:
+    max_svg_bytes: 5242880    # 5 Mo
+    max_photo_bytes: 10485760 # 10 Mo
+    # Décision tranchée par le cahier des charges : le client télécharge le PNG
+    # filigrané issu de l'IA, jamais le SVG vectorisé.
+    client_may_download_svg: false
+    watermark_enabled: true
+
+  # --- Anti-abus -----------------------------------------------------------
+  rate_limits:
+    design_creation: { count: 10, within_seconds: 60 }
+    authentication: { count: 10, within_seconds: 180 }
+
+  # --- RGPD ----------------------------------------------------------------
+  privacy:
+    # Version du texte de consentement enregistrée sur chaque demande.
+    consent_text_version: "2026-09-v1"
+    # ⚠ DÉCISION OUVERTE : durées de conservation.
+    design_retention_days: 180
+    print_request_anonymize_days: 365
+    deleted_account_purge_days: 30
+
+development:
+  support_email: "dev@example.invalid"
+
+test:
+  # Valeurs volontairement petites pour que les tests restent lisibles et
+  # rapides ; les tests qui portent sur une limite la fixent explicitement.
+  generation:
+    quota_per_day: 5
+    poll_interval_seconds: 0
+    poll_timeout_seconds: 10
+
+production: {}

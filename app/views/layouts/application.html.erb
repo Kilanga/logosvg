@@ -1,0 +1,54 @@
+<%# Public layout: home page, directories, printer and designer pages.
+    Professional spaces use layouts/console instead. %>
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <%= render "layouts/document_head" %>
+  </head>
+
+  <body class="min-h-dvh bg-paper text-ink antialiased">
+    <a class="skip-link" href="#contenu"><%= t("layout.skip_to_content") %></a>
+
+    <header class="border-b border-line bg-surface">
+      <%# Thin emulsion rule across the top: the edge of a squeegee pass. %>
+      <div class="h-1 bg-emulsion" aria-hidden="true"></div>
+
+      <div class="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-8 gap-y-3 px-5 py-4">
+        <%= link_to root_path, class: "flex items-center gap-2.5 text-ink" do %>
+          <%= registration_mark css_class: "text-emulsion" %>
+          <span class="font-display text-xl font-bold uppercase tracking-[0.06em]"><%= platform_name %></span>
+        <% end %>
+
+        <nav class="ms-auto flex items-center gap-x-6 gap-y-2" aria-label="<%= t("layout.main_navigation") %>">
+          <%# Directory and account links arrive with steps 1, 2 and 7. %>
+          <%= link_to t("nav.sign_in"), "#", class: "btn btn-secondary text-sm" %>
+        </nav>
+      </div>
+    </header>
+
+    <%= render "layouts/flash" %>
+
+    <main id="contenu" tabindex="-1">
+      <%= yield %>
+    </main>
+
+    <footer class="mt-24 border-t border-line bg-ink text-paper">
+      <div class="mx-auto w-full max-w-6xl px-5 py-12">
+        <div class="flex flex-wrap items-end justify-between gap-8">
+          <div>
+            <p class="flex items-center gap-2.5">
+              <%= registration_mark css_class: "text-paper/60" %>
+              <span class="font-display text-lg font-bold uppercase tracking-[0.06em]"><%= platform_name %></span>
+            </p>
+            <p class="mt-2 max-w-sm text-sm text-paper/70"><%= t("platform.tagline") %></p>
+          </div>
+
+          <%# Legal pages are built in step 10; nothing is linked before it exists. %>
+          <p class="label-rule text-paper/50">
+            © <%= Time.zone.today.year %> <%= platform_name %> · <%= t("footer.rights") %>
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

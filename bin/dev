@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+
+# Shared configuration for every process in Procfile.dev, including the Python
+# generator service: one file, so Rails and the service never drift apart on the
+# API key. See .env.example.
+if [ -f .env ]; then
+  set -a
+  . ./.env
+  set +a
+else
+  echo "No .env found. Copy .env.example to .env and fill it in."
+  echo "The generator service will not start without it."
+fi
+
+if ! gem list foreman -i --silent; then
+  echo "Installing foreman..."
+  gem install foreman
+fi
+
+# Default to port 3000 if not specified
+export PORT="${PORT:-3000}"
+
+# Let the debug gem allow remote connections,
+# but avoid loading until `debugger` is called
+export RUBY_DEBUG_OPEN="true"
+export RUBY_DEBUG_LAZY="true"
+
+exec foreman start -f Procfile.dev "$@"

@@ -1,0 +1,47 @@
+<%# Shell shared by the four professional spaces. Each space has its own thin
+    layout (client, printer, designer, admin) that fills in :space_name and
+    :space_nav, then renders this template. See docs/SPEC.md, "Écrans et routes".
+
+    The sidebar is ink on paper, as the visual tokens prescribe. %>
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <%= render "layouts/document_head" %>
+  </head>
+
+  <body class="min-h-dvh bg-paper text-ink antialiased">
+    <a class="skip-link" href="#contenu"><%= t("layout.skip_to_content") %></a>
+
+    <div class="lg:flex lg:min-h-dvh">
+      <div class="bg-ink text-paper lg:w-60 lg:flex-none">
+        <div class="flex items-center gap-2.5 px-5 py-4 lg:py-6">
+          <%= registration_mark css_class: "text-paper/60" %>
+          <span class="font-display text-base font-bold uppercase tracking-[0.06em]">
+            <%= yield(:space_name).presence || platform_name %>
+          </span>
+        </div>
+
+        <%# Horizontal and scrollable on small screens, stacked from lg up. %>
+        <nav class="overflow-x-auto border-t border-paper/15 lg:border-t-0"
+             aria-label="<%= t("layout.main_navigation") %>">
+          <ul class="flex gap-1 px-3 pb-3 lg:flex-col lg:gap-0.5 lg:px-2">
+            <%= yield :space_nav %>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="min-w-0 flex-1">
+        <header class="border-b border-line bg-surface px-5 py-5 lg:px-8">
+          <p class="label-rule"><%= yield(:space_name) %></p>
+          <h1 class="mt-1 text-2xl font-bold lg:text-3xl"><%= yield(:heading) %></h1>
+        </header>
+
+        <%= render "layouts/flash" %>
+
+        <main id="contenu" tabindex="-1" class="px-5 py-8 lg:px-8">
+          <%= yield %>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

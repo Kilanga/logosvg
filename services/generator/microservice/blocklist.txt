@@ -1,0 +1,36 @@
+# Un terme par ligne, insensible à la casse et aux accents.
+# Les prompts contenant un de ces termes sont refusés avant génération.
+# Liste de départ à compléter selon vos besoins.
+
+# Marques et licences
+disney
+marvel
+pixar
+nintendo
+pokemon
+mickey
+star wars
+harry potter
+nike
+adidas
+supreme
+louis vuitton
+chanel
+gucci
+coca cola
+ferrari
+nba
+nfl
+psg
+real madrid
+
+# Contenus inappropriés
+nsfw
+nude
+nue
+porn
+sexy
+gore
+nazi
+swastika
+croix gammee

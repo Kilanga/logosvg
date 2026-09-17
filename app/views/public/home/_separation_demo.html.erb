@@ -1,0 +1,71 @@
+<%# Before / after: the same mark as a raster AI image, then as flat separated
+    inks. Drawn inline rather than shipped as two files so the comparison stays
+    crisp at any size and costs no extra request. Decorative: the surrounding
+    text carries the meaning, so the figures are hidden from screen readers. %>
+
+<% inks = [
+     { hex: "#1F5F7A", name: t("public.home.demo.ink_names.blue") },
+     { hex: "#E4572E", name: t("public.home.demo.ink_names.orange") },
+     { hex: "#F2C14E", name: t("public.home.demo.ink_names.yellow") }
+   ] %>
+
+<div class="grid gap-4 sm:grid-cols-2">
+  <figure class="panel overflow-hidden">
+    <figcaption class="flex items-baseline justify-between border-b border-line px-4 py-2.5">
+      <span class="label-rule"><%= t("public.home.demo.before_label") %></span>
+      <span class="font-display text-sm font-bold text-muted"><%= t("public.home.demo.before_colors") %></span>
+    </figcaption>
+
+    <div class="screen-tint p-4">
+      <svg viewBox="0 0 240 180" class="w-full" role="presentation" aria-hidden="true">
+        <defs>
+          <filter id="raster-artifacts" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3.2" result="soft" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="grain" />
+            <feDisplacementMap in="soft" in2="grain" scale="4" />
+          </filter>
+        </defs>
+
+        <g filter="url(#raster-artifacts)">
+          <circle cx="150" cy="70" r="34" fill="#F2C14E" />
+          <polygon points="20,158 90,62 160,158" fill="#1F5F7A" />
+          <polygon points="95,158 150,100 205,158" fill="#E4572E" />
+          <rect x="20" y="156" width="185" height="4" fill="#1F5F7A" />
+        </g>
+      </svg>
+    </div>
+
+    <p class="border-t border-line px-4 py-3 text-sm text-muted">
+      <%= t("public.home.demo.before_body") %>
+    </p>
+  </figure>
+
+  <figure class="panel overflow-hidden">
+    <figcaption class="flex items-baseline justify-between border-b border-line px-4 py-2.5">
+      <span class="label-rule text-emulsion"><%= t("public.home.demo.after_label") %></span>
+      <span class="font-display text-sm font-bold text-ink">
+        <%= t("public.home.demo.after_screens", count: inks.size) %>
+      </span>
+    </figcaption>
+
+    <div class="screen-tint p-4">
+      <svg viewBox="0 0 240 180" class="w-full" role="presentation" aria-hidden="true">
+        <circle cx="150" cy="70" r="34" fill="#F2C14E" />
+        <polygon points="20,158 90,62 160,158" fill="#1F5F7A" />
+        <polygon points="95,158 150,100 205,158" fill="#E4572E" />
+        <rect x="20" y="156" width="185" height="4" fill="#1F5F7A" />
+      </svg>
+    </div>
+
+    <%# Ink pots: one swatch per screen, with the code a printer can mix from. %>
+    <ul class="flex flex-wrap gap-4 border-t border-line px-4 py-3">
+      <% inks.each do |ink| %>
+        <li class="flex items-center gap-2">
+          <span class="size-6 rounded-xs border border-ink/15" style="background-color: <%= ink[:hex] %>"></span>
+          <span class="font-display text-sm font-semibold uppercase tracking-[0.04em]"><%= ink[:hex] %></span>
+          <span class="sr-only"><%= ink[:name] %></span>
+        </li>
+      <% end %>
+    </ul>
+  </figure>
+</div>

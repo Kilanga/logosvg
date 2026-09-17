@@ -1,0 +1,13 @@
+<%# Flash messages. Announced to assistive technology without stealing focus. %>
+<% if flash.any? %>
+  <div class="mx-auto w-full max-w-6xl px-5" role="status" aria-live="polite">
+    <% flash.each do |type, message| %>
+      <% next if message.blank? %>
+      <div class="mt-4 flex items-start gap-3 border-l-2 px-4 py-3 text-sm <%=
+           type.to_s == "alert" ? "border-warning bg-warning-bg text-warning" : "border-success bg-success-bg text-success" %>">
+        <%= registration_mark css_class: "mt-0.5" %>
+        <p><%= message %></p>
+      </div>
+    <% end %>
+  </div>
+<% end %>

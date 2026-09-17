@@ -1,0 +1,17 @@
+# Tunnel nommé : URL fixe, mais nécessite un domaine géré par Cloudflare.
+# Emplacement sous Windows : C:\Users\<vous>\.cloudflared\config.yml
+#
+# Étapes (une seule fois) :
+#   cloudflared tunnel login
+#   cloudflared tunnel create tshirt-ia
+#   cloudflared tunnel route dns tshirt-ia api.votre-domaine.fr
+# Puis à chaque session :
+#   cloudflared tunnel run tshirt-ia
+
+tunnel: <ID_DU_TUNNEL>
+credentials-file: C:\Users\<vous>\.cloudflared\<ID_DU_TUNNEL>.json
+
+ingress:
+  - hostname: api.votre-domaine.fr
+    service: http://127.0.0.1:5000
+  - service: http_status:404

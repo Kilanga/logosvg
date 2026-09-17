@@ -1,0 +1,191 @@
+/* T-shirt IA Designer — styles limités au bloc .tsia pour ne pas toucher au thème. */
+.tsia {
+	--tsia-paper: #f2f4f3;
+	--tsia-surface: #ffffff;
+	--tsia-ink: #1d2433;
+	--tsia-muted: #5a6472;
+	--tsia-line: #c8d0d4;
+	--tsia-emulsion: #1f5f7a;
+	--tsia-emulsion-soft: #dbe9ef;
+	--tsia-warn-bg: #fff3dc;
+	--tsia-warn: #7a4a00;
+	--tsia-error: #a3261b;
+
+	color: var(--tsia-ink);
+	background: var(--tsia-paper);
+	border: 1px solid var(--tsia-line);
+	border-radius: 10px;
+	padding: clamp(1rem, 3vw, 2rem);
+	display: grid;
+	gap: 2rem;
+	font-size: 1rem;
+	line-height: 1.5;
+}
+
+.tsia *,
+.tsia *::before,
+.tsia *::after { box-sizing: border-box; }
+
+.tsia--guest { display: block; }
+
+@media (min-width: 900px) {
+	.tsia { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); align-items: start; }
+}
+
+/* Formulaire ------------------------------------------------------------- */
+.tsia-form { display: grid; gap: 1.25rem; }
+.tsia-field { border: 0; margin: 0; padding: 0; min-width: 0; }
+.tsia-field > label,
+.tsia-field > legend { display: block; font-weight: 600; margin-bottom: .4rem; padding: 0; }
+
+.tsia textarea {
+	width: 100%;
+	font: inherit;
+	color: inherit;
+	background: var(--tsia-surface);
+	border: 1px solid var(--tsia-line);
+	border-radius: 6px;
+	padding: .75rem .85rem;
+	resize: vertical;
+}
+
+.tsia-hint { margin: .35rem 0 0; font-size: .875rem; color: var(--tsia-muted); }
+
+.tsia-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.tsia-chip { position: relative; cursor: pointer; }
+.tsia-chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.tsia-chip span {
+	display: inline-block;
+	padding: .4rem .9rem;
+	border: 1px solid var(--tsia-line);
+	border-radius: 999px;
+	background: var(--tsia-surface);
+}
+.tsia-chip input:checked + span {
+	background: var(--tsia-emulsion);
+	border-color: var(--tsia-emulsion);
+	color: #fff;
+}
+.tsia-chip input:focus-visible + span { outline: 2px solid var(--tsia-emulsion); outline-offset: 2px; }
+
+.tsia-range { display: flex; align-items: center; gap: 1rem; }
+.tsia-range input { flex: 1; accent-color: var(--tsia-emulsion); }
+.tsia-range output { min-width: 6.5rem; font-variant-numeric: tabular-nums; }
+
+.tsia-check { display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; }
+.tsia-check input { width: 1.1rem; height: 1.1rem; accent-color: var(--tsia-emulsion); }
+
+.tsia-button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	font: inherit;
+	font-weight: 600;
+	color: #fff;
+	background: var(--tsia-emulsion);
+	border: 0;
+	border-radius: 6px;
+	padding: .8rem 1.4rem;
+	text-decoration: none;
+	cursor: pointer;
+}
+.tsia-button:hover { background: #174a60; color: #fff; }
+.tsia-button[disabled] { opacity: .55; cursor: progress; }
+
+.tsia-link {
+	font: inherit;
+	background: none;
+	border: 0;
+	padding: .25rem 0;
+	color: var(--tsia-emulsion);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	cursor: pointer;
+}
+
+.tsia-status { margin: 0; min-height: 1.5em; color: var(--tsia-muted); }
+.tsia-status.is-error { color: var(--tsia-error); font-weight: 600; }
+
+.tsia :focus-visible { outline: 2px solid var(--tsia-emulsion); outline-offset: 2px; }
+
+/* Résultat --------------------------------------------------------------- */
+.tsia-result { display: grid; gap: 1.25rem; min-width: 0; }
+.tsia-result[hidden] { display: none; }
+.tsia-result__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; }
+.tsia-result__head h3 { margin: 0; font-size: 1.25rem; }
+
+.tsia-toggle { display: inline-flex; border: 1px solid var(--tsia-line); border-radius: 6px; overflow: hidden; }
+.tsia-toggle button {
+	font: inherit;
+	font-size: .9rem;
+	border: 0;
+	padding: .4rem .8rem;
+	background: var(--tsia-surface);
+	color: var(--tsia-ink);
+	cursor: pointer;
+}
+.tsia-toggle button[aria-pressed="true"] { background: var(--tsia-emulsion-soft); font-weight: 600; }
+
+/* La trame rappelle l'écran de sérigraphie sur lequel le design sera insolé. */
+.tsia-stage {
+	border-radius: 4px;
+	padding: 1.25rem;
+	background-color: var(--tsia-surface);
+	background-image:
+		repeating-linear-gradient(0deg, rgba(31, 95, 122, .07) 0 1px, transparent 1px 7px),
+		repeating-linear-gradient(90deg, rgba(31, 95, 122, .07) 0 1px, transparent 1px 7px);
+	border: 1px solid var(--tsia-line);
+}
+.tsia-stage[hidden] { display: none; }
+
+.tsia-shirt { display: block; width: 100%; max-width: 420px; height: auto; margin: 0 auto; }
+.tsia-shirt__body { fill: var(--tsia-shirt); stroke: rgba(0, 0, 0, .25); stroke-width: 2; stroke-linejoin: round; transition: fill .2s; }
+.tsia-shirt__collar { fill: none; stroke: rgba(0, 0, 0, .3); stroke-width: 3; }
+
+.tsia-swatches { display: flex; justify-content: center; gap: .6rem; margin-top: 1rem; }
+.tsia-swatch {
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	border: 1px solid rgba(0, 0, 0, .3);
+	background: var(--tsia-swatch);
+	cursor: pointer;
+	padding: 0;
+}
+.tsia-swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--tsia-surface), 0 0 0 4px var(--tsia-emulsion); }
+
+.tsia-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.tsia-compare figure { margin: 0; }
+.tsia-compare figcaption { font-size: .875rem; color: var(--tsia-muted); margin-top: .4rem; text-align: center; }
+.tsia-frame { overflow: hidden; aspect-ratio: 1; background: #fff; border: 1px solid var(--tsia-line); }
+.tsia-frame img { display: block; width: 100%; height: 100%; object-fit: contain; transition: transform .25s ease; }
+.tsia-compare.is-zoomed img { transform: scale(4); }
+
+/* Encres : chaque couleur correspond à un écran à préparer. */
+.tsia-inks__title { margin: 0 0 .6rem; font-weight: 600; }
+.tsia-inks__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .75rem; }
+.tsia-inks__list li { display: grid; justify-items: center; gap: .3rem; font-size: .8rem; color: var(--tsia-muted); font-variant-numeric: tabular-nums; }
+.tsia-ink {
+	width: 3rem;
+	height: 3rem;
+	border-radius: 4px;
+	border: 3px solid #c9ced1;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+	background: var(--tsia-ink-color);
+}
+
+.tsia-warnings { margin: 0; padding: .85rem 1rem .85rem 2rem; border-radius: 6px; background: var(--tsia-warn-bg); color: var(--tsia-warn); }
+.tsia-warnings[hidden] { display: none; }
+
+.tsia-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; }
+
+.tsia-visually-hidden {
+	position: absolute !important;
+	width: 1px; height: 1px;
+	overflow: hidden; clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tsia * { transition: none !important; }
+}
