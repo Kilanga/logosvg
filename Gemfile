@@ -7,7 +7,7 @@ gem "rails", "~> 8.1.3", ">= 8.1.3.1"
 # keyword argument. ActiveSupport::JSON.decode therefore raises ArgumentError,
 # which breaks every JSON-serialised column — Solid Queue's job arguments
 # included, so bin/jobs crash-loops. Drop the pin once ActiveSupport supports json 3.
-gem "json", "~> 2.7"
+gem "json", "~> 3.0"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
