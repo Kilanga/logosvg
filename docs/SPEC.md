@@ -181,7 +181,7 @@ flowchart LR
 | `Printer` | user\_id, name, slug, description, address, postal\_code, city, latitude, longitude, orders\_email, phone, website, opening\_hours, response\_time\_hours, min\_order\_qty, standard\_lead\_days, express\_available, express\_lead\_hours, ships, shipping\_zones, shipping\_lead, shipping\_price\_note, pickup, provides\_textile, accepts\_client\_textile, textile\_brands, textile\_label (none, gots, oeko\_tex), placements (tableau), max\_print\_width\_cm, max\_print\_height\_cm, price\_note, brand\_color, status (draft, pending\_review, published, suspended), featured ; pièces jointes logo et photos | Slug unique ; géocodé à chaque changement d'adresse ; visible si `published` et abonnement actif |
 | `PrinterTechnique` | printer\_id, technique (screen\_printing, dtf, dtg, flex, embroidery), max\_colors, accepted\_formats (tableau) | Une ligne par technique ; `max_colors` requis pour la sérigraphie |
 | `Subscription` | printer\_id, plan (listing, atelier\_plus), status (incomplete, trialing, active, past\_due, canceled), stripe\_customer\_id, stripe\_subscription\_id, current\_period\_end | Mise à jour uniquement par les webhooks Stripe |
-| `Design` | user\_id, printer\_id (contexte, facultatif), parent\_id (variante), prompt, style (illustration, logo, mascotte, badge), colors\_requested, remove\_background, seed, status, generator\_job\_id, error\_message, inks\_count, palette (jsonb), paths\_count, warnings (jsonb), prompt\_used, deleted\_at ; pièces jointes svg et source\_png | `colors_requested` borné par l'atelier s'il y en a un |
+| `Design` | user\_id, printer\_id (contexte, facultatif), parent\_id (variante), prompt, style (illustration, logo, mascotte, badge), colors\_requested, remove\_background, seed, status, generator\_job\_id, error\_message, inks\_count, palette (jsonb), paths\_count, warnings (jsonb), prompt\_used, subject, root\_id, mode (create, variant, refine), instruction, refinements\_left, deleted\_at ; pièces jointes svg et source\_png | `colors_requested` borné par l'atelier s'il y en a un ; `parent_id` et `root_id` forment la lignée, indexés tous les deux |
 | `DesignerProfile` | user\_id, display\_name, bio, city, latitude, longitude, remote, specialties (tableau), languages (tableau), accepting\_work, status (pending\_review, active, suspended), stripe\_account\_id, payouts\_enabled, rating\_avg, ratings\_count ; pièces jointes avatar et portfolio | Ne reçoit rien tant que `payouts_enabled` est faux |
 | `ReviewLevel` | key (check, retouch, custom), name, description, price\_cents (vide pour « sur devis »), turnaround\_hours, revisions\_included, position, active | Géré par l'admin |
 | `DesignerLevel` | designer\_profile\_id, review\_level\_id | Niveaux acceptés par le graphiste |
@@ -201,7 +201,7 @@ Trois objets ont un cycle de vie : le design, la demande d'impression et la revu
 
 ### Design
 
-`pending` → `generating` → `ready` ou `failed`. Un design `failed` peut être relancé ; il ne consomme pas de quota. Un design `ready` est immuable : une modification crée une variante (`parent_id`).
+`pending` → `generating` → `ready` ou `failed`. Un design `failed` peut être relancé ; il ne consomme pas de quota. Un design `ready` est immuable : une variante ou une retouche crée un design enfant (`parent_id`), rattaché à la même lignée (`root_id`).
 
 ### Demande d'impression
 
@@ -218,6 +218,7 @@ stateDiagram-v2
 ```
 
 - À l'envoi, l'atelier reçoit l'email avec les fichiers joints et un lien portant `confirmation_token`.
+- **Fiche technique jointe à l'envoi.** L'atelier reçoit le SVG (fichier d'impression) **et** le PNG, plus une fiche reprenant la description du client, `prompt_used`, l'instruction de la dernière retouche s'il y en a eu, la palette hex avec les parts, le nombre d'encres, `seed` et `style`. Le PNG et le prompt disent l'intention là où le SVG a perdu des nuances ; `seed` et `style` permettent de régénérer la même image des mois plus tard.
 - Le lien ouvre une page de confirmation ; seul le bouton de cette page (POST) change le statut, car les antivirus de messagerie ouvrent les liens automatiquement.
 - Sans confirmation après 48 h : relance à l'atelier. Après 5 jours : statut `expired`, et le client est invité à choisir un autre atelier.
 - L'atelier met aussi à jour les statuts depuis `/atelier/demandes`.
@@ -278,6 +279,21 @@ Le graphiste renvoie la demande quand l'option choisie ne permet pas de faire le
 
 Si le graphiste choisi ne prend pas la revue en charge dans les 12 h, le client choisit : passer en « premier disponible », choisir un autre graphiste, ou être remboursé.
 
+## Reprise d'un design
+
+Un design `ready` ne se modifie pas : le client le reprend, et chaque reprise crée un enfant de la même lignée (`root_id`). Deux façons de reprendre, et une sortie payante quand le budget est épuisé.
+
+| Reprise | Ce que fait le service | Ce que voit le client |
+| --- | --- | --- |
+| **Retouche** | L'instruction française est traduite, fusionnée dans la description anglaise du parent, puis le modèle repart **de l'image du parent** en img2img (denoise 0,55) : la composition est conservée, le détail change | Un chat « que voulez-vous changer ? » ; la demande puis la nouvelle version s'affichent comme une conversation |
+| **Variantes** | Même description, un à trois autres tirages, chacun étant un design complet (SVG et PNG) | Un bouton « proposez-moi d'autres versions », puis les propositions côte à côte |
+
+- **Budget : trois reprises par design**, variantes et retouches confondues. Il est compté par le microservice sur la lignée, et jamais recalculé par Rails : `refinements_left`, renvoyé par chaque appel, fait foi et s'affiche en permanence sous l'aperçu.
+- Une reprise consomme le quota journalier de génération, comme une création.
+- Budget épuisé : le service répond 429 avec `reason: "refine_budget"`. L'écran remplace alors les deux actions par l'entrée dans le parcours de **vérification par un graphiste** : c'est la suite naturelle, et elle est payante.
+- Les variantes sont produites en pleine taille, pas en vignettes : avec SDXL, un même `seed` à une autre résolution ne redonne pas la même image, donc une vignette choisie puis re-rendue dériverait sous les yeux du client.
+- La lignée est navigable : le client revoit chaque version et repart de celle qu'il veut. Le graphiste, lui, voit toute la lignée.
+
 ## Écrans et routes
 
 Les routes publiques sont en français ; chaque espace a son propre layout et son espace de noms de contrôleurs. Les maquettes de référence sont sur le canevas « T-shirt IA — maquettes ».
@@ -293,7 +309,8 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 | `GET /graphistes`, `GET /graphistes/:id` | Liste avec filtres et carte facultative ; profil avec portfolio et avis | Tous |
 | `GET /designs/new` | Création : bandeau de l'atelier, formulaire, aperçu sur t-shirt avec couleurs de tissu, vue image et vecteur avec zoom, encres et écrans, compatibilité, actions | Client |
 | `POST /designs`, `GET /designs/:id` | Lancement puis suivi en Turbo Stream ; la route GET /designs/:id/image télécharge le PNG issu de l'IA avec filigrane, jamais le SVG | Propriétaire |
-| `POST /designs/:id/variants` | Nouvelle variante | Propriétaire |
+| `POST /designs/:id/variants` | Une à trois variantes du design (mêmes mots, autres tirages) | Propriétaire |
+| `POST /designs/:id/refine` | Retouche par instruction : le texte du chat part au service, la nouvelle version arrive en Turbo Stream | Propriétaire |
 | `GET /designs/:id/print_requests/new`, `POST` | Envoi à l'atelier : textile, emplacement, tailles et quantités, date, message, coordonnées, consentement ; récapitulatif à droite | Propriétaire |
 | `GET /designs/:id/reviews/new`, `POST` | Choix du niveau et du graphiste, puis Stripe Checkout | Propriétaire |
 | `GET /verifications/:id` | Détail d'une revue : versions, messagerie, valider, demander un retour, répondre à une proposition | Client de la revue |
@@ -321,6 +338,8 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 ### Détails d'interface à respecter
 
 - **Création** : le curseur de couleurs est borné au maximum de l'atelier ; le compteur de créations restantes s'affiche sous le bouton ; les alertes du service apparaissent en encadré d'avertissement.
+- **Aperçu** : l'aperçu principal est le **rendu du SVG**, pas le PNG. Le SVG est le fichier d'impression et diffère volontairement de l'image générée : le blanc y est devenu papier non imprimé et les teintes proches ont été fusionnées pour tenir le nombre d'encres. Faire valider le PNG reviendrait à faire approuver autre chose que ce qui sera imprimé. Le SVG est servi par une balise `<img>` depuis Active Storage — jamais inliné dans le HTML, même après contrôle — et s'affiche sur fond clair **et** sur fond sombre, puisque le blanc n'est pas imprimé. Le sélecteur « rendu final / image d'origine » permet de comparer.
+- **Reprise** : le chat de retouche et le bouton de variantes sont sous l'aperçu, avec le nombre de reprises restantes toujours visible ; à zéro, les deux laissent place à l'appel à la vérification par un graphiste.
 - **Encres** : chaque couleur s'affiche comme un pot d'encre avec son code, et le titre annonce le nombre d'écrans.
 - **Annuaire** : le filtre « Compatibles avec mon design » est coché par défaut quand un design existe ; les ateliers incompatibles restent affichés en atténué avec la raison.
 - **Mise en avant Atelier+** : l'étiquette « Mis en avant » est toujours visible.
@@ -333,13 +352,15 @@ Rails parle au service FastAPI existant en HTTP, depuis des tâches de fond uniq
 
 | Méthode et route | Corps ou paramètres | Réponse |
 | --- | --- | --- |
-| `POST /generate` | prompt (3 à 300 caractères), style, colors (1 à 6), remove\_background, user\_id, seed facultatif | 202 : job\_id, status, position |
-| `GET /jobs/:id?user_id=` | — | status (queued, running, done, error), position, error, result (palette, inks, stats.paths, warnings, prompt\_used, seed) |
+| `POST /generate` | prompt (3 à 300 caractères), style, colors (1 à 6), remove\_background, user\_id, seed facultatif | 202 : job\_id, status, position, refinements\_left |
+| `POST /jobs/:id/refine` | instruction (3 à 200 caractères), user\_id | 202 : job\_id, status, position, refinements\_left |
+| `POST /jobs/:id/variants` | user\_id, count (1 à 3) | 202 : job\_ids, job\_id, status, position, refinements\_left |
+| `GET /jobs/:id?user_id=` | — | status (queued, running, done, error), position, error, mode, parent\_id, root\_id, refinements\_left, result (palette, inks, stats.paths, stats.opaque\_share, warnings, prompt\_used, subject, instruction, seed) |
 | `GET /jobs/:id/design.svg?user_id=` | — | Le SVG |
 | `GET /jobs/:id/source.png?user_id=` | — | L'image brute générée |
 | `GET /health` | — | Sans clé ; pour la page d'état admin |
 
-**Codes d'erreur à traiter** : 401 (configuration, message générique au client), 422 (terme interdit ou prompt invalide, message du service affiché), 429 (limite atteinte, en-tête `Retry-After`), 503 (file pleine ou service arrêté, nouvel essai proposé).
+**Codes d'erreur à traiter** : 401 (configuration, message générique au client), 409 (reprise demandée sur une version pas encore prête), 422 (terme interdit ou prompt invalide, message du service affiché), 503 (file pleine ou service arrêté, nouvel essai proposé). Les deux 429 ne se traitent pas pareil : avec l'en-tête `Retry-After`, c'est la limite horaire de générations et le client réessaie plus tard ; avec `reason: "refine_budget"`, c'est le budget de reprises du design, définitif, qui ouvre le parcours graphiste. `GeneratorClient` expose donc le corps JSON de la réponse, pas seulement le code.
 
 **Déroulement**
 
@@ -349,6 +370,7 @@ Rails parle au service FastAPI existant en HTTP, depuis des tâches de fond uniq
 4. Sur `done` : téléchargement du SVG et de l'image, contrôle du SVG, pièces jointes, champs de résultat, statut `ready`, incrément du quota.
 5. Sur `error` ou délai dépassé : statut `failed` et message ; le quota n'est pas consommé.
 6. Chaque changement d'état diffuse un Turbo Stream vers la page du design.
+7. Une retouche (`RefineDesignJob`) et des variantes (`VariantsJob`) créent un design enfant par `job_id` renvoyé, puis réutilisent `PollDesignJob` sans le dupliquer.
 
 **Détails**
 
@@ -384,7 +406,7 @@ Stripe gère deux flux : les abonnements des imprimeurs et le paiement des revue
 
 | Événement | Destinataire | Contenu |
 | --- | --- | --- |
-| Demande d'impression envoyée | Atelier (`orders_email`) | Récapitulatif, SVG et aperçu joints, palette, bouton de confirmation |
+| Demande d'impression envoyée | Atelier (`orders_email`) | Récapitulatif, SVG et aperçu joints, fiche technique, bouton de confirmation |
 | Demande d'impression envoyée | Client | Copie de la demande |
 | Aucune confirmation après 48 h | Atelier | Relance |
 | Demande expirée après 5 jours | Client | Proposition de choisir un autre atelier |
@@ -478,7 +500,8 @@ Ces points bloquent la mise en production, pas la construction : Claude Code uti
 - [ ] Prix des deux abonnements et période d'essai éventuelle
 - [ ] Prix des niveaux de revue : fixés par la plateforme (hypothèse actuelle) ou par chaque graphiste
 - [ ] Taux de commission sur les revues
-- [ ] Le client peut-il télécharger son SVG, ou seulement l'envoyer à un atelier ? (décision : l'image PNG issue de l'IA oui, le SVG non ; filigrane « Créé avec \[nom de l'atelier\] » ajouté au PNG téléchargé, nom de la plateforme si aucun atelier)
+- [x] Le client peut-il télécharger son SVG, ou seulement l'envoyer à un atelier ? (décidé : l'image PNG issue de l'IA oui, le SVG non ; filigrane « Créé avec \[nom de l'atelier\] » ajouté au PNG téléchargé, nom de la plateforme si aucun atelier)
+- [ ] La lignée et le budget de reprises vivent en mémoire dans le microservice : un redémarrage de la machine de génération remet le compteur à zéro. Acceptable en démonstration ; si cela devient un enjeu commercial, le compteur passera côté Rails
 - [ ] Délais : validation automatique (7 jours), réponse à une proposition (72 h), graphiste choisi silencieux (12 h), expiration d'une demande (5 jours)
 - [ ] Seuil d'alerte du taux de renvoi des graphistes
 - [ ] Durées de conservation des designs et des demandes

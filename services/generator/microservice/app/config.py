@@ -12,6 +12,10 @@ def _int(name: str, default: int) -> int:
     return int(os.getenv(name, str(default)))
 
 
+def _float(name: str, default: float) -> float:
+    return float(os.getenv(name, str(default)))
+
+
 @dataclass(frozen=True)
 class Settings:
     api_key: str = os.getenv("API_KEY", "")
@@ -24,6 +28,12 @@ class Settings:
 
     ollama_url: str = os.getenv("OLLAMA_URL", "")
     ollama_model: str = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+
+    # Retouches : combien de reprises (variantes ou corrections) par design, et a quel point
+    # la retouche s'ecarte de l'image de depart (0 = identique, 1 = image entierement nouvelle).
+    max_refinements: int = _int("MAX_REFINEMENTS", 3)
+    max_variants: int = _int("MAX_VARIANTS", 3)
+    refine_denoise: float = _float("REFINE_DENOISE", 0.55)
 
     rate_limit_count: int = _int("RATE_LIMIT_COUNT", 5)
     rate_limit_window: int = _int("RATE_LIMIT_WINDOW_SECONDS", 3600)

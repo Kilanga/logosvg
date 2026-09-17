@@ -1,4 +1,4 @@
-"""Génération d'image : simulation locale ou ComfyUI."""
+"""Génération d'image : simulation locale ou ComfyUI (création et retouche)."""
 import asyncio
 import io
 import json
@@ -13,7 +13,9 @@ from PIL import Image, ImageDraw
 
 from .config import settings
 
-WORKFLOW_PATH = Path(__file__).resolve().parent.parent / "workflows" / "sdxl_flat.json"
+WORKFLOWS = Path(__file__).resolve().parent.parent / "workflows"
+TEXT2IMG = WORKFLOWS / "sdxl_flat.json"
+IMG2IMG = WORKFLOWS / "sdxl_img2img.json"
 
 
 class GenerationError(Exception):
@@ -50,28 +52,73 @@ class MockGenerator:
         img.save(buf, format="PNG")
         return buf.getvalue()
 
+    async def refine(self, positive: str, negative: str, seed: int, colors: int,
+                     init_png: bytes, denoise: float) -> bytes:
+        """Repart de l'image fournie et la modifie visiblement, sans GPU."""
+        await asyncio.sleep(1)
+        img = Image.open(io.BytesIO(init_png)).convert("RGB")
+        draw = ImageDraw.Draw(img)
+        rng = random.Random(seed)
+        w, h = img.size
+        # Une marque dépendante du seed : l'image retouchée diffère de son parent.
+        colour = tuple(rng.randint(0, 200) for _ in range(3))
+        draw.rectangle([w // 8, h // 8, w // 8 + w // 4, h // 8 + h // 12], fill=colour)
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+
 
 class ComfyUIGenerator:
-    """Envoie le workflow SDXL à ComfyUI et récupère l'image produite."""
+    """Envoie les workflows SDXL à ComfyUI et récupère l'image produite."""
 
     def __init__(self):
-        self.template = json.loads(WORKFLOW_PATH.read_text(encoding="utf-8"))
+        self.text2img = json.loads(TEXT2IMG.read_text(encoding="utf-8"))
+        self.img2img = json.loads(IMG2IMG.read_text(encoding="utf-8")) if IMG2IMG.exists() else None
 
-    def _workflow(self, positive: str, negative: str, seed: int) -> dict:
-        wf = json.loads(json.dumps(self.template))
+    def _common(self, wf: dict, positive: str, negative: str, seed: int) -> dict:
         wf["3"]["inputs"]["seed"] = seed
         wf["4"]["inputs"]["ckpt_name"] = settings.comfyui_checkpoint
-        wf["5"]["inputs"]["width"] = settings.image_size
-        wf["5"]["inputs"]["height"] = settings.image_size
         wf["6"]["inputs"]["text"] = positive
         wf["7"]["inputs"]["text"] = negative
         return wf
 
-    async def generate(self, positive: str, negative: str, seed: int, colors: int) -> bytes:
-        payload = {"prompt": self._workflow(positive, negative, seed), "client_id": uuid.uuid4().hex}
+    def _workflow(self, positive: str, negative: str, seed: int) -> dict:
+        wf = self._common(json.loads(json.dumps(self.text2img)), positive, negative, seed)
+        wf["5"]["inputs"]["width"] = settings.image_size
+        wf["5"]["inputs"]["height"] = settings.image_size
+        return wf
+
+    def _workflow_refine(self, positive: str, negative: str, seed: int,
+                         image_name: str, denoise: float) -> dict:
+        if not self.img2img:
+            raise GenerationError("Le workflow de retouche est absent du service.")
+        wf = self._common(json.loads(json.dumps(self.img2img)), positive, negative, seed)
+        wf["3"]["inputs"]["denoise"] = denoise
+        wf["10"]["inputs"]["image"] = image_name
+        wf["12"]["inputs"]["width"] = settings.image_size
+        wf["12"]["inputs"]["height"] = settings.image_size
+        return wf
+
+    async def _upload(self, client: httpx.AsyncClient, png: bytes) -> str:
+        """Dépose l'image de départ dans le dossier d'entrée de ComfyUI."""
+        name = f"tsia_{uuid.uuid4().hex}.png"
+        resp = await client.post(
+            "/upload/image",
+            files={"image": (name, png, "image/png")},
+            data={"overwrite": "true", "type": "input"},
+        )
+        if resp.status_code != 200:
+            raise GenerationError(f"ComfyUI a refusé l'image de départ : {resp.text[:200]}")
+        body = resp.json()
+        subfolder = body.get("subfolder") or ""
+        stored = body.get("name", name)
+        return f"{subfolder}/{stored}" if subfolder else stored
+
+    async def _run(self, workflow: dict) -> bytes:
+        payload = {"prompt": workflow, "client_id": uuid.uuid4().hex}
         deadline = time.monotonic() + settings.comfyui_timeout
         try:
-            async with httpx.AsyncClient(base_url=settings.comfyui_url, timeout=30) as client:
+            async with httpx.AsyncClient(base_url=settings.comfyui_url, timeout=60) as client:
                 resp = await client.post("/prompt", json=payload)
                 if resp.status_code != 200:
                     raise GenerationError(f"ComfyUI a refusé le workflow : {resp.text[:300]}")
@@ -99,6 +146,18 @@ class ComfyUIGenerator:
         except httpx.HTTPError as exc:
             raise GenerationError(f"ComfyUI injoignable : {exc}") from exc
         raise GenerationError("La génération a dépassé le délai autorisé.")
+
+    async def generate(self, positive: str, negative: str, seed: int, colors: int) -> bytes:
+        return await self._run(self._workflow(positive, negative, seed))
+
+    async def refine(self, positive: str, negative: str, seed: int, colors: int,
+                     init_png: bytes, denoise: float) -> bytes:
+        try:
+            async with httpx.AsyncClient(base_url=settings.comfyui_url, timeout=60) as client:
+                name = await self._upload(client, init_png)
+        except httpx.HTTPError as exc:
+            raise GenerationError(f"ComfyUI injoignable : {exc}") from exc
+        return await self._run(self._workflow_refine(positive, negative, seed, name, denoise))
 
 
 def get_generator():
