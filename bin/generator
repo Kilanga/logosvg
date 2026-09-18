@@ -14,9 +14,22 @@ if [ -z "$API_KEY" ]; then
   exit 1
 fi
 
+# vtracer 0.6.15 publishes a cp314 wheel that imports but segfaults on the first
+# conversion, so the virtualenv is built on the newest interpreter known to work.
+# This only concerns local mock mode: the real service runs on the generation
+# machine with its own environment.
+PYTHON=""
+for candidate in python3.13 python3.12 python3; do
+  command -v "$candidate" >/dev/null 2>&1 && { PYTHON="$candidate"; break; }
+done
+if [ -z "$PYTHON" ]; then
+  echo "generator: no python3 interpreter found."
+  exit 1
+fi
+
 if [ ! -x .venv/bin/python ]; then
-  echo "generator: creating the virtualenv (first run only)..."
-  python3 -m venv .venv
+  echo "generator: creating the virtualenv with $PYTHON (first run only)..."
+  "$PYTHON" -m venv .venv
   .venv/bin/pip install --quiet --upgrade pip
   .venv/bin/pip install --quiet -r requirements.txt
 fi

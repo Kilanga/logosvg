@@ -19,18 +19,21 @@ ne les remplace pas.
    ne pas deviner. En attendant, utiliser une valeur de configuration
    clairement marquée (§8) — jamais une constante enfouie dans le code.
 5. **Ne pas réécrire le microservice** de `services/generator/`. On consomme son
-   API telle quelle : mock en développement, WebMock en test.
-6. **Interface en français** (fichiers de locale). **Code, tables, modèles,
+   API telle quelle : mock en développement, WebMock en test. Il n'évolue que
+   par des correctifs fournis par l'utilisateur, jamais à notre initiative.
+6. **Branche puis pull request, jamais de push sur `main`.** Commits atomiques,
+   messages en français.
+7. **Interface en français** (fichiers de locale). **Code, tables, modèles,
    colonnes, noms de classes et commentaires en anglais.**
-7. **Aucun secret en dur, jamais dans le dépôt** : credentials Rails chiffrés ou
+8. **Aucun secret en dur, jamais dans le dépôt** : credentials Rails chiffrés ou
    variables d'environnement.
-8. **Chaque machine à états est testée transition par transition**, y compris
+9. **Chaque machine à états est testée transition par transition**, y compris
    les transitions interdites (`refute` sur `may_xxx?` et sur l'appel du
    `xxx!` qui doit lever `AASM::InvalidTransition`).
-9. **Chaque action de contrôleur passe par une policy Pundit** ; chaque requête
-   est limitée aux données de l'utilisateur connecté (`policy_scope`).
-   `verify_authorized` et `verify_policy_scoped` actifs partout.
-10. **Reprendre les tokens visuels et la structure des écrans** de la section
+10. **Chaque action de contrôleur passe par une policy Pundit** ; chaque requête
+    est limitée aux données de l'utilisateur connecté (`policy_scope`).
+    `verify_authorized` et `verify_policy_scoped` actifs partout.
+11. **Reprendre les tokens visuels et la structure des écrans** de la section
     « Écrans et routes » du cahier des charges.
 
 Qualité attendue : code propre, interfaces soignées et singulières — pas un
@@ -278,19 +281,32 @@ Base : `services/generator/microservice` (FastAPI, port 5000, `127.0.0.1`).
 
 | Appel                              | Entrée                                                                   | Sortie                                                       |
 | ---------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ |
-| `POST /generate`                   | `prompt` (3–300), `style`, `colors` (1–6), `remove_background`, `user_id`, `seed?` | `202` : `job_id`, `status`, `position`              |
-| `GET /jobs/:id?user_id=`           | —                                                                        | `status` (`queued`/`running`/`done`/`error`), `position`, `error`, `result` |
+| `POST /generate`                   | `prompt` (3–300), `style`, `colors` (1–6), `remove_background`, `user_id`, `seed?` | `202` : `job_id`, `status`, `position`, `refinements_left` |
+| `POST /jobs/:id/refine`            | `instruction` (3–200), `user_id`                                          | `202` : `job_id`, `status`, `position`, `refinements_left`   |
+| `POST /jobs/:id/variants`          | `user_id`, `count`                                                        | `202` : `job_ids`, `job_id`, `status`, `position`, `refinements_left` |
+| `GET /jobs/:id?user_id=`           | —                                                                        | `status`, `position`, `error`, `mode`, `parent_id`, `root_id`, `refinements_left`, `result` |
 | `GET /jobs/:id/design.svg?user_id=`| —                                                                        | le SVG                                                       |
 | `GET /jobs/:id/source.png?user_id=`| —                                                                        | l'image brute                                                |
 | `GET /health`                      | — (sans clé)                                                             | `{"status":"ok"}`                                            |
 
-`result` contient `palette`, `inks`, `stats` (dont `paths`), `warnings`,
-`prompt_used`, `seed`.
+`result` contient `palette`, `inks`, `stats` (dont `paths` et `opaque_share`),
+`warnings`, `prompt_used`, `subject`, `instruction`, `seed`.
 
-Codes à traiter : **401** (configuration, message générique), **422** (terme
-interdit ou prompt invalide — afficher le message du service), **429**
-(en-tête `Retry-After`), **503** (file pleine — proposer un nouvel essai).
-Un `user_id` qui ne correspond pas au job renvoie **404**.
+Codes à traiter : **401** (configuration, message générique), **409** (reprise
+demandée sur une version pas encore prête), **422** (terme interdit ou prompt
+invalide — afficher le message du service), **503** (file pleine — proposer un
+nouvel essai). Un `user_id` qui ne correspond pas au job renvoie **404**.
+
+⚠ **Les deux 429 ne se traitent pas pareil.** Avec l'en-tête `Retry-After`,
+c'est la limite horaire de générations : le client réessaie plus tard. Avec
+`reason: "refine_budget"`, c'est le budget de reprises du design, définitif, qui
+ouvre le parcours graphiste. `GeneratorClient` doit donc exposer **le corps JSON**
+de la réponse, pas seulement le code HTTP.
+
+**Reprises.** Un design `ready` ne se modifie pas : une retouche ou une variante
+crée un enfant de la même lignée (`root_id`). Budget de trois reprises par
+lignée, compté par le service ; `refinements_left` fait foi et n'est jamais
+recalculé par Rails.
 
 Règles côté Rails :
 
@@ -402,6 +418,13 @@ arguments de job de Solid Queue, qui part alors en boucle de redémarrage sous
 expanse les `$` avant WSL : `$HOME` devient `C:\Users\ARNAU`, les antislashs
 sautent, et Bundler reçoit un chemin absurde contenant `:`. Toujours écrire un
 `.sh` et l'exécuter.
+
+**Le virtualenv du microservice est sur Python 3.13, pas 3.14.** `vtracer`
+publie une roue `cp314` qui s'importe sans broncher puis **segfault au premier
+appel** — y compris sur une image de 64×64 dans le thread principal. Python 3.13
+vient du dépôt deadsnakes. `bin/generator` choisit l'interpréteur le plus récent
+qui fonctionne. Cela ne concerne que le **mode mock local** : la génération et la
+vectorisation réelles tournent sur la machine GPU, avec son propre environnement.
 
 **Le texte rendu n'est pas le texte écrit.** Les titres sont en capitales via
 `text-transform`, et un navigateur renvoie le texte tel qu'il est *rendu*. Dans
