@@ -16,7 +16,7 @@ class PasswordsController < ApplicationController
   def create
     # Only an active account receives a link, but the answer is the same either
     # way so the form cannot be used to discover which addresses are registered.
-    if user = User.active.find_by(email: params[:email]&.strip&.downcase)
+    if user = User.active.find_by(email_address: params[:email_address]&.strip&.downcase)
       PasswordsMailer.reset(user).deliver_later
     end
 

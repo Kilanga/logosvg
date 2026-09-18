@@ -3,7 +3,7 @@
 <% digest = BCrypt::Password.create("motdepasse-test", cost: 4) %>
 
 client:
-  email: claire@example.invalid
+  email_address: claire@example.invalid
   password_digest: <%= digest %>
   first_name: Claire
   last_name: Martin
@@ -12,7 +12,7 @@ client:
   terms_accepted_at: <%= 2.months.ago.to_fs(:db) %>
 
 printer:
-  email: atelier@example.invalid
+  email_address: atelier@example.invalid
   password_digest: <%= digest %>
   first_name: Bruno
   last_name: Leroy
@@ -21,7 +21,7 @@ printer:
   terms_accepted_at: <%= 6.months.ago.to_fs(:db) %>
 
 designer:
-  email: graphiste@example.invalid
+  email_address: graphiste@example.invalid
   password_digest: <%= digest %>
   first_name: Inès
   last_name: Nadeau
@@ -30,7 +30,7 @@ designer:
   terms_accepted_at: <%= 3.months.ago.to_fs(:db) %>
 
 admin:
-  email: admin@example.invalid
+  email_address: admin@example.invalid
   password_digest: <%= digest %>
   first_name: Sam
   last_name: Oubre
@@ -39,7 +39,7 @@ admin:
   terms_accepted_at: <%= 1.year.ago.to_fs(:db) %>
 
 deleted_client:
-  email: parti@example.invalid
+  email_address: parti@example.invalid
   password_digest: <%= digest %>
   first_name: Yanis
   last_name: Fabre

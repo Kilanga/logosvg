@@ -4,7 +4,7 @@
       locals: { eyebrow: t(".eyebrow"), title: t(".title"), subtitle: t(".subtitle") } do %>
   <%= form_with url: passwords_path, class: "space-y-5" do |form| %>
     <%= render "shared/field",
-          form: form, field: :email, label: t("activerecord.attributes.user.email"),
+          form: form, field: :email_address, label: t("activerecord.attributes.user.email_address"),
           kind: :email_field,
           options: { required: true, autofocus: true, autocomplete: "username" } %>
 

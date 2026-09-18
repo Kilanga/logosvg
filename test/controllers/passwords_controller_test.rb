@@ -9,7 +9,7 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
 
   test "a known address receives a link" do
     assert_enqueued_emails 1 do
-      post passwords_path, params: { email: users(:client).email }
+      post passwords_path, params: { email_address: users(:client).email_address }
     end
 
     assert_redirected_to new_session_path
@@ -17,7 +17,7 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
 
   test "an unknown address gets the same answer, and no email" do
     assert_no_enqueued_emails do
-      post passwords_path, params: { email: "inconnue@example.invalid" }
+      post passwords_path, params: { email_address: "inconnue@example.invalid" }
     end
 
     assert_equal I18n.t("passwords.create.sent"), flash[:notice]
@@ -25,7 +25,7 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
 
   test "a deleted account receives nothing" do
     assert_no_enqueued_emails do
-      post passwords_path, params: { email: users(:deleted_client).email }
+      post passwords_path, params: { email_address: users(:deleted_client).email_address }
     end
   end
 
@@ -38,7 +38,7 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     patch password_path(token), params: { password: "un-nouveau-mot-de-passe", password_confirmation: "un-nouveau-mot-de-passe" }
 
     assert_redirected_to new_session_path
-    assert User.authenticate_by(email: users(:client).email, password: "un-nouveau-mot-de-passe")
+    assert User.authenticate_by(email_address: users(:client).email_address, password: "un-nouveau-mot-de-passe")
   end
 
   test "resetting signs out every other device" do
@@ -57,7 +57,7 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     patch password_path(token), params: { password: "un-nouveau-mot-de-passe", password_confirmation: "pas-le-meme" }
 
     assert_redirected_to edit_password_path(token)
-    assert User.authenticate_by(email: users(:client).email, password: "motdepasse-test")
+    assert User.authenticate_by(email_address: users(:client).email_address, password: "motdepasse-test")
   end
 
   test "an invalid token leads back to the request form" do

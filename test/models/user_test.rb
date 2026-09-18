@@ -5,28 +5,28 @@ class UserTest < ActiveSupport::TestCase
     user = User.new
 
     assert_not user.valid?
-    assert user.errors.include?(:email)
+    assert user.errors.include?(:email_address)
     assert user.errors.include?(:first_name)
     assert user.errors.include?(:last_name)
     assert user.errors.include?(:terms_accepted_at)
   end
 
   test "email is stored trimmed and lowercased" do
-    user = build_user(email: "  Claire.Martin@Example.INVALID  ")
+    user = build_user(email_address: "  Claire.Martin@Example.INVALID  ")
 
     assert user.save
-    assert_equal "claire.martin@example.invalid", user.email
+    assert_equal "claire.martin@example.invalid", user.email_address
   end
 
   test "email must be unique whatever the case" do
-    user = build_user(email: users(:client).email.upcase)
+    user = build_user(email_address: users(:client).email_address.upcase)
 
     assert_not user.valid?
-    assert user.errors.include?(:email)
+    assert user.errors.include?(:email_address)
   end
 
   test "an address that is not an address is refused" do
-    assert_not build_user(email: "claire[at]example").valid?
+    assert_not build_user(email_address: "claire[at]example").valid?
   end
 
   test "phone keeps only digits and a leading plus" do
@@ -84,21 +84,21 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "a deleted account cannot authenticate even with the right password" do
-    assert_nil User.authenticate_by(email: users(:deleted_client).email, password: "motdepasse-test")
+    assert_nil User.authenticate_by(email_address: users(:deleted_client).email_address, password: "motdepasse-test")
   end
 
   test "an active account authenticates with the right password" do
-    assert_equal users(:client), User.authenticate_by(email: users(:client).email, password: "motdepasse-test")
+    assert_equal users(:client), User.authenticate_by(email_address: users(:client).email_address, password: "motdepasse-test")
   end
 
   test "a wrong password never authenticates" do
-    assert_nil User.authenticate_by(email: users(:client).email, password: "pas-le-bon")
+    assert_nil User.authenticate_by(email_address: users(:client).email_address, password: "pas-le-bon")
   end
 
   private
     def build_user(**attributes)
       User.new({
-        email: "nouvelle@example.invalid",
+        email_address: "nouvelle@example.invalid",
         password: "motdepasse-test",
         first_name: "Nouvelle",
         last_name: "Personne",

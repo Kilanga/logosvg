@@ -35,8 +35,8 @@
             options: { required: true, autocomplete: "family-name" } %>
     </div>
 
-    <%= render "shared/field", form: form, field: :email,
-          label: t("activerecord.attributes.user.email"), kind: :email_field,
+    <%= render "shared/field", form: form, field: :email_address,
+          label: t("activerecord.attributes.user.email_address"), kind: :email_field,
           options: { required: true, autocomplete: "email" } %>
 
     <div class="grid gap-5 sm:grid-cols-2">
