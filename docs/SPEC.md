@@ -286,7 +286,7 @@ Un design `ready` ne se modifie pas : le client le reprend, et chaque reprise cr
 | Reprise | Ce que fait le service | Ce que voit le client |
 | --- | --- | --- |
 | **Retouche** | L'instruction française est traduite, fusionnée dans la description anglaise du parent, puis le modèle repart **de l'image du parent** en img2img (denoise 0,55) : la composition est conservée, le détail change | Un chat « que voulez-vous changer ? » ; la demande puis la nouvelle version s'affichent comme une conversation |
-| **Variantes** | Même description, un à trois autres tirages, chacun étant un design complet (SVG et PNG) | Un bouton « proposez-moi d'autres versions », puis les propositions côte à côte |
+| **Variantes** | Même description, **trois** autres tirages, chacun étant un design complet (SVG et PNG) | Un bouton « proposez-moi d'autres versions », puis les trois propositions côte à côte |
 
 - **Budget : trois reprises par design**, variantes et retouches confondues. Il est compté par le microservice sur la lignée, et jamais recalculé par Rails : `refinements_left`, renvoyé par chaque appel, fait foi et s'affiche en permanence sous l'aperçu.
 - Une reprise consomme le quota journalier de génération, comme une création.
@@ -308,8 +308,8 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 | `GET /imprimeurs/:slug` | Fiche : présentation, badges, photos, caractéristiques par groupe, carte, contact, compatibilité avec le dernier design | Tous |
 | `GET /graphistes`, `GET /graphistes/:id` | Liste avec filtres et carte facultative ; profil avec portfolio et avis | Tous |
 | `GET /designs/new` | Création : bandeau de l'atelier, formulaire, aperçu sur t-shirt avec couleurs de tissu, vue image et vecteur avec zoom, encres et écrans, compatibilité, actions | Client |
-| `POST /designs`, `GET /designs/:id` | Lancement puis suivi en Turbo Stream ; la route GET /designs/:id/image télécharge le PNG issu de l'IA avec filigrane, jamais le SVG | Propriétaire |
-| `POST /designs/:id/variants` | Une à trois variantes du design (mêmes mots, autres tirages) | Propriétaire |
+| `POST /designs`, `GET /designs/:id` | Lancement puis suivi en Turbo Stream ; la route GET /designs/:id/image télécharge le rendu matriciel du SVG, filigrané — jamais le fichier SVG | Propriétaire |
+| `POST /designs/:id/variants` | Trois variantes du design (mêmes mots, autres tirages) | Propriétaire |
 | `POST /designs/:id/refine` | Retouche par instruction : le texte du chat part au service, la nouvelle version arrive en Turbo Stream | Propriétaire |
 | `GET /designs/:id/print_requests/new`, `POST` | Envoi à l'atelier : textile, emplacement, tailles et quantités, date, message, coordonnées, consentement ; récapitulatif à droite | Propriétaire |
 | `GET /designs/:id/reviews/new`, `POST` | Choix du niveau et du graphiste, puis Stripe Checkout | Propriétaire |
@@ -338,7 +338,7 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 ### Détails d'interface à respecter
 
 - **Création** : le curseur de couleurs est borné au maximum de l'atelier ; le compteur de créations restantes s'affiche sous le bouton ; les alertes du service apparaissent en encadré d'avertissement.
-- **Aperçu** : l'aperçu principal est le **rendu du SVG**, pas le PNG. Le SVG est le fichier d'impression et diffère volontairement de l'image générée : le blanc y est devenu papier non imprimé et les teintes proches ont été fusionnées pour tenir le nombre d'encres. Faire valider le PNG reviendrait à faire approuver autre chose que ce qui sera imprimé. Le SVG est servi par une balise `<img>` depuis Active Storage — jamais inliné dans le HTML, même après contrôle — et s'affiche sur fond clair **et** sur fond sombre, puisque le blanc n'est pas imprimé. Le sélecteur « rendu final / image d'origine » permet de comparer.
+- **Aperçu** : l'aperçu principal est le **rendu du SVG**, pas l'image issue de l'IA. Le SVG est le fichier d'impression et diffère volontairement de l'image générée : le blanc y est devenu papier non imprimé et les teintes proches ont été fusionnées pour tenir le nombre d'encres. Faire valider l'image d'origine reviendrait à faire approuver autre chose que ce qui sera imprimé. Ce rendu est **rastérisé côté serveur** (libvips) puis filigrané avant d'être servi : le client voit exactement le fichier d'impression, mais le fichier vectoriel lui-même ne lui est jamais transmis — le servir laisserait retirer le filigrane d'un coup d'éditeur de texte. Il s'affiche sur fond clair **et** sur fond sombre, puisque le blanc n'est pas imprimé. Le sélecteur « rendu final / image d'origine » permet de comparer.
 - **Reprise** : le chat de retouche et le bouton de variantes sont sous l'aperçu, avec le nombre de reprises restantes toujours visible ; à zéro, les deux laissent place à l'appel à la vérification par un graphiste.
 - **Encres** : chaque couleur s'affiche comme un pot d'encre avec son code, et le titre annonce le nombre d'écrans.
 - **Annuaire** : le filtre « Compatibles avec mon design » est coché par défaut quand un design existe ; les ateliers incompatibles restent affichés en atténué avec la raison.
@@ -354,7 +354,7 @@ Rails parle au service FastAPI existant en HTTP, depuis des tâches de fond uniq
 | --- | --- | --- |
 | `POST /generate` | prompt (3 à 300 caractères), style, colors (1 à 6), remove\_background, user\_id, seed facultatif | 202 : job\_id, status, position, refinements\_left |
 | `POST /jobs/:id/refine` | instruction (3 à 200 caractères), user\_id | 202 : job\_id, status, position, refinements\_left |
-| `POST /jobs/:id/variants` | user\_id, count (1 à 3) | 202 : job\_ids, job\_id, status, position, refinements\_left |
+| `POST /jobs/:id/variants` | user\_id, count | 202 : job\_ids, job\_id, status, position, refinements\_left |
 | `GET /jobs/:id?user_id=` | — | status (queued, running, done, error), position, error, mode, parent\_id, root\_id, refinements\_left, result (palette, inks, stats.paths, stats.opaque\_share, warnings, prompt\_used, subject, instruction, seed) |
 | `GET /jobs/:id/design.svg?user_id=` | — | Le SVG |
 | `GET /jobs/:id/source.png?user_id=` | — | L'image brute générée |
@@ -446,7 +446,7 @@ Chaque donnée est limitée à son propriétaire, chaque action coûteuse est pl
 
 ### Fichiers
 
-- Contrôle de tout SVG, généré ou déposé : racine `<svg>`, aucun `script`, `foreignObject`, attribut `on*`, URL `javascript:`, entité XML, ni lien externe. Refus sinon. Le client ne télécharge que l'image PNG issue de l'IA, avec un filigrane « Créé avec \[nom de l'atelier\] » (nom de la plateforme si aucun atelier) ajouté au moment du téléchargement par la gem image\_processing avec libvips ; à l'écran, cette image s'affiche en résolution réduite pour ne pas contourner le filigrane ; le SVG vectorisé n'est jamais servi au client et ne part qu'à l'atelier et au graphiste.
+- Contrôle de tout SVG, généré ou déposé : racine `<svg>`, aucun `script`, `foreignObject`, attribut `on*`, URL `javascript:`, entité XML, ni lien externe. Refus sinon. **Le fichier SVG n'est jamais servi au client** : il ne part qu'à l'atelier et au graphiste. Ce que le client voit et télécharge est un **rendu matriciel du SVG**, produit côté serveur par la gem image\_processing avec libvips et filigrané « Créé avec \[nom de l'atelier\] » (nom de la plateforme si aucun atelier). Ce rendu est fidèle au fichier d'impression — mêmes aplats, mêmes couleurs, blanc rendu au papier — de sorte que le client valide bien ce qui sera imprimé, sans pouvoir s'en servir pour imprimer ailleurs. L'image brute issue de l'IA reste consultable en comparaison, filigranée de la même façon.
 - Taille maximale : 5 Mo pour un SVG, 10 Mo pour une photo ; types vérifiés par contenu, pas seulement par extension.
 - Les SVG s'affichent dans des balises `img` ; le téléchargement passe par un contrôleur qui vérifie l'autorisation et envoie `Content-Disposition: attachment`.
 - Politique de sécurité du contenu (CSP) stricte : scripts de l'application, Turnstile et Stripe ; tuiles OpenStreetMap pour les images.
@@ -500,7 +500,7 @@ Ces points bloquent la mise en production, pas la construction : Claude Code uti
 - [ ] Prix des deux abonnements et période d'essai éventuelle
 - [ ] Prix des niveaux de revue : fixés par la plateforme (hypothèse actuelle) ou par chaque graphiste
 - [ ] Taux de commission sur les revues
-- [x] Le client peut-il télécharger son SVG, ou seulement l'envoyer à un atelier ? (décidé : l'image PNG issue de l'IA oui, le SVG non ; filigrane « Créé avec \[nom de l'atelier\] » ajouté au PNG téléchargé, nom de la plateforme si aucun atelier)
+- [x] Le client peut-il télécharger son SVG, ou seulement l'envoyer à un atelier ? (décidé : le fichier SVG, non — il ne part qu'à l'atelier et au graphiste. Le client voit et télécharge un rendu matriciel de ce SVG, fidèle au fichier d'impression et filigrané « Créé avec \[nom de l'atelier\] », nom de la plateforme si aucun atelier)
 - [ ] La lignée et le budget de reprises vivent en mémoire dans le microservice : un redémarrage de la machine de génération remet le compteur à zéro. Acceptable en démonstration ; si cela devient un enjeu commercial, le compteur passera côté Rails
 - [ ] Délais : validation automatique (7 jours), réponse à une proposition (72 h), graphiste choisi silencieux (12 h), expiration d'une demande (5 jours)
 - [ ] Seuil d'alerte du taux de renvoi des graphistes
