@@ -94,9 +94,35 @@ class PrinterTest < ActiveSupport::TestCase
     assert_equal printers(:lyon), Printer.listed.by_prominence.first
   end
 
-  test "the screen printing ceiling decides how many inks a design may use" do
-    assert_equal 4, printers(:rennes).screen_printing_max_colors
-    assert_nil printers(:lyon).screen_printing_max_colors, "DTF has no colour ceiling"
+  test "a shop knows which techniques it practises" do
+    assert printers(:rennes).practises?("screen_printing")
+    assert_not printers(:rennes).practises?("dtf")
+    assert_equal %w[ embroidery flex sublimation ], printers(:nantes).technique_keys.sort
+  end
+
+  test "the primary technique is the one kept when a client does not know" do
+    assert_equal "screen_printing", printers(:rennes).primary_technique.technique
+    assert_equal "embroidery", printers(:nantes).primary_technique.technique
+  end
+
+  test "a listing designates exactly one primary technique" do
+    printer = printers(:nantes)
+
+    printer.techniques.each { |t| t.primary = true }
+    assert_not printer.valid?
+    assert printer.errors.include?(:techniques)
+
+    printer.techniques.each { |t| t.primary = false }
+    assert_not printer.valid?
+  end
+
+  test "a listing with no technique cannot leave the draft" do
+    printer = printers(:brouillon)
+    printer.assign_attributes(address: "2 rue du Change", postal_code: "37000",
+                              city: "Tours", description: "Sérigraphie.", status: :published)
+
+    assert_not printer.valid?
+    assert printer.errors.include?(:techniques)
   end
 
   test "brands are typed as one line and stored as a list" do

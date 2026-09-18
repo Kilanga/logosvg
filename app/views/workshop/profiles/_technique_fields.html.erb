@@ -1,42 +1,95 @@
-<%# One technique. Unchecking it destroys the row, so the listing says only what
-    the shop actually does.
+<%# One technique, and what this shop does with it.
 
-    Screen printing, flex and embroidery are applied colour by colour and need a
-    ceiling; DTF and DTG print a full-colour image in one pass and have none. %>
-<% technique = form.object %>
-<% checked = technique.persisted? %>
+    The key is the mode a client chooses; everything below belongs to the shop —
+    the name it gives that mode, the file its machine expects, the colour space
+    of its workflow, its own ceilings. Unchecking destroys the row. %>
+<% row = form.object %>
+<% entry = PrintTechniques.fetch(row.technique) %>
 
-<div class="rounded-xs border border-line p-4 has-[:checked]:border-emulsion">
+<%# The id says which technique this block is, rather than which position it
+    happens to occupy in the form. %>
+<div id="setup_<%= row.technique %>"
+     class="rounded-xs border border-line p-4 has-[:checked]:border-emulsion"
+     data-controller="technique">
   <%= form.hidden_field :id %>
   <%= form.hidden_field :technique %>
 
-  <label class="flex cursor-pointer items-center gap-3">
-    <%= form.check_box :_destroy, { checked: checked, class: "size-4 rounded-xs border-line text-emulsion" }, "0", "1" %>
-    <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
-      <%= t("enums.printer_technique.technique.#{technique.technique}") %>
+  <label class="flex cursor-pointer items-start gap-3">
+    <%# Checked means "we practise this": unchecking destroys the row. %>
+    <%= form.check_box :_destroy,
+          { checked: row.persisted?, id: "practises_#{row.technique}",
+            class: "mt-1 size-4 rounded-xs border-line text-emulsion",
+            data: { technique_target: "toggle", action: "technique#sync" } },
+          "0", "1" %>
+    <span>
+      <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
+        <%= entry.label %>
+      </span>
+      <span class="mt-0.5 block text-sm text-muted">
+        <%= t("workshop.profiles.edit.technique_hint.#{entry.family}") %>
+      </span>
     </span>
   </label>
 
-  <div class="mt-4 grid gap-5 sm:grid-cols-2">
-    <% unless technique.unlimited_colours? %>
+  <div class="mt-5 space-y-5 border-t border-line pt-5" data-technique-target="settings">
+    <%= render "shared/field", form: form, field: :label,
+          label: t("activerecord.attributes.printer_technique.label"),
+          options: { placeholder: entry.label },
+          hint: t("workshop.profiles.edit.label_hint") %>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <%= form.label :output_format, t("activerecord.attributes.printer_technique.output_format"),
+              class: "label-rule block" %>
+        <%= form.select :output_format,
+              PrinterTechnique::OUTPUT_FORMATS.map { |f| [ f.upcase, f ] },
+              {}, class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+        <p class="mt-1.5 text-sm text-muted">
+          <%= t("workshop.profiles.edit.output_format_hint", native: entry.native_format.upcase) %>
+        </p>
+      </div>
+
+      <div>
+        <%= form.label :color_space, t("activerecord.attributes.printer_technique.color_space"),
+              class: "label-rule block" %>
+        <%= form.select :color_space,
+              PrinterTechnique::COLOR_SPACES.map { |s| [ t("enums.printer_technique.color_space.#{s}"), s ] },
+              {}, class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+        <p class="mt-1.5 text-sm text-muted"><%= t("workshop.profiles.edit.color_space_hint") %></p>
+      </div>
+    </div>
+
+    <%# Only where inks are counted one by one. On DTF the machine prints every
+        colour at once, and a ceiling would state a limit the shop has not got. %>
+    <% if entry.limited_colors? %>
       <%= render "shared/field", form: form, field: :max_colors,
             label: t("activerecord.attributes.printer_technique.max_colors"),
-            kind: :number_field, options: { min: 1, max: 12 } %>
+            kind: :number_field, options: { min: 1, max: entry.max_colors },
+            hint: t("workshop.profiles.edit.max_colors_hint", max: entry.max_colors) %>
     <% end %>
 
-    <fieldset>
-      <legend class="label-rule"><%= t("activerecord.attributes.printer_technique.accepted_formats") %></legend>
-      <div class="mt-2 flex flex-wrap gap-3">
-        <% PrinterTechnique::FORMATS.each do |format| %>
-          <label class="flex items-center gap-2 text-sm">
-            <%= check_box_tag "#{form.object_name}[accepted_formats][]", format,
-                  technique.accepted_formats.include?(format),
-                  id: "#{form.object_name.parameterize}_format_#{format}",
-                  class: "size-4 rounded-xs border-line text-emulsion" %>
-            <%= t("enums.printer_technique.formats.#{format}") %>
-          </label>
-        <% end %>
-      </div>
-    </fieldset>
+    <div class="grid gap-5 sm:grid-cols-2">
+      <%= render "shared/field", form: form, field: :max_print_width_cm,
+            label: t("activerecord.attributes.printer_technique.max_print_width_cm"),
+            kind: :number_field, options: { min: 1 },
+            hint: t("workshop.profiles.edit.dimensions_hint") %>
+
+      <%= render "shared/field", form: form, field: :max_print_height_cm,
+            label: t("activerecord.attributes.printer_technique.max_print_height_cm"),
+            kind: :number_field, options: { min: 1 } %>
+    </div>
+
+    <%= render "shared/field", form: form, field: :note,
+          label: t("activerecord.attributes.printer_technique.note"),
+          hint: t("workshop.profiles.edit.note_hint") %>
+
+    <%# One radio group across every technique: exactly one can be primary, and
+        the browser enforces it before the model has to. %>
+    <label class="flex min-h-touch cursor-pointer items-center gap-3 rounded-xs border border-line px-3
+                  has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+      <%= radio_button_tag "printer[primary_technique]", row.technique, row.primary?,
+            id: "primary_#{row.technique}", class: "size-4 border-line text-emulsion" %>
+      <span class="text-sm font-medium"><%= t("workshop.profiles.edit.primary") %></span>
+    </label>
   </div>
 </div>

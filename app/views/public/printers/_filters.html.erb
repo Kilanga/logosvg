@@ -5,7 +5,26 @@
   <%= form_with url: printers_path, method: :get, data: { directory_target: "form" },
         class: "space-y-6" do |form| %>
 
-    <div>
+    <%# Technique first: it is the only filter that decides whether a shop can
+        print the design at all. Everything below merely narrows. Several
+        checked techniques widen the results rather than narrowing them. %>
+    <fieldset>
+      <legend class="label-rule"><%= t(".techniques") %></legend>
+      <div class="mt-3 space-y-2">
+        <% PrintTechniques.all.each do |entry| %>
+          <label class="flex items-center gap-2.5 text-sm">
+            <%= check_box_tag "techniques[]", entry.key,
+                  Array(params[:techniques]).include?(entry.key),
+                  id: "technique_#{entry.key}",
+                  class: "size-4 rounded-xs border-line text-emulsion",
+                  data: { action: "directory#submit" } %>
+            <%= entry.label %>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <div class="border-t border-line pt-6">
       <%= form.label :q, t(".search"), class: "label-rule block" %>
       <%= form.search_field :q, value: params[:q],
             placeholder: t(".search_placeholder"),
@@ -44,22 +63,6 @@
               class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
       <% end %>
     </div>
-
-    <fieldset class="border-t border-line pt-6">
-      <legend class="label-rule"><%= t(".techniques") %></legend>
-      <div class="mt-3 space-y-2">
-        <% PrinterTechnique.techniques.keys.each do |technique| %>
-          <label class="flex items-center gap-2.5 text-sm">
-            <%= check_box_tag "techniques[]", technique,
-                  Array(params[:techniques]).include?(technique),
-                  id: "technique_#{technique}",
-                  class: "size-4 rounded-xs border-line text-emulsion",
-                  data: { action: "directory#submit" } %>
-            <%= t("enums.printer_technique.technique.#{technique}") %>
-          </label>
-        <% end %>
-      </div>
-    </fieldset>
 
     <fieldset class="border-t border-line pt-6">
       <legend class="label-rule"><%= t(".services") %></legend>

@@ -65,19 +65,55 @@ class WorkshopProfilesTest < ActionDispatch::IntegrationTest
     assert_predicate printers(:brouillon).reload, :draft?
   end
 
+  test "a listing with no technique cannot be submitted, however complete the rest" do
+    sign_in_as users(:printer_draft)
+    patch workshop_profile_path, params: { printer: complete_listing }
+
+    post submit_workshop_profile_path
+
+    assert_predicate printers(:brouillon).reload, :draft?
+  end
+
   test "a complete draft is submitted for review, and publication is not the printer's call" do
     sign_in_as users(:printer_draft)
 
-    patch workshop_profile_path, params: { printer: {
-      name: "Atelier en préparation", description: "Sérigraphie, petites séries.",
-      address: "2 rue du Change", postal_code: "37000", city: "Tours",
-      orders_email: "futur@example.invalid"
-    } }
+    patch workshop_profile_path, params: {
+      printer: complete_listing.merge(
+        techniques_attributes: { "0" => {
+          technique: "screen_printing", max_colors: "4",
+          output_format: "svg", color_space: "rgb", _destroy: "0"
+        } },
+        primary_technique: "screen_printing"
+      )
+    }
+
+    assert_equal 1, printers(:brouillon).reload.techniques.size
 
     post submit_workshop_profile_path
 
     assert_predicate printers(:brouillon).reload, :pending_review?
     assert_not_predicate printers(:brouillon), :published?
+  end
+
+  test "a shop says what it delivers, and the catalogue does not decide for it" do
+    sign_in_as users(:printer_draft)
+
+    patch workshop_profile_path, params: {
+      printer: complete_listing.merge(
+        techniques_attributes: { "0" => {
+          technique: "sublimation", label: "Impression photo",
+          output_format: "svg", color_space: "cmyk", _destroy: "0"
+        } },
+        primary_technique: "sublimation"
+      )
+    }
+
+    row = printers(:brouillon).reload.techniques.sole
+
+    assert_equal "Impression photo", row.display_label
+    assert_equal "svg", row.output_format, "the catalogue says PNG; this shop wants an SVG"
+    assert_equal "cmyk", row.color_space
+    assert_predicate row, :primary?
   end
 
   test "a listing already waiting cannot be submitted again" do
@@ -96,4 +132,23 @@ class WorkshopProfilesTest < ActionDispatch::IntegrationTest
       patch workshop_profile_path, params: { printer: { city: "Saint-Malo" } }
     end
   end
+
+  # A printer editing only their address must not silently lose the technique
+  # they designated as primary.
+  test "an edit that says nothing about techniques leaves them alone" do
+    sign_in_as users(:printer)
+
+    patch workshop_profile_path, params: { printer: { city: "Saint-Malo" } }
+
+    assert_predicate printers(:rennes).reload.primary_technique, :present?
+  end
+
+  private
+    def complete_listing
+      {
+        name: "Atelier en préparation", description: "Sérigraphie, petites séries.",
+        address: "2 rue du Change", postal_code: "37000", city: "Tours",
+        orders_email: "futur@example.invalid"
+      }
+    end
 end

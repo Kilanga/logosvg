@@ -59,8 +59,12 @@ class PrinterDirectory
       end
     end
 
+    # Several techniques widen rather than narrow: a client who can have their
+    # design in DTF *or* in screen printing wants to see both kinds of shop.
+    # Keys come from the catalogue, so an unknown one is dropped rather than
+    # emptying the results.
     def apply_techniques(relation)
-      wanted = Array(@filters[:techniques]).select { |t| PrinterTechnique.techniques.key?(t) }
+      wanted = Array(@filters[:techniques]) & PrintTechniques.keys
       return relation if wanted.empty?
 
       relation.where(id: PrinterTechnique.where(technique: wanted).select(:printer_id))

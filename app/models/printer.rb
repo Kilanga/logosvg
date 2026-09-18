@@ -11,9 +11,9 @@ class Printer < ApplicationRecord
   HEX_COLOUR = /\A#\h{6}\z/
 
   belongs_to :user
-  # Ordered by the enum, so the listing form and the public page always present
-  # the techniques in the same order.
-  has_many :techniques, -> { order(:technique) },
+  # Primary first, then alphabetical: the public page leads with the technique
+  # the shop would pick for a client who does not know.
+  has_many :techniques, -> { primary_first },
            class_name: "PrinterTechnique", dependent: :destroy, inverse_of: :printer
   accepts_nested_attributes_for :techniques, allow_destroy: true, reject_if: :all_blank
 
@@ -44,6 +44,15 @@ class Printer < ApplicationRecord
 
   # Everything a visitor needs before the shop can be shown at all.
   validates :address, :postal_code, :city, :description, presence: true, if: :leaving_draft?
+
+  # A listing with no technique cannot be matched to any design: it would appear
+  # in the directory and be compatible with nothing.
+  validate :declares_at_least_one_technique, if: :leaving_draft?
+
+  # The technique kept when a client answers "I don't know". Validated here
+  # rather than in the form: the rule belongs to the shop as a whole, and the
+  # database enforces it too.
+  validate :exactly_one_primary_technique
 
   # A listing is public once it is published *and* the shop's subscription is
   # active. Subscriptions arrive in step 6; until then `published` is the whole
@@ -108,14 +117,36 @@ class Printer < ApplicationRecord
   # the subscription condition in step 6.
   def listed? = published?
 
-  # Screen printing is the technique with a colour ceiling, so it decides how
-  # many inks a design may use for this shop.
-  def screen_printing_max_colors
-    techniques.find { |t| t.screen_printing? }&.max_colors
-  end
+  # What this shop would use for a client who answers "I don't know".
+  def primary_technique = live_techniques.find(&:primary?)
+
+  def technique_for(key) = live_techniques.find { |t| t.technique == key.to_s }
+
+  def practises?(key) = technique_for(key).present?
+
+  def technique_keys = live_techniques.map(&:technique)
 
   private
     def leaving_draft? = !draft?
+
+    # The rows that will still exist once the form is saved: a technique the
+    # printer just unchecked must not keep the listing alive, nor hold the
+    # primary flag.
+    def live_techniques = techniques.reject(&:marked_for_destruction?)
+
+    def declares_at_least_one_technique
+      errors.add(:techniques, :blank) if live_techniques.empty?
+    end
+
+    def exactly_one_primary_technique
+      return if live_techniques.empty?
+
+      case live_techniques.count(&:primary?)
+      when 1 then nil
+      when 0 then errors.add(:techniques, :no_primary)
+      else errors.add(:techniques, :several_primaries)
+      end
+    end
 
     def address_fields_changed?
       saved_change_to_address? || saved_change_to_postal_code? || saved_change_to_city?

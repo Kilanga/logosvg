@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_150100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_18_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,14 +43,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_150100) do
   end
 
   create_table "printer_techniques", force: :cascade do |t|
-    t.string "accepted_formats", default: [], null: false, array: true
+    t.string "color_space", default: "rgb", null: false
     t.datetime "created_at", null: false
+    t.string "label"
     t.integer "max_colors"
+    t.integer "max_print_height_cm"
+    t.integer "max_print_width_cm"
+    t.string "note"
+    t.string "output_format", default: "svg", null: false
+    t.boolean "primary", default: false, null: false
     t.bigint "printer_id", null: false
-    t.integer "technique", null: false
+    t.string "technique", null: false
     t.datetime "updated_at", null: false
     t.index ["printer_id", "technique"], name: "index_printer_techniques_on_printer_id_and_technique", unique: true
     t.index ["printer_id"], name: "index_printer_techniques_on_printer_id"
+    t.index ["printer_id"], name: "index_printer_techniques_on_single_primary", unique: true, where: "(\"primary\" = true)"
     t.index ["technique"], name: "index_printer_techniques_on_technique"
   end
 

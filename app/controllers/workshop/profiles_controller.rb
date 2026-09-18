@@ -12,7 +12,10 @@ module Workshop
     def update
       authorize @printer, :update?
 
-      if @printer.update(printer_params)
+      @printer.assign_attributes(printer_params)
+      apply_primary_technique
+
+      if @printer.save
         redirect_to edit_workshop_profile_path, notice: t(".saved")
       else
         build_missing_techniques
@@ -36,15 +39,35 @@ module Workshop
       # A printer who has never filled anything in still gets a form, not a
       # dead end.
       def set_printer
-        @printer = Current.user.printer || Current.user.build_printer(orders_email: Current.user.email_address)
+        @printer = Current.user.printer ||
+                   Current.user.build_printer(orders_email: Current.user.email_address)
       end
 
-      # One row per technique, always all of them: the form is a checklist of
-      # what the shop can do, not a list to grow by hand.
+      # Every technique in the catalogue is offered, in catalogue order: the
+      # section is a checklist of what the shop can do, not a list to grow by
+      # hand. Unchecking one destroys its row.
       def build_missing_techniques
-        (PrinterTechnique.techniques.keys - @printer.techniques.map(&:technique)).each do |technique|
-          @printer.techniques.build(technique: technique)
+        declared = @printer.techniques.map(&:technique)
+
+        (PrintTechniques.keys - declared).each do |key|
+          entry = PrintTechniques.fetch(key)
+          @printer.techniques.build(
+            technique: key,
+            output_format: entry.native_format,
+            max_colors: (entry.max_colors if entry.limited_colors?)
+          )
         end
+      end
+
+      # The primary technique is one choice across the whole section, so it
+      # arrives as a single radio value rather than a flag per row.
+      def apply_primary_technique
+        chosen = params.dig(:printer, :primary_technique)
+        # Absent means "not part of this submission", not "none": a printer
+        # editing only their address must not lose the technique they chose.
+        return if chosen.blank?
+
+        @printer.techniques.each { |row| row.primary = (row.technique == chosen) }
       end
 
       def printer_params
@@ -58,7 +81,9 @@ module Workshop
           :max_print_width_cm, :max_print_height_cm, :price_note, :brand_color,
           :logo,
           { shipping_zones: [], placements: [], photos: [],
-            techniques_attributes: [ [ :id, :technique, :max_colors, :_destroy, { accepted_formats: [] } ] ] }
+            techniques_attributes: [ [ :id, :technique, :label, :output_format, :color_space,
+                                       :max_colors, :max_print_width_cm, :max_print_height_cm,
+                                       :note, :_destroy ] ] }
         ])
       end
   end
