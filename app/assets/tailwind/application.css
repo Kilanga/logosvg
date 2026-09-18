@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Leaflet's own stylesheet, vendored and inlined into the build so the map
+   needs no third-party request. The rules pointing at its default marker icons
+   were stripped: the directory draws its own markers. */
+@import "./leaflet.css";
+
 /* Tailwind v4 scans these for class names. Listed explicitly so a class used
    only in a mailer or a Stimulus controller is never dropped from the build. */
 @source "../../views";

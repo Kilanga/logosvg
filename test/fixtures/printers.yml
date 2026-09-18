@@ -1,0 +1,80 @@
+<%# Rennes and Nantes sit about 107 km apart; Lyon is some 700 km from both.
+    That spread is what the radius tests rely on, together with Lyon shipping
+    nationwide — the shop that must stay visible from anywhere. %>
+
+rennes:
+  user: printer
+  name: Sérigraphie du Thabor
+  slug: serigraphie-du-thabor
+  description: Atelier de sérigraphie artisanale, cinq couleurs maximum, textile bio.
+  address: 12 rue de Paris
+  postal_code: "35000"
+  city: Rennes
+  latitude: 48.1173
+  longitude: -1.6778
+  orders_email: commandes@thabor.example
+  phone: "+33299000000"
+  status: published
+  standard_lead_days: 10
+  min_order_qty: 20
+  response_time_hours: 24
+  pickup: true
+  provides_textile: true
+  textile_label: gots
+  placements: [ chest_center, back_full ]
+  max_print_width_cm: 30
+  max_print_height_cm: 40
+
+lyon:
+  user: printer_lyon
+  name: Presse Rhône
+  slug: presse-rhone
+  description: DTF grand format, expédition partout en France sous cinq jours.
+  address: 3 quai Perrache
+  postal_code: "69002"
+  city: Lyon
+  latitude: 45.7640
+  longitude: 4.8357
+  orders_email: contact@presse-rhone.example
+  status: published
+  ships: true
+  shipping_zones: [ france, europe ]
+  shipping_lead: 5
+  standard_lead_days: 7
+  accepts_client_textile: true
+  featured: true
+
+nantes:
+  user: printer_nantes
+  name: Atelier Loire
+  slug: atelier-loire
+  description: Broderie et flocage, petites séries.
+  address: 8 rue Kervégan
+  postal_code: "44000"
+  city: Nantes
+  latitude: 47.2184
+  longitude: -1.5536
+  orders_email: bonjour@atelier-loire.example
+  status: published
+  express_available: true
+  express_lead_hours: 48
+
+brouillon:
+  user: printer_draft
+  name: Atelier en préparation
+  slug: atelier-en-preparation
+  orders_email: futur@example.invalid
+  status: draft
+
+attente:
+  user: printer_waiting
+  name: Encre du Nord
+  slug: encre-du-nord
+  description: Sérigraphie textile, Lille et alentours.
+  address: 5 rue Nationale
+  postal_code: "59000"
+  city: Lille
+  latitude: 50.6292
+  longitude: 3.0573
+  orders_email: atelier@encre-du-nord.example
+  status: pending_review

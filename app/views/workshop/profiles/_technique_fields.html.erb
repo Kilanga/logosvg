@@ -1,0 +1,42 @@
+<%# One technique. Unchecking it destroys the row, so the listing says only what
+    the shop actually does.
+
+    Screen printing, flex and embroidery are applied colour by colour and need a
+    ceiling; DTF and DTG print a full-colour image in one pass and have none. %>
+<% technique = form.object %>
+<% checked = technique.persisted? %>
+
+<div class="rounded-xs border border-line p-4 has-[:checked]:border-emulsion">
+  <%= form.hidden_field :id %>
+  <%= form.hidden_field :technique %>
+
+  <label class="flex cursor-pointer items-center gap-3">
+    <%= form.check_box :_destroy, { checked: checked, class: "size-4 rounded-xs border-line text-emulsion" }, "0", "1" %>
+    <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
+      <%= t("enums.printer_technique.technique.#{technique.technique}") %>
+    </span>
+  </label>
+
+  <div class="mt-4 grid gap-5 sm:grid-cols-2">
+    <% unless technique.unlimited_colours? %>
+      <%= render "shared/field", form: form, field: :max_colors,
+            label: t("activerecord.attributes.printer_technique.max_colors"),
+            kind: :number_field, options: { min: 1, max: 12 } %>
+    <% end %>
+
+    <fieldset>
+      <legend class="label-rule"><%= t("activerecord.attributes.printer_technique.accepted_formats") %></legend>
+      <div class="mt-2 flex flex-wrap gap-3">
+        <% PrinterTechnique::FORMATS.each do |format| %>
+          <label class="flex items-center gap-2 text-sm">
+            <%= check_box_tag "#{form.object_name}[accepted_formats][]", format,
+                  technique.accepted_formats.include?(format),
+                  id: "#{form.object_name.parameterize}_format_#{format}",
+                  class: "size-4 rounded-xs border-line text-emulsion" %>
+            <%= t("enums.printer_technique.formats.#{format}") %>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+  </div>
+</div>

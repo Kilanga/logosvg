@@ -46,7 +46,7 @@ class ApplicationController < ActionController::Base
     def space_path_for(user)
       case user&.role
       when "client"   then client_dashboard_path
-      when "printer"  then printer_dashboard_path
+      when "printer"  then workshop_dashboard_path
       when "designer" then designer_dashboard_path
       when "admin"    then admin_dashboard_path
       else root_path

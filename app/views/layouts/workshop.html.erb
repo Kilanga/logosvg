@@ -1,0 +1,13 @@
+<%# Workshop space. Steps 4 and 6 add the print requests and the subscription. %>
+<% content_for :space_name, t("nav.workshop") %>
+<% content_for :space_nav do %>
+  <%= render "layouts/space_link",
+        label: t("nav.dashboard"),
+        path: workshop_dashboard_path,
+        current: current_page?(workshop_dashboard_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.my_listing"),
+        path: edit_workshop_profile_path,
+        current: current_page?(edit_workshop_profile_path) %>
+<% end %>
+<%= render template: "layouts/console" %>

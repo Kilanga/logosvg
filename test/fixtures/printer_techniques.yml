@@ -1,0 +1,28 @@
+rennes_screen:
+  printer: rennes
+  technique: screen_printing
+  max_colors: 4
+  accepted_formats: [ svg, pdf ]
+
+lyon_dtf:
+  printer: lyon
+  technique: dtf
+  accepted_formats: [ svg, png ]
+
+nantes_embroidery:
+  printer: nantes
+  technique: embroidery
+  max_colors: 8
+  accepted_formats: [ svg ]
+
+nantes_flex:
+  printer: nantes
+  technique: flex
+  max_colors: 2
+  accepted_formats: [ svg ]
+
+attente_screen:
+  printer: attente
+  technique: screen_printing
+  max_colors: 6
+  accepted_formats: [ svg ]

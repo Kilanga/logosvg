@@ -42,6 +42,17 @@ Rails.application.configure do
     policy.upgrade_insecure_requests unless Rails.env.local?
   end
 
+  # The importmap and Turbo are served as inline <script> tags, which a
+  # `script-src 'self'` policy blocks outright. Without a nonce the application
+  # silently loses all of its JavaScript — no Stimulus, no Turbo — while every
+  # page still renders, which is exactly the kind of failure nobody notices.
+  #
+  # A fresh nonce per request rather than one derived from the session: most
+  # visitors here have no session at all, and an empty nonce blocks just as
+  # thoroughly as a missing one.
+  config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
+  config.content_security_policy_nonce_directives = %w[ script-src ]
+
   # Enforced, not merely reported: a violation should break a page in
   # development rather than reach production unnoticed.
   config.content_security_policy_report_only = false

@@ -1,0 +1,46 @@
+<%# One shop in the directory list. A row with a hairline rule rather than a
+    floating card: the list reads as a register, which is what it is. %>
+<li class="py-6">
+  <article class="flex flex-wrap items-start gap-x-6 gap-y-4">
+    <% if printer.logo.attached? %>
+      <%= image_tag printer.logo.variant(resize_to_fill: [ 96, 96 ]),
+            alt: "", loading: "lazy",
+            class: "size-16 flex-none rounded-xs border border-line object-cover" %>
+    <% else %>
+      <div class="screen-tint flex size-16 flex-none items-center justify-center rounded-xs border border-line text-emulsion">
+        <%= registration_mark %>
+      </div>
+    <% end %>
+
+    <div class="min-w-0 flex-1">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2 class="font-display text-xl font-bold uppercase">
+          <%= link_to printer.name, printer_path(printer), class: "hover:text-emulsion" %>
+        </h2>
+        <% if printer.featured? %>
+          <span class="pill pill-success"><%= t("printers.featured") %></span>
+        <% end %>
+      </div>
+
+      <p class="mt-1 text-sm text-muted">
+        <%= [ printer.postal_code, printer.city ].compact_blank.join(" ") %>
+      </p>
+
+      <% if printer.description.present? %>
+        <p class="mt-2 line-clamp-2 text-sm"><%= printer.description %></p>
+      <% end %>
+
+      <ul class="mt-3 flex flex-wrap gap-2">
+        <% printer.techniques.each do |technique| %>
+          <li class="chip-file"><%= technique_summary(technique) %></li>
+        <% end %>
+      </ul>
+    </div>
+
+    <ul class="flex flex-none flex-wrap gap-2 text-sm text-muted">
+      <% if printer.ships? %><li class="chip-file"><%= t("printers.ships") %></li><% end %>
+      <% if printer.pickup? %><li class="chip-file"><%= t("printers.pickup") %></li><% end %>
+      <% if printer.express_available? %><li class="chip-file"><%= t("printers.express") %></li><% end %>
+    </ul>
+  </article>
+</li>

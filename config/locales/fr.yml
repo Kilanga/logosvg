@@ -167,6 +167,33 @@ fr:
     studio: "Studio"
     admin: "Administration"
     dashboard: "Tableau de bord"
+    my_listing: "Ma fiche"
+
+  # Libellés partagés par l'annuaire, la fiche publique et les espaces pros.
+  printers:
+    featured: "Mis en avant"
+    ships: "Expédie"
+    pickup: "Retrait sur place"
+    express: "Express"
+    yes: "Oui"
+    unlimited_colors: "Couleurs illimitées"
+    textile_provided: "textile fourni par l'atelier"
+    textile_accepted: "textile du client accepté"
+    colors:
+      one: "%{count} couleur"
+      other: "%{count} couleurs"
+    pieces:
+      one: "%{count} pièce"
+      other: "%{count} pièces"
+    days:
+      one: "%{count} jour"
+      other: "%{count} jours"
+    hours:
+      one: "%{count} heure"
+      other: "%{count} heures"
+    responds_within:
+      one: "Répond sous %{count} h"
+      other: "Répond sous %{count} h"
 
   roles:
     client: "Client"
@@ -201,9 +228,56 @@ fr:
       label: "Bientôt disponible"
 
   activerecord:
+    errors:
+      messages:
+        record_invalid: "La validation a échoué : %{errors}"
+        restrict_dependent_destroy:
+          has_one: "Un enregistrement %{record} dépend de celui-ci"
+          has_many: "Des enregistrements %{record} dépendent de celui-ci"
+      models:
+        user:
+          attributes:
+            terms_accepted_at:
+              blank: "doivent être acceptées"
     models:
       user: "Compte"
+      printer: "Atelier"
+      printer_technique: "Technique"
     attributes:
+      printer:
+        name: "Nom de l'atelier"
+        description: "Présentation"
+        address: "Adresse"
+        postal_code: "Code postal"
+        city: "Ville"
+        orders_email: "Email de réception des demandes"
+        phone: "Téléphone"
+        website: "Site web"
+        response_time_hours: "Délai de réponse (heures)"
+        min_order_qty: "Quantité minimum"
+        standard_lead_days: "Délai standard (jours)"
+        express_available: "Service express"
+        express_lead_hours: "Délai express (heures)"
+        ships: "Expédition"
+        shipping_zones: "Zones desservies"
+        shipping_lead: "Délai d'expédition (jours)"
+        shipping_price_note: "Frais d'expédition"
+        pickup: "Retrait sur place"
+        provides_textile: "Je fournis le textile"
+        accepts_client_textile: "J'accepte le textile du client"
+        textile_brands: "Marques proposées"
+        textile_label: "Label textile"
+        placements: "Emplacements possibles"
+        max_print_width_cm: "Largeur d'impression maximale (cm)"
+        max_print_height_cm: "Hauteur d'impression maximale (cm)"
+        price_note: "Indication tarifaire"
+        brand_color: "Couleur de marque"
+        logo: "Logo"
+        photos: "Photos de l'atelier"
+      printer_technique:
+        technique: "Technique"
+        max_colors: "Nombre de couleurs maximum"
+        accepted_formats: "Formats acceptés"
       user:
         email_address: "Adresse email"
         password: "Mot de passe"
@@ -214,12 +288,41 @@ fr:
         city: "Ville"
         role: "Rôle"
         terms_accepted_at: "Conditions d'utilisation"
-    errors:
-      models:
-        user:
-          attributes:
-            terms_accepted_at:
-              blank: "doivent être acceptées"
+
+  enums:
+    printer:
+      status:
+        draft: "Brouillon"
+        pending_review: "En attente de validation"
+        published: "Publiée"
+        suspended: "Suspendue"
+      textile_label:
+        none: "Aucun"
+        gots: "GOTS"
+        oeko_tex: "OEKO-TEX"
+      placements:
+        chest_center: "Poitrine, centré"
+        chest_left: "Poitrine, côté cœur"
+        back_full: "Dos, grand format"
+        back_top: "Haut du dos"
+        sleeve: "Manche"
+        tote_bag: "Tote bag"
+      shipping_zones:
+        france: "France"
+        europe: "Europe"
+        worldwide: "International"
+    printer_technique:
+      technique:
+        screen_printing: "Sérigraphie"
+        dtf: "DTF"
+        dtg: "DTG"
+        flex: "Flocage"
+        embroidery: "Broderie"
+      formats:
+        svg: "SVG"
+        pdf: "PDF"
+        eps: "EPS"
+        png: "PNG"
 
   sessions:
     new:
@@ -303,19 +406,60 @@ fr:
           - step: "08"
             label: "Faire vérifier un design par un graphiste"
 
-  printer:
+  workshop:
     dashboards:
       show:
         title: "Atelier"
         heading: "Bonjour %{name}"
-        body: "Votre fiche, vos demandes d'impression et votre abonnement se piloteront depuis cet espace."
+        listing: "Votre fiche"
+        listing_state:
+          missing: "Vous n'avez pas encore de fiche. C'est elle qui vous fait apparaître dans l'annuaire et qui permet aux clients de vous envoyer leurs demandes."
+          draft: "Votre fiche est en brouillon : elle n'est visible que de vous. Complétez-la, puis soumettez-la à validation."
+          pending_review: "Votre fiche est en attente de validation. Nous vous préviendrons dès qu'elle sera publiée."
+          published: "Votre fiche est publiée : les clients peuvent vous trouver dans l'annuaire."
+          suspended: "Votre fiche est suspendue et n'apparaît plus dans l'annuaire. Écrivez-nous pour en connaître la raison."
+        create_listing: "Créer ma fiche"
+        edit_listing: "Modifier ma fiche"
+        view_listing: "Voir la fiche publique"
+        body: "Vos demandes d'impression et votre abonnement se piloteront depuis cet espace."
         upcoming:
-          - step: "02"
-            label: "Remplir votre fiche et apparaître dans l'annuaire"
           - step: "04"
             label: "Recevoir et suivre les demandes d'impression"
           - step: "06"
             label: "Abonnement, lien client, QR code et affiche comptoir"
+
+    profiles:
+      edit:
+        title: "Ma fiche"
+        heading: "Ma fiche d'atelier"
+        preview: "Aperçu public"
+        save: "Enregistrer"
+        description_hint: "Ce que vous imprimez, depuis quand, ce qui vous distingue. C'est le premier texte que lira un client."
+        where_hint: "L'adresse place votre atelier sur la carte de l'annuaire. Elle est mise à jour automatiquement à chaque modification."
+        orders_email_hint: "C'est à cette adresse que les demandes d'impression arriveront, avec les fichiers joints."
+        techniques_hint: "Cochez ce que vous savez faire. Pour la sérigraphie, le flocage et la broderie, indiquez le nombre de couleurs maximum : c'est ce qui détermine quels designs vous pourrez imprimer."
+        brands_hint: "Séparées par des virgules."
+        status_hint:
+          draft: "Visible de vous seul."
+          pending_review: "En attente d'une décision de l'administration."
+          published: "Visible dans l'annuaire."
+          suspended: "Retirée de l'annuaire."
+        sections:
+          identity: "Identité"
+          where: "Adresse"
+          contact: "Contact"
+          techniques: "Techniques d'impression"
+          printing: "Impression"
+          textile: "Textile"
+          delivery: "Délais et livraison"
+        submit_title: "Prêt à être publié ?"
+        submit_body: "Votre fiche sera relue par notre équipe avant d'apparaître dans l'annuaire. Vous pourrez continuer à la modifier pendant ce temps."
+        submit_action: "Soumettre à validation"
+      update:
+        saved: "Fiche enregistrée."
+      submit:
+        submitted: "Votre fiche est soumise à validation."
+        incomplete: "Votre fiche ne peut pas être soumise en l'état."
 
   designer:
     dashboards:
@@ -343,7 +487,86 @@ fr:
           - step: "09"
             label: "Litiges, remboursements, niveaux, termes bloqués, état du service"
 
+    printers:
+      index:
+        title: "Imprimeurs"
+        heading: "Fiches des imprimeurs"
+        waiting:
+          zero: "Aucune fiche en attente"
+          one: "1 fiche en attente"
+          other: "%{count} fiches en attente"
+        nothing_waiting: "Rien à valider pour le moment."
+        all:
+          zero: "Aucune autre fiche"
+          one: "1 autre fiche"
+          other: "%{count} autres fiches"
+      row:
+        review: "Relire la fiche"
+        publish: "Publier"
+        suspend: "Suspendre"
+        techniques:
+          zero: "aucune technique"
+          one: "1 technique"
+          other: "%{count} techniques"
+      update:
+        published: "La fiche de %{name} est publiée."
+        suspended: "La fiche de %{name} est suspendue."
+        failed: "La fiche de %{name} n'a pas pu être modifiée."
+
   public:
+    printers:
+      index:
+        title: "Les imprimeurs"
+        eyebrow: "Annuaire"
+        subtitle: >-
+          Les ateliers référencés, leurs techniques et ce qu'ils savent
+          imprimer. Ceux qui expédient partout restent proposés, même loin de
+          chez vous.
+        results_label: "Résultats"
+        map_label: "Carte des ateliers"
+        map_note: "Seuls les ateliers dont l'adresse a été localisée apparaissent sur la carte."
+        osm_attribution: "© Contributeurs OpenStreetMap"
+        within: "dans un rayon de %{radius} km"
+        empty: "Aucun atelier ne correspond à ces critères. Élargissez le rayon ou retirez un filtre."
+        count:
+          zero: "Aucun atelier"
+          one: "1 atelier"
+          other: "%{count} ateliers"
+      filters:
+        search: "Rechercher"
+        search_placeholder: "Nom ou ville"
+        area: "Secteur"
+        locate: "Autour de moi"
+        located: "Position prise en compte"
+        clear_location: "Retirer"
+        radius: "Rayon"
+        radius_option: "%{km} km"
+        department: "Département"
+        department_placeholder: "44"
+        techniques: "Techniques"
+        services: "Services"
+        apply: "Filtrer"
+        reset: "Tout effacer"
+        filters:
+          express_available: "Service express"
+          pickup: "Retrait sur place"
+          ships: "Expédie"
+          provides_textile: "Fournit le textile"
+          accepts_client_textile: "Accepte mon textile"
+      show:
+        preview: "Aperçu de votre fiche, actuellement %{status}. Les visiteurs ne la voient pas encore."
+        about: "Présentation"
+        techniques: "Techniques"
+        contact: "Contact"
+        photos: "L'atelier"
+      characteristics:
+        max_size: "Surface imprimable maximale"
+        textile_source: "Textile"
+        groups:
+          printing: "Impression"
+          textile: "Textile"
+          delivery: "Délais et livraison"
+
     home:
       # Clés absolues : utilisées par le partiel _separation_demo.
       demo:

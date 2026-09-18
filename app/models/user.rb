@@ -10,6 +10,9 @@ class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
 
+  # Only a printer account has one, and it has exactly one.
+  has_one :printer, dependent: :destroy
+
   normalizes :email_address, with: ->(e) { e.strip.downcase }
   normalizes :phone, with: ->(p) { p.gsub(/[^\d+]/, "") }
 

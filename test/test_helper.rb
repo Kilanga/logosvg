@@ -18,6 +18,9 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Add more helper methods to be used by all tests here...
+    # Background work is how this application talks to the outside world, so
+    # "which job did that enqueue?" is a question worth asking from any test,
+    # not only from job tests.
+    include ActiveJob::TestHelper
   end
 end

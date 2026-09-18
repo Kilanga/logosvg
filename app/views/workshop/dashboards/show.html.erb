@@ -1,0 +1,29 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading", name: Current.user.first_name) %>
+
+<div class="max-w-2xl space-y-8">
+  <%# The listing is the one thing a printer must do before anything else works,
+      so it leads, and it says exactly where it stands. %>
+  <% printer = Current.user.printer %>
+
+  <section class="panel p-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <h2 class="font-display text-xl font-bold uppercase"><%= t(".listing") %></h2>
+      <% if printer %><%= printer_status_pill(printer) %><% end %>
+    </div>
+
+    <p class="mt-3 text-muted">
+      <%= t(".listing_state.#{printer&.status || 'missing'}") %>
+    </p>
+
+    <div class="mt-5 flex flex-wrap gap-3">
+      <%= link_to printer ? t(".edit_listing") : t(".create_listing"),
+            edit_workshop_profile_path, class: "btn btn-primary" %>
+      <% if printer&.persisted? %>
+        <%= link_to t(".view_listing"), printer_path(printer), class: "btn btn-secondary" %>
+      <% end %>
+    </div>
+  </section>
+
+  <%= render "shared/space_placeholder", body: t(".body"), items: t(".upcoming") %>
+</div>
