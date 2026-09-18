@@ -1,0 +1,9 @@
+<%# Client space. Steps 3 and 5 add designs, print requests and reviews. %>
+<% content_for :space_name, t("nav.my_space") %>
+<% content_for :space_nav do %>
+  <%= render "layouts/space_link",
+        label: t("nav.dashboard"),
+        path: client_dashboard_path,
+        current: current_page?(client_dashboard_path) %>
+<% end %>
+<%= render template: "layouts/console" %>

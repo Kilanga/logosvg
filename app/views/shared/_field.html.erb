@@ -1,0 +1,31 @@
+<%# A labelled field, with its own error underneath rather than in a distant
+    summary. `kind` is the form builder method: text_field, email_field,
+    password_field, telephone_field…
+
+    Inputs are at least 44px tall and keep a visible focus ring, per the
+    accessibility rules in docs/SPEC.md. %>
+<% kind ||= :text_field %>
+<% options ||= {} %>
+<% invalid = form.object.respond_to?(:errors) && form.object.errors.include?(field) %>
+
+<div>
+  <%= form.label field, label, class: "label-rule block" %>
+
+  <%= form.public_send(kind, field, **options.merge(
+        "aria-invalid": invalid.presence,
+        "aria-describedby": (invalid ? "#{field}_error" : nil),
+        class: class_names(
+          "mt-2 block min-h-touch w-full rounded-xs border bg-surface px-3 py-2 text-base",
+          "focus:border-emulsion",
+          invalid ? "border-warning" : "border-line"
+        )
+      )) %>
+
+  <% if invalid %>
+    <p id="<%= field %>_error" class="mt-1.5 text-sm text-warning">
+      <%= form.object.errors.full_messages_for(field).first %>
+    </p>
+  <% elsif local_assigns[:hint].present? %>
+    <p class="mt-1.5 text-sm text-muted"><%= hint %></p>
+  <% end %>
+</div>
