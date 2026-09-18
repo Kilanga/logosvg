@@ -3,6 +3,12 @@ require "test_helper"
 class TurnstileVerifierTest < ActiveSupport::TestCase
   ENDPOINT = "https://challenges.cloudflare.com/turnstile/v0/siteverify".freeze
 
+  # Named so that neither a human nor a secret scanner can mistake them for real
+  # keys: a literal assigned to something called SECRET_KEY is exactly what
+  # GitGuardian is built to flag.
+  PLACEHOLDER_SECRET = "not-a-key-turnstile-secret-placeholder".freeze
+  PLACEHOLDER_SITE = "not-a-key-turnstile-site-placeholder".freeze
+
   test "verification is skipped when no secret key is configured" do
     result = TurnstileVerifier.call(token: "anything")
 
@@ -31,7 +37,7 @@ class TurnstileVerifierTest < ActiveSupport::TestCase
       TurnstileVerifier.call(token: "bon-jeton", ip: "203.0.113.1")
 
       assert_requested :post, ENDPOINT, body: hash_including(
-        "secret" => "cle-secrete-de-test", "response" => "bon-jeton", "remoteip" => "203.0.113.1"
+        "secret" => PLACEHOLDER_SECRET, "response" => "bon-jeton", "remoteip" => "203.0.113.1"
       )
     end
   end
@@ -80,8 +86,8 @@ class TurnstileVerifierTest < ActiveSupport::TestCase
 
   private
     def with_secret
-      ENV["TURNSTILE_SECRET_KEY"] = "cle-secrete-de-test"
-      ENV["TURNSTILE_SITE_KEY"] = "cle-de-site-de-test"
+      ENV["TURNSTILE_SECRET_KEY"] = PLACEHOLDER_SECRET
+      ENV["TURNSTILE_SITE_KEY"] = PLACEHOLDER_SITE
       yield
     ensure
       ENV.delete("TURNSTILE_SECRET_KEY")
