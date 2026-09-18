@@ -13,11 +13,16 @@ from .config import settings
 from .jobs import CREATE, REFINE, VARIANT, Job, JobManager, child_job, new_seed
 from .prompt_filter import PromptFilter, clean_prompt
 from .security import RateLimiter, require_api_key
+from .techniques import DEFAULT_PRINT_WIDTH_CM, DEFAULT_TECHNIQUE, KEYS, catalog_payload, resolve
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 JOB_ID = re.compile(r"^[a-f0-9]{32}$")
-FILES = {"design.svg": "image/svg+xml", "source.png": "image/png"}
+FILES = {
+    "design.svg": "image/svg+xml",
+    "print.png": "image/png",
+    "source.png": "image/png",
+}
 USER_ID = r"^[A-Za-z0-9_-]+$"
 
 prompt_filter = PromptFilter(settings.blocklist_file)
@@ -45,7 +50,12 @@ app = FastAPI(title="T-shirt IA — génération vectorielle", lifespan=lifespan
 class GenerateRequest(BaseModel):
     prompt: str = Field(min_length=3, max_length=300)
     style: Literal["logo", "illustration", "mascotte", "badge"] = "illustration"
-    colors: int = Field(default=3, ge=1, le=6)
+    # Technique de l'atelier : elle borne `colors` et décide du fichier produit.
+    # `colors` n'a de sens que pour les techniques à encres comptées ; laissé vide,
+    # c'est la valeur par défaut de la technique qui s'applique.
+    technique: Literal[KEYS] = DEFAULT_TECHNIQUE
+    colors: Optional[int] = Field(default=None, ge=1, le=6)
+    print_width_cm: float = Field(default=DEFAULT_PRINT_WIDTH_CM, ge=3, le=60)
     remove_background: bool = True
     user_id: str = Field(min_length=1, max_length=64, pattern=USER_ID)
     seed: Optional[int] = Field(default=None, ge=0, le=2**32 - 1)
@@ -109,6 +119,12 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/techniques", dependencies=[Depends(require_api_key)])
+def techniques():
+    """Catalogue des techniques : Rails y lit les libellés et les bornes, sans les dupliquer."""
+    return {"techniques": catalog_payload()}
+
+
 @app.post("/generate", status_code=202, dependencies=[Depends(require_api_key)])
 def generate(req: GenerateRequest):
     prompt = clean_prompt(req.prompt)
@@ -130,12 +146,15 @@ def generate(req: GenerateRequest):
             content={"detail": f"Limite de générations atteinte. Réessayez dans {retry_after // 60 + 1} min."},
         )
 
+    profile = resolve(req.technique)
     job = manager.submit(Job(
         user_id=req.user_id,
         prompt=prompt,
         style=req.style,
-        colors=req.colors,
+        colors=profile.clamp_colors(req.colors),
         remove_background=req.remove_background,
+        technique=profile.key,
+        print_width_cm=req.print_width_cm,
         seed=req.seed if req.seed is not None else new_seed(),
     ))
     return {"job_id": job.id, "status": job.status, "position": manager.position(job),
@@ -219,6 +238,9 @@ def job_status(job_id: str, user_id: str = Query(min_length=1, max_length=64)):
 @app.get("/jobs/{job_id}/{filename}", dependencies=[Depends(require_api_key)])
 def job_file(job_id: str, filename: str, user_id: str = Query(min_length=1, max_length=64)):
     job = _job_or_404(job_id, user_id)
-    if filename not in FILES or job.status != "done":
+    path = job.directory / filename
+    # Selon la technique, le fichier d'impression est un SVG ou un PNG : demander l'autre
+    # n'est pas une erreur du service, c'est un fichier qui n'existe pas.
+    if filename not in FILES or job.status != "done" or not path.exists():
         raise HTTPException(status_code=404, detail="Fichier indisponible.")
-    return FileResponse(job.directory / filename, media_type=FILES[filename])
+    return FileResponse(path, media_type=FILES[filename])

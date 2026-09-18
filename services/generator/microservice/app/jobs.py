@@ -18,7 +18,9 @@ from .config import settings
 from .generator import GenerationError, get_generator
 from .prompt_builder import build_prompts
 from .prompt_filter import PromptFilter
+from .raster import rasterize
 from .refine import apply_instruction
+from .techniques import DEFAULT_PRINT_WIDTH_CM, DEFAULT_TECHNIQUE, resolve
 from .translate import to_english
 from .vectorizer import vectorize
 
@@ -35,6 +37,10 @@ class Job:
     colors: int
     remove_background: bool
     seed: int
+    # Technique d'impression de l'atelier : elle décide du prompt, du fichier produit
+    # et des alertes. Voir app/techniques.py.
+    technique: str = DEFAULT_TECHNIQUE
+    print_width_cm: float = DEFAULT_PRINT_WIDTH_CM
     id: str = field(default_factory=lambda: uuid.uuid4().hex)
     mode: str = CREATE  # create | variant | refine
     parent_id: Optional[str] = None
@@ -142,26 +148,41 @@ class JobManager:
         if self.prompt_filter.blocked_term(subject):
             raise GenerationError("Cette demande contient un terme non autorisé.")
         job.subject = subject
-        positive, negative = build_prompts(subject, job.style, job.colors)
+        profile = resolve(job.technique)
+        colors = profile.clamp_colors(job.colors)
+        job.colors = colors
+        positive, negative = build_prompts(subject, job.style, colors, profile.key)
 
         if job.mode == REFINE:
             png = await self.generator.refine(
-                positive, negative, job.seed, job.colors,
+                positive, negative, job.seed, colors,
                 self._init_image(job), settings.refine_denoise,
             )
         else:
-            png = await self.generator.generate(positive, negative, job.seed, job.colors)
-
-        # La vectorisation est du calcul CPU : on la sort de la boucle asynchrone.
-        out = await asyncio.to_thread(
-            vectorize, png, job.colors, job.remove_background, settings.max_paths_warning
-        )
+            png = await self.generator.generate(positive, negative, job.seed, colors)
 
         job.directory.mkdir(parents=True, exist_ok=True)
         (job.directory / "source.png").write_bytes(png)
-        (job.directory / "design.svg").write_text(out["svg"], encoding="utf-8")
+
+        # Préparation du fichier d'impression : du calcul CPU, sorti de la boucle asynchrone.
+        if profile.family == "vector":
+            out = await asyncio.to_thread(
+                vectorize, png, colors, job.remove_background,
+                settings.max_paths_warning, profile.key,
+            )
+            (job.directory / "design.svg").write_text(out["svg"], encoding="utf-8")
+        else:
+            out = await asyncio.to_thread(
+                rasterize, png, profile, job.remove_background, job.print_width_cm
+            )
+            (job.directory / "print.png").write_bytes(out["png"])
 
         job.result = {
+            "technique": profile.key,
+            "technique_label": profile.label,
+            "output": profile.family,
+            "print_file": profile.file_name,
+            "colors": colors,
             "palette": out["palette"],
             "inks": out["inks"],
             "stats": out["stats"],
@@ -197,6 +218,9 @@ def child_job(parent: Job, mode: str, instruction: Optional[str] = None) -> Job:
         colors=parent.colors,
         remove_background=parent.remove_background,
         seed=new_seed(),
+        # Une reprise reste destinée à la même machine que son parent.
+        technique=parent.technique,
+        print_width_cm=parent.print_width_cm,
         mode=mode,
         parent_id=parent.id,
         root_id=parent.root_id or parent.id,

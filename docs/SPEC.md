@@ -28,9 +28,9 @@ Commence par l'étape 0.
 
 La plateforme se vend aux imprimeurs textiles : ils paient un abonnement pour être référencés, et envoient leurs clients créer un design IA directement imprimable.
 
-**Problème.** Les clients arrivent avec des images IA en pixels, impossibles à vectoriser proprement pour la sérigraphie.
+**Problème.** Les clients arrivent avec des images IA en pixels : impossibles à vectoriser proprement pour la sérigraphie, et trop petites pour une machine numérique.
 
-**Solution.** Le client décrit son idée. L'IA génère un visuel en aplats, limité aux couleurs que l'atelier sait imprimer. Le service le vectorise. L'atelier reçoit par email une demande complète : SVG, palette d'encres, textile, emplacement, tailles et quantités. Il répond avec son devis, hors plateforme.
+**Solution.** Le client arrive avec la technique que son atelier lui a indiquée. L'IA génère un visuel **conçu pour cette machine** — aplats bornés aux encres de l'atelier en sérigraphie, illustration détaillée et dégradés en DTF — et le service produit le fichier que cette machine attend : SVG vectorisé, ou image matricielle détourée en 300 dpi à la taille d'impression. L'atelier reçoit par email une demande complète : le fichier d'impression, la technique, la palette, le textile, l'emplacement, les tailles et les quantités. Il répond avec son devis, hors plateforme.
 
 | Source de revenus | Qui paie | Fréquence | Montant |
 | --- | --- | --- | --- |
@@ -87,7 +87,7 @@ Un client arrivé par `/a/:slug` a l'atelier présélectionné pendant toute sa 
 ### Espace client
 
 - **Tableau de bord** : les actions qui l'attendent en premier (version à valider, proposition d'un graphiste à laquelle répondre, demande sans réponse de l'atelier), puis l'activité récente.
-- **Mes designs** : grille des designs avec variantes, nombre d'encres, date, atelier associé ; actions : créer une variante, demander une vérification, envoyer à un atelier, supprimer.
+- **Mes designs** : grille des designs avec variantes, technique, nombre d'encres ou taille du fichier selon la famille, date, atelier associé ; actions : créer une variante, demander une vérification, envoyer à un atelier, supprimer.
 - **Mes demandes d'impression** : atelier, quantités, statut, date d'envoi ; action : annuler tant que l'atelier n'a pas envoyé de devis.
 - **Mes vérifications** : niveau, graphiste, statut, échéance ; page de détail avec les versions, la messagerie, les boutons valider ou demander un retour, et la réponse à une proposition de changement d'option.
 - **Mon compte** : coordonnées, mot de passe, export des données, suppression du compte.
@@ -155,6 +155,32 @@ Rails 8 monolithique avec Hotwire ; seul le moteur de génération reste un serv
 
 Le fond des aperçus reprend une trame fine (lignes émulsion à 8 % tous les 8 px), en rappel de l'écran de sérigraphie. Cibles tactiles de 44 px minimum, focus visible, contraste 4,5:1.
 
+## Techniques d'impression
+
+Un atelier n'imprime pas d'une seule façon, et toutes ses machines n'attendent pas un SVG. La technique retenue est donc choisie **avant la génération**, et elle pilote trois choses : le prompt envoyé au modèle, le fichier produit en sortie, et les alertes affichées au client comme jointes à la demande. Un visuel pensé dès la génération pour deux couleurs vaut infiniment mieux qu'un visuel riche réduit après coup : c'est ce qui justifie l'ordre.
+
+| Technique | Clé | Sortie | Encres | Dégradés | Blanc imprimé | Ce qui casse le design |
+| --- | --- | --- | --- | --- | --- | --- |
+| Sérigraphie | `screen_printing` | SVG | 6 au plus | non | non | traits fins, aplats non fermés |
+| Flex ou flocage (découpe) | `flex` | SVG | 2 au plus | non | non | tout détail fin, motif éclaté |
+| Broderie | `embroidery` | SVG | 6 fils au plus | non | oui | densité de détail, texte minuscule |
+| DTF (transfert numérique) | `dtf` | PNG 300 dpi | sans limite | oui | oui | détourage approximatif |
+| DTG (impression directe) | `dtg` | PNG 300 dpi | sans limite | oui | oui | détourage approximatif |
+| Sublimation | `sublimation` | PNG 300 dpi | sans limite | oui | **non** | polyester clair seulement |
+
+**Le profil de chaque technique vit dans le microservice** (`services/generator/microservice/app/techniques.py`) et Rails le lit sur `GET /techniques` : les libellés français, la famille de sortie, le plafond d'encres et le nom du fichier produit. Rails ne duplique pas ces valeurs ; il en garde une copie en cache pour les formulaires et l'affichage.
+
+**Choix de la technique dans le parcours.** Le client arrive presque toujours sur recommandation de son atelier, donc la technique lui est connue.
+
+- Arrivé par `/a/:slug`, il ne voit que les techniques que **cet** atelier pratique. Une seule technique déclarée : elle est retenue sans rien demander.
+- Arrivé par l'annuaire, il voit le catalogue complet, puis l'annuaire ne lui propose que les ateliers compatibles.
+- Le libellé montré est humain — « flocage 1 couleur », « impression photo toutes couleurs » — la mention technique venant en second. Une option « je ne sais pas » retombe sur la technique marquée `primary` de l'atelier en contexte, et sur `screen_printing` sans atelier.
+- Le curseur d'encres n'apparaît que pour les techniques à encres comptées ; ailleurs il n'a pas de sens et le formulaire ne l'affiche pas.
+
+**Ce que la résolution du modèle impose aux sorties matricielles.** SDXL dessine en 1 024 pixels de côté (`IMAGE_SIZE`). Le fichier livré fait toujours 300 dpi, mais le dessin, lui, ne fournit que 1 024 pixels : au-delà d'environ 9 cm de large, les pixels supplémentaires sont interpolés. Le service renvoie donc `source_dpi` et `net_width_cm` dans ses statistiques, et prévient le client sous 150 dpi réels — seuil au-delà duquel un atelier accepte couramment un fichier DTF. Une poitrine de t-shirt se demandant plutôt en 25 cm, ce message serait la règle et non l'exception : **la V1 doit donc agrandir avant de livrer**, par un nœud d'agrandissement dans le workflow ComfyUI de la machine de génération, ou par un `IMAGE_SIZE` plus élevé. C'est un réglage de la machine de génération, pas du code Rails ; en attendant, l'avertissement dit la vérité au client.
+
+**Changer de technique après coup.** La technique est figée sur le design : elle a façonné le prompt, pas seulement le fichier. Un client qui choisit un atelier incompatible se voit proposer une **nouvelle création** pour la technique de cet atelier, pas une conversion de fichier. Cette re-génération consomme le quota journalier et **ne consomme pas** le budget de reprises, qui appartient à la lignée précédente.
+
 ## Modèle de données
 
 Quatorze modèles, compteur de quota compris ; les fichiers passent par Active Storage et les statuts par AASM.
@@ -179,21 +205,27 @@ flowchart LR
 | --- | --- | --- |
 | `User` | email, password\_digest, first\_name, last\_name, phone, city, role (client, printer, designer, admin), terms\_accepted\_at, deleted\_at | Email unique ; suppression douce puis purge |
 | `Printer` | user\_id, name, slug, description, address, postal\_code, city, latitude, longitude, orders\_email, phone, website, opening\_hours, response\_time\_hours, min\_order\_qty, standard\_lead\_days, express\_available, express\_lead\_hours, ships, shipping\_zones, shipping\_lead, shipping\_price\_note, pickup, provides\_textile, accepts\_client\_textile, textile\_brands, textile\_label (none, gots, oeko\_tex), placements (tableau), max\_print\_width\_cm, max\_print\_height\_cm, price\_note, brand\_color, status (draft, pending\_review, published, suspended), featured ; pièces jointes logo et photos | Slug unique ; géocodé à chaque changement d'adresse ; visible si `published` et abonnement actif |
-| `PrinterTechnique` | printer\_id, technique (screen\_printing, dtf, dtg, flex, embroidery), max\_colors, accepted\_formats (tableau) | Une ligne par technique ; `max_colors` requis pour la sérigraphie |
+| `PrinterTechnique` | printer\_id, technique (screen\_printing, flex, embroidery, dtf, dtg, sublimation), max\_colors, primary, max\_print\_width\_cm, max\_print\_height\_cm, note | Une ligne par technique pratiquée ; `max_colors` requis et borné par le plafond de la technique pour celles à encres comptées, ignoré pour les autres ; une seule ligne `primary` par atelier, retenue quand le client répond « je ne sais pas » ; les dimensions vides retombent sur celles de la fiche |
 | `Subscription` | printer\_id, plan (listing, atelier\_plus), status (incomplete, trialing, active, past\_due, canceled), stripe\_customer\_id, stripe\_subscription\_id, current\_period\_end | Mise à jour uniquement par les webhooks Stripe |
-| `Design` | user\_id, printer\_id (contexte, facultatif), parent\_id (variante), prompt, style (illustration, logo, mascotte, badge), colors\_requested, remove\_background, seed, status, generator\_job\_id, error\_message, inks\_count, palette (jsonb), paths\_count, warnings (jsonb), prompt\_used, subject, root\_id, mode (create, variant, refine), instruction, refinements\_left, deleted\_at ; pièces jointes svg et source\_png | `colors_requested` borné par l'atelier s'il y en a un ; `parent_id` et `root_id` forment la lignée, indexés tous les deux |
+| `Design` | user\_id, printer\_id (contexte, facultatif), parent\_id (variante), prompt, style (illustration, logo, mascotte, badge), **technique**, **print\_format** (svg, png), **print\_width\_cm**, colors\_requested, remove\_background, seed, status, generator\_job\_id, error\_message, inks\_count, palette (jsonb), paths\_count, warnings (jsonb), prompt\_used, subject, root\_id, mode (create, variant, refine), instruction, refinements\_left, deleted\_at ; pièces jointes **print\_file** et source\_png | `technique` obligatoire, figée à la création et héritée par toute la lignée ; `print_format` en découle et dit si `print_file` est un SVG ou un PNG ; `colors_requested` borné par le plafond de la technique **puis** par celui de l'atelier ; `paths_count` et `inks_count` ne sont renseignés qu'en sortie vectorielle ; `parent_id` et `root_id` forment la lignée, indexés tous les deux |
 | `DesignerProfile` | user\_id, display\_name, bio, city, latitude, longitude, remote, specialties (tableau), languages (tableau), accepting\_work, status (pending\_review, active, suspended), stripe\_account\_id, payouts\_enabled, rating\_avg, ratings\_count ; pièces jointes avatar et portfolio | Ne reçoit rien tant que `payouts_enabled` est faux |
 | `ReviewLevel` | key (check, retouch, custom), name, description, price\_cents (vide pour « sur devis »), turnaround\_hours, revisions\_included, position, active | Géré par l'admin |
 | `DesignerLevel` | designer\_profile\_id, review\_level\_id | Niveaux acceptés par le graphiste |
 | `Review` | design\_id, client\_id, designer\_profile\_id (vide si « premier disponible » non attribué), review\_level\_id, assignment\_mode (chosen, first\_available), status, client\_brief, price\_cents, platform\_fee\_cents, revisions\_included, revisions\_used, due\_at, paid\_at, accepted\_at, stripe\_checkout\_session\_id, stripe\_payment\_intent\_id, return\_reason\_code, return\_message, proposed\_level\_id, proposed\_price\_cents, returned\_at, proposal\_expires\_at | Voir la machine à états |
-| `ReviewVersion` | review\_id, number, message, checks (jsonb), inks\_count ; pièce jointe svg | Numérotation continue ; SVG contrôlé avant enregistrement |
+| `ReviewVersion` | review\_id, number, message, checks (jsonb), inks\_count ; pièce jointe file | Numérotation continue ; la version déposée respecte le `print_format` du design (un graphiste ne renvoie pas un PNG là où l'atelier attend un SVG) ; un SVG est contrôlé avant enregistrement, un PNG est vérifié en type, en dimensions et en résolution |
 | `ReviewMessage` | review\_id, author\_id, body, read\_at | Visible par le client, le graphiste et l'admin |
 | `Rating` | review\_id, score (1 à 5), comment | Un seul par revue, après validation |
-| `PrintRequest` | design\_id, review\_version\_id (facultatif), client\_id, printer\_id, status, textile\_source (printer, client), textile\_model, textile\_color, placements (tableau), print\_width\_cm, sizes (jsonb, taille vers quantité), total\_qty, desired\_on, message, contact\_name, contact\_email, contact\_phone, contact\_city, consent\_text\_version, consented\_at, confirmation\_token, sent\_at, acknowledged\_at, quoted\_at, reminded\_at ; pièces jointes final\_svg et preview\_png | Copie des fichiers à l'envoi ; `total_qty` calculé |
+| `PrintRequest` | design\_id, review\_version\_id (facultatif), client\_id, printer\_id, status, textile\_source (printer, client), textile\_model, textile\_color, placements (tableau), print\_width\_cm, sizes (jsonb, taille vers quantité), total\_qty, desired\_on, message, contact\_name, contact\_email, contact\_phone, contact\_city, consent\_text\_version, consented\_at, confirmation\_token, sent\_at, acknowledged\_at, quoted\_at, reminded\_at ; pièces jointes final\_file et preview\_png | Copie des fichiers à l'envoi ; la technique du design est reprise dans l'email et la fiche technique ; `total_qty` calculé |
 
 **Quota de génération.** Table `generation_counters` (user\_id, day, count), index unique sur user\_id et day. Une génération échouée ne consomme pas de quota.
 
-**Compatibilité atelier.** Un atelier peut imprimer un design si l'une de ses techniques accepte le format SVG et remplit une condition : DTF ou DTG, sans limite de couleurs ; ou sérigraphie, flocage ou broderie avec `max_colors` supérieur ou égal à `inks_count`. La règle vit dans `PrinterCompatibility` et sert à l'annuaire, à la fiche et à l'écran de création.
+**Compatibilité atelier.** La compatibilité ne se juge plus sur le format du fichier mais sur la technique du design. Un atelier peut imprimer un design si :
+
+1. il pratique la technique du design — sinon il est incompatible, quelles que soient ses autres machines ;
+2. pour une technique à encres comptées (sérigraphie, flex, broderie), son `max_colors` est supérieur ou égal à `inks_count` ;
+3. la taille d'impression demandée tient dans les dimensions déclarées pour cette technique.
+
+Chaque échec porte sa raison, affichée telle quelle dans l'annuaire : « ne pratique pas le DTF », « 2 encres maximum, le design en compte 4 », « largeur maximale 20 cm ». La règle vit dans `PrinterCompatibility` et sert à l'annuaire, à la fiche et à l'écran de création.
 
 ## Machines à états
 
@@ -304,10 +336,10 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 | --- | --- | --- |
 | `GET /` | Accueil imprimeurs : avant/après pixel et vecteur, fonctionnement, exemple d'email, abonnements, appel aux graphistes | Tous |
 | `GET /a/:slug` | Enregistre l'atelier en session et redirige vers la création | Tous |
-| `GET /imprimeurs` | Annuaire : filtres à gauche, liste au centre, carte à droite ; les ateliers qui livrent partout en France restent visibles hors rayon | Tous |
+| `GET /imprimeurs` | Annuaire : filtres à gauche — **technique d'impression en tête**, puis rayon, textile, délai, livraison — liste au centre, carte à droite ; les ateliers qui livrent partout en France restent visibles hors rayon | Tous |
 | `GET /imprimeurs/:slug` | Fiche : présentation, badges, photos, caractéristiques par groupe, carte, contact, compatibilité avec le dernier design | Tous |
 | `GET /graphistes`, `GET /graphistes/:id` | Liste avec filtres et carte facultative ; profil avec portfolio et avis | Tous |
-| `GET /designs/new` | Création : bandeau de l'atelier, formulaire, aperçu sur t-shirt avec couleurs de tissu, vue image et vecteur avec zoom, encres et écrans, compatibilité, actions | Client |
+| `GET /designs/new` | Création : bandeau de l'atelier, **choix de la technique en premier champ**, formulaire, aperçu sur t-shirt avec couleurs de tissu, vue du fichier d'impression et de l'image d'origine avec zoom, encres et écrans, compatibilité, actions | Client |
 | `POST /designs`, `GET /designs/:id` | Lancement puis suivi en Turbo Stream ; la route GET /designs/:id/image télécharge le rendu matriciel du SVG, filigrané — jamais le fichier SVG | Propriétaire |
 | `POST /designs/:id/variants` | Trois variantes du design (mêmes mots, autres tirages) | Propriétaire |
 | `POST /designs/:id/refine` | Retouche par instruction : le texte du chat part au service, la nouvelle version arrive en Turbo Stream | Propriétaire |
@@ -337,11 +369,12 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 
 ### Détails d'interface à respecter
 
-- **Création** : le curseur de couleurs est borné au maximum de l'atelier ; le compteur de créations restantes s'affiche sous le bouton ; les alertes du service apparaissent en encadré d'avertissement.
-- **Aperçu** : l'aperçu principal est le **rendu du SVG**, pas l'image issue de l'IA. Le SVG est le fichier d'impression et diffère volontairement de l'image générée : le blanc y est devenu papier non imprimé et les teintes proches ont été fusionnées pour tenir le nombre d'encres. Faire valider l'image d'origine reviendrait à faire approuver autre chose que ce qui sera imprimé. Ce rendu est **rastérisé côté serveur** (libvips) puis filigrané avant d'être servi : le client voit exactement le fichier d'impression, mais le fichier vectoriel lui-même ne lui est jamais transmis — le servir laisserait retirer le filigrane d'un coup d'éditeur de texte. Il s'affiche sur fond clair **et** sur fond sombre, puisque le blanc n'est pas imprimé. Le sélecteur « rendu final / image d'origine » permet de comparer.
+- **Création** : la technique se choisit avant tout le reste, en libellés humains, et le reste du formulaire s'y adapte — le curseur de couleurs n'apparaît que pour les techniques à encres comptées, et il est borné au minimum entre le plafond de la technique et celui de l'atelier ; la taille d'impression est demandée pour les techniques matricielles, où elle détermine la définition du fichier. Le compteur de créations restantes s'affiche sous le bouton ; les alertes du service apparaissent en encadré d'avertissement.
+- **Aperçu** : l'aperçu principal est le **rendu du fichier d'impression**, pas l'image issue de l'IA — le SVG vectorisé pour les techniques vectorielles, le PNG détouré pour les autres. Ce fichier diffère volontairement de l'image générée : selon la technique, le blanc y est devenu textile non imprimé, les teintes proches ont été fusionnées pour tenir le nombre d'encres, le fond a été retiré. Faire valider l'image d'origine reviendrait à faire approuver autre chose que ce qui sera imprimé. Ce rendu est **produit côté serveur** (libvips) puis filigrané avant d'être servi : le client voit exactement le fichier d'impression, mais le fichier lui-même ne lui est jamais transmis — servir le SVG laisserait retirer le filigrane d'un coup d'éditeur de texte, et servir le PNG en 300 dpi reviendrait à livrer le fichier d'impression. Il s'affiche sur fond clair **et** sur fond sombre, puisque le blanc n'est pas toujours imprimé. Le sélecteur « rendu final / image d'origine » permet de comparer.
 - **Reprise** : le chat de retouche et le bouton de variantes sont sous l'aperçu, avec le nombre de reprises restantes toujours visible ; à zéro, les deux laissent place à l'appel à la vérification par un graphiste.
-- **Encres** : chaque couleur s'affiche comme un pot d'encre avec son code, et le titre annonce le nombre d'écrans.
-- **Annuaire** : le filtre « Compatibles avec mon design » est coché par défaut quand un design existe ; les ateliers incompatibles restent affichés en atténué avec la raison.
+- **Encres** : en sortie vectorielle, chaque couleur s'affiche comme un pot d'encre avec son code, et le titre annonce le nombre d'écrans. En sortie matricielle, ce bloc laisse place à la fiche du fichier : dimensions en centimètres, définition en pixels, 300 dpi, fond transparent, largeur au-delà de laquelle le rendu perd en netteté (`net_width_cm`) — et, quand la machine n'a pas d'encre blanche, la part du dessin qui prendra la couleur du textile.
+- **Annuaire** : le filtre « Compatibles avec mon design » est coché par défaut quand un design existe, et il se lit d'abord sur la technique ; les ateliers incompatibles restent affichés en atténué avec la raison (« ne pratique pas le DTF », « 2 encres maximum »). Un atelier incompatible propose, au lieu du bouton d'envoi, de recréer le design pour **sa** technique.
+- **Fiche imprimeur** : les techniques pratiquées apparaissent en badges, chacune avec ses limites — encres et dimensions — et la technique principale est marquée.
 - **Mise en avant Atelier+** : l'étiquette « Mis en avant » est toujours visible.
 - **Espace graphiste** : l'échéance est en rouge sous 6 h ; le renvoi ouvre une fenêtre avec motif, niveau proposé, prix si sur devis et message.
 - **Espace client** : une proposition de graphiste apparaît en tête du tableau de bord avec le compte à rebours des 72 h.
@@ -352,13 +385,17 @@ Rails parle au service FastAPI existant en HTTP, depuis des tâches de fond uniq
 
 | Méthode et route | Corps ou paramètres | Réponse |
 | --- | --- | --- |
-| `POST /generate` | prompt (3 à 300 caractères), style, colors (1 à 6), remove\_background, user\_id, seed facultatif | 202 : job\_id, status, position, refinements\_left |
+| `POST /generate` | prompt (3 à 300 caractères), style, **technique** (clé du catalogue), colors (1 à 6, facultatif), **print\_width\_cm** (3 à 60), remove\_background, user\_id, seed facultatif | 202 : job\_id, status, position, refinements\_left |
 | `POST /jobs/:id/refine` | instruction (3 à 200 caractères), user\_id | 202 : job\_id, status, position, refinements\_left |
 | `POST /jobs/:id/variants` | user\_id, count | 202 : job\_ids, job\_id, status, position, refinements\_left |
-| `GET /jobs/:id?user_id=` | — | status (queued, running, done, error), position, error, mode, parent\_id, root\_id, refinements\_left, result (palette, inks, stats.paths, stats.opaque\_share, warnings, prompt\_used, subject, instruction, seed) |
-| `GET /jobs/:id/design.svg?user_id=` | — | Le SVG |
+| `GET /jobs/:id?user_id=` | — | status (queued, running, done, error), position, error, mode, parent\_id, root\_id, refinements\_left, result (**technique**, **technique\_label**, **output** : vector ou raster, **print\_file** : nom du fichier à télécharger, colors, palette, inks, stats, warnings, prompt\_used, subject, instruction, seed) |
+| `GET /jobs/:id/design.svg?user_id=` | — | Le SVG — **techniques vectorielles uniquement**, 404 sinon |
+| `GET /jobs/:id/print.png?user_id=` | — | Le PNG d'impression détouré, à la taille demandée en 300 dpi — **techniques matricielles uniquement**, 404 sinon |
 | `GET /jobs/:id/source.png?user_id=` | — | L'image brute générée |
+| `GET /techniques` | — | Le catalogue : clé, libellé, famille, plafond d'encres, couleurs par défaut, dégradés, blanc imprimé, dpi, nom du fichier produit |
 | `GET /health` | — | Sans clé ; pour la page d'état admin |
+
+`result.stats` dépend de la famille : `paths`, `svg_bytes` et `opaque_share` en sortie vectorielle ; `width_px`, `height_px`, `print_width_cm`, `print_height_cm`, `dpi`, `upscale`, `source_dpi`, `net_width_cm`, `white_share` et `opaque_share` en sortie matricielle. Rails télécharge le fichier nommé par `result.print_file` et ne présume jamais de son extension.
 
 **Codes d'erreur à traiter** : 401 (configuration, message générique au client), 409 (reprise demandée sur une version pas encore prête), 422 (terme interdit ou prompt invalide, message du service affiché), 503 (file pleine ou service arrêté, nouvel essai proposé). Les deux 429 ne se traitent pas pareil : avec l'en-tête `Retry-After`, c'est la limite horaire de générations et le client réessaie plus tard ; avec `reason: "refine_budget"`, c'est le budget de reprises du design, définitif, qui ouvre le parcours graphiste. `GeneratorClient` expose donc le corps JSON de la réponse, pas seulement le code.
 
@@ -367,7 +404,7 @@ Rails parle au service FastAPI existant en HTTP, depuis des tâches de fond uniq
 1. `DesignsController#create` vérifie Turnstile et le quota, crée le `Design` en `pending`, lance `GenerateDesignJob`.
 2. `GenerateDesignJob` appelle `POST /generate`, enregistre `generator_job_id`, passe en `generating`, programme `PollDesignJob`.
 3. `PollDesignJob` interroge le statut toutes les 2 secondes en se reprogrammant, pendant 5 minutes maximum.
-4. Sur `done` : téléchargement du SVG et de l'image, contrôle du SVG, pièces jointes, champs de résultat, statut `ready`, incrément du quota.
+4. Sur `done` : téléchargement du fichier nommé par `result.print_file` et de l'image d'origine, contrôle du fichier selon son format, pièces jointes, champs de résultat dont `technique` et `print_format`, statut `ready`, incrément du quota.
 5. Sur `error` ou délai dépassé : statut `failed` et message ; le quota n'est pas consommé.
 6. Chaque changement d'état diffuse un Turbo Stream vers la page du design.
 7. Une retouche (`RefineDesignJob`) et des variantes (`VariantsJob`) créent un design enfant par `job_id` renvoyé, puis réutilisent `PollDesignJob` sans le dupliquer.
@@ -375,12 +412,15 @@ Rails parle au service FastAPI existant en HTTP, depuis des tâches de fond uniq
 **Détails**
 
 - `user_id` envoyé au service : HMAC-SHA256 de l'identifiant utilisateur avec une clé dédiée, tronqué à 32 caractères.
-- `colors` envoyé : le minimum entre le choix du client et le maximum de sérigraphie de l'atelier en contexte.
+- `technique` envoyée : celle du design, obligatoire. Le service la borne à son tour — un `colors` à 6 sur du flex revient à 2 — et renvoie la valeur retenue dans `result.colors` : c'est elle qui fait foi, Rails ne la recalcule pas.
+- `colors` envoyé : le minimum entre le choix du client, le plafond de la technique et le `max_colors` de l'atelier en contexte ; omis pour les techniques sans limite d'encres.
+- `print_width_cm` envoyé : la largeur d'impression visée, bornée par les dimensions de l'atelier quand il y en a un. Elle ne sert qu'aux sorties matricielles, où elle fixe la taille du fichier produit.
+- Le catalogue de `GET /techniques` est lu au démarrage et mis en cache (Solid Cache, 1 heure) ; une clé inconnue de Rails est une erreur de configuration, pas une entrée utilisateur.
 - Variables : `GENERATOR_URL`, `GENERATOR_API_KEY`, `GENERATOR_USER_KEY` ; délai réseau de 20 secondes par appel.
 - `GeneratorClient` utilise `Net::HTTP` ; aucune gem HTTP supplémentaire.
 - En développement, `bin/dev` lance aussi le service en mode mock (entrée dédiée dans `Procfile.dev`).
 - En test, WebMock simule toutes les routes, y compris les erreurs 422, 429 et 503.
-- Le SVG déposé par un graphiste passe par le même contrôle ; `SvgInspector` compte les couleurs de remplissage distinctes avec Nokogiri pour mettre à jour `inks_count` et vérifier la compatibilité avec l'atelier.
+- Le fichier déposé par un graphiste passe par le même contrôle que celui du service, selon son format : `SvgInspector` compte les couleurs de remplissage distinctes avec Nokogiri pour mettre à jour `inks_count` et vérifier la compatibilité avec l'atelier ; `RasterInspector` vérifie le type réel, la transparence, les dimensions et la résolution effective à la taille d'impression. Un dépôt dont le format ne correspond pas au `print_format` du design est refusé avec la raison.
 
 ## Paiements, abonnements et emails
 
@@ -446,8 +486,9 @@ Chaque donnée est limitée à son propriétaire, chaque action coûteuse est pl
 
 ### Fichiers
 
-- Contrôle de tout SVG, généré ou déposé : racine `<svg>`, aucun `script`, `foreignObject`, attribut `on*`, URL `javascript:`, entité XML, ni lien externe. Refus sinon. **Le fichier SVG n'est jamais servi au client** : il ne part qu'à l'atelier et au graphiste. Ce que le client voit et télécharge est un **rendu matriciel du SVG**, produit côté serveur par la gem image\_processing avec libvips et filigrané « Créé avec \[nom de l'atelier\] » (nom de la plateforme si aucun atelier). Ce rendu est fidèle au fichier d'impression — mêmes aplats, mêmes couleurs, blanc rendu au papier — de sorte que le client valide bien ce qui sera imprimé, sans pouvoir s'en servir pour imprimer ailleurs. L'image brute issue de l'IA reste consultable en comparaison, filigranée de la même façon.
-- Taille maximale : 5 Mo pour un SVG, 10 Mo pour une photo ; types vérifiés par contenu, pas seulement par extension.
+- Contrôle de tout SVG, généré ou déposé : racine `<svg>`, aucun `script`, `foreignObject`, attribut `on*`, URL `javascript:`, entité XML, ni lien externe. Refus sinon. Contrôle de tout PNG d'impression : type réel vérifié au contenu, canal alpha présent, dimensions cohérentes avec la taille demandée.
+- **Le fichier d'impression n'est jamais servi au client**, quel que soit son format : il ne part qu'à l'atelier et au graphiste. Ce que le client voit et télécharge est un **rendu d'écran** de ce fichier, produit côté serveur par la gem image\_processing avec libvips, redimensionné à 1 200 px de large au plus et filigrané « Créé avec \[nom de l'atelier\] » (nom de la plateforme si aucun atelier). La limite de taille compte autant que le filigrane : en sortie matricielle, servir le fichier en pleine définition reviendrait à livrer le fichier d'impression lui-même. Ce rendu reste fidèle — mêmes couleurs, même détourage, blanc rendu au textile quand il ne sera pas imprimé — de sorte que le client valide bien ce qui sera imprimé, sans pouvoir s'en servir pour imprimer ailleurs. L'image brute issue de l'IA reste consultable en comparaison, filigranée de la même façon.
+- Taille maximale : 5 Mo pour un SVG, 25 Mo pour un PNG d'impression, 10 Mo pour une photo ; types vérifiés par contenu, pas seulement par extension.
 - Les SVG s'affichent dans des balises `img` ; le téléchargement passe par un contrôleur qui vérifie l'autorisation et envoie `Content-Disposition: attachment`.
 - Politique de sécurité du contenu (CSP) stricte : scripts de l'application, Turnstile et Stripe ; tuiles OpenStreetMap pour les images.
 
@@ -475,8 +516,8 @@ Onze étapes, chacune livrable et testée seule ; Claude Code s'arrête après c
 | --- | --- | --- |
 | 0. Socle | `rails new` avec PostgreSQL, Tailwind, Solid Queue, Cable et Cache ; CI ; `CLAUDE.md` ; tokens, polices auto-hébergées, layouts public et espaces ; locale `fr` ; `Procfile.dev` avec le service mock | `bin/dev` démarre l'application et le service ; CI verte |
 | 1. Comptes | Authentification, inscription avec choix du rôle, Turnstile, Pundit, espaces vides par rôle, `rate_limit` | Chaque rôle n'accède qu'à son espace, testé en système |
-| 2. Imprimeurs | Modèles `Printer` et `PrinterTechnique`, formulaire de fiche, géocodage, validation admin, fiche publique, annuaire avec filtres et carte Leaflet | Un imprimeur publié apparaît sur la carte et répond aux filtres |
-| 3. Designs | `GeneratorClient`, tâches, écran de création, Turbo Streams, quota, variantes, lien `/a/:slug`, `PrinterCompatibility` | Un client crée un design via le service mock et le voit sur le t-shirt ; les erreurs 422, 429 et 503 sont affichées |
+| 2. Imprimeurs | Modèles `Printer` et `PrinterTechnique`, catalogue des techniques lu sur `GET /techniques`, formulaire de fiche avec les techniques et leurs limites, géocodage, validation admin, fiche publique avec badges de technique, annuaire avec filtre par technique et carte Leaflet | Un imprimeur publié apparaît sur la carte, et le filtre par technique ne renvoie que les ateliers qui la pratiquent |
+| 3. Designs | `GeneratorClient`, tâches, écran de création **avec choix de la technique**, formulaire qui s'adapte à la famille de sortie, Turbo Streams, quota, variantes, lien `/a/:slug`, `PrinterCompatibility` | Un client crée un design en sérigraphie et un autre en DTF via le service mock, obtient un SVG dans un cas et un PNG 300 dpi dans l'autre, et ne voit dans l'annuaire que les ateliers qui pratiquent sa technique ; les erreurs 422, 429 et 503 sont affichées |
 | 4. Demandes d'impression | Formulaire d'envoi, emails avec pièces jointes, page de confirmation, relance et expiration, liste et statuts dans `/atelier/demandes` | L'atelier confirme depuis l'email ; le client voit le statut changer |
 | 5. Espace client | Tableau de bord, designs, demandes, vérifications (liste vide prête), compte | Toutes les listes sont filtrées sur le client connecté |
 | 6. Abonnements | Checkout, portail, webhooks, visibilité conditionnée, `past_due`, lien, QR code, affiche, statistiques Atelier+ | Un imprimeur sans abonnement actif n'apparaît nulle part |
@@ -503,6 +544,10 @@ Ces points bloquent la mise en production, pas la construction : Claude Code uti
 - [x] Le client peut-il télécharger son SVG, ou seulement l'envoyer à un atelier ? (décidé : le fichier SVG, non — il ne part qu'à l'atelier et au graphiste. Le client voit et télécharge un rendu matriciel de ce SVG, fidèle au fichier d'impression et filigrané « Créé avec \[nom de l'atelier\] », nom de la plateforme si aucun atelier)
 - [ ] La lignée et le budget de reprises vivent en mémoire dans le microservice : un redémarrage de la machine de génération remet le compteur à zéro. Acceptable en démonstration ; si cela devient un enjeu commercial, le compteur passera côté Rails
 - [ ] Délais : validation automatique (7 jours), réponse à une proposition (72 h), graphiste choisi silencieux (12 h), expiration d'une demande (5 jours)
+- [x] Le fichier d'impression est-il toujours un SVG ? (décidé : non — la technique décide. Sérigraphie, flex et broderie donnent un SVG ; DTF, DTG et sublimation donnent un PNG détouré en 300 dpi à la taille d'impression. La technique est choisie avant la génération et façonne le prompt, pas seulement la sortie)
+- [ ] Agrandissement avant livraison des fichiers matriciels : nœud d'agrandissement dans le workflow ComfyUI, ou `IMAGE_SIZE` plus élevé. Sans lui, un DTF de 25 cm est livré à environ 100 dpi réels et l'avertissement s'affiche presque toujours
+- [ ] Ajouter l'impression papier (offset et numérique, fichier CMJN avec fonds perdus) au catalogue, ou rester sur le textile en V1
+- [ ] Faut-il facturer la sublimation et le DTF comme la sérigraphie côté abonnement, sachant que ces ateliers n'ont pas le problème de vectorisation qui fait l'argument de vente
 - [ ] Seuil d'alerte du taux de renvoi des graphistes
 - [ ] Durées de conservation des designs et des demandes
 - [ ] Fournisseur d'emails et hébergement de production
