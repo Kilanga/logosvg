@@ -1,0 +1,7 @@
+<%# A yes/no the shop answers about itself. A full-width row rather than a bare
+    checkbox: these decide what a client sees, so they deserve the space. %>
+<label class="flex min-h-touch cursor-pointer items-center gap-3 rounded-xs border border-line px-3
+              has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+  <%= form.check_box field, class: "size-4 rounded-xs border-line text-emulsion" %>
+  <span class="text-sm font-medium"><%= t("activerecord.attributes.printer.#{field}") %></span>
+</label>

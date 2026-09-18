@@ -1,0 +1,86 @@
+<%# Directory filters. Every one is a plain form field inside a GET form, so the
+    panel works with JavaScript disabled; the Stimulus controller only removes
+    the need to press the button. %>
+<aside data-controller="directory">
+  <%= form_with url: printers_path, method: :get, data: { directory_target: "form" },
+        class: "space-y-6" do |form| %>
+
+    <div>
+      <%= form.label :q, t(".search"), class: "label-rule block" %>
+      <%= form.search_field :q, value: params[:q],
+            placeholder: t(".search_placeholder"),
+            class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3 text-base" %>
+    </div>
+
+    <%# Location comes from the browser, never from an address sent to a
+        geocoding service. %>
+    <div class="border-t border-line pt-6">
+      <p class="label-rule"><%= t(".area") %></p>
+
+      <%= form.hidden_field :latitude, value: params[:latitude], data: { directory_target: "latitude" } %>
+      <%= form.hidden_field :longitude, value: params[:longitude], data: { directory_target: "longitude" } %>
+
+      <% if @directory.near? %>
+        <div class="mt-3 flex items-center justify-between gap-2 rounded-xs bg-success-bg px-3 py-2 text-sm text-success">
+          <span><%= t(".located") %></span>
+          <button type="button" class="underline underline-offset-2"
+                  data-action="directory#clearLocation"><%= t(".clear_location") %></button>
+        </div>
+
+        <%= form.label :radius, t(".radius"), class: "label-rule mt-4 block" %>
+        <%= form.select :radius,
+              PrinterDirectory::RADII_KM.map { |km| [ t(".radius_option", km: km), km ] },
+              { selected: @directory.radius_km },
+              class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3",
+              data: { action: "directory#submit" } %>
+      <% else %>
+        <button type="button" class="btn btn-secondary mt-3 w-full text-sm"
+                data-directory-target="locateButton"
+                data-action="directory#locate"><%= t(".locate") %></button>
+
+        <%= form.label :department, t(".department"), class: "label-rule mt-4 block" %>
+        <%= form.text_field :department, value: params[:department], inputmode: "numeric",
+              maxlength: 2, placeholder: t(".department_placeholder"),
+              class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+      <% end %>
+    </div>
+
+    <fieldset class="border-t border-line pt-6">
+      <legend class="label-rule"><%= t(".techniques") %></legend>
+      <div class="mt-3 space-y-2">
+        <% PrinterTechnique.techniques.keys.each do |technique| %>
+          <label class="flex items-center gap-2.5 text-sm">
+            <%= check_box_tag "techniques[]", technique,
+                  Array(params[:techniques]).include?(technique),
+                  id: "technique_#{technique}",
+                  class: "size-4 rounded-xs border-line text-emulsion",
+                  data: { action: "directory#submit" } %>
+            <%= t("enums.printer_technique.technique.#{technique}") %>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <fieldset class="border-t border-line pt-6">
+      <legend class="label-rule"><%= t(".services") %></legend>
+      <div class="mt-3 space-y-2">
+        <% PrinterDirectory::BOOLEAN_FILTERS.each do |name| %>
+          <label class="flex items-center gap-2.5 text-sm">
+            <%= check_box_tag name, "1", params[name].present?, id: "filter_#{name}",
+                  class: "size-4 rounded-xs border-line text-emulsion",
+                  data: { action: "directory#submit" } %>
+            <%= t(".filters.#{name}") %>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <div class="border-t border-line pt-6">
+      <%= form.submit t(".apply"), class: "btn btn-primary w-full text-sm" %>
+      <% if params.values_at(:q, :department, :latitude, :techniques, *PrinterDirectory::BOOLEAN_FILTERS).any?(&:present?) %>
+        <%= link_to t(".reset"), printers_path,
+              class: "mt-3 block text-center text-sm underline underline-offset-4" %>
+      <% end %>
+    </div>
+  <% end %>
+</aside>

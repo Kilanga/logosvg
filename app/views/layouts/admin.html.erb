@@ -1,10 +1,14 @@
-<%# Administration. Step 9 adds validations, disputes, refunds, review levels,
-    blocked terms and the generator service status. %>
+<%# Administration. Step 9 adds disputes, refunds, review levels, blocked terms
+    and the generator service status. %>
 <% content_for :space_name, t("nav.admin") %>
 <% content_for :space_nav do %>
   <%= render "layouts/space_link",
         label: t("nav.dashboard"),
         path: admin_dashboard_path,
         current: current_page?(admin_dashboard_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.printers"),
+        path: admin_printers_path,
+        current: current_page?(admin_printers_path) %>
 <% end %>
 <%= render template: "layouts/console" %>

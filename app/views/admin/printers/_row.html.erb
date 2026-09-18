@@ -1,0 +1,31 @@
+<%# One listing awaiting, or having received, a decision. The public page opens
+    in a new tab: an administrator reviews it beside the queue, not instead of
+    it. %>
+<li class="flex flex-wrap items-center gap-x-6 gap-y-3 py-4">
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap items-baseline gap-3">
+      <span class="font-display text-lg font-bold uppercase"><%= printer.name %></span>
+      <%= printer_status_pill(printer) %>
+    </div>
+    <p class="mt-1 text-sm text-muted">
+      <%= [ printer.postal_code, printer.city ].compact_blank.join(" ") %>
+      · <%= printer.user.email_address %>
+      · <%= t(".techniques", count: printer.techniques.size) %>
+    </p>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2">
+    <%= link_to t(".review"), printer_path(printer), target: "_blank", rel: "noopener",
+          class: "btn btn-secondary text-sm" %>
+
+    <% if decidable || printer.suspended? %>
+      <%= button_to t(".publish"), admin_printer_path(printer), method: :patch,
+            params: { status: "published" }, class: "btn btn-primary text-sm" %>
+    <% end %>
+
+    <% if printer.published? %>
+      <%= button_to t(".suspend"), admin_printer_path(printer), method: :patch,
+            params: { status: "suspended" }, class: "btn btn-secondary text-sm" %>
+    <% end %>
+  </div>
+</li>

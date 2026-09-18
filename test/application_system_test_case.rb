@@ -6,6 +6,11 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # on CI runners alike.
   parallelize(workers: 1)
 
+  # Turbo turns every navigation into a fetch, and this machine is slow. Two
+  # seconds is enough on a developer laptop and not on a CI runner or an old
+  # dual-core; waiting longer costs nothing when the assertion passes.
+  Capybara.default_max_wait_time = 5
+
   driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 900 ] do |options|
     # Chrome runs inside WSL here and inside a container on CI. Neither offers a
     # usable sandbox or a large enough /dev/shm.
@@ -22,7 +27,9 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # rendered, not as it is written. Matching a translation case-insensitively
   # asserts that the right words are on screen without freezing a styling
   # decision into the test.
-  def displayed(key, **options)
-    /#{Regexp.escape(I18n.t(key, **options))}/i
-  end
+  def displayed(key, **options) = shown(I18n.t(key, **options))
+
+  # Same, for a literal that is not a translation — a shop name read from a
+  # fixture, say, which the display face also uppercases.
+  def shown(text) = /#{Regexp.escape(text)}/i
 end

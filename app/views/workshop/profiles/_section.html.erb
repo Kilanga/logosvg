@@ -1,0 +1,14 @@
+<%# One numbered section of the listing form. Numbered like a technical sheet:
+    the form is long, and a printer needs to know where they are in it. %>
+<section>
+  <header class="flex items-baseline gap-4 border-b border-line pb-3">
+    <span class="font-display text-xl font-bold text-emulsion"><%= number %></span>
+    <h2 class="font-display text-xl font-bold uppercase"><%= title %></h2>
+  </header>
+
+  <% if local_assigns[:hint].present? %>
+    <p class="mt-3 text-sm text-muted"><%= hint %></p>
+  <% end %>
+
+  <div class="mt-6 space-y-5"><%= yield %></div>
+</section>

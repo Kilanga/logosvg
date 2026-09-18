@@ -20,7 +20,11 @@
         <% end %>
 
         <nav class="ms-auto flex items-center gap-x-5 gap-y-2" aria-label="<%= t("layout.main_navigation") %>">
-          <%# The directory and the designer list arrive with steps 2 and 7. %>
+          <%= link_to t("nav.printers"), printers_path,
+                class: class_names("text-sm font-medium underline-offset-4 hover:text-emulsion",
+                                   current_page?(printers_path) ? "text-emulsion underline" : "") %>
+
+          <%# The designer list arrives with step 7. %>
           <% if Current.user %>
             <%= link_to t("nav.my_space"), space_path_for(Current.user), class: "btn btn-secondary text-sm" %>
           <% else %>

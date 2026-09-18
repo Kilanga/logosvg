@@ -1,0 +1,191 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-4xl">
+  <div class="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-5">
+    <p class="flex items-center gap-3">
+      <%= printer_status_pill(@printer) %>
+      <span class="text-sm text-muted"><%= t(".status_hint.#{@printer.new_record? ? 'draft' : @printer.status}") %></span>
+    </p>
+
+    <% if @printer.persisted? %>
+      <%= link_to t(".preview"), printer_path(@printer), class: "btn btn-secondary text-sm" %>
+    <% end %>
+  </div>
+
+  <%= form_with model: @printer, url: workshop_profile_path, method: :patch, class: "mt-8 space-y-10" do |form| %>
+    <% if @printer.errors.any? %>
+      <div class="border-l-2 border-warning bg-warning-bg px-4 py-3">
+        <p class="font-semibold text-warning">
+          <%= t("errors.template.header", count: @printer.errors.count) %>
+        </p>
+        <p class="mt-1 text-sm text-warning"><%= t("errors.template.body") %></p>
+      </div>
+    <% end %>
+
+    <%= render "section", number: "01", title: t(".sections.identity") do %>
+      <%= render "shared/field", form: form, field: :name,
+            label: t("activerecord.attributes.printer.name"), options: { required: true } %>
+
+      <div>
+        <%= form.label :description, t("activerecord.attributes.printer.description"), class: "label-rule block" %>
+        <%= form.text_area :description, rows: 5,
+              class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+        <p class="mt-1.5 text-sm text-muted"><%= t(".description_hint") %></p>
+      </div>
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <%= form.label :logo, t("activerecord.attributes.printer.logo"), class: "label-rule block" %>
+          <%= form.file_field :logo, accept: "image/png,image/jpeg,image/webp", class: "mt-2 block w-full text-sm" %>
+        </div>
+        <div>
+          <%= form.label :photos, t("activerecord.attributes.printer.photos"), class: "label-rule block" %>
+          <%= form.file_field :photos, multiple: true, accept: "image/png,image/jpeg,image/webp",
+                class: "mt-2 block w-full text-sm" %>
+        </div>
+      </div>
+    <% end %>
+
+    <%= render "section", number: "02", title: t(".sections.where"), hint: t(".where_hint") do %>
+      <%= render "shared/field", form: form, field: :address,
+            label: t("activerecord.attributes.printer.address") %>
+
+      <div class="grid gap-5 sm:grid-cols-[10rem_minmax(0,1fr)]">
+        <%= render "shared/field", form: form, field: :postal_code,
+              label: t("activerecord.attributes.printer.postal_code"),
+              options: { inputmode: "numeric", maxlength: 5 } %>
+        <%= render "shared/field", form: form, field: :city,
+              label: t("activerecord.attributes.printer.city") %>
+      </div>
+    <% end %>
+
+    <%= render "section", number: "03", title: t(".sections.contact"), hint: t(".orders_email_hint") do %>
+      <%= render "shared/field", form: form, field: :orders_email,
+            label: t("activerecord.attributes.printer.orders_email"),
+            kind: :email_field, options: { required: true } %>
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        <%= render "shared/field", form: form, field: :phone,
+              label: t("activerecord.attributes.printer.phone"), kind: :telephone_field %>
+        <%= render "shared/field", form: form, field: :website,
+              label: t("activerecord.attributes.printer.website"), kind: :url_field %>
+      </div>
+    <% end %>
+
+    <%= render "section", number: "04", title: t(".sections.techniques"), hint: t(".techniques_hint") do %>
+      <%= form.fields_for :techniques do |technique_form| %>
+        <%= render "technique_fields", form: technique_form %>
+      <% end %>
+    <% end %>
+
+    <%= render "section", number: "05", title: t(".sections.printing") do %>
+      <fieldset>
+        <legend class="label-rule"><%= t("activerecord.attributes.printer.placements") %></legend>
+        <div class="mt-3 grid gap-2 sm:grid-cols-2">
+          <% Printer::PLACEMENTS.each do |placement| %>
+            <label class="flex items-center gap-2.5 text-sm">
+              <%= check_box_tag "printer[placements][]", placement,
+                    @printer.placements.include?(placement), id: "placement_#{placement}",
+                    class: "size-4 rounded-xs border-line text-emulsion" %>
+              <%= t("enums.printer.placements.#{placement}") %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        <%= render "shared/field", form: form, field: :max_print_width_cm,
+              label: t("activerecord.attributes.printer.max_print_width_cm"),
+              kind: :number_field, options: { min: 1 } %>
+        <%= render "shared/field", form: form, field: :max_print_height_cm,
+              label: t("activerecord.attributes.printer.max_print_height_cm"),
+              kind: :number_field, options: { min: 1 } %>
+      </div>
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        <%= render "shared/field", form: form, field: :min_order_qty,
+              label: t("activerecord.attributes.printer.min_order_qty"),
+              kind: :number_field, options: { min: 1 } %>
+        <%= render "shared/field", form: form, field: :price_note,
+              label: t("activerecord.attributes.printer.price_note") %>
+      </div>
+    <% end %>
+
+    <%= render "section", number: "06", title: t(".sections.textile") do %>
+      <div class="space-y-2">
+        <%= render "toggle", form: form, field: :provides_textile %>
+        <%= render "toggle", form: form, field: :accepts_client_textile %>
+      </div>
+
+      <%= render "shared/field", form: form, field: :textile_brands_list,
+            label: t("activerecord.attributes.printer.textile_brands"),
+            hint: t(".brands_hint") %>
+
+      <div>
+        <%= form.label :textile_label, t("activerecord.attributes.printer.textile_label"), class: "label-rule block" %>
+        <%= form.select :textile_label,
+              Printer.textile_labels.keys.map { |l| [ t("enums.printer.textile_label.#{l}"), l ] },
+              {}, class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+      </div>
+    <% end %>
+
+    <%= render "section", number: "07", title: t(".sections.delivery") do %>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <%= render "shared/field", form: form, field: :response_time_hours,
+              label: t("activerecord.attributes.printer.response_time_hours"),
+              kind: :number_field, options: { min: 1 } %>
+        <%= render "shared/field", form: form, field: :standard_lead_days,
+              label: t("activerecord.attributes.printer.standard_lead_days"),
+              kind: :number_field, options: { min: 1 } %>
+      </div>
+
+      <div class="space-y-2">
+        <%= render "toggle", form: form, field: :express_available %>
+        <%= render "toggle", form: form, field: :pickup %>
+        <%= render "toggle", form: form, field: :ships %>
+      </div>
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        <%= render "shared/field", form: form, field: :express_lead_hours,
+              label: t("activerecord.attributes.printer.express_lead_hours"),
+              kind: :number_field, options: { min: 1 } %>
+        <%= render "shared/field", form: form, field: :shipping_lead,
+              label: t("activerecord.attributes.printer.shipping_lead"),
+              kind: :number_field, options: { min: 1 } %>
+      </div>
+
+      <fieldset>
+        <legend class="label-rule"><%= t("activerecord.attributes.printer.shipping_zones") %></legend>
+        <div class="mt-3 flex flex-wrap gap-4">
+          <% Printer::SHIPPING_ZONES.each do |zone| %>
+            <label class="flex items-center gap-2.5 text-sm">
+              <%= check_box_tag "printer[shipping_zones][]", zone,
+                    @printer.shipping_zones.include?(zone), id: "zone_#{zone}",
+                    class: "size-4 rounded-xs border-line text-emulsion" %>
+              <%= t("enums.printer.shipping_zones.#{zone}") %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <%= render "shared/field", form: form, field: :shipping_price_note,
+            label: t("activerecord.attributes.printer.shipping_price_note") %>
+    <% end %>
+
+    <div class="flex flex-wrap gap-3 border-t border-line pt-8">
+      <%= form.submit t(".save"), class: "btn btn-primary" %>
+    </div>
+  <% end %>
+
+  <% if @printer.persisted? && @printer.draft? %>
+    <div class="panel mt-8 p-6">
+      <p class="label-rule flex items-center gap-2.5 text-emulsion">
+        <%= registration_mark %><%= t(".submit_title") %>
+      </p>
+      <p class="mt-3 text-muted"><%= t(".submit_body") %></p>
+      <%= button_to t(".submit_action"), submit_workshop_profile_path,
+            class: "btn btn-primary mt-5" %>
+    </div>
+  <% end %>
+</div>

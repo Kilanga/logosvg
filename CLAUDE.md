@@ -329,8 +329,8 @@ Règles côté Rails :
 | Étape | Contenu                       | État                          |
 | ----- | ----------------------------- | ----------------------------- |
 | 0     | Socle                         | terminée                       |
-| 1     | Comptes                       | **terminée**, en attente de validation |
-| 2     | Imprimeurs                    | à faire                        |
+| 1     | Comptes                       | terminée                       |
+| 2     | Imprimeurs                    | **terminée**, en attente de validation |
 | 3     | Designs                       | à faire                        |
 | 4     | Demandes d'impression         | à faire                        |
 | 5     | Espace client                 | à faire                        |
@@ -418,6 +418,23 @@ arguments de job de Solid Queue, qui part alors en boucle de redémarrage sous
 expanse les `$` avant WSL : `$HOME` devient `C:\Users\ARNAU`, les antislashs
 sautent, et Bundler reçoit un chemin absurde contenant `:`. Toujours écrire un
 `.sh` et l'exécuter.
+
+**La CSP a besoin d'un nonce, sans quoi elle coupe tout le JavaScript.**
+L'importmap et Turbo sont servis en balises `<script>` en ligne, que
+`script-src 'self'` bloque. Sans
+`content_security_policy_nonce_generator`, l'application perd Stimulus et Turbo
+**pendant que toutes les pages continuent de s'afficher** — la panne la plus
+facile à ne pas voir. Configuré dans `config/initializers/content_security_policy.rb`.
+
+**`Printer` est le modèle, `Workshop` est l'espace.** Une classe de modèle et un
+module d'espace de noms de contrôleurs ne peuvent pas porter le même nom : Ruby
+lève `TypeError: Printer is not a module`. D'où `Workshop::ProfilesController`
+pour `/atelier`, alors que le rôle sur `User` reste `printer`.
+
+**Les tests système attendent, ils ne supposent pas.** Un helper de connexion
+qui rend la main avant la fin de la redirection fait échouer le test bien plus
+loin, sur un symptôme sans rapport. Terminer par une assertion qui attend
+(`assert_no_current_path new_session_path`).
 
 **Le virtualenv du microservice est sur Python 3.13, pas 3.14.** `vtracer`
 publie une roue `cp314` qui s'importe sans broncher puis **segfault au premier

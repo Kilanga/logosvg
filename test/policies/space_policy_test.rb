@@ -6,7 +6,7 @@ require "test_helper"
 class SpacePolicyTest < ActiveSupport::TestCase
   SPACES = {
     ClientSpacePolicy => :client,
-    PrinterSpacePolicy => :printer,
+    WorkshopSpacePolicy => :printer,
     DesignerSpacePolicy => :designer,
     AdminSpacePolicy => :admin
   }.freeze
@@ -29,7 +29,7 @@ class SpacePolicyTest < ActiveSupport::TestCase
 
   test "an administrator does not roam the other spaces" do
     assert_not ClientSpacePolicy.new(users(:admin), :space).show?
-    assert_not PrinterSpacePolicy.new(users(:admin), :space).show?
+    assert_not WorkshopSpacePolicy.new(users(:admin), :space).show?
     assert_not DesignerSpacePolicy.new(users(:admin), :space).show?
   end
 

@@ -18,7 +18,7 @@ class AccountsTest < ApplicationSystemTestCase
     click_on I18n.t("registrations.new.submit")
 
     assert_current_path "/atelier"
-    assert_selector "h1", text: displayed("printer.dashboards.show.heading", name: "Bruno")
+    assert_selector "h1", text: displayed("workshop.dashboards.show.heading", name: "Bruno")
   end
 
   test "a client signs in, sees their space, and signs out" do

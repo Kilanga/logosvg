@@ -20,6 +20,42 @@ printer:
   role: printer
   terms_accepted_at: <%= 6.months.ago.to_fs(:db) %>
 
+printer_lyon:
+  email_address: lyon@example.invalid
+  password_digest: <%= digest %>
+  first_name: Nora
+  last_name: Belkacem
+  city: Lyon
+  role: printer
+  terms_accepted_at: <%= 4.months.ago.to_fs(:db) %>
+
+printer_nantes:
+  email_address: nantes@example.invalid
+  password_digest: <%= digest %>
+  first_name: Hugo
+  last_name: Salaun
+  city: Nantes
+  role: printer
+  terms_accepted_at: <%= 5.months.ago.to_fs(:db) %>
+
+printer_draft:
+  email_address: brouillon@example.invalid
+  password_digest: <%= digest %>
+  first_name: Léa
+  last_name: Vasseur
+  city: Tours
+  role: printer
+  terms_accepted_at: <%= 1.month.ago.to_fs(:db) %>
+
+printer_waiting:
+  email_address: attente@example.invalid
+  password_digest: <%= digest %>
+  first_name: Marc
+  last_name: Ferrand
+  city: Lille
+  role: printer
+  terms_accepted_at: <%= 2.weeks.ago.to_fs(:db) %>
+
 designer:
   email_address: graphiste@example.invalid
   password_digest: <%= digest %>

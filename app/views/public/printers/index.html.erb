@@ -1,0 +1,55 @@
+<% content_for :title, t(".title") %>
+
+<div class="mx-auto w-full max-w-[110rem] px-5 py-10 lg:py-14">
+  <header class="border-b border-line pb-6">
+    <p class="label-rule text-emulsion"><%= t(".eyebrow") %></p>
+    <h1 class="mt-3 text-3xl font-bold uppercase lg:text-4xl"><%= t(".title") %></h1>
+    <p class="mt-3 max-w-xl text-muted"><%= t(".subtitle") %></p>
+  </header>
+
+  <div class="mt-8 grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,1fr)_22rem]">
+    <%= render "filters", directory: @directory %>
+
+    <section aria-label="<%= t(".results_label") %>">
+      <p class="label-rule border-b border-line pb-3">
+        <%= t(".count", count: @directory.printers.size) %>
+        <% if @directory.near? %>
+          · <%= t(".within", radius: @directory.radius_km) %>
+        <% end %>
+      </p>
+
+      <% if @directory.any? %>
+        <ul class="divide-y divide-line">
+          <% @directory.printers.each do |printer| %>
+            <%= render "card", printer: printer %>
+          <% end %>
+        </ul>
+      <% else %>
+        <div class="panel mt-6 p-8 text-center">
+          <p class="label-rule flex items-center justify-center gap-2.5 text-emulsion">
+            <%= registration_mark %>
+            <%= t("states.empty.title") %>
+          </p>
+          <p class="mt-4 text-muted"><%= t(".empty") %></p>
+        </div>
+      <% end %>
+    </section>
+
+    <%# The map repeats the list rather than replacing it: a directory must stay
+        usable without JavaScript, and on a phone the list is what matters. %>
+    <aside class="hidden xl:block" aria-label="<%= t(".map_label") %>">
+      <div class="sticky top-6">
+        <div class="panel overflow-hidden">
+          <%= tag.div class: "screen-tint h-[32rem] w-full",
+                data: {
+                  controller: "map",
+                  map_points_value: map_points(@directory.located).to_json,
+                  map_center_value: @directory.center&.to_json,
+                  attribution: t(".osm_attribution")
+                } %>
+        </div>
+        <p class="mt-2 text-xs text-muted"><%= t(".map_note") %></p>
+      </div>
+    </aside>
+  </div>
+</div>
