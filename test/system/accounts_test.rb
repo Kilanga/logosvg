@@ -10,7 +10,7 @@ class AccountsTest < ApplicationSystemTestCase
 
     fill_in I18n.t("activerecord.attributes.user.first_name"), with: "Bruno"
     fill_in I18n.t("activerecord.attributes.user.last_name"), with: "Leroy"
-    fill_in I18n.t("activerecord.attributes.user.email"), with: "nouvel-atelier@example.invalid"
+    fill_in I18n.t("activerecord.attributes.user.email_address"), with: "nouvel-atelier@example.invalid"
     fill_in I18n.t("activerecord.attributes.user.password"), with: "motdepasse-test"
     fill_in I18n.t("activerecord.attributes.user.password_confirmation"), with: "motdepasse-test"
     check I18n.t("registrations.new.terms")
@@ -25,7 +25,7 @@ class AccountsTest < ApplicationSystemTestCase
     visit root_path
     click_on I18n.t("nav.sign_in")
 
-    fill_in I18n.t("activerecord.attributes.user.email"), with: users(:client).email
+    fill_in I18n.t("activerecord.attributes.user.email_address"), with: users(:client).email_address
     fill_in I18n.t("activerecord.attributes.user.password"), with: "motdepasse-test"
     click_on I18n.t("sessions.new.submit")
 
@@ -51,7 +51,7 @@ class AccountsTest < ApplicationSystemTestCase
   test "wrong credentials keep the visitor on the form, without saying why" do
     visit new_session_path
 
-    fill_in I18n.t("activerecord.attributes.user.email"), with: users(:client).email
+    fill_in I18n.t("activerecord.attributes.user.email_address"), with: users(:client).email_address
     fill_in I18n.t("activerecord.attributes.user.password"), with: "pas-le-bon"
     click_on I18n.t("sessions.new.submit")
 
@@ -62,7 +62,7 @@ class AccountsTest < ApplicationSystemTestCase
   private
     def sign_in_through_form(user)
       visit new_session_path
-      fill_in I18n.t("activerecord.attributes.user.email"), with: user.email
+      fill_in I18n.t("activerecord.attributes.user.email_address"), with: user.email_address
       fill_in I18n.t("activerecord.attributes.user.password"), with: "motdepasse-test"
       click_on I18n.t("sessions.new.submit")
     end

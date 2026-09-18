@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_082142) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_18_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -27,7 +27,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_082142) do
     t.string "city"
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
-    t.string "email", null: false
+    t.string "email_address", null: false
     t.string "first_name"
     t.string "last_name"
     t.string "password_digest", null: false
@@ -36,7 +36,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_082142) do
     t.datetime "terms_accepted_at"
     t.datetime "updated_at", null: false
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
-    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["role"], name: "index_users_on_role"
   end
 

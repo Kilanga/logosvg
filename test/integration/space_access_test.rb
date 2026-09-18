@@ -59,7 +59,7 @@ class SpaceAccessTest < ActionDispatch::IntegrationTest
 
   test "signing in lands on the space of the role" do
     SPACES.each do |role, path|
-      post session_path, params: { email: users(role).email, password: "motdepasse-test" }
+      post session_path, params: { email_address: users(role).email_address, password: "motdepasse-test" }
 
       assert_redirected_to path
 

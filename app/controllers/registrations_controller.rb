@@ -36,7 +36,7 @@ class RegistrationsController < ApplicationController
 
   private
     def registration_params
-      params.expect(user: [ :email, :password, :password_confirmation,
+      params.expect(user: [ :email_address, :password, :password_confirmation,
                             :first_name, :last_name, :phone, :city, :role ])
             .then { |attributes| attributes.merge(role: requested_role(attributes[:role])) }
     end

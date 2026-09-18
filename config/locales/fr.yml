@@ -205,7 +205,7 @@ fr:
       user: "Compte"
     attributes:
       user:
-        email: "Adresse email"
+        email_address: "Adresse email"
         password: "Mot de passe"
         password_confirmation: "Confirmation du mot de passe"
         first_name: "Prénom"

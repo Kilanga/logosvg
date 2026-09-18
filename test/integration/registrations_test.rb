@@ -59,7 +59,7 @@ class RegistrationsTest < ActionDispatch::IntegrationTest
 
   test "an address already registered stops the account being created" do
     assert_no_difference "User.count" do
-      post registration_path, params: valid_params(email: users(:client).email)
+      post registration_path, params: valid_params(email_address: users(:client).email_address)
     end
 
     assert_response :unprocessable_entity
@@ -77,7 +77,7 @@ class RegistrationsTest < ActionDispatch::IntegrationTest
     def valid_params(**overrides)
       {
         user: {
-          email: "nouvelle@example.invalid",
+          email_address: "nouvelle@example.invalid",
           password: "motdepasse-test",
           password_confirmation: "motdepasse-test",
           first_name: "Nouvelle",
