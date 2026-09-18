@@ -13,21 +13,30 @@
     <a class="skip-link" href="#contenu"><%= t("layout.skip_to_content") %></a>
 
     <div class="lg:flex lg:min-h-dvh">
-      <div class="bg-ink text-paper lg:w-60 lg:flex-none">
-        <div class="flex items-center gap-2.5 px-5 py-4 lg:py-6">
+      <div class="flex flex-col bg-ink text-paper lg:w-60 lg:flex-none">
+        <%= link_to root_path, class: "flex items-center gap-2.5 px-5 py-4 lg:py-6" do %>
           <%= registration_mark css_class: "text-paper/60" %>
           <span class="font-display text-base font-bold uppercase tracking-[0.06em]">
             <%= yield(:space_name).presence || platform_name %>
           </span>
-        </div>
+        <% end %>
 
         <%# Horizontal and scrollable on small screens, stacked from lg up. %>
-        <nav class="overflow-x-auto border-t border-paper/15 lg:border-t-0"
+        <nav class="overflow-x-auto border-t border-paper/15 lg:flex-1 lg:border-t-0"
              aria-label="<%= t("layout.main_navigation") %>">
           <ul class="flex gap-1 px-3 pb-3 lg:flex-col lg:gap-0.5 lg:px-2">
             <%= yield :space_nav %>
           </ul>
         </nav>
+
+        <% if Current.user %>
+          <div class="border-t border-paper/15 px-5 py-4">
+            <p class="truncate text-sm font-medium"><%= Current.user.full_name %></p>
+            <p class="label-rule mt-0.5 text-paper/50"><%= t("roles.#{Current.user.role}") %></p>
+            <%= button_to t("nav.sign_out"), session_path, method: :delete,
+                  class: "mt-3 text-sm text-paper/70 underline underline-offset-4 hover:text-paper" %>
+          </div>
+        <% end %>
       </div>
 
       <div class="min-w-0 flex-1">

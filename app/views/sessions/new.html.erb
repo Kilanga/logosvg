@@ -1,0 +1,30 @@
+<% content_for :title, t(".title") %>
+
+<%= render layout: "shared/auth_frame",
+      locals: { eyebrow: t(".eyebrow"), title: t(".title") } do %>
+  <%= form_with url: session_path, class: "space-y-5" do |form| %>
+    <%= render "shared/field",
+          form: form, field: :email, label: t("activerecord.attributes.user.email"),
+          kind: :email_field,
+          options: { required: true, autofocus: true, autocomplete: "username" } %>
+
+    <%= render "shared/field",
+          form: form, field: :password, label: t("activerecord.attributes.user.password"),
+          kind: :password_field,
+          options: { required: true, autocomplete: "current-password" } %>
+
+    <%= form.submit t("sessions.new.submit"), class: "btn btn-primary w-full" %>
+  <% end %>
+
+  <div class="mt-8 space-y-2 border-t border-line pt-6 text-sm">
+    <p>
+      <%= link_to t("sessions.new.forgot_password"), new_password_path,
+            class: "underline underline-offset-4 hover:text-emulsion" %>
+    </p>
+    <p class="text-muted">
+      <%= t("sessions.new.no_account") %>
+      <%= link_to t("nav.sign_up"), new_registration_path,
+            class: "font-medium text-ink underline underline-offset-4 hover:text-emulsion" %>
+    </p>
+  </div>
+<% end %>

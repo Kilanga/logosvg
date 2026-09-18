@@ -1,0 +1,18 @@
+<% content_for :title, t(".title") %>
+
+<%= render layout: "shared/auth_frame",
+      locals: { eyebrow: t(".eyebrow"), title: t(".title"), subtitle: t(".subtitle") } do %>
+  <%= form_with url: passwords_path, class: "space-y-5" do |form| %>
+    <%= render "shared/field",
+          form: form, field: :email, label: t("activerecord.attributes.user.email"),
+          kind: :email_field,
+          options: { required: true, autofocus: true, autocomplete: "username" } %>
+
+    <%= form.submit t("passwords.new.submit"), class: "btn btn-primary w-full" %>
+  <% end %>
+
+  <p class="mt-8 border-t border-line pt-6 text-sm text-muted">
+    <%= link_to t("passwords.new.back"), new_session_path,
+          class: "font-medium text-ink underline underline-offset-4 hover:text-emulsion" %>
+  </p>
+<% end %>

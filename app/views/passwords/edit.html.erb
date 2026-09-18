@@ -1,0 +1,18 @@
+<% content_for :title, t(".title") %>
+
+<%= render layout: "shared/auth_frame",
+      locals: { eyebrow: t(".eyebrow"), title: t(".title"), subtitle: t(".subtitle") } do %>
+  <%= form_with url: password_path(params[:token]), method: :patch, class: "space-y-5" do |form| %>
+    <%= render "shared/field",
+          form: form, field: :password, label: t("passwords.edit.new_password"),
+          kind: :password_field,
+          options: { required: true, autofocus: true, autocomplete: "new-password" } %>
+
+    <%= render "shared/field",
+          form: form, field: :password_confirmation, label: t("activerecord.attributes.user.password_confirmation"),
+          kind: :password_field,
+          options: { required: true, autocomplete: "new-password" } %>
+
+    <%= form.submit t("passwords.edit.submit"), class: "btn btn-primary w-full" %>
+  <% end %>
+<% end %>

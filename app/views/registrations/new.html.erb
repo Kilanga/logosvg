@@ -1,0 +1,85 @@
+<% content_for :title, t(".title") %>
+
+<%= render layout: "shared/auth_frame",
+      locals: { eyebrow: t(".eyebrow"), title: t(".title"), subtitle: t(".subtitle") } do %>
+  <%= form_with model: @user, url: registration_path, class: "space-y-8" do |form| %>
+    <%# Role first: it decides what the rest of the account is for. Presented as
+        three choices rather than a dropdown, because each one is a different
+        job. `admin` is never among them. %>
+    <fieldset>
+      <legend class="label-rule"><%= t("registrations.new.role_legend") %></legend>
+
+      <div class="mt-3 grid gap-2 sm:grid-cols-3">
+        <% User::SELF_ASSIGNABLE_ROLES.each do |role| %>
+          <label class="group flex cursor-pointer flex-col gap-1 rounded-xs border border-line p-3
+                        has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5
+                        has-[:focus-visible]:outline has-[:focus-visible]:outline-2
+                        has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-emulsion">
+            <%= form.radio_button :role, role, class: "sr-only" %>
+            <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
+              <%= t("roles.#{role}") %>
+            </span>
+            <span class="text-sm text-muted"><%= t("registrations.role_hints.#{role}") %></span>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <%= render "shared/field", form: form, field: :first_name,
+            label: t("activerecord.attributes.user.first_name"),
+            options: { required: true, autofocus: true, autocomplete: "given-name" } %>
+
+      <%= render "shared/field", form: form, field: :last_name,
+            label: t("activerecord.attributes.user.last_name"),
+            options: { required: true, autocomplete: "family-name" } %>
+    </div>
+
+    <%= render "shared/field", form: form, field: :email,
+          label: t("activerecord.attributes.user.email"), kind: :email_field,
+          options: { required: true, autocomplete: "email" } %>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <%= render "shared/field", form: form, field: :phone,
+            label: t("activerecord.attributes.user.phone"), kind: :telephone_field,
+            options: { autocomplete: "tel" }, hint: t("registrations.new.phone_hint") %>
+
+      <%= render "shared/field", form: form, field: :city,
+            label: t("activerecord.attributes.user.city"),
+            options: { autocomplete: "address-level2" } %>
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <%= render "shared/field", form: form, field: :password,
+            label: t("activerecord.attributes.user.password"), kind: :password_field,
+            options: { required: true, autocomplete: "new-password" },
+            hint: t("registrations.new.password_hint") %>
+
+      <%= render "shared/field", form: form, field: :password_confirmation,
+            label: t("activerecord.attributes.user.password_confirmation"), kind: :password_field,
+            options: { required: true, autocomplete: "new-password" } %>
+    </div>
+
+    <%= render "shared/turnstile" %>
+
+    <div class="border-t border-line pt-6">
+      <label class="flex items-start gap-3 text-sm">
+        <%= check_box_tag "user[terms]", "1", @user.terms_accepted_at.present?,
+              required: true, class: "mt-0.5 size-5 flex-none rounded-xs border-line text-emulsion" %>
+        <span><%= t("registrations.new.terms") %></span>
+      </label>
+
+      <% if @user.errors.include?(:terms_accepted_at) %>
+        <p class="mt-2 text-sm text-warning"><%= t("registrations.new.terms_required") %></p>
+      <% end %>
+
+      <%= form.submit t("registrations.new.submit"), class: "btn btn-primary mt-6 w-full" %>
+    </div>
+  <% end %>
+
+  <p class="mt-8 border-t border-line pt-6 text-sm text-muted">
+    <%= t("registrations.new.has_account") %>
+    <%= link_to t("nav.sign_in"), new_session_path,
+          class: "font-medium text-ink underline underline-offset-4 hover:text-emulsion" %>
+  </p>
+<% end %>

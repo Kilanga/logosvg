@@ -19,9 +19,22 @@
           <span class="font-display text-xl font-bold uppercase tracking-[0.06em]"><%= platform_name %></span>
         <% end %>
 
-        <nav class="ms-auto flex items-center gap-x-6 gap-y-2" aria-label="<%= t("layout.main_navigation") %>">
-          <%# Directory and account links arrive with steps 1, 2 and 7. %>
-          <%= link_to t("nav.sign_in"), "#", class: "btn btn-secondary text-sm" %>
+        <nav class="ms-auto flex items-center gap-x-5 gap-y-2" aria-label="<%= t("layout.main_navigation") %>">
+          <%# The directory and the designer list arrive with steps 2 and 7. %>
+          <% if Current.user %>
+            <%= link_to t("nav.my_space"), space_path_for(Current.user), class: "btn btn-secondary text-sm" %>
+          <% else %>
+            <%# Neither link is offered on the page it leads to: it would point
+                at the screen already open, and sit beside a submit button
+                carrying the same words. %>
+            <% unless current_page?(new_session_path) %>
+              <%= link_to t("nav.sign_in"), new_session_path,
+                    class: "text-sm font-medium underline underline-offset-4 hover:text-emulsion" %>
+            <% end %>
+            <% unless current_page?(new_registration_path) %>
+              <%= link_to t("nav.sign_up"), new_registration_path, class: "btn btn-primary text-sm" %>
+            <% end %>
+          <% end %>
         </nav>
       </div>
     </header>

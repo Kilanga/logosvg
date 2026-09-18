@@ -1,0 +1,20 @@
+<%# Placeholder for a space whose screens arrive in a later step. It says what
+    is coming rather than showing an empty page, so the space is legible from
+    the first sign-in. Each entry names the step that will fill it. %>
+<div class="panel max-w-2xl p-6 lg:p-8">
+  <p class="label-rule flex items-center gap-2.5 text-emulsion">
+    <%= registration_mark %>
+    <%= t("states.coming.label") %>
+  </p>
+
+  <p class="mt-4 text-lg text-muted"><%= body %></p>
+
+  <ul class="mt-6 divide-y divide-line border-t border-line">
+    <% items.each do |item| %>
+      <li class="flex items-baseline gap-4 py-3">
+        <span class="font-display text-sm font-bold text-emulsion"><%= item[:step] %></span>
+        <span><%= item[:label] %></span>
+      </li>
+    <% end %>
+  </ul>
+</div>

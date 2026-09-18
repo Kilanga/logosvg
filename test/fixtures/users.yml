@@ -1,0 +1,48 @@
+<%# One account per role, plus a deleted one. Cost 4 keeps the suite fast: these
+    digests only ever need to be verifiable, not slow to crack. %>
+<% digest = BCrypt::Password.create("motdepasse-test", cost: 4) %>
+
+client:
+  email: claire@example.invalid
+  password_digest: <%= digest %>
+  first_name: Claire
+  last_name: Martin
+  city: Nantes
+  role: client
+  terms_accepted_at: <%= 2.months.ago.to_fs(:db) %>
+
+printer:
+  email: atelier@example.invalid
+  password_digest: <%= digest %>
+  first_name: Bruno
+  last_name: Leroy
+  city: Rennes
+  role: printer
+  terms_accepted_at: <%= 6.months.ago.to_fs(:db) %>
+
+designer:
+  email: graphiste@example.invalid
+  password_digest: <%= digest %>
+  first_name: Inès
+  last_name: Nadeau
+  city: Lyon
+  role: designer
+  terms_accepted_at: <%= 3.months.ago.to_fs(:db) %>
+
+admin:
+  email: admin@example.invalid
+  password_digest: <%= digest %>
+  first_name: Sam
+  last_name: Oubre
+  city: Paris
+  role: admin
+  terms_accepted_at: <%= 1.year.ago.to_fs(:db) %>
+
+deleted_client:
+  email: parti@example.invalid
+  password_digest: <%= digest %>
+  first_name: Yanis
+  last_name: Fabre
+  role: client
+  terms_accepted_at: <%= 1.year.ago.to_fs(:db) %>
+  deleted_at: <%= 1.week.ago.to_fs(:db) %>

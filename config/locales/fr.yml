@@ -166,6 +166,13 @@ fr:
     workshop: "Atelier"
     studio: "Studio"
     admin: "Administration"
+    dashboard: "Tableau de bord"
+
+  roles:
+    client: "Client"
+    printer: "Imprimeur"
+    designer: "Graphiste"
+    admin: "Administrateur"
 
   footer:
     legal_notice: "Mentions légales"
@@ -179,6 +186,8 @@ fr:
   flash:
     unauthorized: "Vous n'avez pas accès à cette page."
     not_found: "Cette page n'existe pas ou n'existe plus."
+    rate_limited: "Trop de tentatives. Patientez quelques minutes avant de réessayer."
+    turnstile_failed: "La vérification anti-robot n'a pas abouti. Réessayez."
 
   states:
     empty:
@@ -188,6 +197,151 @@ fr:
       title: "Quelque chose s'est mal passé"
       body: "Réessayez dans un instant. Si le problème persiste, écrivez-nous."
     loading: "Chargement en cours"
+    coming:
+      label: "Bientôt disponible"
+
+  activerecord:
+    models:
+      user: "Compte"
+    attributes:
+      user:
+        email: "Adresse email"
+        password: "Mot de passe"
+        password_confirmation: "Confirmation du mot de passe"
+        first_name: "Prénom"
+        last_name: "Nom"
+        phone: "Téléphone"
+        city: "Ville"
+        role: "Rôle"
+        terms_accepted_at: "Conditions d'utilisation"
+    errors:
+      models:
+        user:
+          attributes:
+            terms_accepted_at:
+              blank: "doivent être acceptées"
+
+  sessions:
+    new:
+      eyebrow: "Votre compte"
+      title: "Se connecter"
+      submit: "Se connecter"
+      forgot_password: "Mot de passe oublié ?"
+      no_account: "Pas encore de compte ?"
+    create:
+      failed: "Adresse email ou mot de passe incorrect."
+    destroy:
+      signed_out: "Vous êtes déconnecté."
+
+  registrations:
+    role_hints:
+      client: "Je veux créer un design à faire imprimer."
+      printer: "J'ai un atelier et je veux être référencé."
+      designer: "Je veux réaliser des vérifications payées."
+    new:
+      eyebrow: "Créer un compte"
+      title: "Rejoindre la plateforme"
+      subtitle: >-
+        Quelques informations suffisent. Vous pourrez compléter votre profil
+        ensuite.
+      role_legend: "Vous venez pour"
+      phone_hint: "Facultatif, pour être joint plus vite."
+      password_hint: "Au moins 8 caractères."
+      terms: "J'accepte les conditions générales d'utilisation et la politique de confidentialité."
+      terms_required: "Vous devez accepter les conditions pour créer un compte."
+      submit: "Créer mon compte"
+      has_account: "Vous avez déjà un compte ?"
+    create:
+      welcome: "Bienvenue, %{name}. Votre compte est créé."
+
+  passwords:
+    new:
+      eyebrow: "Mot de passe oublié"
+      title: "Réinitialiser"
+      subtitle: >-
+        Indiquez l'adresse de votre compte : vous recevrez un lien pour choisir
+        un nouveau mot de passe.
+      submit: "Envoyer le lien"
+      back: "Retour à la connexion"
+    create:
+      sent: "Si un compte existe pour cette adresse, le lien vient d'être envoyé."
+    edit:
+      eyebrow: "Mot de passe oublié"
+      title: "Nouveau mot de passe"
+      subtitle: "Choisissez un mot de passe que vous n'utilisez nulle part ailleurs."
+      new_password: "Nouveau mot de passe"
+      submit: "Enregistrer"
+      invalid_link: "Ce lien n'est plus valable. Demandez-en un nouveau."
+    update:
+      changed: "Mot de passe modifié. Vous pouvez vous connecter."
+      mismatch: "Les deux mots de passe ne correspondent pas."
+
+  mailers:
+    passwords:
+      reset:
+        subject: "Réinitialiser votre mot de passe"
+        greeting: "Bonjour %{name},"
+        body: >-
+          Vous avez demandé à réinitialiser votre mot de passe. Ce lien est
+          valable quinze minutes.
+        action: "Choisir un nouveau mot de passe"
+        ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe reste inchangé."
+
+  client:
+    dashboards:
+      show:
+        title: "Mon espace"
+        heading: "Bonjour %{name}"
+        body: "Vos designs, vos demandes d'impression et vos vérifications se retrouveront ici."
+        upcoming:
+          - step: "03"
+            label: "Créer un design et le décliner en variantes"
+          - step: "04"
+            label: "Envoyer une demande d'impression à un atelier"
+          - step: "05"
+            label: "Suivre vos designs, vos demandes et votre compte"
+          - step: "08"
+            label: "Faire vérifier un design par un graphiste"
+
+  printer:
+    dashboards:
+      show:
+        title: "Atelier"
+        heading: "Bonjour %{name}"
+        body: "Votre fiche, vos demandes d'impression et votre abonnement se piloteront depuis cet espace."
+        upcoming:
+          - step: "02"
+            label: "Remplir votre fiche et apparaître dans l'annuaire"
+          - step: "04"
+            label: "Recevoir et suivre les demandes d'impression"
+          - step: "06"
+            label: "Abonnement, lien client, QR code et affiche comptoir"
+
+  designer:
+    dashboards:
+      show:
+        title: "Studio"
+        heading: "Bonjour %{name}"
+        body: "Votre profil, vos niveaux et la file des vérifications à traiter arriveront ici."
+        upcoming:
+          - step: "07"
+            label: "Profil, portfolio, niveaux acceptés et versements Stripe"
+          - step: "08"
+            label: "Prendre une revue, déposer une version, échanger avec le client"
+
+  admin:
+    dashboards:
+      show:
+        title: "Administration"
+        heading: "Administration"
+        body: "Les validations, les litiges et les réglages de la plateforme se gèreront depuis cet espace."
+        upcoming:
+          - step: "02"
+            label: "Valider les fiches des imprimeurs"
+          - step: "07"
+            label: "Valider les profils des graphistes"
+          - step: "09"
+            label: "Litiges, remboursements, niveaux, termes bloqués, état du service"
 
   public:
     home:

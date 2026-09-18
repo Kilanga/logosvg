@@ -1,0 +1,13 @@
+<%# Cloudflare Turnstile widget. Rendered only when a site key is configured, so
+    development works without an account; TurnstileVerifier skips verification in
+    exactly the same case. The script host is allowed by the CSP. %>
+<% if TurnstileVerifier.configured? %>
+  <% content_for :head do %>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <% end %>
+
+  <div class="cf-turnstile"
+       data-sitekey="<%= TurnstileVerifier.site_key %>"
+       data-language="fr"
+       data-theme="light"></div>
+<% end %>

@@ -1,0 +1,14 @@
+<%# One entry in a professional space's sidebar.
+    `current` marks the page the visitor is on, for sighted users and for
+    assistive technology alike. %>
+<li>
+  <%= link_to path,
+        aria: { current: current ? "page" : nil },
+        class: class_names(
+          "flex min-h-touch items-center gap-2.5 whitespace-nowrap rounded-xs px-3 text-sm font-medium",
+          current ? "bg-paper/15 text-paper" : "text-paper/70 hover:bg-paper/10 hover:text-paper"
+        ) do %>
+    <%= registration_mark css_class: current ? "text-paper" : "text-paper/40" %>
+    <span><%= label %></span>
+  <% end %>
+</li>

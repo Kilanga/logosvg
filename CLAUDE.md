@@ -328,8 +328,8 @@ Règles côté Rails :
 
 | Étape | Contenu                       | État                          |
 | ----- | ----------------------------- | ----------------------------- |
-| 0     | Socle                         | **terminée**, en attente de validation |
-| 1     | Comptes                       | à faire                        |
+| 0     | Socle                         | terminée                       |
+| 1     | Comptes                       | **terminée**, en attente de validation |
 | 2     | Imprimeurs                    | à faire                        |
 | 3     | Designs                       | à faire                        |
 | 4     | Demandes d'impression         | à faire                        |

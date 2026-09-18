@@ -14,8 +14,7 @@
       <p class="mt-6 max-w-md text-lg text-muted"><%= t(".subhead") %></p>
 
       <div class="mt-8 flex flex-wrap gap-3">
-        <%# Sign-up arrives with step 1. %>
-        <span class="btn btn-primary"><%= t(".cta_primary") %></span>
+        <%= link_to t(".cta_primary"), new_registration_path(role: "printer"), class: "btn btn-primary" %>
         <a href="#fonctionnement" class="btn btn-secondary"><%= t(".cta_secondary") %></a>
       </div>
     </div>
@@ -137,8 +136,7 @@
 
     <div class="mt-10 flex flex-wrap items-end justify-between gap-8">
       <p class="max-w-xl text-lg text-muted"><%= t(".designers.body") %></p>
-      <%# Designer sign-up arrives with step 7. %>
-      <span class="btn btn-secondary"><%= t(".designers.cta") %></span>
+      <%= link_to t(".designers.cta"), new_registration_path(role: "designer"), class: "btn btn-secondary" %>
     </div>
   </div>
 </section>
