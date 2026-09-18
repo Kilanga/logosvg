@@ -24,6 +24,8 @@ from collections import Counter
 import vtracer
 from PIL import Image, ImageDraw, ImageFilter
 
+from .techniques import resolve
+
 TRANSPARENT = (0, 0, 0, 0)
 WHITE = (255, 255, 255)
 # Nombre de points de départ du remplissage par bord de l'image.
@@ -102,6 +104,11 @@ def _opaque_counts(img: Image.Image) -> Counter:
 def _opaque_share(img: Image.Image) -> float:
     opaque = sum(n for n, p in (img.getcolors(img.width * img.height) or []) if p[3] > 0)
     return opaque / float(img.width * img.height)
+
+
+def opaque_share(img: Image.Image) -> float:
+    """Part de l'image restée opaque. Utilisée aussi par la voie matricielle."""
+    return _opaque_share(img)
 
 
 def consolidate_colors(rgba: Image.Image, colors: int, tolerance: int = COLOR_TOLERANCE,
@@ -193,7 +200,8 @@ def remove_background(rgba: Image.Image) -> None:
             ImageDraw.floodfill(rgba, xy, TRANSPARENT, thresh=0)
 
 
-def prepare_image(png_bytes: bytes, colors: int, remove_bg: bool) -> Image.Image:
+def prepare_image(png_bytes: bytes, colors: int, remove_bg: bool,
+                  white_is_ink: bool = False) -> Image.Image:
     img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
     img = img.filter(ImageFilter.MedianFilter(5))
     if remove_bg:
@@ -211,7 +219,10 @@ def prepare_image(png_bytes: bytes, colors: int, remove_bg: bool) -> Image.Image
     if remove_bg:
         before = rgba.copy()
         remove_background(rgba)
-        whites_to_paper(rgba)
+        # La broderie a du fil blanc, la sérigraphie et le flex n'ont pas d'encre blanche :
+        # dans le second cas le blanc redevient du textile non imprimé.
+        if not white_is_ink:
+            whites_to_paper(rgba)
         # Filet de sécurité : si tout a été effacé (dessin blanc sur blanc, sujet confondu
         # avec le fond), on rend l'image d'origine plutôt qu'une image vide.
         if _opaque_share(rgba) < 0.03:
@@ -232,7 +243,7 @@ def extract_palette(img: Image.Image, min_share: float = 0.005) -> list:
     return palette
 
 
-def to_svg(img: Image.Image) -> str:
+def to_svg(img: Image.Image, min_detail: int = 20) -> str:
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return vtracer.convert_raw_image_to_svg(
@@ -242,7 +253,9 @@ def to_svg(img: Image.Image) -> str:
         # "cutout" : formes juxtaposées sans superposition, adapté à la sérigraphie.
         hierarchical="cutout",
         mode="spline",
-        filter_speckle=20,
+        # Taille du plus petit détail que la technique sait rendre : une moucheture que le
+        # couteau de découpe arracherait n'a pas à figurer dans le fichier.
+        filter_speckle=min_detail,
         color_precision=6,
         layer_difference=16,
         corner_threshold=60,
@@ -253,9 +266,11 @@ def to_svg(img: Image.Image) -> str:
     )
 
 
-def vectorize(png_bytes: bytes, colors: int, remove_background: bool, max_paths_warning: int) -> dict:
-    prepared = prepare_image(png_bytes, colors, remove_background)
-    svg = to_svg(prepared)
+def vectorize(png_bytes: bytes, colors: int, remove_background: bool, max_paths_warning: int,
+              technique: str = None) -> dict:
+    profile = resolve(technique)
+    prepared = prepare_image(png_bytes, colors, remove_background, profile.white_is_ink)
+    svg = to_svg(prepared, profile.min_detail)
     palette = extract_palette(prepared)
     paths = svg.count("<path")
     # Part de l'image restée opaque : sert à repérer un fond qui n'a pas pu être retiré.
@@ -273,6 +288,13 @@ def vectorize(png_bytes: bytes, colors: int, remove_background: bool, max_paths_
         warnings.append(
             "Le fond n'a pas pu être retiré : le dessin couvre toute l'image. "
             "Relancez la création ou décrivez un sujet isolé."
+        )
+    # Découpe et broderie : au-delà de quelques dizaines de formes, le fichier est juste
+    # et la machine, elle, ne suivra pas.
+    if profile.min_detail >= 48 and paths > 60:
+        warnings.append(
+            f"{profile.label} : le dessin contient {paths} formes, c'est beaucoup pour cette "
+            "technique. Un motif plus simple, en une ou deux couleurs, se pose bien mieux."
         )
 
     return {
