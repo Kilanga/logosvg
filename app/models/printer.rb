@@ -21,6 +21,10 @@ class Printer < ApplicationRecord
   # listing is not deleted out from under a job in progress.
   has_many :print_requests, dependent: :restrict_with_error, inverse_of: :printer
 
+  has_one :subscription, dependent: :destroy
+  has_many :link_visits, class_name: "WorkshopLinkVisit", dependent: :delete_all,
+           inverse_of: :printer
+
   has_one_attached :logo
   has_many_attached :photos
 
@@ -58,10 +62,11 @@ class Printer < ApplicationRecord
   # database enforces it too.
   validate :exactly_one_primary_technique
 
-  # A listing is public once it is published *and* the shop's subscription is
-  # active. Subscriptions arrive in step 6; until then `published` is the whole
-  # condition, and this scope is the single place that will change.
-  scope :listed, -> { published }
+  # A listing is public once it is published *and* paid for. This scope is the
+  # only place that answers it: the directory, the map, the shop page, the
+  # workshop link and every compatibility check all go through here, so a shop
+  # whose subscription lapses disappears from all of them at once.
+  scope :listed, -> { published.where(id: Subscription.visible_printer_ids) }
   scope :located, -> { where.not(latitude: nil, longitude: nil) }
   scope :shipping_nationwide, -> { where(ships: true) }
   scope :by_prominence, -> { order(featured: :desc, name: :asc) }
@@ -117,9 +122,10 @@ class Printer < ApplicationRecord
 
   def located? = latitude.present? && longitude.present?
 
-  # The instance side of the `listed` scope, and the single place that will gain
-  # the subscription condition in step 6.
-  def listed? = published?
+  # The instance side of the `listed` scope. Both have to agree, or a shop
+  # disappears from the directory while its own page stays up — which is how a
+  # lapsed subscription would keep being reachable by anyone holding the link.
+  def listed? = published? && subscription&.visible?.present?
 
   # What this shop would use for a client who answers "I don't know".
   def primary_technique = live_techniques.find(&:primary?)

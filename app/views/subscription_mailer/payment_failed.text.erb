@@ -1,0 +1,14 @@
+<%= t("mailers.subscription.payment_failed.eyebrow") %>
+
+<%= t("mailers.subscription.payment_failed.heading") %>
+
+<%= t("mailers.subscription.payment_failed.body", printer: @printer.name) %>
+<% if @hidden_from -%>
+
+<%= t("mailers.subscription.payment_failed.hidden_from", date: l(@hidden_from.to_date, format: :long)) %>
+<% end -%>
+
+<%= t("mailers.subscription.payment_failed.action") %> :
+<%= workshop_subscription_url %>
+
+<%= t("mailers.subscription.payment_failed.requests_kept") %>
