@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_090100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,58 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_170000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "designs", force: :cascade do |t|
+    t.integer "colors_requested"
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.text "error_message"
+    t.string "generator_job_id"
+    t.integer "inks_count"
+    t.string "instruction"
+    t.string "mode", default: "create", null: false
+    t.jsonb "palette", default: [], null: false
+    t.bigint "parent_id"
+    t.integer "paths_count"
+    t.string "print_format"
+    t.integer "print_width_cm"
+    t.bigint "printer_id"
+    t.text "prompt", null: false
+    t.text "prompt_used"
+    t.integer "refinements_left"
+    t.boolean "remove_background", default: true, null: false
+    t.bigint "root_id"
+    t.bigint "seed"
+    t.jsonb "stats", default: {}, null: false
+    t.string "status", default: "pending", null: false
+    t.string "style", default: "illustration", null: false
+    t.string "subject"
+    t.string "technique", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.jsonb "warnings", default: [], null: false
+    t.index ["deleted_at"], name: "index_designs_on_deleted_at"
+    t.index ["generator_job_id"], name: "index_designs_on_generator_job_id"
+    t.index ["parent_id"], name: "index_designs_on_parent_id"
+    t.index ["printer_id"], name: "index_designs_on_printer_id"
+    t.index ["root_id"], name: "index_designs_on_root_id"
+    t.index ["status"], name: "index_designs_on_status"
+    t.index ["technique"], name: "index_designs_on_technique"
+    t.index ["token"], name: "index_designs_on_token", unique: true
+    t.index ["user_id", "created_at"], name: "index_designs_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_designs_on_user_id"
+  end
+
+  create_table "generation_counters", force: :cascade do |t|
+    t.integer "count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.date "day", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "day"], name: "index_generation_counters_on_user_id_and_day", unique: true
+    t.index ["user_id"], name: "index_generation_counters_on_user_id"
   end
 
   create_table "printer_techniques", force: :cascade do |t|
@@ -136,6 +188,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_170000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "designs", "designs", column: "parent_id"
+  add_foreign_key "designs", "designs", column: "root_id"
+  add_foreign_key "designs", "printers"
+  add_foreign_key "designs", "users"
+  add_foreign_key "generation_counters", "users"
   add_foreign_key "printer_techniques", "printers"
   add_foreign_key "printers", "users"
   add_foreign_key "sessions", "users"
