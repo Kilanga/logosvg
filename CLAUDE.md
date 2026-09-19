@@ -331,8 +331,8 @@ Règles côté Rails :
 | 0     | Socle                         | terminée                       |
 | 1     | Comptes                       | terminée                       |
 | 2     | Imprimeurs                    | terminée                       |
-| 3     | Designs                       | **terminée**, en attente de validation |
-| 4     | Demandes d'impression         | à faire                        |
+| 3     | Designs                       | terminée                       |
+| 4     | Demandes d'impression         | **terminée**, en attente de validation |
 | 5     | Espace client                 | à faire                        |
 | 6     | Abonnements                   | à faire                        |
 | 7     | Graphistes                    | à faire                        |
@@ -489,6 +489,24 @@ placé à l'intérieur d'un `render "section" do` cherche
 manquante rend une chaîne « translation missing » et l'échec survient bien plus
 loin, méconnaissable — c'est ainsi qu'un doublon de clé de premier niveau dans
 `fr.yml` s'est manifesté en `undefined method 'each'` au fond d'un partiel.
+
+**Une validation qui rejuge le passé fige l'enregistrement.** Le minimum de
+commande d'un atelier et la date souhaitée par le client jugent la demande
+*telle qu'elle a été envoyée* : en `on: :create` uniquement. Sans cela, un
+atelier qui relève son minimum le mois suivant — ou une date qui arrive tout
+simplement — rend impossible le moindre `save`, et la demande reste **bloquée
+dans son état**, y compris pour l'atelier qui l'a en main.
+
+**Les vues de mailer se résolvent sur `<mailer>.<action>`, pas sur `mailers.`.**
+Un `t(".titre")` dans `print_request_mailer/to_printer.html.erb` cherche
+`fr.print_request_mailer.to_printer.titre`. Le projet range ses textes sous
+`mailers.<objet>.<action>` : employer la clé absolue, comme le fait déjà
+`passwords_mailer`.
+
+**`ActionMailer::TestHelper` n'est pas inclus par défaut.** Il l'est désormais
+dans `test/test_helper.rb`, à côté de celui d'Active Job : une demande
+d'impression qui n'envoie aucun email n'a pas été envoyée, et `assert_emails`
+doit être disponible partout, pas seulement dans `test/mailers`.
 
 **`config_for` symbolise les clés en profondeur.** Un `preset['key']` sur une
 entrée de `config/settings.yml` renvoie `nil`, toujours — il faut `preset[:key]`.
