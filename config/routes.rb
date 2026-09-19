@@ -14,6 +14,18 @@ Rails.application.routes.draw do
 
   resources :passwords, path: "mot-de-passe", param: :token, only: %i[ new create edit update ]
 
+  # --- Designs ---------------------------------------------------------------
+  # Le lien que l'imprimeur partage : il retient l'atelier pour la session.
+  get "a/:slug", to: "public/workshop_links#show", as: :workshop_link
+
+  get  "designs/nouveau", to: "client/designs#new",    as: :new_design
+  post "designs",         to: "client/designs#create", as: :designs
+  get  "designs/:token",  to: "client/designs#show",   as: :design
+  # Le rendu filigrané : jamais le fichier d'impression lui-même.
+  get  "designs/:token/apercu", to: "client/designs#image", as: :design_image
+  post "designs/:token/variantes", to: "client/designs#variants", as: :design_variants
+  post "designs/:token/retouche",  to: "client/designs#refine",   as: :design_refine
+
   # --- Annuaire public -------------------------------------------------------
   get "imprimeurs",       to: "public/printers#index", as: :printers
   get "imprimeurs/:slug", to: "public/printers#show",  as: :printer

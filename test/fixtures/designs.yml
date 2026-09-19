@@ -1,0 +1,65 @@
+<%# Un design par famille de sortie : l'un vectorisé en sérigraphie, l'autre
+    matriciel en DTF. C'est ce qui rend la compatibilité démontrable. %>
+
+fox_screen:
+  user: client
+  printer: rennes
+  token: design-renard-serigraphie
+  prompt: un renard qui fait du skate
+  style: mascotte
+  technique: screen_printing
+  colors_requested: 3
+  print_width_cm: 25
+  status: ready
+  print_format: svg
+  inks_count: 3
+  paths_count: 268
+  <%# Structures YAML, pas des chaînes JSON : une chaîne dans une colonne jsonb
+      est réencodée en chaîne JSON, et la vue reçoit un String au lieu du tableau. %>
+  palette:
+    - hex: "#1F5F7A"
+    - hex: "#E4572E"
+    - hex: "#F2C14E"
+  stats:
+    paths: 268
+    svg_bytes: 16497
+    opaque_share: 0.32
+  prompt_used: screen print separation artwork, a fox on a skateboard
+  subject: a fox on a skateboard
+  seed: 123456
+
+fox_dtf:
+  user: client
+  printer: lyon
+  token: design-renard-dtf
+  prompt: un renard qui fait du skate
+  style: mascotte
+  technique: dtf
+  print_width_cm: 24
+  status: ready
+  print_format: png
+  stats:
+    width_px: 2835
+    height_px: 2835
+    dpi: 300
+    net_width_cm: 13
+    source_dpi: 81
+  prompt_used: detailed illustration, a fox on a skateboard
+  subject: a fox on a skateboard
+  seed: 654321
+
+pending_design:
+  user: client
+  token: design-en-attente
+  prompt: une montagne au lever du soleil
+  technique: screen_printing
+  colors_requested: 2
+  status: pending
+
+other_client_design:
+  user: deleted_client
+  token: design-d-un-autre
+  prompt: un phare dans la tempête
+  technique: dtf
+  status: ready
+  print_format: png

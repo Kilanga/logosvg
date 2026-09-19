@@ -42,8 +42,11 @@ Rails.application.configure do
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 
-  # Raises error for missing translations.
-  # config.i18n.raise_on_missing_translations = true
+  # Raises error for missing translations. Active on purpose: a missing key
+  # otherwise renders as a "translation missing" string, and the test fails far
+  # from the cause — a duplicate top-level key in fr.yml surfaced as an
+  # `undefined method 'each' for a String` deep inside a partial.
+  config.i18n.raise_on_missing_translations = true
 
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true

@@ -269,7 +269,15 @@ fr:
       user: "Compte"
       printer: "Atelier"
       printer_technique: "Technique"
+      design: "Design"
     attributes:
+      design:
+        prompt: "Votre idée"
+        style: "Style"
+        technique: "Technique d'impression"
+        colors_requested: "Nombre de couleurs"
+        print_width_cm: "Largeur d'impression (cm)"
+        instruction: "Ce que vous voulez changer"
       printer:
         name: "Nom de l'atelier"
         description: "Présentation"
@@ -349,6 +357,12 @@ fr:
       color_space:
         rgb: "RVB"
         cmyk: "CMJN"
+    design:
+      style:
+        illustration: "Illustration"
+        logo: "Logo"
+        mascotte: "Mascotte"
+        badge: "Badge"
 
   sessions:
     new:
@@ -416,21 +430,73 @@ fr:
         action: "Choisir un nouveau mot de passe"
         ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe reste inchangé."
 
+  # Un seul bloc `client:` — deux clés de même niveau en YAML, et la seconde
+  # écrase silencieusement la première.
   client:
     dashboards:
       show:
         title: "Mon espace"
         heading: "Bonjour %{name}"
-        body: "Vos designs, vos demandes d'impression et vos vérifications se retrouveront ici."
+        body: "Vos demandes d'impression et vos vérifications se retrouveront ici."
         upcoming:
-          - step: "03"
-            label: "Créer un design et le décliner en variantes"
           - step: "04"
             label: "Envoyer une demande d'impression à un atelier"
           - step: "05"
             label: "Suivre vos designs, vos demandes et votre compte"
           - step: "08"
             label: "Faire vérifier un design par un graphiste"
+
+    designs:
+      new:
+        title: "Créer un design"
+        heading: "Créer un design"
+        for_workshop_html: "Vous créez pour %{name}. Les techniques proposées sont les siennes."
+        change_workshop: "Changer d'atelier"
+        technique_legend: "Technique d'impression"
+        technique_hint: >-
+          Elle ne décide pas seulement du fichier produit : elle oriente la
+          génération elle-même. Un visuel pensé dès le départ pour deux couleurs
+          vaut mieux qu'un visuel riche réduit après coup.
+        idea_legend: "Votre idée"
+        prompt_placeholder: "un renard qui fait du skate, style rétro"
+        prompt_hint: "Une phrase suffit. Décrivez le sujet, pas la technique."
+        colors_hint: "Chaque couleur est un écran de plus à l'atelier."
+        width_hint: "La largeur imprimée sur le vêtement. Elle fixe la définition du fichier."
+        submit: "Générer mon design"
+        remaining:
+          zero: "Plus de création disponible aujourd'hui."
+          one: "Il vous reste %{count} création aujourd'hui."
+          other: "Il vous reste %{count} créations aujourd'hui."
+      create:
+        quota_exceeded:
+          one: "Vous avez atteint votre limite de %{count} création par jour."
+          other: "Vous avez atteint votre limite de %{count} créations par jour."
+      show:
+        title: "Votre design"
+        what_was_asked: "Votre demande"
+        workshop: "Atelier"
+        who_can_print: "Qui peut l'imprimer"
+        see_directory: "Voir tous les ateliers compatibles"
+        no_compatible_printer: "Aucun atelier référencé ne pratique cette technique pour l'instant."
+      design:
+        working: "Génération en cours"
+        working_hint: "Comptez une à deux minutes. La page se met à jour toute seule."
+        failed: "La génération n'a pas abouti"
+        try_again: "Réessayer"
+        print_file: "Fichier d'impression"
+        download: "Télécharger l'aperçu"
+        variants: "Proposez-moi d'autres versions"
+        screens:
+          one: "%{count} écran"
+          other: "%{count} écrans"
+        refinements_left:
+          zero: "Plus de reprise disponible pour ce design."
+          one: "Il reste %{count} reprise pour ce design."
+          other: "Il reste %{count} reprises pour ce design."
+      variants:
+        budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
+      refine:
+        budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
 
   workshop:
     dashboards:
@@ -554,7 +620,30 @@ fr:
         suspended: "La fiche de %{name} est suspendue."
         failed: "La fiche de %{name} n'a pas pu être modifiée."
 
+  # Libellés partagés par l'écran de création, le suivi et les jobs.
+  designs:
+    watermark: "Créé avec %{name}"
+    family_hint:
+      vector: "Aplats, encres comptées. Fichier vectoriel."
+      raster: "Dégradés et photo. Fichier image en 300 dpi."
+    facts:
+      size: "Taille"
+      definition: "Définition"
+      resolution: "Résolution"
+      sharp_up_to: "Net jusqu'à"
+    errors:
+      unavailable: "Le service de génération n'est pas joignable. Réessayez dans quelques minutes."
+      rate_limited: "Limite de générations atteinte. Réessayez dans %{minutes} min."
+      timed_out: "La génération a pris trop de temps. Votre essai ne vous a pas été décompté."
+      failed: "La génération a échoué. Votre essai ne vous a pas été décompté."
+      expired: "Ce design n'est plus disponible sur la machine de génération."
+      unusable_file: "Le fichier produit n'a pas passé nos contrôles. Votre essai ne vous a pas été décompté."
+
   public:
+    workshop_links:
+      show:
+        unknown: "Cet atelier n'est plus référencé. Choisissez-en un autre."
+
     printers:
       index:
         title: "Les imprimeurs"

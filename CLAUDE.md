@@ -330,8 +330,8 @@ Règles côté Rails :
 | ----- | ----------------------------- | ----------------------------- |
 | 0     | Socle                         | terminée                       |
 | 1     | Comptes                       | terminée                       |
-| 2     | Imprimeurs                    | **terminée**, en attente de validation |
-| 3     | Designs                       | à faire                        |
+| 2     | Imprimeurs                    | terminée                       |
+| 3     | Designs                       | **terminée**, en attente de validation |
 | 4     | Demandes d'impression         | à faire                        |
 | 5     | Espace client                 | à faire                        |
 | 6     | Abonnements                   | à faire                        |
@@ -462,6 +462,39 @@ cache froid retombe sur `config/print_techniques.yml`.
 les tests système, comparer avec le helper `displayed(clé)` d'
 `ApplicationSystemTestCase`, qui construit une expression régulière insensible à
 la casse.
+
+**libvips refuse le SVG tant qu'on ne le débloque pas.** `image_processing`
+appelle `Vips.block_untrusted(true)` au chargement, ce qui coupe *tous* les
+chargeurs que libvips juge non sûrs — dont rsvg. Or un design de sérigraphie
+**est** un SVG, et la seule image qu'un client reçoit est un aperçu rastérisé :
+laissé bloqué, aucun design vectoriel n'aurait d'aperçu, **en silence**, puisque
+le fichier lui-même se stocke très bien. `config/initializers/vips.rb` débloque
+le seul chargeur SVG ; tout le reste demeure refusé. Ce qui le rend acceptable,
+c'est qu'aucun SVG n'atteint le moteur de rendu sans examen : `SvgInspector`
+passe une première fois au stockage, et `DesignPreview` **repasse sur les octets
+stockés** juste avant de rastériser.
+
+**Une chaîne JSON dans une colonne `jsonb` est réencodée en chaîne.** Une fixture
+écrite `palette: '[{"hex":"#1F5F7A"}]'` ne donne pas un tableau mais la *chaîne*
+`"[{\"hex\"…}]"`, et la vue lève `undefined method 'each' for a String`. Écrire
+les fixtures `jsonb` en vraies structures YAML.
+
+**`t(".clé")` dans un bloc `render ... do` se résout contre le partiel.** Les
+arguments du `render` sont évalués chez l'appelant, mais le corps du bloc est
+rendu dans le contexte du partiel : dans `edit.html.erb`, un `t(".description_hint")`
+placé à l'intérieur d'un `render "section" do` cherche
+`workshop.profiles.section.description_hint`. Employer une clé absolue.
+
+**`raise_on_missing_translations` est actif en test, exprès.** Sans lui, une clé
+manquante rend une chaîne « translation missing » et l'échec survient bien plus
+loin, méconnaissable — c'est ainsi qu'un doublon de clé de premier niveau dans
+`fr.yml` s'est manifesté en `undefined method 'each'` au fond d'un partiel.
+
+**Ne pas lancer `bin/rails runner` en `RAILS_ENV=test` sans transaction.** Les
+tables Active Storage ne sont pas des fixtures : un attachement créé par un essai
+de débogage **reste** dans la base de test et fait passer, au hasard des seeds,
+un test qui attendait « aucun fichier ». Nettoyer, ou envelopper dans un
+`ActiveRecord::Base.transaction { … raise ActiveRecord::Rollback }`.
 
 ### Ce que la machine impose
 

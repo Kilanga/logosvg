@@ -1,0 +1,112 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-3xl">
+  <%# The shop in context, kept for the whole session by /a/:slug. It is what
+      narrows the techniques on offer, so it leads. %>
+  <% if context_printer %>
+    <div class="panel mb-8 flex flex-wrap items-center justify-between gap-4 p-4">
+      <p class="flex items-center gap-3 text-sm">
+        <%= registration_mark css_class: "text-emulsion" %>
+        <span><%= t(".for_workshop_html", name: tag.strong(context_printer.name)) %></span>
+      </p>
+      <%= link_to t(".change_workshop"), printers_path,
+            class: "text-sm underline underline-offset-4 hover:text-emulsion" %>
+    </div>
+  <% end %>
+
+  <%= form_with model: @design, url: designs_path, class: "space-y-10",
+        data: {
+          controller: "design-form",
+          design_form_families_value: available_techniques.to_h { |e| [ e.key, e.family ] }.to_json,
+          design_form_ceilings_value: available_techniques.to_h { |e| [ e.key, e.max_colors ] }.to_json
+        } do |form| %>
+
+    <%# The technique comes first: it shapes the prompt sent to the model, not
+        only the file that comes back. %>
+    <fieldset>
+      <div class="flex items-baseline gap-4 border-b border-line pb-3">
+        <span class="font-display text-xl font-bold text-emulsion">01</span>
+        <legend class="font-display text-xl font-bold uppercase"><%= t(".technique_legend") %></legend>
+      </div>
+      <p class="mt-3 text-sm text-muted"><%= t(".technique_hint") %></p>
+
+      <div class="mt-4 grid gap-2 sm:grid-cols-2">
+        <% available_techniques.each do |entry| %>
+          <label class="flex cursor-pointer flex-col gap-1 rounded-xs border border-line p-3
+                        has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+            <%= form.radio_button :technique, entry.key,
+                  class: "sr-only", data: { design_form_target: "technique", action: "design-form#sync" } %>
+            <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
+              <%= workshop_technique_label(entry) %>
+            </span>
+            <span class="text-sm text-muted"><%= technique_family_hint(entry) %></span>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <div class="flex items-baseline gap-4 border-b border-line pb-3">
+        <span class="font-display text-xl font-bold text-emulsion">02</span>
+        <legend class="font-display text-xl font-bold uppercase"><%= t(".idea_legend") %></legend>
+      </div>
+
+      <div class="mt-6 space-y-5">
+        <div>
+          <%= form.label :prompt, t("activerecord.attributes.design.prompt"), class: "label-rule block" %>
+          <%= form.text_area :prompt, rows: 3, required: true, maxlength: 300,
+                placeholder: t(".prompt_placeholder"),
+                class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+          <p class="mt-1.5 text-sm text-muted"><%= t(".prompt_hint") %></p>
+        </div>
+
+        <div>
+          <%= form.label :style, t("activerecord.attributes.design.style"), class: "label-rule block" %>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <% Design::STYLES.each do |style| %>
+              <label class="cursor-pointer rounded-xs border border-line px-3 py-2 text-sm
+                            has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+                <%= form.radio_button :style, style, class: "sr-only" %>
+                <%= t("enums.design.style.#{style}") %>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <%# Only where inks are counted one by one. %>
+        <div data-design-form-target="inks">
+          <%= form.label :colors_requested, t("activerecord.attributes.design.colors_requested"),
+                class: "label-rule block" %>
+          <div class="mt-2 flex items-center gap-4">
+            <%= form.range_field :colors_requested, min: 1, max: 6, step: 1,
+                  class: "h-2 w-full accent-emulsion",
+                  data: { action: "design-form#showInkValue" } %>
+            <span class="font-display text-2xl font-bold" data-design-form-target="inkValue">
+              <%= @design.colors_requested || 3 %>
+            </span>
+          </div>
+          <p class="mt-1.5 text-sm text-muted"><%= t(".colors_hint") %></p>
+        </div>
+
+        <%# Only where the file is measured in pixels. %>
+        <div data-design-form-target="width">
+          <%= render "shared/field", form: form, field: :print_width_cm,
+                label: t("activerecord.attributes.design.print_width_cm"),
+                kind: :number_field, options: { min: 3, max: 60 },
+                hint: t(".width_hint") %>
+        </div>
+      </div>
+    </fieldset>
+
+    <%= render "shared/turnstile" %>
+
+    <div class="border-t border-line pt-8">
+      <%= form.submit t(".submit"), class: "btn btn-primary w-full sm:w-auto" %>
+      <%# The counter sits under the button, where the decision is made. %>
+      <p class="mt-3 text-sm text-muted">
+        <%= t(".remaining", count: GenerationQuota.for(Current.user).remaining) %>
+      </p>
+    </div>
+  <% end %>
+</div>
