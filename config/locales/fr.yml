@@ -169,6 +169,10 @@ fr:
     dashboard: "Tableau de bord"
     my_listing: "Ma fiche"
     print_requests: "Demandes"
+    my_designs: "Mes designs"
+    my_requests: "Mes demandes"
+    my_reviews: "Mes vérifications"
+    my_account: "Mon compte"
 
   # Libellés partagés par l'annuaire, la fiche publique et les espaces pros.
   printers:
@@ -256,6 +260,8 @@ fr:
           attributes:
             terms_accepted_at:
               blank: "doivent être acceptées"
+            current_password:
+              invalid: "ne correspond pas à votre mot de passe actuel"
         printer:
           attributes:
             techniques:
@@ -392,6 +398,11 @@ fr:
         logo: "Logo"
         mascotte: "Mascotte"
         badge: "Badge"
+      status:
+        pending: "En attente"
+        generating: "Génération en cours"
+        ready: "Prêt"
+        failed: "Échec"
     print_request:
       status:
         sent: "Envoyée"
@@ -564,16 +575,81 @@ fr:
       show:
         title: "Mon espace"
         heading: "Bonjour %{name}"
-        body: "Vos demandes d'impression et vos vérifications se retrouveront ici."
-        upcoming:
-          - step: "04"
-            label: "Envoyer une demande d'impression à un atelier"
-          - step: "05"
-            label: "Suivre vos designs, vos demandes et votre compte"
-          - step: "08"
-            label: "Faire vérifier un design par un graphiste"
+        waiting_on_you: "Ce qui vous attend"
+        nothing_waiting: "Rien ne vous attend. Vos designs et vos demandes suivent leur cours."
+        action:
+          design_failed:
+            label: "Génération à relancer"
+            hint: "Cet essai ne vous a pas été décompté."
+            cta: "Recommencer"
+          design_unsent:
+            label: "Design prêt, jamais envoyé"
+            hint: "Aucun atelier n'a encore reçu ce visuel."
+            cta: "Envoyer"
+          print_request_silent:
+            label: "Atelier sans réponse"
+            hint: "L'atelier n'a pas encore confirmé la réception."
+            cta: "Voir"
+        recent_designs: "Derniers designs"
+        recent_requests: "Dernières demandes"
+        see_all: "Tout voir"
+        no_design: "Vous n'avez pas encore créé de design."
+        no_request: "Aucune demande d'impression pour l'instant."
+
+    accounts:
+      edit:
+        title: "Mon compte"
+        heading: "Mon compte"
+        details: "Vos coordonnées"
+        email_locked: "L'adresse email identifie votre compte. Écrivez-nous pour la changer."
+        save: "Enregistrer"
+        password: "Mot de passe"
+        password_hint: "Votre mot de passe actuel est demandé, même connecté : c'est ce qui protège un navigateur resté ouvert."
+        current_password: "Mot de passe actuel"
+        change_password: "Changer de mot de passe"
+        other_sessions: "Vos autres sessions seront déconnectées."
+        data: "Vos données"
+        data_coming: "L'export et la suppression du compte arrivent prochainement."
+      update:
+        saved: "Vos coordonnées sont à jour."
+      update_password:
+        changed: "Mot de passe modifié. Vos autres sessions ont été déconnectées."
+
+    reviews:
+      index:
+        title: "Mes vérifications"
+        heading: "Mes vérifications"
+        empty: "Aucune vérification"
+        empty_body: >-
+          Vous n'avez encore fait vérifier aucun design par un graphiste.
+        what_is_it: "La vérification par un graphiste"
+        what_is_it_body: >-
+          Un graphiste professionnel reprend votre visuel pour l'impression :
+          il nettoie les tracés, ajuste les encres et vous renvoie un fichier
+          que l'atelier pourra sortir sans retouche.
+        coming: "Cette option sera bientôt disponible."
 
     designs:
+      index:
+        title: "Mes designs"
+        heading: "Mes designs"
+        count:
+          zero: "Aucun design"
+          one: "%{count} design"
+          other: "%{count} designs"
+        variants:
+          one: "%{count} variante"
+          other: "%{count} variantes"
+        variant_alt: "Variante du design"
+        send_to_workshop: "Envoyer à un atelier"
+        delete: "Supprimer"
+        delete_confirm: "Supprimer ce design ? Les demandes déjà envoyées ne sont pas concernées."
+        empty: "Aucun design pour l'instant"
+        empty_body: >-
+          Décrivez une idée et l'IA la dessine pour la machine de votre
+          atelier. Vous gardez trois reprises par design.
+      destroy:
+        deleted: "Design supprimé."
       new:
         title: "Créer un design"
         heading: "Créer un design"
@@ -642,6 +718,18 @@ fr:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
 
     print_requests:
+      index:
+        title: "Mes demandes"
+        heading: "Mes demandes d'impression"
+        count:
+          zero: "Aucune demande"
+          one: "%{count} demande"
+          other: "%{count} demandes"
+        empty: "Aucune demande d'impression"
+        empty_body: >-
+          Quand un design vous convient, envoyez-le à l'atelier qui
+          l'imprimera. Le devis se fait ensuite directement avec lui.
+        browse_designs: "Voir mes designs"
       new:
         title: "Envoyer à un atelier"
         heading: "Envoyer à %{printer}"

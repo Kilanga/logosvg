@@ -1,6 +1,83 @@
 <% content_for :title, t(".title") %>
 <% content_for :heading, t(".heading", name: Current.user.first_name) %>
 
-<%= render "shared/space_placeholder",
-      body: t(".body"),
-      items: t(".upcoming") %>
+<div class="max-w-5xl space-y-10">
+  <%# What is waiting on the client leads. Anything else on this page is
+      history, and history can wait. %>
+  <section>
+    <h2 class="label-rule flex items-center gap-2.5 text-emulsion">
+      <%= registration_mark %><%= t(".waiting_on_you") %>
+    </h2>
+
+    <% if @dashboard[:actions].any? %>
+      <ul class="mt-4 space-y-2">
+        <% @dashboard[:actions].each do |action| %>
+          <li>
+            <%= link_to dashboard_action_path(action),
+                  class: "panel flex flex-wrap items-center gap-4 border-l-2 border-l-emulsion p-4 hover:border-emulsion" do %>
+              <span class="min-w-0 flex-1">
+                <span class="label-rule block text-emulsion"><%= t(".action.#{action.kind}.label") %></span>
+                <span class="mt-0.5 block truncate font-medium">
+                  <%= dashboard_action_subject(action) %>
+                </span>
+                <span class="mt-0.5 block text-sm text-muted"><%= t(".action.#{action.kind}.hint") %></span>
+              </span>
+              <span class="label-rule flex-none text-muted"><%= t(".action.#{action.kind}.cta") %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="panel mt-4 flex items-center gap-4 p-5">
+        <span class="text-success" aria-hidden="true"><%= registration_mark %></span>
+        <p class="text-muted"><%= t(".nothing_waiting") %></p>
+      </div>
+    <% end %>
+  </section>
+
+  <%# Recent activity, in two columns rather than one merged stream: a design
+      and an order are not the same kind of thing, and mixing them would make
+      both harder to scan. %>
+  <div class="grid gap-10 lg:grid-cols-2">
+    <section>
+      <div class="flex items-baseline justify-between gap-4 border-b border-line pb-3">
+        <h2 class="font-display text-xl font-bold uppercase"><%= t(".recent_designs") %></h2>
+        <%= link_to t(".see_all"), client_designs_path,
+              class: "text-sm underline underline-offset-4 hover:text-emulsion" %>
+      </div>
+
+      <% if @dashboard[:designs].any? %>
+        <ul class="mt-4 space-y-2">
+          <% @dashboard[:designs].each do |design| %>
+            <li><%= render "client/designs/row", design: design %></li>
+          <% end %>
+        </ul>
+      <% else %>
+        <div class="panel mt-4 p-6 text-center">
+          <p class="text-muted"><%= t(".no_design") %></p>
+          <%= link_to t("nav.create"), new_design_path, class: "btn btn-primary mt-4" %>
+        </div>
+      <% end %>
+    </section>
+
+    <section>
+      <div class="flex items-baseline justify-between gap-4 border-b border-line pb-3">
+        <h2 class="font-display text-xl font-bold uppercase"><%= t(".recent_requests") %></h2>
+        <%= link_to t(".see_all"), client_print_requests_path,
+              class: "text-sm underline underline-offset-4 hover:text-emulsion" %>
+      </div>
+
+      <% if @dashboard[:print_requests].any? %>
+        <ul class="mt-4 space-y-2">
+          <% @dashboard[:print_requests].each do |print_request| %>
+            <li><%= render "client/print_requests/row", print_request: print_request %></li>
+          <% end %>
+        </ul>
+      <% else %>
+        <div class="panel mt-4 p-6 text-center">
+          <p class="text-muted"><%= t(".no_request") %></p>
+        </div>
+      <% end %>
+    </section>
+  </div>
+</div>

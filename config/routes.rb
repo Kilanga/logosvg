@@ -48,6 +48,17 @@ Rails.application.routes.draw do
   # --- Espaces professionnels ------------------------------------------------
   # One entry point per role. Later steps nest their screens under each of them.
   get "mon-espace", to: "client/dashboards#show",   as: :client_dashboard
+
+  # Les listes du client, toutes restreintes à ses propres données.
+  get    "mon-espace/designs",       to: "client/designs#index",       as: :client_designs
+  get    "mon-espace/demandes",      to: "client/print_requests#index", as: :client_print_requests
+  get    "mon-espace/verifications", to: "client/reviews#index",       as: :client_reviews
+  get    "mon-espace/compte",        to: "client/accounts#edit",       as: :client_account
+  patch  "mon-espace/compte",        to: "client/accounts#update"
+  patch  "mon-espace/compte/mot-de-passe", to: "client/accounts#update_password",
+         as: :client_account_password
+
+  delete "designs/:token", to: "client/designs#destroy", as: :delete_design
   get "atelier",    to: "workshop/dashboards#show",  as: :workshop_dashboard
   get "studio",     to: "designer/dashboards#show", as: :designer_dashboard
   get "admin",      to: "admin/dashboards#show",    as: :admin_dashboard

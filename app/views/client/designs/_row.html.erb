@@ -1,0 +1,19 @@
+<%# One design, in a line. Used by the dashboard and by anything else that
+    lists designs without needing the whole card. %>
+<%= link_to design_path(design), class: "panel flex items-center gap-4 p-3 hover:border-emulsion" do %>
+  <div class="screen-tint size-12 flex-none overflow-hidden rounded-xs">
+    <% if design.ready? %>
+      <%= image_tag design_image_path(design), alt: "", class: "size-full object-contain" %>
+    <% end %>
+  </div>
+
+  <div class="min-w-0 flex-1">
+    <p class="truncate font-medium"><%= design.prompt.truncate(48) %></p>
+    <p class="mt-0.5 text-sm text-muted">
+      <%= design.technique_label %>
+      <% if design.printer %> · <%= design.printer.name %><% end %>
+    </p>
+  </div>
+
+  <%= design_status_pill(design) %>
+<% end %>

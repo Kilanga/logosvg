@@ -1,0 +1,19 @@
+<%# One print request, in a line. Shared by the dashboard and the list. %>
+<%= link_to print_request_path(print_request),
+      class: "panel flex items-center gap-4 p-3 hover:border-emulsion" do %>
+  <div class="screen-tint size-12 flex-none overflow-hidden rounded-xs">
+    <%= image_tag design_image_path(print_request.design), alt: "", class: "size-full object-contain" %>
+  </div>
+
+  <div class="min-w-0 flex-1">
+    <p class="truncate font-medium"><%= print_request.printer.name %></p>
+    <p class="mt-0.5 text-sm text-muted">
+      <%= t("workshop.print_requests.index.quantity", count: print_request.total_qty) %>
+      <% if print_request.sent_at %>
+        · <%= l(print_request.sent_at.to_date, format: :short) %>
+      <% end %>
+    </p>
+  </div>
+
+  <%= print_request_status_pill(print_request) %>
+<% end %>

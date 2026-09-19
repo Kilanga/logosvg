@@ -10,6 +10,35 @@ module DesignsHelper
     t("designs.family_hint.#{entry.family}")
   end
 
+  def design_status_pill(design)
+    style = case design.status
+    when "ready"  then "pill-success"
+    when "failed" then "pill-warning"
+    else "border border-line text-muted"
+    end
+
+    tag.span t("enums.design.status.#{design.status}"), class: "pill #{style}"
+  end
+
+  # The subject of a pending action, whatever kind of record it hangs off.
+  # Written here so the dashboard view does not have to know.
+  def dashboard_action_subject(action)
+    case action.record
+    when Design then action.record.prompt.truncate(60)
+    when PrintRequest then action.record.printer.name
+    end
+  end
+
+  # Where acting on it happens. Here rather than in ClientDashboard: a service
+  # that builds URLs cannot be called without a request in hand.
+  def dashboard_action_path(action)
+    case action.kind
+    when :design_failed then new_design_path
+    when :design_unsent then new_design_print_request_path(action.record)
+    when :print_request_silent then print_request_path(action.record)
+    end
+  end
+
   # The sizes a client actually thinks in — a chest logo, a back print — rather
   # than a bare number of centimetres. Read from settings, never hard-coded.
   #

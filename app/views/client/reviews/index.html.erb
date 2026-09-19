@@ -1,0 +1,23 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-3xl">
+  <%# The list is empty until step 8 brings reviews. The screen exists now so
+      the space is whole, and so the empty state is designed rather than
+      discovered the day the first review lands. %>
+  <div class="panel flex flex-col items-center gap-3 p-12 text-center">
+    <span class="flex gap-3 text-line" aria-hidden="true">
+      <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+    </span>
+    <p class="label-rule"><%= t(".empty") %></p>
+    <p class="max-w-md text-sm text-muted"><%= t(".empty_body") %></p>
+  </div>
+
+  <div class="panel mt-6 p-6">
+    <p class="label-rule flex items-center gap-2.5 text-emulsion">
+      <%= registration_mark %><%= t(".what_is_it") %>
+    </p>
+    <p class="mt-3 text-muted"><%= t(".what_is_it_body") %></p>
+    <p class="mt-4 text-sm text-muted"><%= t(".coming") %></p>
+  </div>
+</div>

@@ -11,6 +11,12 @@ module Client
     rate_limit to: 10, within: 1.minute, only: :create,
                with: -> { redirect_to design_path(params[:design_token]), alert: t("flash.rate_limited") }
 
+    def index
+      authorize PrintRequest
+      @print_requests = policy_scope(PrintRequest).newest_first
+                                                  .includes(:printer, design: :print_file_attachment)
+    end
+
     def new
       @print_request = build_request
       authorize @print_request

@@ -1,4 +1,4 @@
-<%# Client space. Steps 3 and 5 add designs, print requests and reviews. %>
+<%# Client space. Step 8 fills the reviews list. %>
 <% content_for :space_name, t("nav.my_space") %>
 <% content_for :space_nav do %>
   <%= render "layouts/space_link",
@@ -9,5 +9,21 @@
         label: t("nav.create"),
         path: new_design_path,
         current: current_page?(new_design_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.my_designs"),
+        path: client_designs_path,
+        current: current_page?(client_designs_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.my_requests"),
+        path: client_print_requests_path,
+        current: current_page?(client_print_requests_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.my_reviews"),
+        path: client_reviews_path,
+        current: current_page?(client_reviews_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.my_account"),
+        path: client_account_path,
+        current: current_page?(client_account_path) %>
 <% end %>
 <%= render template: "layouts/console" %>

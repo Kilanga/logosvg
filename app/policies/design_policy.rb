@@ -7,6 +7,9 @@ class DesignPolicy < ApplicationPolicy
   def create? = user&.client?
   def new? = create?
 
+  # Their own list. The scope is what narrows it; this only says who has one.
+  def index? = user&.client?
+
   # The preview is the only rendering a client may ever download — and never
   # the print file itself.
   def image? = owner?
