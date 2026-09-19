@@ -40,24 +40,35 @@
         </section>
       <% end %>
 
+      <%# The shop's own wording leads, its limits follow: they are what decides
+          whether a design can be printed here. The primary technique is marked,
+          because it is the one used when a client says they do not know. %>
       <section>
         <h2 class="label-rule"><%= t(".techniques") %></h2>
+
         <ul class="mt-3 divide-y divide-line border-y border-line">
           <% @printer.techniques.each do |technique| %>
-            <li class="flex flex-wrap items-baseline justify-between gap-3 py-3">
-              <span class="font-display text-lg font-bold uppercase">
-                <%= t("enums.printer_technique.technique.#{technique.technique}") %>
-              </span>
-              <span class="text-sm text-muted">
-                <% if technique.unlimited_colours? %>
-                  <%= t("printers.unlimited_colors") %>
-                <% else %>
-                  <%= t("printers.colors", count: technique.max_colors) %>
+            <li class="py-4">
+              <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span class="font-display text-lg font-bold uppercase">
+                  <%= technique.display_label %>
+                </span>
+                <% if technique.primary? %>
+                  <span class="pill pill-success"><%= t("printers.primary_technique") %></span>
                 <% end %>
-                <% if technique.accepted_formats.any? %>
-                  · <%= technique.accepted_formats.map(&:upcase).join(", ") %>
+              </div>
+
+              <ul class="mt-2 flex flex-wrap gap-2 text-sm">
+                <li class="chip-file"><%= technique_ink_limit(technique) %></li>
+                <% if technique_size_limit(technique) %>
+                  <li class="chip-file"><%= technique_size_limit(technique) %></li>
                 <% end %>
-              </span>
+                <li class="chip-file"><%= technique_delivery(technique) %></li>
+              </ul>
+
+              <% if technique.note.present? %>
+                <p class="mt-2 text-sm text-muted"><%= technique.note %></p>
+              <% end %>
             </li>
           <% end %>
         </ul>

@@ -175,8 +175,24 @@ fr:
     ships: "Expédie"
     pickup: "Retrait sur place"
     express: "Express"
-    yes: "Oui"
+    # Entre guillemets : sans eux, YAML lit `yes` comme le booléen vrai et la
+    # clé devient `true`, ce qui affiche « Yes » à l'écran.
+    "yes": "Oui"
     unlimited_colors: "Couleurs illimitées"
+    primary_technique: "Technique principale"
+    # `format` est une clé réservée par I18n : d'où `file_format`.
+    delivery: "Fichier %{file_format}, %{color_space}"
+    ink_ceiling:
+      one: "%{count} encre maximum"
+      other: "%{count} encres maximum"
+    # Motifs d'incompatibilité, affichés tels quels dans l'annuaire et sur la
+    # fiche. Voir PrinterCompatibility.
+    compatibility:
+      technique_not_practised: "ne pratique pas %{technique}"
+      # Composé à partir de `ink_ceiling` : l'accord porte sur le plafond, pas
+      # sur le nombre d'encres du design, et I18n n'accorde que sur `count`.
+      too_many_inks: "%{ceiling}, le design en compte %{count}"
+      too_wide: "largeur maximale %{max} cm"
     textile_provided: "textile fourni par l'atelier"
     textile_accepted: "textile du client accepté"
     colors:
@@ -239,6 +255,16 @@ fr:
           attributes:
             terms_accepted_at:
               blank: "doivent être acceptées"
+        printer:
+          attributes:
+            techniques:
+              blank: "sont obligatoires : indiquez au moins une technique d'impression"
+              no_primary: "doivent désigner une technique principale"
+              several_primaries: "ne peuvent désigner qu'une seule technique principale"
+        printer_technique:
+          attributes:
+            max_colors:
+              present: "ne s'applique pas à cette technique, qui imprime toutes les couleurs en une passe"
     models:
       user: "Compte"
       printer: "Atelier"
@@ -276,8 +302,13 @@ fr:
         photos: "Photos de l'atelier"
       printer_technique:
         technique: "Technique"
+        label: "Nom affiché aux clients"
+        output_format: "Format de fichier attendu"
+        color_space: "Espace colorimétrique"
         max_colors: "Nombre de couleurs maximum"
-        accepted_formats: "Formats acceptés"
+        max_print_width_cm: "Largeur maximale (cm)"
+        max_print_height_cm: "Hauteur maximale (cm)"
+        note: "Précision"
       user:
         email_address: "Adresse email"
         password: "Mot de passe"
@@ -312,17 +343,12 @@ fr:
         europe: "Europe"
         worldwide: "International"
     printer_technique:
-      technique:
-        screen_printing: "Sérigraphie"
-        dtf: "DTF"
-        dtg: "DTG"
-        flex: "Flocage"
-        embroidery: "Broderie"
-      formats:
-        svg: "SVG"
-        pdf: "PDF"
-        eps: "EPS"
-        png: "PNG"
+      # Les libellés des techniques ne sont pas ici : ils viennent du catalogue
+      # servi par le microservice, et chaque imprimeur peut les remplacer par
+      # les siens. Voir PrintTechniques.
+      color_space:
+        rgb: "RVB"
+        cmyk: "CMJN"
 
   sessions:
     new:
@@ -437,7 +463,22 @@ fr:
         description_hint: "Ce que vous imprimez, depuis quand, ce qui vous distingue. C'est le premier texte que lira un client."
         where_hint: "L'adresse place votre atelier sur la carte de l'annuaire. Elle est mise à jour automatiquement à chaque modification."
         orders_email_hint: "C'est à cette adresse que les demandes d'impression arriveront, avec les fichiers joints."
-        techniques_hint: "Cochez ce que vous savez faire. Pour la sérigraphie, le flocage et la broderie, indiquez le nombre de couleurs maximum : c'est ce qui détermine quels designs vous pourrez imprimer."
+        techniques_hint: >-
+          Cochez ce que vous savez faire, puis dites ce qu'il y a derrière :
+          vos clients ne voient que le mode d'impression, mais c'est vous qui
+          décidez du nom affiché, du fichier que vous recevez et de son espace
+          colorimétrique. Deux ateliers qui font de la sublimation n'attendent
+          pas forcément le même fichier.
+        technique_hint:
+          vector: "Encres comptées une à une : chaque couleur est un écran, une découpe ou un fil."
+          raster: "Image complète imprimée en une passe : dégradés et photo possibles."
+        label_hint: "Laissez vide pour garder le nom du catalogue. « Flocage 1 couleur », « Impression photo »… employez vos mots."
+        output_format_hint: "Le fichier que votre machine attend. Par défaut %{native} pour cette technique."
+        color_space_hint: "Ce que le client verra à l'écran sera calé sur ce choix, pour éviter les surprises à l'impression."
+        max_colors_hint: "Votre plafond pour cette technique, au plus %{max}."
+        dimensions_hint: "Laissez vide pour reprendre les dimensions générales de votre fiche."
+        note_hint: "Facultatif. Une précision que le client doit lire avant de vous envoyer sa demande."
+        primary: "Technique retenue quand le client ne sait pas laquelle choisir"
         brands_hint: "Séparées par des virgules."
         status_hint:
           draft: "Visible de vous seul."

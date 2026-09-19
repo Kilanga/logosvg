@@ -19,16 +19,44 @@ class PrintersTest < ApplicationSystemTestCase
 
     assert_selector "h1", text: shown(printers(:rennes).name)
     assert_text printers(:rennes).description
-    assert_text displayed("enums.printer_technique.technique.screen_printing")
+    # The label comes from the catalogue, not from a second copy in fr.yml.
+    assert_text shown(PrintTechniques.fetch("screen_printing").label)
   end
 
-  test "filtering by technique narrows the list" do
+  # The completion criterion for step 2: the technique filter leaves only the
+  # shops that practise it.
+  test "filtering by technique leaves only the shops that practise it" do
     visit printers_path
 
     check "technique_embroidery"
 
     assert_text shown(printers(:nantes).name)
     assert_no_text shown(printers(:rennes).name)
+    assert_no_text shown(printers(:lyon).name)
+
+    # Several techniques widen rather than narrow.
+    check "technique_screen_printing"
+
+    assert_text shown(printers(:nantes).name)
+    assert_text shown(printers(:rennes).name)
+    assert_no_text shown(printers(:lyon).name)
+  end
+
+  test "a shop page shows each technique under the shop's own name, with its limits" do
+    visit printer_path(printers(:nantes))
+
+    # The shop's wording, not the catalogue's.
+    assert_text shown("Broderie fil à fil")
+    assert_text shown("Impression photo grand format")
+
+    # The limits that decide whether a design can be printed here.
+    assert_text shown(I18n.t("printers.ink_ceiling", count: 6))
+    assert_text shown("20 × 20 cm")
+
+    # What this shop actually wants delivered — an SVG in CMYK for a technique
+    # the catalogue produces as a PNG.
+    assert_text shown("Fichier SVG, CMJN")
+    assert_text displayed("printers.primary_technique")
   end
 
   test "a printer fills in their listing and submits it, and an administrator publishes it" do
@@ -42,6 +70,16 @@ class PrintersTest < ApplicationSystemTestCase
     fill_in I18n.t("activerecord.attributes.printer.address"), with: "2 rue du Change"
     fill_in I18n.t("activerecord.attributes.printer.postal_code"), with: "37000"
     fill_in I18n.t("activerecord.attributes.printer.city"), with: "Tours"
+
+    # The shop says what it does, under its own name, delivering the file its
+    # machine expects.
+    check "practises_screen_printing"
+    within "#setup_screen_printing" do
+      fill_in I18n.t("activerecord.attributes.printer_technique.label"), with: "Sérigraphie 4 couleurs"
+      fill_in I18n.t("activerecord.attributes.printer_technique.max_colors"), with: "4"
+      choose "primary_screen_printing"
+    end
+
     click_on I18n.t("workshop.profiles.edit.save")
 
     assert_text displayed("workshop.profiles.update.saved")

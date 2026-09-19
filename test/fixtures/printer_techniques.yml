@@ -1,28 +1,61 @@
+<%# Trois configurations qui rendent le filtre démontrable : un atelier
+    sérigraphie seule, un atelier DTF seul, et un atelier qui fait les deux
+    familles. Les plafonds respectent ceux du catalogue — 6 en sérigraphie et en
+    broderie, 2 en flex. %>
+
 rennes_screen:
   printer: rennes
   technique: screen_printing
   max_colors: 4
-  accepted_formats: [ svg, pdf ]
+  output_format: svg
+  color_space: rgb
+  primary: true
+  max_print_width_cm: 30
+  max_print_height_cm: 40
 
 lyon_dtf:
   printer: lyon
   technique: dtf
-  accepted_formats: [ svg, png ]
+  output_format: png
+  color_space: rgb
+  primary: true
+  max_print_width_cm: 40
+  max_print_height_cm: 50
 
+# Deux familles chez le même atelier, et une sublimation livrée en SVG : c'est
+# exactement le cas que l'imprimeur doit pouvoir décrire lui-même.
 nantes_embroidery:
   printer: nantes
   technique: embroidery
-  max_colors: 8
-  accepted_formats: [ svg ]
+  label: Broderie fil à fil
+  max_colors: 6
+  output_format: svg
+  color_space: rgb
+  primary: true
+  max_print_width_cm: 20
+  max_print_height_cm: 20
 
 nantes_flex:
   printer: nantes
   technique: flex
   max_colors: 2
-  accepted_formats: [ svg ]
+  output_format: svg
+  color_space: rgb
+  primary: false
+
+nantes_sublimation:
+  printer: nantes
+  technique: sublimation
+  label: Impression photo grand format
+  output_format: svg
+  color_space: cmyk
+  primary: false
+  note: Polyester clair uniquement.
 
 attente_screen:
   printer: attente
   technique: screen_printing
   max_colors: 6
-  accepted_formats: [ svg ]
+  output_format: svg
+  color_space: cmyk
+  primary: true

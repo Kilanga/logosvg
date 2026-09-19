@@ -1,0 +1,74 @@
+# ⚠ COPIE DE SECOURS — ce fichier ne fait pas autorité.
+#
+# Le catalogue qui fait foi vit dans le microservice
+# (services/generator/microservice/app/techniques.py) et Rails le lit sur
+# GET /techniques, puis le met en cache une heure.
+#
+# Cette copie ne sert qu'au démarrage à froid et aux pannes du service : sans
+# elle, un imprimeur ne pourrait pas remplir sa fiche tant que la machine de
+# génération dort. Elle est donc volontairement figée, et peut devenir périmée —
+# si les deux divergent, c'est le microservice qui a raison.
+#
+# À régénérer avec :
+#   bin/rails runner 'puts GeneratorClient.techniques.to_yaml'
+
+techniques:
+  - key: screen_printing
+    label: Sérigraphie
+    family: vector
+    max_colors: 6
+    default_colors: 3
+    gradients: false
+    white_is_ink: false
+    dpi: 300
+    file_name: design.svg
+
+  - key: flex
+    label: Flex ou flocage
+    family: vector
+    max_colors: 2
+    default_colors: 2
+    gradients: false
+    white_is_ink: false
+    dpi: 300
+    file_name: design.svg
+
+  - key: embroidery
+    label: Broderie
+    family: vector
+    max_colors: 6
+    default_colors: 3
+    gradients: false
+    white_is_ink: true
+    dpi: 300
+    file_name: design.svg
+
+  - key: dtf
+    label: DTF
+    family: raster
+    max_colors:
+    default_colors: 6
+    gradients: true
+    white_is_ink: true
+    dpi: 300
+    file_name: print.png
+
+  - key: dtg
+    label: DTG
+    family: raster
+    max_colors:
+    default_colors: 6
+    gradients: true
+    white_is_ink: true
+    dpi: 300
+    file_name: print.png
+
+  - key: sublimation
+    label: Sublimation
+    family: raster
+    max_colors:
+    default_colors: 6
+    gradients: true
+    white_is_ink: false
+    dpi: 300
+    file_name: print.png

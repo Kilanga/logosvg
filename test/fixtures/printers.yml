@@ -58,6 +58,9 @@ nantes:
   status: published
   express_available: true
   express_lead_hours: 48
+  # Le flocage ne déclare pas ses dimensions : il retombe sur celles-ci.
+  max_print_width_cm: 25
+  max_print_height_cm: 35
 
 brouillon:
   user: printer_draft

@@ -14,30 +14,51 @@ module PrintersHelper
     end
   end
 
-  # "Sérigraphie · 4 couleurs" — the one line that tells a client whether their
-  # design can be printed here.
+  # "Sérigraphie, 4 encres max, 30 × 40 cm" — the one line that tells a client
+  # whether their design can be printed here. The shop's own wording leads; the
+  # limits follow, because they are what actually decides.
   def technique_summary(technique)
-    label = t("enums.printer_technique.technique.#{technique.technique}")
-    return label if technique.unlimited_colours?
+    [
+      technique.display_label,
+      technique_ink_limit(technique),
+      technique_size_limit(technique)
+    ].compact_blank.join(", ")
+  end
 
-    "#{label} · #{t('printers.colors', count: technique.max_colors)}"
+  def technique_ink_limit(technique)
+    if technique.limited_colors?
+      t("printers.ink_ceiling", count: technique.max_colors)
+    else
+      t("printers.unlimited_colors")
+    end
+  end
+
+  def technique_size_limit(technique)
+    width = technique.effective_max_width_cm
+    height = technique.effective_max_height_cm
+    "#{width} × #{height} cm" if width.present? && height.present?
+  end
+
+  # What the shop actually hands over, in the terms a print shop uses. Shown on
+  # the listing because two shops doing the same technique may not want the same
+  # file — and the client's preview will follow this.
+  def technique_delivery(technique)
+    t("printers.delivery",
+      file_format: technique.output_format.upcase,
+      color_space: t("enums.printer_technique.color_space.#{technique.color_space}"))
   end
 
   # Characteristics grouped the way a client reads them: what gets printed, on
   # what, and how it arrives. Built here rather than in the template because
   # each row is a small decision, and a view full of inline conditionals is a
   # view nobody dares change.
-  #
-  # Blank values are dropped by the caller, so a sparse listing shows only what
-  # it actually says.
   def printer_characteristics(printer)
     {
       printing: [
         [ t("activerecord.attributes.printer.placements"),
           printer.placements.map { |p| t("enums.printer.placements.#{p}") }.to_sentence ],
         [ t("public.printers.characteristics.max_size"), print_area(printer) ],
-        [ t("activerecord.attributes.printer.min_order_qty"),
-          quantity(printer.min_order_qty) ],
+        [ t("activerecord.attributes.printer.min_order_qty"), quantity(printer.min_order_qty) ],
         [ t("activerecord.attributes.printer.price_note"), printer.price_note ]
       ],
       textile: [

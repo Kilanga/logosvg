@@ -443,6 +443,20 @@ vient du dépôt deadsnakes. `bin/generator` choisit l'interpréteur le plus ré
 qui fonctionne. Cela ne concerne que le **mode mock local** : la génération et la
 vectorisation réelles tournent sur la machine GPU, avec son propre environnement.
 
+**`yes`, `no`, `on`, `off` doivent être entre guillemets dans un fichier YAML.**
+Sans eux, YAML les lit comme des booléens : la clé de locale `yes:` devient
+`true`, et l'écran affiche « Yes » au lieu de « Oui ».
+
+**`format` est une clé réservée par I18n.** L'utiliser en interpolation lève
+`reserved key :format used in …`. Nommer le paramètre autrement (`file_format`).
+
+**Le catalogue des techniques vient du microservice, pas de la locale.** Les
+libellés, familles et plafonds sont servis par `GET /techniques` et mis en cache
+par `PrintTechniques` ; chaque atelier peut ensuite les habiller des siens. Ne
+jamais recopier la liste des techniques dans `fr.yml` ni dans un enum Rails.
+La lecture ne fait **jamais** d'appel réseau : un job rafraîchit le cache, un
+cache froid retombe sur `config/print_techniques.yml`.
+
 **Le texte rendu n'est pas le texte écrit.** Les titres sont en capitales via
 `text-transform`, et un navigateur renvoie le texte tel qu'il est *rendu*. Dans
 les tests système, comparer avec le helper `displayed(clé)` d'

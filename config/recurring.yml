@@ -9,7 +9,20 @@
 #     priority: 2
 #     schedule: at 5am every day
 
+# The technique catalogue is cached for an hour and read from the cache on every
+# page. Refreshing slightly more often than it expires means a form is never
+# rendered from the bundled fallback just because the refresh was late.
+# Scheduled in development too: without it, the local cache would always be cold.
+default: &default
+  refresh_print_techniques:
+    class: RefreshPrintTechniquesJob
+    schedule: every 45 minutes
+
+development:
+  <<: *default
+
 production:
+  <<: *default
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
