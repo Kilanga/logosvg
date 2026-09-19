@@ -168,6 +168,7 @@ fr:
     admin: "Administration"
     dashboard: "Tableau de bord"
     my_listing: "Ma fiche"
+    print_requests: "Demandes"
 
   # Libellés partagés par l'annuaire, la fiche publique et les espaces pros.
   printers:
@@ -265,11 +266,27 @@ fr:
           attributes:
             max_colors:
               present: "ne s'applique pas à cette technique, qui imprime toutes les couleurs en une passe"
+        print_request:
+          attributes:
+            sizes:
+              blank: "sont obligatoires : indiquez au moins un exemplaire"
+              not_a_number: "ne peuvent contenir que des nombres entiers"
+              unknown_size: "comportent une taille inconnue : %{sizes}"
+              below_minimum:
+                one: "n'atteignent pas la commande minimale de cet atelier : %{count} exemplaire"
+                other: "n'atteignent pas la commande minimale de cet atelier : %{count} exemplaires"
+            desired_on:
+              in_the_past: "ne peut pas être une date passée"
+            consented_at:
+              blank: "est obligatoire : cochez la case pour transmettre vos coordonnées"
+            consent_text_version:
+              blank: "est obligatoire : cochez la case pour transmettre vos coordonnées"
     models:
       user: "Compte"
       printer: "Atelier"
       printer_technique: "Technique"
       design: "Design"
+      print_request: "Demande d'impression"
     attributes:
       design:
         prompt: "Votre idée"
@@ -278,6 +295,18 @@ fr:
         colors_requested: "Nombre de couleurs"
         print_width_cm: "Largeur d'impression (cm)"
         instruction: "Ce que vous voulez changer"
+      print_request:
+        textile_source: "Qui fournit le textile"
+        textile_model: "Modèle de textile"
+        textile_color: "Couleur du textile"
+        placements: "Emplacement"
+        sizes: "Tailles et quantités"
+        desired_on: "Date souhaitée"
+        message: "Message à l'atelier"
+        contact_name: "Votre nom"
+        contact_email: "Votre email"
+        contact_phone: "Votre téléphone"
+        contact_city: "Votre ville"
       printer:
         name: "Nom de l'atelier"
         description: "Présentation"
@@ -363,6 +392,53 @@ fr:
         logo: "Logo"
         mascotte: "Mascotte"
         badge: "Badge"
+    print_request:
+      status:
+        sent: "Envoyée"
+        acknowledged: "Reçue par l'atelier"
+        quoted: "Devis envoyé"
+        in_production: "En production"
+        completed: "Terminée"
+        canceled: "Annulée"
+        expired: "Sans réponse"
+      textile_source:
+        printer: "L'atelier fournit le textile"
+        client: "Je fournis le textile"
+
+  # --- Demandes d'impression, textes partagés entre écrans et emails --------
+  print_requests:
+    errors:
+      design_not_ready: "Ce design n'est pas encore prêt à être envoyé."
+    sheet:
+      technique: "Technique d'impression"
+      print_width: "Largeur d'impression"
+      placements: "Emplacement"
+      textile: "Textile"
+      sizes: "Tailles"
+      total_qty: "Quantité totale"
+      desired_on: "Date souhaitée"
+      inks: "Nombre d'encres"
+      palette: "Palette"
+      paths: "Tracés"
+      definition: "Définition"
+      resolution: "Résolution"
+      sharp_up_to: "Net jusqu'à"
+      asked_for: "Demande du client"
+      prompt_used: "Prompt utilisé"
+      instruction: "Dernière retouche"
+      style: "Style"
+      seed: "Graine de génération"
+      textile_source:
+        printer: "Fourni par l'atelier"
+        client: "Fourni par le client"
+    status_body:
+      sent: "L'atelier a reçu votre demande par email. Il confirme sa réception, puis vous envoie son devis."
+      acknowledged: "L'atelier a confirmé la réception de votre demande. Le devis arrive par email, hors plateforme."
+      quoted: "L'atelier vous a envoyé son devis."
+      in_production: "Votre commande est en cours d'impression."
+      completed: "Votre commande est terminée."
+      canceled: "Vous avez annulé cette demande. L'atelier ne la traitera pas."
+      expired: "L'atelier n'a pas répondu dans les délais. Votre design est intact : choisissez un autre atelier."
 
   sessions:
     new:
@@ -430,6 +506,57 @@ fr:
         action: "Choisir un nouveau mot de passe"
         ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe reste inchangé."
 
+    print_request:
+      to_printer:
+        subject: "Nouvelle demande d'impression — %{reference}"
+        eyebrow: "Demande %{reference}"
+        heading: "%{client} vous envoie un design à imprimer"
+        body:
+          one: "Une demande pour %{count} exemplaire. Tout ce qu'il faut pour chiffrer est ci-dessous."
+          other: "Une demande pour %{count} exemplaires. Tout ce qu'il faut pour chiffrer est ci-dessous."
+        confirm: "Confirmer la réception"
+        sheet_title: "Fiche technique"
+        message_title: "Message du client"
+        files_title: "Pièces jointes"
+        files_body: >-
+          Le fichier d'impression et un aperçu filigrané. Le client, lui, n'a
+          jamais reçu le fichier d'impression.
+        reply_to: "Répondez directement à cet email pour joindre le client (%{email})."
+      to_client:
+        subject: "Votre demande est partie chez %{printer}"
+        eyebrow: "Demande %{reference}"
+        heading: "Votre demande est partie chez %{printer}"
+        body: >-
+          %{printer} a reçu votre design et votre commande. L'atelier confirme
+          sa réception, puis vous envoie son devis directement.
+        follow: "Suivre ma demande"
+        sheet_title: "Ce que vous avez demandé"
+        quote_off_platform: >-
+          Le devis et le paiement se font directement avec l'atelier. La
+          plateforme ne prend aucune commission sur l'impression.
+      reminder:
+        subject: "Demande d'impression en attente — %{reference}"
+        eyebrow: "Relance — demande %{reference}"
+        heading: "Une demande attend votre réponse"
+        body:
+          one: "%{client} attend une réponse pour %{count} exemplaire. Sans confirmation sous %{days} jours, la demande expire et le client est invité à choisir un autre atelier."
+          other: "%{client} attend une réponse pour %{count} exemplaires. Sans confirmation sous %{days} jours, la demande expire et le client est invité à choisir un autre atelier."
+        confirm: "Confirmer la réception"
+        files_again: "Les fichiers sont joints à nouveau, au cas où le premier email se serait perdu."
+      expired:
+        subject: "Pas de réponse de %{printer}"
+        heading: "%{printer} n'a pas répondu"
+        body: >-
+          Votre demande est restée sans confirmation pendant %{days} jours.
+          Nous la clôturons pour ne pas vous laisser attendre.
+        design_kept: "Votre design est intact : vous pouvez l'envoyer à un autre atelier sans le recréer."
+        choose_another: "Choisir un autre atelier"
+      status_changed:
+        subject: "Votre demande chez %{printer} a changé d'état"
+        eyebrow: "Demande %{reference}"
+        follow: "Voir ma demande"
+        workshop: "Atelier : %{printer}"
+
   # Un seul bloc `client:` — deux clés de même niveau en YAML, et la seconde
   # écrase silencieusement la première.
   client:
@@ -491,6 +618,7 @@ fr:
         what_was_asked: "Votre demande"
         workshop: "Atelier"
         who_can_print: "Qui peut l'imprimer"
+        send_to: "Envoyer"
         see_directory: "Voir tous les ateliers compatibles"
         no_compatible_printer: "Aucun atelier référencé ne pratique cette technique pour l'instant."
       design:
@@ -512,6 +640,66 @@ fr:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
       refine:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
+
+    print_requests:
+      new:
+        title: "Envoyer à un atelier"
+        heading: "Envoyer à %{printer}"
+        no_workshop: "Aucun atelier choisi"
+        no_workshop_body: >-
+          Choisissez d'abord l'atelier qui imprimera ce design. Seuls ceux qui
+          pratiquent sa technique peuvent le réaliser.
+        choose_workshop: "Choisir un atelier"
+        textile_legend: "Le textile"
+        textile_source_hint:
+          printer: "L'atelier propose ses propres vêtements."
+          client: "Vous livrez vos vêtements à l'atelier."
+        textile_unavailable: "Cet atelier ne propose pas cette option."
+        placement_legend: "L'emplacement"
+        placement_hint: "Où le visuel sera imprimé sur le vêtement. Cet atelier ne propose que ces emplacements."
+        sizes_legend: "Tailles et quantités"
+        sizes_hint: "Indiquez le nombre d'exemplaires par taille."
+        minimum:
+          one: "Cet atelier imprime à partir de %{count} exemplaire."
+          other: "Cet atelier imprime à partir de %{count} exemplaires."
+        total: "Total"
+        details_legend: "Délai et précisions"
+        desired_on_hint: "Facultatif. L'atelier vous dira ce qui est réalisable."
+        message_placeholder: "Une précision sur le rendu, le textile, la livraison…"
+        contact_legend: "Vous joindre"
+        contact_hint: "Le devis vous parviendra directement par l'atelier, hors plateforme."
+        consent: >-
+          J'accepte que mes coordonnées et ma demande soient transmises à
+          %{printer} pour l'établissement d'un devis.
+        submit: "Envoyer la demande"
+        quote_off_platform: "L'envoi est gratuit. Le devis et le paiement se font directement avec l'atelier."
+        recap: "Ce qui part"
+        inks: "Encres"
+        workshop: "Atelier"
+        what_the_workshop_gets: "Ce que reçoit l'atelier"
+        what_the_workshop_gets_body: >-
+          Le fichier d'impression, l'aperçu, et une fiche technique complète :
+          technique, palette, taille, textile et quantités. De quoi chiffrer
+          sans vous rappeler.
+      create:
+        sent: "Votre demande est partie chez %{printer}."
+      show:
+        title: "Votre demande"
+        heading: "Demande envoyée à %{printer}"
+        reference: "Référence %{reference}"
+        what_was_ordered: "Ce que vous avez demandé"
+        workshop: "Atelier"
+        choose_another: "Choisir un autre atelier"
+        quote_title: "Le devis arrive hors plateforme"
+        quote_body: >-
+          L'atelier vous répond directement, par email ou par téléphone. La
+          plateforme ne prend aucune commission sur l'impression.
+        cancel_title: "Annuler cette demande"
+        cancel_body: "Tant que l'atelier n'a pas commencé, vous pouvez retirer votre demande."
+        cancel: "Annuler la demande"
+        cancel_confirm: "Annuler cette demande d'impression ?"
+      cancel:
+        canceled: "Votre demande a été annulée."
 
   workshop:
     dashboards:
@@ -582,6 +770,55 @@ fr:
       submit:
         submitted: "Votre fiche est soumise à validation."
         incomplete: "Votre fiche ne peut pas être soumise en l'état."
+
+    print_requests:
+      index:
+        title: "Demandes"
+        heading: "Demandes d'impression"
+        filters: "Filtrer par état"
+        filter:
+          open: "En cours"
+          sent: "À confirmer"
+          acknowledged: "Confirmées"
+          quoted: "Devis envoyé"
+          in_production: "En production"
+          completed: "Terminées"
+          canceled: "Annulées"
+          expired: "Sans réponse"
+        quantity:
+          one: "%{count} exemplaire"
+          other: "%{count} exemplaires"
+        empty:
+          open: "Aucune demande en cours"
+          other: "Aucune demande dans cet état"
+        empty_body: >-
+          Les demandes de vos clients apparaîtront ici. Partagez votre lien
+          d'atelier pour qu'ils créent leurs visuels pour vos machines.
+      show:
+        title: "Demande %{reference}"
+        heading: "Demande %{reference}"
+        sheet: "Fiche technique"
+        client_message: "Message du client"
+        next_step: "Faire avancer"
+        next_step_body:
+          acknowledge: "Confirmez au client que vous avez bien reçu sa demande."
+          quote: "Indiquez que votre devis est parti. Le client en est prévenu."
+          start_production: "Le client a accepté : la commande passe en production."
+          complete: "La commande est terminée et remise au client."
+        event:
+          acknowledge: "Confirmer la réception"
+          quote: "J'ai envoyé mon devis"
+          start_production: "Passer en production"
+          complete: "Marquer comme terminée"
+        files: "Fichiers"
+        files_body: >-
+          Le fichier d'impression et l'aperçu vous ont été envoyés en pièces
+          jointes de l'email de demande.
+        contact: "Contact client"
+        quote_off_platform: "Le devis et le paiement se font directement avec le client."
+      update:
+        updated: "Statut mis à jour. Le client vient d'être prévenu."
+        impossible: "Ce changement n'est pas possible depuis cet état."
 
   designer:
     dashboards:
@@ -658,6 +895,22 @@ fr:
     workshop_links:
       show:
         unknown: "Cet atelier n'est plus référencé. Choisissez-en un autre."
+
+    print_request_confirmations:
+      show:
+        title: "Confirmer la réception"
+        reference: "Demande %{reference}"
+        heading: "Une demande d'impression vous attend"
+        body: "%{client} vous a envoyé un design à imprimer. Confirmez que vous l'avez bien reçue."
+        confirm: "Je confirme la réception"
+        confirm_hint: "Le client est prévenu. Vous lui envoyez ensuite votre devis directement."
+        already_heading: "Réception déjà confirmée"
+        already_body: "Vous avez confirmé cette demande. Le client attend votre devis."
+        closed_heading: "Cette demande est close"
+        sign_in: "votre espace atelier"
+        sign_in_hint_html: "Retrouvez toutes vos demandes dans %{link}."
+      create:
+        acknowledged: "Réception confirmée. Le client vient d'être prévenu."
 
     printers:
       index:

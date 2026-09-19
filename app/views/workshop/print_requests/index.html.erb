@@ -1,0 +1,66 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-5xl">
+  <%# Tabs rather than a dropdown: a shop lives in "open" and glances at the
+      rest. The counts come from one grouped query. %>
+  <nav class="flex flex-wrap gap-1 border-b border-line" aria-label="<%= t('.filters') %>">
+    <% Workshop::PrintRequestsController::STATUS_FILTERS.each do |filter| %>
+      <% count = filter == "open" ? @counts.values_at(*%w[ sent acknowledged quoted in_production ]).compact.sum : @counts[filter].to_i %>
+      <% next if count.zero? && filter != "open" && filter != @filter %>
+      <%= link_to workshop_print_requests_path(statut: filter),
+            class: class_names(
+              "flex min-h-touch items-center gap-2 border-b-2 px-3 text-sm font-medium",
+              @filter == filter ? "border-emulsion text-emulsion" : "border-transparent text-muted hover:text-ink"
+            ),
+            aria: { current: (@filter == filter ? "page" : nil) } do %>
+        <%= t(".filter.#{filter}") %>
+        <span class="font-display font-bold"><%= count %></span>
+      <% end %>
+    <% end %>
+  </nav>
+
+  <% if @print_requests.any? %>
+    <ul class="mt-6 space-y-3">
+      <% @print_requests.each do |print_request| %>
+        <li>
+          <%= link_to workshop_print_request_path(print_request),
+                class: "panel flex flex-wrap items-center gap-4 p-4 hover:border-emulsion" do %>
+            <div class="screen-tint size-16 flex-none overflow-hidden rounded-xs">
+              <%= image_tag design_image_path(print_request.design), alt: "",
+                    class: "size-full object-contain" %>
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <p class="label-rule"><%= print_request_reference(print_request) %></p>
+              <p class="mt-0.5 truncate font-medium"><%= print_request.design.prompt.truncate(70) %></p>
+              <p class="mt-0.5 text-sm text-muted">
+                <%= print_request.design.technique_label %> ·
+                <%= t(".quantity", count: print_request.total_qty) %> ·
+                <%= print_request.contact_name %>
+              </p>
+            </div>
+
+            <div class="flex flex-none flex-col items-end gap-1.5">
+              <%= print_request_status_pill(print_request) %>
+              <% if print_request.sent_at %>
+                <time class="text-sm text-muted" datetime="<%= print_request.sent_at.iso8601 %>">
+                  <%= l(print_request.sent_at.to_date, format: :short) %>
+                </time>
+              <% end %>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <%# Drawn, not left to the browser. %>
+    <div class="panel mt-6 flex flex-col items-center gap-3 p-12 text-center">
+      <span class="flex gap-3 text-line" aria-hidden="true">
+        <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+      </span>
+      <p class="label-rule"><%= t(".empty.#{@filter == 'open' ? 'open' : 'other'}") %></p>
+      <p class="max-w-sm text-sm text-muted"><%= t(".empty_body") %></p>
+    </div>
+  <% end %>
+</div>

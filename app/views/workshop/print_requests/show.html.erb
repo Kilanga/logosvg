@@ -1,0 +1,73 @@
+<% content_for :title, t(".title", reference: print_request_reference(@print_request)) %>
+<% content_for :heading, t(".heading", reference: print_request_reference(@print_request)) %>
+
+<div class="grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)] lg:items-start">
+  <div class="space-y-6">
+    <%# The technical sheet, as it went out by email: the shop can quote from
+        this page without going back to its inbox. %>
+    <div class="panel p-6">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
+        <h2 class="label-rule"><%= t(".sheet") %></h2>
+        <%= print_request_status_pill(@print_request) %>
+      </div>
+
+      <dl class="mt-4 space-y-3 text-sm">
+        <% @sheet.each do |line| %>
+          <div class="flex justify-between gap-6 border-b border-line pb-2 last:border-0">
+            <dt class="text-muted"><%= line.label %></dt>
+            <dd class="text-right font-medium"><%= line.value %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+
+    <% if @print_request.message.present? %>
+      <div class="panel p-6">
+        <h2 class="label-rule"><%= t(".client_message") %></h2>
+        <p class="mt-3 whitespace-pre-line"><%= @print_request.message %></p>
+      </div>
+    <% end %>
+
+    <%# Moving the job along. One button: the next step, and only if it is
+        possible from here. %>
+    <% next_event = @print_request.next_workshop_event %>
+    <% if next_event %>
+      <div class="panel p-6">
+        <p class="label-rule"><%= t(".next_step") %></p>
+        <p class="mt-2 text-sm text-muted"><%= t(".next_step_body.#{next_event}") %></p>
+        <%= button_to t(".event.#{next_event}"), workshop_print_request_path(@print_request),
+              method: :patch, params: { event: next_event },
+              class: "btn btn-primary mt-4" %>
+      </div>
+    <% end %>
+  </div>
+
+  <aside class="space-y-6">
+    <div class="panel overflow-hidden">
+      <div class="screen-tint p-4">
+        <%= image_tag design_image_path(@print_request.design), alt: @print_request.design.prompt,
+              class: "mx-auto w-full" %>
+      </div>
+      <div class="border-t border-line p-4">
+        <p class="label-rule"><%= t(".files") %></p>
+        <p class="mt-2 text-sm text-muted"><%= t(".files_body") %></p>
+      </div>
+    </div>
+
+    <div class="panel p-5">
+      <p class="label-rule"><%= t(".contact") %></p>
+      <address class="mt-3 space-y-1 not-italic text-sm">
+        <p class="font-medium"><%= @print_request.contact_name %></p>
+        <p><%= mail_to @print_request.contact_email, class: "underline underline-offset-4" %></p>
+        <% if @print_request.contact_phone.present? %>
+          <p><%= link_to @print_request.contact_phone, "tel:#{@print_request.contact_phone}",
+                class: "underline underline-offset-4" %></p>
+        <% end %>
+        <% if @print_request.contact_city.present? %>
+          <p class="text-muted"><%= @print_request.contact_city %></p>
+        <% end %>
+      </address>
+      <p class="mt-4 border-t border-line pt-3 text-sm text-muted"><%= t(".quote_off_platform") %></p>
+    </div>
+  </aside>
+</div>

@@ -37,11 +37,20 @@
         <h2 class="label-rule"><%= t(".who_can_print") %></h2>
 
         <% if @compatible_printers.any? %>
+          <%# Each shop is one click from a complete brief: the point of the
+              whole step is that the client never re-types what they already
+              chose. %>
           <ul class="mt-4 space-y-2 text-sm">
             <% @compatible_printers.first(6).each do |printer| %>
-              <li class="flex items-center gap-2.5">
-                <%= registration_mark css_class: "text-success" %>
-                <%= link_to printer.name, printer_path(printer), class: "underline underline-offset-4" %>
+              <li class="flex items-center justify-between gap-3">
+                <span class="flex min-w-0 items-center gap-2.5">
+                  <%= registration_mark css_class: "text-success flex-none" %>
+                  <%= link_to printer.name, printer_path(printer),
+                        class: "truncate underline underline-offset-4" %>
+                </span>
+                <%= link_to t(".send_to"),
+                      new_design_print_request_path(@design, atelier: printer.slug),
+                      class: "flex-none text-sm font-medium text-emulsion underline underline-offset-4" %>
               </li>
             <% end %>
           </ul>
