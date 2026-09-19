@@ -94,7 +94,8 @@ class DesignStateMachineTest < ActiveSupport::TestCase
         user: users(:client),
         prompt: "un renard qui fait du skate",
         technique: "screen_printing",
-        colors_requested: 3
+        colors_requested: 3,
+        print_width_cm: 25
       }.merge(attributes))
     end
 
@@ -103,8 +104,26 @@ end
 
 class DesignTest < ActiveSupport::TestCase
   test "a design needs a prompt the service will accept" do
-    assert_not Design.new(user: users(:client), technique: "screen_printing", prompt: "ok").valid?
-    assert_not Design.new(user: users(:client), technique: "screen_printing", prompt: "a" * 301).valid?
+    assert_not valid_design(prompt: "ok").valid?
+    assert_not valid_design(prompt: "a" * 301).valid?
+  end
+
+  # It is asked of the client now, for every technique — a design with no size
+  # is one no workshop can be matched against.
+  test "a design needs a print size, whatever its technique" do
+    %w[ screen_printing dtf ].each do |technique|
+      design = valid_design(technique: technique, print_width_cm: nil)
+
+      assert_not design.valid?, "#{technique} must still be given a width"
+      assert design.errors.include?(:print_width_cm)
+    end
+  end
+
+  test "a print size outside what a garment takes is refused" do
+    assert_not valid_design(print_width_cm: 2).valid?
+    assert_not valid_design(print_width_cm: 61).valid?
+    assert_predicate valid_design(print_width_cm: 3), :valid?
+    assert_predicate valid_design(print_width_cm: 60), :valid?
   end
 
   test "a design needs a technique the catalogue knows" do
@@ -130,7 +149,7 @@ class DesignTest < ActiveSupport::TestCase
   end
 
   test "a token is assigned without being asked for" do
-    design = Design.create!(user: users(:client), prompt: "un renard", technique: "dtf")
+    design = valid_design(technique: "dtf").tap(&:save!)
 
     assert design.token.present?
   end
@@ -161,4 +180,25 @@ class DesignTest < ActiveSupport::TestCase
 
     assert_not_predicate designs(:fox_dtf).compatibility_with(printers(:rennes)), :compatible?
   end
+
+  # A design too wide for a shop's press is a design that shop cannot print,
+  # whatever else matches.
+  test "a design wider than the press is refused by that shop" do
+    wide = designs(:fox_screen).tap { |d| d.update!(print_width_cm: 40) }
+
+    result = wide.compatibility_with(printers(:rennes))
+
+    assert_not_predicate result, :compatible?
+    assert_equal :too_wide, result.reason
+  end
+
+  private
+    def valid_design(**attributes)
+      Design.new({
+        user: users(:client),
+        prompt: "un renard qui fait du skate",
+        technique: "screen_printing",
+        print_width_cm: 25
+      }.merge(attributes))
+    end
 end

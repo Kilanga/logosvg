@@ -56,6 +56,27 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_equal 0, GenerationQuota.for(users(:client)).used
   end
 
+  # Asked of the client now, and checked on the server: the drawing and the
+  # presets are a convenience, not the rule.
+  test "a design submitted without a size comes back with the form" do
+    sign_in_as users(:client)
+
+    assert_no_enqueued_jobs(only: GenerateDesignJob) do
+      post designs_path, params: { design: valid_design.merge(print_width_cm: "") }
+    end
+
+    assert_response :unprocessable_entity
+  end
+
+  test "the size is asked for a vector technique as much as for a raster one" do
+    sign_in_as users(:client)
+
+    get new_design_path
+
+    assert_select "input[name=?]", "design[print_width_cm]"
+    assert_select "legend", text: /#{Regexp.escape(I18n.t('client.designs.new.size_legend'))}/i
+  end
+
   test "the daily allowance stops the sixth attempt of the day" do
     sign_in_as users(:client)
     GenerationQuota.per_day.times { GenerationQuota.for(users(:client)).consume! }

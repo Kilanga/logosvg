@@ -490,6 +490,13 @@ manquante rend une chaîne « translation missing » et l'échec survient bien p
 loin, méconnaissable — c'est ainsi qu'un doublon de clé de premier niveau dans
 `fr.yml` s'est manifesté en `undefined method 'each'` au fond d'un partiel.
 
+**`config_for` symbolise les clés en profondeur.** Un `preset['key']` sur une
+entrée de `config/settings.yml` renvoie `nil`, toujours — il faut `preset[:key]`.
+Le piège n'est pas le `nil` lui-même : interpolé dans une clé de traduction, il
+donne `…size_presets.`, et I18n, plutôt que de lever une erreur, **retombe sur
+le hash parent**. Chaque bouton affichait donc les quatre libellés à la fois,
+`raise_on_missing_translations` compris. Employer `fetch(:key)`, qui échoue.
+
 **Ne pas lancer `bin/rails runner` en `RAILS_ENV=test` sans transaction.** Les
 tables Active Storage ne sont pas des fixtures : un attachement créé par un essai
 de débogage **reste** dans la base de test et fait passer, au hasard des seeds,

@@ -461,7 +461,22 @@ fr:
         prompt_placeholder: "un renard qui fait du skate, style rétro"
         prompt_hint: "Une phrase suffit. Décrivez le sujet, pas la technique."
         colors_hint: "Chaque couleur est un écran de plus à l'atelier."
-        width_hint: "La largeur imprimée sur le vêtement. Elle fixe la définition du fichier."
+        size_legend: "La taille imprimée"
+        size_hint:
+          vector: >-
+            La largeur du visuel sur le vêtement. Un petit logo de poitrine et
+            un grand dessin de dos ne demandent pas le même atelier : c'est
+            elle qui décide qui saura l'imprimer.
+          raster: >-
+            La largeur du visuel sur le vêtement. Elle décide de la définition
+            du fichier produit, et donc de sa netteté : au-delà d'une certaine
+            largeur, l'image est agrandie plutôt que dessinée.
+        size_presets:
+          small_logo: "Petit logo"
+          chest: "Poitrine"
+          back: "Dos"
+          large_back: "Grand dos"
+        template_alt: "Gabarit de t-shirt montrant la zone imprimée à l'échelle"
         submit: "Générer mon design"
         remaining:
           zero: "Plus de création disponible aujourd'hui."
