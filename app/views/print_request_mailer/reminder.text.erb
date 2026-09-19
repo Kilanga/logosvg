@@ -1,0 +1,10 @@
+<%= t("mailers.print_request.reminder.eyebrow", reference: @print_request.token.first(8).upcase) %>
+
+<%= t("mailers.print_request.reminder.heading") %>
+
+<%= t("mailers.print_request.reminder.body", client: @print_request.contact_name, count: @print_request.total_qty, days: Rails.application.config.tshirt.print_requests[:expire_after_days]) %>
+
+<%= t("mailers.print_request.reminder.confirm") %> :
+<%= @confirmation_url %>
+
+<%= t("mailers.print_request.reminder.files_again") %>

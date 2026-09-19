@@ -1,0 +1,10 @@
+<%= t("mailers.print_request.status_changed.eyebrow", reference: @print_request.token.first(8).upcase) %>
+
+<%= t("enums.print_request.status.#{@print_request.status}") %>
+
+<%= t("print_requests.status_body.#{@print_request.status}") %>
+
+<%= t("mailers.print_request.status_changed.follow") %> :
+<%= print_request_url(@print_request) %>
+
+<%= t("mailers.print_request.status_changed.workshop", printer: @print_request.printer.name) %>

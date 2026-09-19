@@ -17,6 +17,12 @@ default: &default
   refresh_print_techniques:
     class: RefreshPrintTechniquesJob
     schedule: every 45 minutes
+  # Relance les ateliers silencieux et fait expirer les demandes sans réponse.
+  # Toutes les heures : les délais se comptent en jours, une heure de retard sur
+  # une relance de 48 h ne se voit pas, et le balayage reste peu coûteux.
+  sweep_print_requests:
+    class: SweepPrintRequestsJob
+    schedule: every hour at minute 7
 
 development:
   <<: *default

@@ -1,0 +1,22 @@
+<div style="font-family:Helvetica,Arial,sans-serif;color:#1D2433;max-width:600px;">
+  <h1 style="font-size:24px;margin:0 0 16px;">
+    <%= t("mailers.print_request.expired.heading", printer: @print_request.printer.name) %>
+  </h1>
+
+  <p style="margin:0 0 24px;line-height:1.5;">
+    <%= t("mailers.print_request.expired.body", printer: @print_request.printer.name,
+          days: Rails.application.config.tshirt.print_requests[:expire_after_days]) %>
+  </p>
+
+  <%# The design is untouched: choosing another shop is one click, not a
+      regeneration. %>
+  <p style="margin:0 0 24px;line-height:1.5;"><%= t("mailers.print_request.expired.design_kept") %></p>
+
+  <p style="margin:0 0 32px;">
+    <a href="<%= printers_url(techniques: [ @print_request.design.technique ]) %>"
+       style="display:inline-block;background:#1F5F7A;color:#FFFFFF;padding:14px 24px;
+              text-decoration:none;font-weight:600;border-radius:2px;">
+      <%= t("mailers.print_request.expired.choose_another") %>
+    </a>
+  </p>
+</div>
