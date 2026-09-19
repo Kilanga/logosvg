@@ -13,6 +13,9 @@ module Public
 
       if printer
         session[:printer_id] = printer.id
+        # Counted here rather than on the creation screen: this is the poster
+        # being scanned, whether or not anything is drawn afterwards.
+        WorkshopLinkVisit.record!(printer)
         redirect_to new_design_path
       else
         # A shop that has been suspended, or a mistyped poster: the directory is
