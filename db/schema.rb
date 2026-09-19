@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_090100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_20_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -92,6 +92,44 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_090100) do
     t.bigint "user_id", null: false
     t.index ["user_id", "day"], name: "index_generation_counters_on_user_id_and_day", unique: true
     t.index ["user_id"], name: "index_generation_counters_on_user_id"
+  end
+
+  create_table "print_requests", force: :cascade do |t|
+    t.datetime "acknowledged_at"
+    t.bigint "client_id", null: false
+    t.string "confirmation_token", null: false
+    t.string "consent_text_version"
+    t.datetime "consented_at"
+    t.string "contact_city"
+    t.string "contact_email"
+    t.string "contact_name"
+    t.string "contact_phone"
+    t.datetime "created_at", null: false
+    t.bigint "design_id", null: false
+    t.date "desired_on"
+    t.text "message"
+    t.string "placements", default: [], null: false, array: true
+    t.integer "print_width_cm"
+    t.bigint "printer_id", null: false
+    t.datetime "quoted_at"
+    t.datetime "reminded_at"
+    t.datetime "sent_at"
+    t.jsonb "sizes", default: {}, null: false
+    t.string "status", default: "sent", null: false
+    t.string "textile_color"
+    t.string "textile_model"
+    t.string "textile_source", default: "printer", null: false
+    t.string "token", null: false
+    t.integer "total_qty", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_id", "created_at"], name: "index_print_requests_on_client_id_and_created_at"
+    t.index ["client_id"], name: "index_print_requests_on_client_id"
+    t.index ["confirmation_token"], name: "index_print_requests_on_confirmation_token", unique: true
+    t.index ["design_id"], name: "index_print_requests_on_design_id"
+    t.index ["printer_id", "status", "sent_at"], name: "index_print_requests_on_printer_id_and_status_and_sent_at"
+    t.index ["printer_id"], name: "index_print_requests_on_printer_id"
+    t.index ["status", "sent_at"], name: "index_print_requests_on_status_and_sent_at"
+    t.index ["token"], name: "index_print_requests_on_token", unique: true
   end
 
   create_table "printer_techniques", force: :cascade do |t|
@@ -193,6 +231,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_090100) do
   add_foreign_key "designs", "printers"
   add_foreign_key "designs", "users"
   add_foreign_key "generation_counters", "users"
+  add_foreign_key "print_requests", "designs"
+  add_foreign_key "print_requests", "printers"
+  add_foreign_key "print_requests", "users", column: "client_id"
   add_foreign_key "printer_techniques", "printers"
   add_foreign_key "printers", "users"
   add_foreign_key "sessions", "users"

@@ -13,6 +13,13 @@ class User < ApplicationRecord
   # Only a printer account has one, and it has exactly one.
   has_one :printer, dependent: :destroy
 
+  has_many :designs, dependent: :destroy
+  # A client's own orders. Never destroyed with the account: the workshop has a
+  # job in hand, and `client_id` is NOT NULL. Closing an account anonymises
+  # these rather than deleting them — that is step 10's business.
+  has_many :print_requests, foreign_key: :client_id,
+           dependent: :restrict_with_error, inverse_of: :client
+
   normalizes :email_address, with: ->(e) { e.strip.downcase }
   normalizes :phone, with: ->(p) { p.gsub(/[^\d+]/, "") }
 

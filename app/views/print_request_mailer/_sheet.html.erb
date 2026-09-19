@@ -1,0 +1,14 @@
+<%# The technical sheet. Styles are inline because email clients strip
+    stylesheets, and the table layout is the one thing they all agree on. %>
+<table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;font-size:14px;">
+  <% sheet.each do |line| %>
+    <tr>
+      <td style="padding:8px 0;border-bottom:1px solid #C8D0D4;color:#505A67;width:40%;vertical-align:top;">
+        <%= line.label %>
+      </td>
+      <td style="padding:8px 0;border-bottom:1px solid #C8D0D4;color:#1D2433;font-weight:600;vertical-align:top;">
+        <%= line.value %>
+      </td>
+    </tr>
+  <% end %>
+</table>

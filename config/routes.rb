@@ -26,6 +26,21 @@ Rails.application.routes.draw do
   post "designs/:token/variantes", to: "client/designs#variants", as: :design_variants
   post "designs/:token/retouche",  to: "client/designs#refine",   as: :design_refine
 
+  # --- Demandes d'impression -------------------------------------------------
+  get  "designs/:design_token/demande", to: "client/print_requests#new",
+       as: :new_design_print_request
+  post "designs/:design_token/demande", to: "client/print_requests#create",
+       as: :design_print_requests
+
+  get  "demandes/:token", to: "client/print_requests#show", as: :print_request
+  post "demandes/:token/annuler", to: "client/print_requests#cancel", as: :cancel_print_request
+
+  # La page que l'atelier ouvre depuis son email, sans connexion. Seul le POST
+  # change le statut : les antivirus de messagerie suivent les liens tout seuls.
+  get  "demandes/confirmation/:token", to: "public/print_request_confirmations#show",
+       as: :print_request_confirmation
+  post "demandes/confirmation/:token", to: "public/print_request_confirmations#create"
+
   # --- Annuaire public -------------------------------------------------------
   get "imprimeurs",       to: "public/printers#index", as: :printers
   get "imprimeurs/:slug", to: "public/printers#show",  as: :printer
@@ -41,6 +56,11 @@ Rails.application.routes.draw do
   get   "atelier/fiche/edit", to: "workshop/profiles#edit",   as: :edit_workshop_profile
   patch "atelier/fiche",      to: "workshop/profiles#update", as: :workshop_profile
   post  "atelier/fiche/soumettre", to: "workshop/profiles#submit", as: :submit_workshop_profile
+
+  # Les demandes reçues par l'atelier, et leur suivi.
+  get   "atelier/demandes",        to: "workshop/print_requests#index",  as: :workshop_print_requests
+  get   "atelier/demandes/:token", to: "workshop/print_requests#show",   as: :workshop_print_request
+  patch "atelier/demandes/:token", to: "workshop/print_requests#update"
 
   # Validation des fiches par l'administration.
   get   "admin/imprimeurs",       to: "admin/printers#index",  as: :admin_printers

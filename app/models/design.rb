@@ -15,6 +15,10 @@ class Design < ApplicationRecord
   has_many :lineage, class_name: "Design", foreign_key: :root_id,
            dependent: :nullify, inverse_of: :root
 
+  # A sent request keeps its own copies of the files, so it outlives the design
+  # it came from — but it is never orphaned while the design is still there.
+  has_many :print_requests, dependent: :restrict_with_error, inverse_of: :design
+
   # The file the workshop prints — an SVG or a PNG, depending on the technique.
   # Never served to the client: see docs/SPEC.md, "Fichiers".
   has_one_attached :print_file

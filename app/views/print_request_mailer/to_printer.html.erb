@@ -1,0 +1,47 @@
+<div style="font-family:Helvetica,Arial,sans-serif;color:#1D2433;max-width:600px;">
+  <p style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#1F5F7A;margin:0 0 8px;">
+    <%= t("mailers.print_request.to_printer.eyebrow", reference: @print_request.token.first(8).upcase) %>
+  </p>
+
+  <h1 style="font-size:24px;margin:0 0 16px;">
+    <%= t("mailers.print_request.to_printer.heading", client: @print_request.contact_name) %>
+  </h1>
+
+  <p style="margin:0 0 24px;line-height:1.5;">
+    <%= t("mailers.print_request.to_printer.body", count: @print_request.total_qty) %>
+  </p>
+
+  <%# The confirmation button leads to a page. Only the button *on that page*
+      changes anything: mail scanners follow links on their own. %>
+  <p style="margin:0 0 32px;">
+    <a href="<%= @confirmation_url %>"
+       style="display:inline-block;background:#1F5F7A;color:#FFFFFF;padding:14px 24px;
+              text-decoration:none;font-weight:600;border-radius:2px;">
+      <%= t("mailers.print_request.to_printer.confirm") %>
+    </a>
+  </p>
+
+  <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;
+             margin:0 0 8px;padding-top:16px;border-top:1px solid #C8D0D4;">
+    <%= t("mailers.print_request.to_printer.sheet_title") %>
+  </h2>
+  <%= render "sheet", sheet: @sheet %>
+
+  <% if @print_request.message.present? %>
+    <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;margin:24px 0 8px;">
+      <%= t("mailers.print_request.to_printer.message_title") %>
+    </h2>
+    <p style="margin:0;line-height:1.5;white-space:pre-line;"><%= @print_request.message %></p>
+  <% end %>
+
+  <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;margin:24px 0 8px;">
+    <%= t("mailers.print_request.to_printer.files_title") %>
+  </h2>
+  <p style="margin:0 0 24px;line-height:1.5;color:#505A67;">
+    <%= t("mailers.print_request.to_printer.files_body") %>
+  </p>
+
+  <p style="margin:0;padding-top:16px;border-top:1px solid #C8D0D4;line-height:1.5;color:#505A67;">
+    <%= t("mailers.print_request.to_printer.reply_to", email: @print_request.contact_email) %>
+  </p>
+</div>

@@ -1,0 +1,66 @@
+<%# Une demande par état qui se teste : celle qu'on attend, celle que l'atelier
+    a confirmée, et une assez vieille pour être relancée puis expirée. %>
+
+waiting:
+  design: fox_screen
+  client: client
+  printer: rennes
+  token: demande-en-attente
+  confirmation_token: confirmation-en-attente
+  status: sent
+  textile_source: printer
+  textile_model: Stanley Stella Creator
+  textile_color: Noir
+  placements: [ chest_center ]
+  print_width_cm: 25
+  sizes:
+    M: 10
+    L: 5
+  total_qty: 15
+  contact_name: Claire Martin
+  contact_email: claire@example.invalid
+  contact_city: Nantes
+  consent_text_version: 2026-09-v1
+  consented_at: <%= 2.hours.ago.to_fs(:db) %>
+  sent_at: <%= 2.hours.ago.to_fs(:db) %>
+
+acknowledged:
+  design: fox_dtf
+  client: client
+  printer: lyon
+  token: demande-confirmee
+  confirmation_token: confirmation-confirmee
+  status: acknowledged
+  textile_source: client
+  placements: [ back_full ]
+  print_width_cm: 24
+  sizes:
+    S: 3
+  total_qty: 3
+  contact_name: Claire Martin
+  contact_email: claire@example.invalid
+  consent_text_version: 2026-09-v1
+  consented_at: <%= 3.days.ago.to_fs(:db) %>
+  sent_at: <%= 3.days.ago.to_fs(:db) %>
+  acknowledged_at: <%= 2.days.ago.to_fs(:db) %>
+
+<%# Envoyée il y a longtemps et jamais confirmée : de quoi éprouver la relance
+    puis l'expiration sans manipuler l'horloge. %>
+forgotten:
+  design: fox_screen
+  client: client
+  printer: nantes
+  token: demande-oubliee
+  confirmation_token: confirmation-oubliee
+  status: sent
+  textile_source: printer
+  placements: [ chest_left ]
+  print_width_cm: 20
+  sizes:
+    L: 8
+  total_qty: 8
+  contact_name: Claire Martin
+  contact_email: claire@example.invalid
+  consent_text_version: 2026-09-v1
+  consented_at: <%= 9.days.ago.to_fs(:db) %>
+  sent_at: <%= 9.days.ago.to_fs(:db) %>

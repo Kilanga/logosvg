@@ -1,0 +1,14 @@
+<%= t("mailers.print_request.to_client.eyebrow", reference: @print_request.token.first(8).upcase) %>
+
+<%= t("mailers.print_request.to_client.heading", printer: @print_request.printer.name) %>
+
+<%= t("mailers.print_request.to_client.body", printer: @print_request.printer.name) %>
+
+<%= t("mailers.print_request.to_client.follow") %> :
+<%= print_request_url(@print_request) %>
+
+-- <%= t("mailers.print_request.to_client.sheet_title") %> --
+
+<%= render "sheet", sheet: @sheet %>
+
+<%= t("mailers.print_request.to_client.quote_off_platform") %>

@@ -1,0 +1,8 @@
+<%= t("mailers.print_request.expired.heading", printer: @print_request.printer.name) %>
+
+<%= t("mailers.print_request.expired.body", printer: @print_request.printer.name, days: Rails.application.config.tshirt.print_requests[:expire_after_days]) %>
+
+<%= t("mailers.print_request.expired.design_kept") %>
+
+<%= t("mailers.print_request.expired.choose_another") %> :
+<%= printers_url(techniques: [ @print_request.design.technique ]) %>

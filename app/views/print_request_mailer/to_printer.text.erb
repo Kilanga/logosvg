@@ -1,0 +1,24 @@
+<%= t("mailers.print_request.to_printer.eyebrow", reference: @print_request.token.first(8).upcase) %>
+
+<%= t("mailers.print_request.to_printer.heading", client: @print_request.contact_name) %>
+
+<%= t("mailers.print_request.to_printer.body", count: @print_request.total_qty) %>
+
+<%= t("mailers.print_request.to_printer.confirm") %> :
+<%= @confirmation_url %>
+
+-- <%= t("mailers.print_request.to_printer.sheet_title") %> --
+
+<%= render "sheet", sheet: @sheet %>
+<% if @print_request.message.present? -%>
+
+-- <%= t("mailers.print_request.to_printer.message_title") %> --
+
+<%= @print_request.message %>
+<% end -%>
+
+-- <%= t("mailers.print_request.to_printer.files_title") %> --
+
+<%= t("mailers.print_request.to_printer.files_body") %>
+
+<%= t("mailers.print_request.to_printer.reply_to", email: @print_request.contact_email) %>

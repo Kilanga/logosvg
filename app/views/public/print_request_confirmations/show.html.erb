@@ -1,0 +1,51 @@
+<% content_for :title, t(".title") %>
+
+<div class="mx-auto max-w-2xl px-5 py-12">
+  <div class="panel p-8">
+    <p class="label-rule flex items-center gap-2.5 text-emulsion">
+      <%= registration_mark %><%= t(".reference", reference: print_request_reference(@print_request)) %>
+    </p>
+
+    <% if @print_request.sent? %>
+      <h1 class="mt-4 font-display text-3xl font-bold uppercase"><%= t(".heading") %></h1>
+      <p class="mt-3 text-muted"><%= t(".body", client: @print_request.contact_name) %></p>
+
+      <dl class="mt-6 space-y-3 border-t border-line pt-6 text-sm">
+        <div class="flex justify-between gap-6">
+          <dt class="text-muted"><%= t("activerecord.attributes.design.technique") %></dt>
+          <dd class="font-medium"><%= @print_request.design.technique_label %></dd>
+        </div>
+        <div class="flex justify-between gap-6">
+          <dt class="text-muted"><%= t("print_requests.sheet.sizes") %></dt>
+          <dd class="font-medium"><%= sizes_summary(@print_request) %></dd>
+        </div>
+        <div class="flex justify-between gap-6">
+          <dt class="text-muted"><%= t("print_requests.sheet.total_qty") %></dt>
+          <dd class="font-medium"><%= @print_request.total_qty %></dd>
+        </div>
+      </dl>
+
+      <%# A POST, never the link itself: mail scanners follow links on their own,
+          and a GET here would acknowledge every request before a human read it. %>
+      <%= button_to t(".confirm"), print_request_confirmation_path(params[:token]),
+            class: "btn btn-primary mt-8 w-full sm:w-auto" %>
+      <p class="mt-3 text-sm text-muted"><%= t(".confirm_hint") %></p>
+
+    <% elsif @print_request.acknowledged? %>
+      <h1 class="mt-4 font-display text-3xl font-bold uppercase"><%= t(".already_heading") %></h1>
+      <p class="mt-3 text-muted"><%= t(".already_body") %></p>
+
+    <% else %>
+      <%# Cancelled, expired, or already further along: the link is dead and
+          says why rather than failing silently. %>
+      <h1 class="mt-4 font-display text-3xl font-bold uppercase"><%= t(".closed_heading") %></h1>
+      <p class="mt-3 text-muted">
+        <%= t("print_requests.status_body.#{@print_request.status}") %>
+      </p>
+    <% end %>
+  </div>
+
+  <p class="mt-6 text-center text-sm text-muted">
+    <%= t(".sign_in_hint_html", link: link_to(t(".sign_in"), new_session_path, class: "underline underline-offset-4")) %>
+  </p>
+</div>

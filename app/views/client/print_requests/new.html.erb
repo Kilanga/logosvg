@@ -1,0 +1,221 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading", printer: @printer&.name) %>
+
+<% if @printer.nil? %>
+  <%# Nothing to send to. A client who arrived here without a shop needs the
+      directory, not a form with an empty recipient. %>
+  <div class="panel max-w-2xl p-8 text-center">
+    <p class="label-rule text-emulsion"><%= t(".no_workshop") %></p>
+    <p class="mt-3 text-muted"><%= t(".no_workshop_body") %></p>
+    <%= link_to t(".choose_workshop"), printers_path(techniques: [ @design.technique ]),
+          class: "btn btn-primary mt-6" %>
+  </div>
+<% else %>
+  <div class="grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)] lg:items-start">
+    <%= form_with model: @print_request, url: design_print_requests_path(@design),
+          class: "space-y-10" do |form| %>
+
+      <% if @print_request.errors.any? %>
+        <div class="border-l-2 border-warning bg-warning-bg px-4 py-3">
+          <p class="font-semibold text-warning">
+            <%= t("errors.template.header", count: @print_request.errors.count) %>
+          </p>
+          <p class="mt-1 text-sm text-warning"><%= t("errors.template.body") %></p>
+        </div>
+      <% end %>
+
+      <%# 01 — Textile. Which side supplies it changes what the shop has to
+          quote, so it comes before anything else. %>
+      <fieldset>
+        <div class="flex items-baseline gap-4 border-b border-line pb-3">
+          <span class="font-display text-xl font-bold text-emulsion">01</span>
+          <legend class="font-display text-xl font-bold uppercase"><%= t(".textile_legend") %></legend>
+        </div>
+
+        <div class="mt-6 space-y-5">
+          <div class="grid gap-2 sm:grid-cols-2">
+            <% PrintRequest::TEXTILE_SOURCES.each do |source| %>
+              <% available = source == "printer" ? @printer.provides_textile? : @printer.accepts_client_textile? %>
+              <label class="flex cursor-pointer flex-col gap-1 rounded-xs border border-line p-3
+                            has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5
+                            has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
+                <%= form.radio_button :textile_source, source, class: "sr-only", disabled: !available %>
+                <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
+                  <%= t("enums.print_request.textile_source.#{source}") %>
+                </span>
+                <span class="text-sm text-muted">
+                  <%= available ? t(".textile_source_hint.#{source}") : t(".textile_unavailable") %>
+                </span>
+              </label>
+            <% end %>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <%= render "shared/field", form: form, field: :textile_model,
+                  label: t("activerecord.attributes.print_request.textile_model"),
+                  hint: @printer.textile_brands.any? ? @printer.textile_brands_list : nil %>
+            <%= render "shared/field", form: form, field: :textile_color,
+                  label: t("activerecord.attributes.print_request.textile_color") %>
+          </div>
+        </div>
+      </fieldset>
+
+      <%# 02 — Where it goes on the garment. The shop only offers what it does. %>
+      <fieldset>
+        <div class="flex items-baseline gap-4 border-b border-line pb-3">
+          <span class="font-display text-xl font-bold text-emulsion">02</span>
+          <legend class="font-display text-xl font-bold uppercase"><%= t(".placement_legend") %></legend>
+        </div>
+        <p class="mt-3 text-sm text-muted"><%= t(".placement_hint") %></p>
+
+        <div class="mt-4 grid gap-2 sm:grid-cols-2">
+          <% (@printer.placements.presence || Printer::PLACEMENTS).each do |placement| %>
+            <label class="flex min-h-touch cursor-pointer items-center gap-2.5 rounded-xs border border-line px-3 text-sm
+                          has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+              <%= check_box_tag "print_request[placements][]", placement,
+                    @print_request.placements.include?(placement),
+                    id: "placement_#{placement}", class: "size-4 rounded-xs border-line text-emulsion" %>
+              <%= t("enums.printer.placements.#{placement}") %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <%# 03 — Sizes and quantities: the heart of the brief, and the only place
+          the total comes from. %>
+      <fieldset>
+        <div class="flex items-baseline gap-4 border-b border-line pb-3">
+          <span class="font-display text-xl font-bold text-emulsion">03</span>
+          <legend class="font-display text-xl font-bold uppercase"><%= t(".sizes_legend") %></legend>
+        </div>
+        <p class="mt-3 text-sm text-muted">
+          <%= @printer.min_order_qty.present? ? t(".minimum", count: @printer.min_order_qty) : t(".sizes_hint") %>
+        </p>
+
+        <div class="mt-4" data-controller="size-run" data-size-run-label-value="<%= t('.total') %>">
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(5rem,1fr))] gap-2">
+            <% PrintRequest.garment_sizes.each do |size| %>
+              <div class="rounded-xs border border-line p-2 text-center">
+                <%= label_tag "size_#{size}", size, class: "label-rule block" %>
+                <%= number_field_tag "print_request[sizes][#{size}]",
+                      @print_request.sizes[size], min: 0, max: 999, id: "size_#{size}",
+                      class: "mt-1.5 block min-h-touch w-full rounded-xs border border-line bg-surface px-2 text-center text-base",
+                      data: { size_run_target: "quantity", action: "size-run#total" } %>
+              </div>
+            <% end %>
+          </div>
+
+          <p class="mt-3 flex items-baseline gap-2">
+            <span class="label-rule"><%= t(".total") %></span>
+            <span class="font-display text-2xl font-bold" data-size-run-target="output">
+              <%= @print_request.total_qty %>
+            </span>
+          </p>
+        </div>
+      </fieldset>
+
+      <%# 04 — When, and anything the shop should know. %>
+      <fieldset>
+        <div class="flex items-baseline gap-4 border-b border-line pb-3">
+          <span class="font-display text-xl font-bold text-emulsion">04</span>
+          <legend class="font-display text-xl font-bold uppercase"><%= t(".details_legend") %></legend>
+        </div>
+
+        <div class="mt-6 space-y-5">
+          <div class="max-w-64">
+            <%= render "shared/field", form: form, field: :desired_on,
+                  label: t("activerecord.attributes.print_request.desired_on"),
+                  kind: :date_field, options: { min: Date.current.to_fs(:db) },
+                  hint: t(".desired_on_hint") %>
+          </div>
+
+          <div>
+            <%= form.label :message, t("activerecord.attributes.print_request.message"),
+                  class: "label-rule block" %>
+            <%= form.text_area :message, rows: 4, maxlength: 1000,
+                  placeholder: t(".message_placeholder"),
+                  class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+          </div>
+        </div>
+      </fieldset>
+
+      <%# 05 — Who the shop answers. Prefilled from the account: the quote comes
+          back by email or by telephone, outside the platform. %>
+      <fieldset>
+        <div class="flex items-baseline gap-4 border-b border-line pb-3">
+          <span class="font-display text-xl font-bold text-emulsion">05</span>
+          <legend class="font-display text-xl font-bold uppercase"><%= t(".contact_legend") %></legend>
+        </div>
+        <p class="mt-3 text-sm text-muted"><%= t(".contact_hint") %></p>
+
+        <div class="mt-6 grid gap-5 sm:grid-cols-2">
+          <%= render "shared/field", form: form, field: :contact_name,
+                label: t("activerecord.attributes.print_request.contact_name"),
+                options: { required: true } %>
+          <%= render "shared/field", form: form, field: :contact_email,
+                label: t("activerecord.attributes.print_request.contact_email"),
+                kind: :email_field, options: { required: true } %>
+          <%= render "shared/field", form: form, field: :contact_phone,
+                label: t("activerecord.attributes.print_request.contact_phone"),
+                kind: :telephone_field %>
+          <%= render "shared/field", form: form, field: :contact_city,
+                label: t("activerecord.attributes.print_request.contact_city") %>
+        </div>
+
+        <label class="mt-6 flex gap-3 border-l-2 border-line pl-4 text-sm">
+          <%= check_box_tag "print_request[consent]", "1",
+                @print_request.consented_at.present?,
+                class: "mt-0.5 size-4 flex-none rounded-xs border-line text-emulsion" %>
+          <span><%= t(".consent", printer: @printer.name) %></span>
+        </label>
+      </fieldset>
+
+      <div class="border-t border-line pt-8">
+        <%= form.submit t(".submit"), class: "btn btn-primary w-full sm:w-auto" %>
+        <p class="mt-3 text-sm text-muted"><%= t(".quote_off_platform") %></p>
+      </div>
+    <% end %>
+
+    <%# The recap: what is actually being sent, next to the form that composes
+        it. The preview is the watermarked rendering — the print file itself
+        goes to the workshop and to nobody else. %>
+    <aside class="space-y-6 lg:sticky lg:top-8">
+      <div class="panel overflow-hidden">
+        <div class="screen-tint p-4">
+          <%= image_tag design_image_path(@design), alt: @design.prompt,
+                class: "mx-auto w-full max-w-64" %>
+        </div>
+        <div class="border-t border-line p-4">
+          <h2 class="label-rule"><%= t(".recap") %></h2>
+          <dl class="mt-3 space-y-2.5 text-sm">
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted"><%= t("activerecord.attributes.design.technique") %></dt>
+              <dd class="text-right font-medium"><%= @design.technique_label %></dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted"><%= t("activerecord.attributes.design.print_width_cm") %></dt>
+              <dd class="text-right font-medium"><%= @design.print_width_cm %> cm</dd>
+            </div>
+            <% if @design.vector? && @design.inks_count %>
+              <div class="flex justify-between gap-4">
+                <dt class="text-muted"><%= t(".inks") %></dt>
+                <dd class="text-right font-medium"><%= @design.inks_count %></dd>
+              </div>
+            <% end %>
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted"><%= t(".workshop") %></dt>
+              <dd class="text-right font-medium"><%= @printer.name %></dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="panel p-5">
+        <p class="label-rule flex items-center gap-2.5 text-emulsion">
+          <%= registration_mark %><%= t(".what_the_workshop_gets") %>
+        </p>
+        <p class="mt-3 text-sm text-muted"><%= t(".what_the_workshop_gets_body") %></p>
+      </div>
+    </aside>
+  </div>
+<% end %>

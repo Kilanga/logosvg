@@ -17,6 +17,10 @@ class Printer < ApplicationRecord
            class_name: "PrinterTechnique", dependent: :destroy, inverse_of: :printer
   accepts_nested_attributes_for :techniques, allow_destroy: true, reject_if: :all_blank
 
+  # The orders the shop has received. Restricted rather than cascaded: a
+  # listing is not deleted out from under a job in progress.
+  has_many :print_requests, dependent: :restrict_with_error, inverse_of: :printer
+
   has_one_attached :logo
   has_many_attached :photos
 
