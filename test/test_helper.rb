@@ -22,5 +22,9 @@ module ActiveSupport
     # "which job did that enqueue?" is a question worth asking from any test,
     # not only from job tests.
     include ActiveJob::TestHelper
+
+    # And email is how it talks to workshops: a print request that sends no
+    # email has not been sent. `assert_emails` belongs everywhere too.
+    include ActionMailer::TestHelper
   end
 end

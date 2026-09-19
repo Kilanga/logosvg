@@ -9,7 +9,12 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # Turbo turns every navigation into a fetch, and this machine is slow. Two
   # seconds is enough on a developer laptop and not on a CI runner or an old
   # dual-core; waiting longer costs nothing when the assertion passes.
-  Capybara.default_max_wait_time = 5
+  #
+  # Raised from 5 to 10 once the suite grew past twenty browser tests: a
+  # sign-in redirect that normally lands in well under a second occasionally
+  # overran five when the machine was loaded, and the failure looked like a
+  # broken assertion rather than a slow one.
+  Capybara.default_max_wait_time = 10
 
   driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 900 ] do |options|
     # Chrome runs inside WSL here and inside a container on CI. Neither offers a
