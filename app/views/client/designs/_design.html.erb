@@ -1,0 +1,80 @@
+<%# The design panel, in whichever of its three states it is. Replaced whole
+    rather than patched: generating, ready and failed look nothing alike. %>
+<div class="panel overflow-hidden">
+  <% if design.in_progress? %>
+    <div class="screen-tint flex aspect-square w-full flex-col items-center justify-center gap-4 p-8 text-center">
+      <span class="flex gap-4 text-emulsion" aria-hidden="true">
+        <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+      </span>
+      <p class="label-rule text-emulsion" role="status"><%= t("client.designs.design.working") %></p>
+      <p class="max-w-xs text-sm text-muted"><%= t("client.designs.design.working_hint") %></p>
+    </div>
+
+  <% elsif design.failed? %>
+    <div class="flex aspect-square w-full flex-col items-center justify-center gap-4 bg-warning-bg p-8 text-center">
+      <p class="label-rule text-warning"><%= t("client.designs.design.failed") %></p>
+      <p class="max-w-sm text-warning"><%= design.error_message %></p>
+      <%# A failed generation consumed no allowance: trying again is free. %>
+      <%= link_to t("client.designs.design.try_again"), new_design_path, class: "btn btn-primary mt-2" %>
+    </div>
+
+  <% else %>
+    <div class="screen-tint p-4">
+      <%= image_tag design_image_path(design), alt: design.prompt, class: "mx-auto w-full max-w-lg" %>
+    </div>
+
+    <div class="border-t border-line p-4">
+      <%# Vector output is counted in screens; raster output in pixels. Asking a
+          DTF file how many screens it needs would be meaningless. %>
+      <% if design.vector? %>
+        <p class="label-rule"><%= t("client.designs.design.screens", count: design.inks_count.to_i) %></p>
+        <ul class="mt-3 flex flex-wrap gap-4">
+          <% design.palette.each do |ink| %>
+            <li class="flex items-center gap-2">
+              <span class="size-6 rounded-xs border border-ink/15" style="background-color: <%= ink["hex"] %>"></span>
+              <span class="font-display text-sm font-semibold uppercase"><%= ink["hex"] %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="label-rule"><%= t("client.designs.design.print_file") %></p>
+        <dl class="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+          <% design_file_facts(design).each do |label, value| %>
+            <div>
+              <dt class="label-rule"><%= label %></dt>
+              <dd class="mt-0.5 font-semibold"><%= value %></dd>
+            </div>
+          <% end %>
+        </dl>
+      <% end %>
+
+      <% if design.warnings.any? %>
+        <ul class="mt-4 space-y-2 border-t border-line pt-4">
+          <% design.warnings.each do |warning| %>
+            <li class="flex gap-3 border-l-2 border-warning bg-warning-bg px-3 py-2 text-sm text-warning">
+              <%= registration_mark css_class: "mt-0.5 flex-none" %><%= warning %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+
+    <div class="flex flex-wrap gap-3 border-t border-line p-4">
+      <%# The print file never leaves for the client: this is a watermarked
+          rendering of it. %>
+      <%= link_to t("client.designs.design.download"), design_image_path(design),
+            class: "btn btn-secondary text-sm" %>
+
+      <% if design.refinements_left.to_i.positive? %>
+        <%= button_to t("client.designs.design.variants"), design_variants_path(design),
+              class: "btn btn-secondary text-sm" %>
+      <% end %>
+    </div>
+
+    <% if design.refinements_left %>
+      <p class="border-t border-line px-4 py-3 text-sm text-muted">
+        <%= t("client.designs.design.refinements_left", count: design.refinements_left) %>
+      </p>
+    <% end %>
+  <% end %>
+</div>

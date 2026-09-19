@@ -27,6 +27,12 @@ shared:
     http_timeout_seconds: 20
     poll_interval_seconds: 2
     poll_timeout_seconds: 300
+    # Largeur d'impression proposée par défaut, en centimètres. Ne sert qu'aux
+    # techniques matricielles, où elle fixe la définition du fichier produit.
+    default_print_width_cm: 25
+    # Nombre de variantes proposées en une fois. Fixé à 3 pour ne surcharger ni
+    # l'application ni le serveur de génération.
+    variants_per_request: 3
 
   # --- Revues graphistes ---------------------------------------------------
   reviews:

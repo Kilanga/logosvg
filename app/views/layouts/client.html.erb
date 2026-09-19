@@ -5,5 +5,9 @@
         label: t("nav.dashboard"),
         path: client_dashboard_path,
         current: current_page?(client_dashboard_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.create"),
+        path: new_design_path,
+        current: current_page?(new_design_path) %>
 <% end %>
 <%= render template: "layouts/console" %>

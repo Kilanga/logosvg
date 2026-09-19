@@ -1,0 +1,56 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, @design.prompt.truncate(60) %>
+
+<%# The panel replaces itself as the generation advances. Broadcast from a job,
+    which is why development runs Solid Cable and not the async adapter. %>
+<%= turbo_stream_from DesignChannel.stream_name(@design) %>
+
+<div class="grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start">
+  <div id="design_<%= @design.token %>">
+    <%= render "client/designs/design", design: @design %>
+  </div>
+
+  <aside class="space-y-6">
+    <div class="panel p-6">
+      <h2 class="label-rule"><%= t(".what_was_asked") %></h2>
+      <dl class="mt-4 space-y-3 text-sm">
+        <div>
+          <dt class="label-rule"><%= t("activerecord.attributes.design.technique") %></dt>
+          <dd class="mt-0.5 font-medium"><%= @design.technique_label %></dd>
+        </div>
+        <div>
+          <dt class="label-rule"><%= t("activerecord.attributes.design.style") %></dt>
+          <dd class="mt-0.5"><%= t("enums.design.style.#{@design.style}") %></dd>
+        </div>
+        <% if @design.printer %>
+          <div>
+            <dt class="label-rule"><%= t(".workshop") %></dt>
+            <dd class="mt-0.5"><%= link_to @design.printer.name, printer_path(@design.printer),
+                  class: "underline underline-offset-4" %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+
+    <% if @design.ready? %>
+      <div class="panel p-6">
+        <h2 class="label-rule"><%= t(".who_can_print") %></h2>
+
+        <% if @compatible_printers.any? %>
+          <ul class="mt-4 space-y-2 text-sm">
+            <% @compatible_printers.first(6).each do |printer| %>
+              <li class="flex items-center gap-2.5">
+                <%= registration_mark css_class: "text-success" %>
+                <%= link_to printer.name, printer_path(printer), class: "underline underline-offset-4" %>
+              </li>
+            <% end %>
+          </ul>
+          <%= link_to t(".see_directory"), printers_path(techniques: [ @design.technique ]),
+                class: "btn btn-secondary mt-5 w-full text-sm" %>
+        <% else %>
+          <p class="mt-4 text-sm text-muted"><%= t(".no_compatible_printer") %></p>
+        <% end %>
+      </div>
+    <% end %>
+  </aside>
+</div>
