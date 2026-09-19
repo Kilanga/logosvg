@@ -68,6 +68,17 @@ Rails.application.routes.draw do
   patch "atelier/fiche",      to: "workshop/profiles#update", as: :workshop_profile
   post  "atelier/fiche/soumettre", to: "workshop/profiles#submit", as: :submit_workshop_profile
 
+  # Abonnement de l'atelier : Checkout et portail client, rien de plus — le
+  # changement de formule et les factures vivent chez Stripe.
+  get  "atelier/abonnement",          to: "workshop/subscriptions#show",   as: :workshop_subscription
+  post "atelier/abonnement",          to: "workshop/subscriptions#create"
+  post "atelier/abonnement/portail",  to: "workshop/subscriptions#portal", as: :workshop_subscription_portal
+
+  # Le lien client, son QR code et l'affiche comptoir.
+  get "atelier/lien",           to: "workshop/links#show", as: :workshop_link_share
+  get "atelier/lien/qr.:format", to: "workshop/links#qr",   as: :workshop_link_qr
+  get "atelier/lien/affiche",   to: "workshop/links#poster", as: :workshop_link_poster
+
   # Les demandes reçues par l'atelier, et leur suivi.
   get   "atelier/demandes",        to: "workshop/print_requests#index",  as: :workshop_print_requests
   get   "atelier/demandes/:token", to: "workshop/print_requests#show",   as: :workshop_print_request
@@ -76,6 +87,10 @@ Rails.application.routes.draw do
   # Validation des fiches par l'administration.
   get   "admin/imprimeurs",       to: "admin/printers#index",  as: :admin_printers
   patch "admin/imprimeurs/:slug", to: "admin/printers#update", as: :admin_printer
+
+  # --- Webhooks ---------------------------------------------------------------
+  # Signature vérifiée, jamais de session : Stripe n'est pas un visiteur.
+  post "webhooks/stripe", to: "webhooks/stripe#create", as: :stripe_webhook
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.

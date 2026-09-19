@@ -173,6 +173,8 @@ fr:
     my_requests: "Mes demandes"
     my_reviews: "Mes vérifications"
     my_account: "Mon compte"
+    my_link: "Mon lien"
+    subscription: "Abonnement"
 
   # Libellés partagés par l'annuaire, la fiche publique et les espaces pros.
   printers:
@@ -415,6 +417,23 @@ fr:
       textile_source:
         printer: "L'atelier fournit le textile"
         client: "Je fournis le textile"
+    subscription:
+      plan:
+        listing: "Référencement"
+        atelier_plus: "Atelier+"
+      status:
+        incomplete: "À finaliser"
+        trialing: "Période d'essai"
+        active: "Active"
+        past_due: "Paiement en échec"
+        canceled: "Résiliée"
+
+  # --- Abonnements, textes partagés ----------------------------------------
+  subscriptions:
+    errors:
+      not_configured: "Les paiements ne sont pas encore configurés. Réessayez plus tard."
+      unavailable: "Le service de paiement n'est pas joignable. Réessayez dans quelques minutes."
+      unknown_plan: "Cette formule n'existe pas."
 
   # --- Demandes d'impression, textes partagés entre écrans et emails --------
   print_requests:
@@ -568,6 +587,20 @@ fr:
         follow: "Voir ma demande"
         workshop: "Atelier : %{printer}"
 
+    subscription:
+      payment_failed:
+        subject: "Votre paiement d'abonnement a échoué"
+        eyebrow: "Abonnement"
+        heading: "Nous n'avons pas pu encaisser votre abonnement"
+        body: >-
+          Le paiement de l'abonnement de %{printer} a été refusé. C'est souvent
+          une carte expirée ou un plafond atteint.
+        hidden_from: "Votre fiche reste visible jusqu'au %{date}. Passé cette date, elle est masquée jusqu'au paiement."
+        action: "Mettre à jour mon moyen de paiement"
+        requests_kept: >-
+          Vos demandes d'impression en cours ne sont pas affectées : vous
+          gardez l'accès à votre espace et aux fichiers déjà reçus.
+
   # Un seul bloc `client:` — deux clés de même niveau en YAML, et la seconde
   # écrase silencieusement la première.
   client:
@@ -694,6 +727,7 @@ fr:
         what_was_asked: "Votre demande"
         workshop: "Atelier"
         who_can_print: "Qui peut l'imprimer"
+        workshop_unavailable: "Cet atelier n'est plus référencé."
         send_to: "Envoyer"
         see_directory: "Voir tous les ateliers compatibles"
         no_compatible_printer: "Aucun atelier référencé ne pratique cette technique pour l'instant."
@@ -804,12 +838,110 @@ fr:
         create_listing: "Créer ma fiche"
         edit_listing: "Modifier ma fiche"
         view_listing: "Voir la fiche publique"
-        body: "Vos demandes d'impression et votre abonnement se piloteront depuis cet espace."
-        upcoming:
-          - step: "04"
-            label: "Recevoir et suivre les demandes d'impression"
-          - step: "06"
-            label: "Abonnement, lien client, QR code et affiche comptoir"
+        not_visible: "Votre fiche n'est visible par personne"
+        not_visible_body: >-
+          Elle est publiée, mais votre abonnement n'est pas actif : elle
+          n'apparaît ni dans l'annuaire, ni sur la carte, ni dans les ateliers
+          compatibles.
+        recent_requests: "Dernières demandes"
+        see_all: "Tout voir"
+        this_month: "Ce mois-ci"
+        to_confirm: "À confirmer"
+        garments: "Pièces"
+        no_request: "Aucune demande reçue pour l'instant."
+        your_link: "Votre lien client"
+        share_link: "Partager mon lien"
+        subscription: "Abonnement"
+        no_subscription: "Aucun abonnement"
+        manage_subscription: "Gérer mon abonnement"
+
+    subscriptions:
+      show:
+        title: "Abonnement"
+        heading: "Mon abonnement"
+        current_plan: "Formule actuelle"
+        renews_on: "Prochain renouvellement"
+        listing_visibility: "Visibilité de la fiche"
+        visible: "Visible dans l'annuaire"
+        past_due_title: "Votre dernier paiement a échoué"
+        past_due_body: "Votre fiche reste visible jusqu'au %{date}. Mettez votre moyen de paiement à jour depuis le portail."
+        open_portal: "Gérer mon abonnement"
+        portal_hint: "Changement de formule, moyen de paiement et factures se font chez Stripe, notre prestataire de paiement."
+        not_visible: "Votre fiche n'est pas visible"
+        not_visible_body: >-
+          Sans abonnement actif, votre atelier n'apparaît ni dans l'annuaire,
+          ni sur la carte, ni parmi les ateliers compatibles avec un design.
+        price_tbd: "Prix à venir"
+        plan_pitch:
+          listing: "Votre atelier dans l'annuaire, avec ses techniques et ses limites."
+          atelier_plus: "Le référencement, plus la mise en avant et les statistiques."
+        plan_features:
+          listing:
+            - "Fiche publique et carte"
+            - "Filtre par technique d'impression"
+            - "Lien client, QR code et affiche comptoir"
+            - "Demandes d'impression par email"
+          atelier_plus:
+            - "Tout le Référencement"
+            - "Mise en avant en tête d'annuaire"
+            - "Votre couleur de marque sur l'écran de création"
+            - "Statistiques du lien sur 30 jours"
+        subscribe: "M'abonner"
+        billing_title: "Facturation"
+        billing_body: >-
+          Les paiements sont traités par Stripe. Nous ne conservons aucune
+          donnée bancaire. Vos factures sont disponibles dans le portail.
+      portal:
+        no_customer: "Aucun abonnement à gérer pour l'instant."
+
+    links:
+      show:
+        title: "Mon lien"
+        heading: "Mon lien client"
+        no_listing: "Créez d'abord votre fiche : c'est elle qui donne son adresse à votre lien."
+        your_link: "Votre adresse"
+        your_link_body: >-
+          Partagez-la à vos clients : ils arrivent directement sur l'écran de
+          création, avec vos techniques déjà sélectionnées.
+        copy: "Copier"
+        copied: "Copié"
+        qr: "Votre QR code"
+        take_it_away: "À emporter"
+        take_it_away_body: >-
+          L'affiche est prête à imprimer en A4. Le QR code se télécharge à part
+          pour vos propres supports.
+        poster: "Affiche comptoir"
+        qr_svg: "QR code (SVG)"
+        qr_png: "QR code (PNG)"
+        statistics: "Statistiques du lien"
+        visits: "Visites"
+        designs: "Designs créés"
+        requests: "Demandes reçues"
+        last_30_days: "30 derniers jours"
+        visit_count:
+          zero: "aucune visite"
+          one: "%{count} visite"
+          other: "%{count} visites"
+        statistics_locked: "Statistiques réservées à Atelier+"
+        statistics_locked_body: >-
+          Voyez combien de personnes scannent votre affiche, combien créent un
+          design et combien vous envoient une demande.
+        see_plans: "Voir les formules"
+      poster:
+        title: "Affiche — %{printer}"
+        eyebrow: "Impression textile"
+        headline: "Imaginez votre t-shirt, on l'imprime"
+        subhead: >-
+          Décrivez votre idée, une IA la dessine pour nos machines, et nous
+          l'imprimons dans notre atelier.
+        scan: "Scannez pour commencer"
+        steps:
+          - "Scannez le code"
+          - "Décrivez votre idée"
+          - "Nous vous envoyons un devis"
+        print: "Imprimer"
+        print_hint: "Cette page est prête pour une impression A4."
+        back: "Retour"
 
     profiles:
       edit:
