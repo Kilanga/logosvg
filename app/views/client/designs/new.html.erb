@@ -89,13 +89,68 @@
           <p class="mt-1.5 text-sm text-muted"><%= t(".colors_hint") %></p>
         </div>
 
-        <%# Only where the file is measured in pixels. %>
-        <div data-design-form-target="width">
-          <%= render "shared/field", form: form, field: :print_width_cm,
-                label: t("activerecord.attributes.design.print_width_cm"),
-                kind: :number_field, options: { min: 3, max: 60 },
-                hint: t(".width_hint") %>
+      </div>
+    </fieldset>
+
+    <%# The size is a question of its own, and asked for every technique: a
+        chest logo and a back print are not the same job, they do not produce
+        the same file, and they do not leave the same workshops able to print
+        it. %>
+    <fieldset>
+      <div class="flex items-baseline gap-4 border-b border-line pb-3">
+        <span class="font-display text-xl font-bold text-emulsion">03</span>
+        <legend class="font-display text-xl font-bold uppercase"><%= t(".size_legend") %></legend>
+      </div>
+      <%# Why the size matters differs by family, so the sentence does too. The
+          right one is rendered server-side for the technique already selected;
+          Stimulus swaps it when the client changes technique. %>
+      <p class="mt-3 text-sm text-muted"
+         data-design-form-target="sizeHint"
+         data-vector="<%= t(".size_hint.vector") %>"
+         data-raster="<%= t(".size_hint.raster") %>">
+        <%= t(".size_hint.#{PrintTechniques.find(@design.technique)&.family || 'vector'}") %>
+      </p>
+
+      <div class="mt-6 grid gap-6 sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-start">
+        <div>
+          <div class="flex flex-wrap gap-2">
+            <% print_size_presets.each do |preset| %>
+              <button type="button"
+                      class="rounded-xs border border-line px-3 py-2 text-left text-sm
+                             hover:border-emulsion aria-pressed:border-emulsion aria-pressed:bg-emulsion/5"
+                      data-design-form-target="preset"
+                      data-width="<%= preset[:width_cm] %>"
+                      data-action="design-form#choosePreset">
+                <span class="block font-medium"><%= preset[:label] %></span>
+                <span class="block text-muted"><%= preset[:width_cm] %> cm</span>
+              </button>
+            <% end %>
+          </div>
+
+          <div class="mt-5 max-w-56">
+            <%= render "shared/field", form: form, field: :print_width_cm,
+                  label: t("activerecord.attributes.design.print_width_cm"),
+                  kind: :number_field,
+                  options: { min: 3, max: 60,
+                             data: { design_form_target: "width", action: "design-form#syncSize" } } %>
+          </div>
         </div>
+
+        <%# A t-shirt template, to scale: the number means nothing on its own,
+            and a client who reads "30 cm" has still not seen how much of the
+            garment that covers. %>
+        <figure class="justify-self-center">
+          <svg viewBox="0 0 100 112" class="w-36" role="img"
+               aria-labelledby="gabarit-titre">
+            <title id="gabarit-titre"><%= t(".template_alt") %></title>
+            <path d="M34 6 L20 13 L12 30 L23 36 L26 28 L26 106 L74 106 L74 28 L77 36 L88 30 L80 13 L66 6
+                     C66 14 58 18 50 18 C42 18 34 14 34 6 Z"
+                  fill="none" stroke="currentColor" stroke-width="1.5" class="text-line"/>
+            <rect data-design-form-target="area" x="35" y="34" width="30" height="30"
+                  class="fill-emulsion/15 stroke-emulsion" stroke-width="1"/>
+          </svg>
+          <figcaption class="label-rule mt-2 text-center" data-design-form-target="areaLabel"></figcaption>
+        </figure>
       </div>
     </fieldset>
 

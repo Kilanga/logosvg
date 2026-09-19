@@ -10,6 +10,18 @@ module DesignsHelper
     t("designs.family_hint.#{entry.family}")
   end
 
+  # The sizes a client actually thinks in — a chest logo, a back print — rather
+  # than a bare number of centimetres. Read from settings, never hard-coded.
+  #
+  # `config_for` hands back deeply symbolised keys, so the lookup is `:key`. A
+  # string subscript returns nil, and the translation key then loses its last
+  # segment and resolves to the whole parent hash rather than raising.
+  def print_size_presets
+    Rails.application.config.tshirt.generation[:print_size_presets].map do |preset|
+      preset.merge(label: t("client.designs.new.size_presets.#{preset.fetch(:key)}"))
+    end
+  end
+
   # What a raster print file is, in the terms that decide whether it will look
   # right: its size on the garment, its definition, and the width beyond which
   # the model's own resolution stops keeping up.

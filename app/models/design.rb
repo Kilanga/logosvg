@@ -31,7 +31,10 @@ class Design < ApplicationRecord
   validates :technique, presence: true, inclusion: { in: ->(_) { PrintTechniques.keys } }
   validates :print_format, inclusion: { in: PRINT_FORMATS }, allow_nil: true
   validates :colors_requested, numericality: { in: 1..6 }, allow_nil: true
-  validates :print_width_cm, numericality: { in: 3..60 }, allow_nil: true
+  # Asked of the client for every technique, not only the raster ones: a chest
+  # logo and a back print are not the same job, and the width is what decides
+  # which workshops can print the result at all.
+  validates :print_width_cm, numericality: { in: 3..60 }
   validates :instruction, length: { in: 3..200 }, allow_nil: true
 
   # The technique shaped the prompt, not only the output file: changing it after

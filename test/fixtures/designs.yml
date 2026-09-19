@@ -54,6 +54,7 @@ pending_design:
   prompt: une montagne au lever du soleil
   technique: screen_printing
   colors_requested: 2
+  print_width_cm: 25
   status: pending
 
 other_client_design:
@@ -61,5 +62,6 @@ other_client_design:
   token: design-d-un-autre
   prompt: un phare dans la tempête
   technique: dtf
+  print_width_cm: 20
   status: ready
   print_format: png

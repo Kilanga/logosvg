@@ -29,6 +29,11 @@ class DesignsTest < ApplicationSystemTestCase
     choose "design_technique_screen_printing", allow_label_click: true
     fill_in "design_prompt", with: "un renard qui fait du skate"
 
+    # The size is asked here too, though screen printing is vectorial: it is
+    # what decides which workshops can take the job.
+    assert_text displayed("client.designs.new.size_legend")
+    click_on I18n.t("client.designs.new.size_presets.chest")
+
     perform_enqueued_jobs do
       click_on I18n.t("client.designs.new.submit")
       assert_selector "h1", text: shown("un renard qui fait du skate")
@@ -36,6 +41,7 @@ class DesignsTest < ApplicationSystemTestCase
 
     design = Design.order(:created_at).last
 
+    assert_equal 25, design.print_width_cm
     assert_equal printers(:rennes), design.printer
     assert_predicate design.reload, :ready?
 
@@ -111,6 +117,45 @@ class DesignsTest < ApplicationSystemTestCase
     assert_link I18n.t("client.designs.design.try_again")
 
     assert_equal 0, GenerationQuota.for(users(:client)).used, "a failure consumes no attempt"
+  end
+
+  # A client pictures a chest logo or a back print, not a number of
+  # centimetres. The presets speak that language and fill the field.
+  test "the size presets fill the width, and the template follows" do
+    sign_in users(:client)
+    visit new_design_path
+
+    click_on I18n.t("client.designs.new.size_presets.small_logo")
+
+    # The caption is uppercased by `label-rule`, and a browser reports text as
+    # it is rendered.
+    assert_field "design_print_width_cm", with: "10"
+    assert_selector "figcaption", text: shown("10 cm")
+
+    click_on I18n.t("client.designs.new.size_presets.large_back")
+
+    assert_field "design_print_width_cm", with: "36"
+    assert_selector "figcaption", text: shown("36 cm")
+
+    # A width typed by hand is as good as a preset, and the drawing follows it.
+    fill_in "design_print_width_cm", with: "18"
+
+    assert_selector "figcaption", text: shown("18 cm")
+  end
+
+  # Why the size matters is not the same question in both families, and the
+  # screen must not give the wrong reason.
+  test "the size explanation follows the technique" do
+    sign_in users(:client)
+    visit workshop_link_path(slug: printers(:nantes).slug)
+
+    choose "design_technique_sublimation", allow_label_click: true
+
+    assert_text displayed("client.designs.new.size_hint.raster")
+
+    choose "design_technique_embroidery", allow_label_click: true
+
+    assert_text displayed("client.designs.new.size_hint.vector")
   end
 
   test "a design still being generated shows a drawn waiting state, not a blank panel" do
