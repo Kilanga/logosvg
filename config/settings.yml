@@ -72,6 +72,13 @@ shared:
     reminder_after_hours: 48
     expire_after_days: 5
     confirmation_token_valid_days: 30
+    # ⚠ DÉCISION OUVERTE : gamme de tailles proposée. Celle-ci couvre le
+    #   t-shirt adulte courant ; l'enfant et les coupes ajustées restent à
+    #   trancher avec les ateliers.
+    garment_sizes: [ "XS", "S", "M", "L", "XL", "XXL", "3XL" ]
+    # Nombre maximal d'exemplaires pour une taille. Garde-fou de saisie, pas
+    # une limite commerciale : le devis se fait hors plateforme.
+    max_qty_per_size: 999
 
   # --- Abonnements imprimeurs ---------------------------------------------
   subscriptions:
