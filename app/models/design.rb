@@ -46,6 +46,10 @@ class Design < ApplicationRecord
   # the fact would describe a design nobody generated.
   validate :technique_is_frozen, on: :update
 
+  # Refused here rather than by the service: a prompt turned away on this side
+  # costs no allowance, reaches no other machine, and says so in French.
+  validate :prompt_avoids_blocked_terms, on: :create
+
   scope :active, -> { where(deleted_at: nil) }
   scope :newest_first, -> { order(created_at: :desc) }
   scope :roots, -> { where(parent_id: nil) }
@@ -102,5 +106,13 @@ class Design < ApplicationRecord
   private
     def technique_is_frozen
       errors.add(:technique, :frozen_after_creation) if technique_changed?
+    end
+
+    def prompt_avoids_blocked_terms
+      term = BlockedTerm.matching(prompt)
+      return if term.nil?
+
+      BlockedTerm.record_hit!(term)
+      errors.add(:prompt, :blocked_term, term: term)
     end
 end

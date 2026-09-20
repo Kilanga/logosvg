@@ -66,6 +66,28 @@ class DesignerProfile < ApplicationRecord
   # Whether an administrator could activate this profile as it stands.
   def ready_for_activation? = valid?(:activation)
 
+  # How often this designer hands work back rather than doing it, over the last
+  # thirty days. A few returns are healthy — it is what the mechanism is for;
+  # a majority means either the levels are wrong or the designer is picking.
+  #
+  # Counted over reviews they actually took, so a quiet month does not read as
+  # a perfect one.
+  def return_rate(days: 30)
+    taken = reviews.where(created_at: days.days.ago..).where.not(returned_at: nil).count
+    total = reviews.where(created_at: days.days.ago..).count
+
+    return nil if total.zero?
+
+    (taken.to_f / total).round(3)
+  end
+
+  def return_rate_alarming?(days: 30)
+    rate = return_rate(days: days)
+    return false if rate.nil?
+
+    rate >= Rails.application.config.tshirt.reviews[:return_rate_alert_threshold]
+  end
+
   def onboarding_started? = onboarding_started_at.present?
 
   def rated? = ratings_count.positive?

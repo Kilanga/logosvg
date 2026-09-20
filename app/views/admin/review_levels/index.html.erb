@@ -1,0 +1,69 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-3xl space-y-8">
+  <%# Said once, at the top: this is what makes the screen safe to use. %>
+  <div class="panel border-l-2 border-l-emulsion p-5">
+    <p class="label-rule text-emulsion"><%= t(".safe_title") %></p>
+    <p class="mt-2 text-sm text-muted"><%= t(".safe_body") %></p>
+  </div>
+
+  <% @levels.each do |level| %>
+    <section class="panel p-6">
+      <%= form_with model: level, url: admin_level_path(level), method: :patch,
+            class: "space-y-4" do |form| %>
+        <div class="flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-3">
+          <h2 class="font-display text-xl font-bold uppercase"><%= level.name %></h2>
+          <span class="label-rule text-muted"><%= level.key %></span>
+        </div>
+
+        <% if level.errors.any? %>
+          <p class="border-l-2 border-warning bg-warning-bg px-3 py-2 text-sm text-warning">
+            <%= level.errors.full_messages.to_sentence %>
+          </p>
+        <% end %>
+
+        <%= render "shared/field", form: form, field: :name,
+              label: t("activerecord.attributes.review_level.name"),
+              options: { required: true } %>
+
+        <div>
+          <%= form.label :description, t("activerecord.attributes.review_level.description"),
+                class: "label-rule block" %>
+          <%= form.text_area :description, rows: 2,
+                class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div>
+            <%= label_tag "review_level_price_#{level.id}",
+                  t("activerecord.attributes.review_level.price"), class: "label-rule block" %>
+            <%= form.number_field :price, value: level.price_euros, min: 1, step: 1,
+                  id: "review_level_price_#{level.id}",
+                  class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+            <% if level.quoted? %>
+              <p class="mt-1.5 text-sm text-muted"><%= t(".quoted_hint") %></p>
+            <% end %>
+          </div>
+
+          <%= render "shared/field", form: form, field: :turnaround_hours,
+                label: t("activerecord.attributes.review_level.turnaround_hours"),
+                kind: :number_field, options: { min: 1 } %>
+          <%= render "shared/field", form: form, field: :revisions_included,
+                label: t("activerecord.attributes.review_level.revisions_included"),
+                kind: :number_field, options: { min: 0 } %>
+        </div>
+
+        <label class="flex min-h-touch cursor-pointer items-center gap-3 rounded-xs border border-line px-3
+                      has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+          <%= form.check_box :active, class: "size-4 rounded-xs border-line text-emulsion" %>
+          <span class="text-sm font-medium"><%= t(".offered") %></span>
+        </label>
+
+        <div class="border-t border-line pt-4">
+          <%= form.submit t(".save"), class: "btn btn-primary text-sm" %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+</div>

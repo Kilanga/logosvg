@@ -9,6 +9,10 @@ class ReviewLevel < ApplicationRecord
   has_many :designer_levels, dependent: :destroy
   has_many :designer_profiles, through: :designer_levels
 
+  # Euros on the administration's form; the column stays in cents. Never
+  # stored — the controller converts it before assigning.
+  attr_accessor :price
+
   validates :key, presence: true, inclusion: { in: KEYS }, uniqueness: true
   validates :name, presence: true
   validates :turnaround_hours, numericality: { greater_than: 0 }

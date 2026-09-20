@@ -1,0 +1,27 @@
+<%# Un terme actif, un désactivé, et un court qui sert à vérifier que la
+    correspondance porte sur le mot entier. %>
+
+marque:
+  term: nikee
+  reason: Marque déposée
+  active: true
+  hits_count: 12
+  last_hit_at: <%= 2.days.ago.to_fs(:db) %>
+
+personnage:
+  term: mickey
+  reason: Personnage protégé
+  active: true
+  hits_count: 3
+
+retire:
+  term: obsolete
+  reason: Ne pose plus de problème
+  active: false
+  hits_count: 1
+
+<%# Court exprès : « art » ne doit pas attraper « cartes ». %>
+court:
+  term: art
+  reason: Test de correspondance sur le mot entier
+  active: true

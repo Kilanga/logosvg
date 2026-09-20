@@ -1,0 +1,54 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-5xl">
+  <nav class="flex flex-wrap gap-1 border-b border-line" aria-label="<%= t('.filters') %>">
+    <% Admin::ReviewsController::FILTERS.each do |filter| %>
+      <%= link_to admin_reviews_path(filtre: filter),
+            class: class_names(
+              "flex min-h-touch items-center gap-2 border-b-2 px-3 text-sm font-medium",
+              @filter == filter ? "border-emulsion text-emulsion" : "border-transparent text-muted hover:text-ink"
+            ),
+            aria: { current: (@filter == filter ? "page" : nil) } do %>
+        <%= t(".filter.#{filter}") %>
+        <span class="font-display font-bold"><%= @counts[filter] %></span>
+      <% end %>
+    <% end %>
+  </nav>
+
+  <% if @reviews.any? %>
+    <ul class="mt-6 space-y-3">
+      <% @reviews.each do |review| %>
+        <li>
+          <%= link_to admin_review_path(review),
+                class: "panel flex flex-wrap items-center gap-4 p-4 hover:border-emulsion" do %>
+            <div class="min-w-0 flex-1">
+              <p class="label-rule"><%= review.review_level.name %></p>
+              <p class="mt-0.5 truncate font-medium"><%= review.design.prompt.truncate(60) %></p>
+              <p class="mt-0.5 text-sm text-muted">
+                <%= review.client.full_name %>
+                → <%= review.designer_profile&.display_name || t(".unassigned") %>
+                · <%= money(review.price_cents) %>
+              </p>
+            </div>
+
+            <div class="flex flex-none flex-col items-end gap-1.5">
+              <%= review_status_pill(review) %>
+              <%= due_badge(review) %>
+              <% if review.settled_at %>
+                <span class="label-rule text-muted"><%= t(".settled") %></span>
+              <% end %>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="panel mt-6 flex flex-col items-center gap-3 p-12 text-center">
+      <span class="flex gap-3 text-line" aria-hidden="true">
+        <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+      </span>
+      <p class="label-rule"><%= t(".empty.#{@filter}") %></p>
+    </div>
+  <% end %>
+</div>

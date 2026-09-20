@@ -1,0 +1,10 @@
+<%# One number and what it is. Nothing waiting reads as muted; anything waiting
+    is the emulsion colour, because it is a thing to go and do. %>
+<div class="panel p-4">
+  <%= link_to path, class: "block" do %>
+    <dt class="label-rule"><%= label %></dt>
+    <dd class="mt-1 font-display text-4xl font-bold <%= count.positive? ? 'text-emulsion' : 'text-muted' %>">
+      <%= count %>
+    </dd>
+  <% end %>
+</div>

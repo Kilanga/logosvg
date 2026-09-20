@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_20_210208) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_20_210210) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210208) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "blocked_terms", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id"
+    t.integer "hits_count", default: 0, null: false
+    t.datetime "last_hit_at"
+    t.string "reason"
+    t.string "term", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_blocked_terms_on_active"
+    t.index ["created_by_id"], name: "index_blocked_terms_on_created_by_id"
+    t.index ["term"], name: "index_blocked_terms_on_term", unique: true
   end
 
   create_table "designer_levels", force: :cascade do |t|
@@ -278,6 +292,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210208) do
 
   create_table "reviews", force: :cascade do |t|
     t.datetime "accepted_at"
+    t.text "admin_note"
     t.string "assignment_mode", default: "first_available", null: false
     t.datetime "canceled_at"
     t.text "client_brief"
@@ -304,6 +319,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210208) do
     t.bigint "review_level_id", null: false
     t.integer "revisions_included", default: 0, null: false
     t.integer "revisions_used", default: 0, null: false
+    t.datetime "settled_at"
+    t.bigint "settled_by_id"
     t.string "status", default: "awaiting_payment", null: false
     t.string "stripe_checkout_session_id"
     t.string "stripe_payment_intent_id"
@@ -317,6 +334,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210208) do
     t.index ["designer_profile_id"], name: "index_reviews_on_designer_profile_id"
     t.index ["proposed_level_id"], name: "index_reviews_on_proposed_level_id"
     t.index ["review_level_id"], name: "index_reviews_on_review_level_id"
+    t.index ["settled_by_id"], name: "index_reviews_on_settled_by_id"
     t.index ["status", "delivered_at"], name: "index_reviews_on_status_and_delivered_at"
     t.index ["status", "due_at"], name: "index_reviews_on_status_and_due_at"
     t.index ["status", "proposal_expires_at"], name: "index_reviews_on_status_and_proposal_expires_at"
@@ -391,6 +409,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210208) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "blocked_terms", "users", column: "created_by_id"
   add_foreign_key "designer_levels", "designer_profiles"
   add_foreign_key "designer_levels", "review_levels"
   add_foreign_key "designer_profiles", "users"
@@ -413,6 +432,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210208) do
   add_foreign_key "reviews", "review_levels"
   add_foreign_key "reviews", "review_levels", column: "proposed_level_id"
   add_foreign_key "reviews", "users", column: "client_id"
+  add_foreign_key "reviews", "users", column: "settled_by_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "subscriptions", "printers"
   add_foreign_key "workshop_link_visits", "printers"

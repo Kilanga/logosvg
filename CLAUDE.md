@@ -336,8 +336,8 @@ Règles côté Rails :
 | 5     | Espace client                 | terminée                       |
 | 6     | Abonnements                   | terminée                       |
 | 7     | Graphistes                    | terminée                       |
-| 8     | Revues                        | **terminée**, en attente de validation |
-| 9     | Administration                | à faire                        |
+| 8     | Revues                        | terminée                       |
+| 9     | Administration                | **terminée**, en attente de validation |
 | 10    | Finitions                     | à faire                        |
 
 ---
@@ -489,6 +489,19 @@ placé à l'intérieur d'un `render "section" do` cherche
 manquante rend une chaîne « translation missing » et l'échec survient bien plus
 loin, méconnaissable — c'est ainsi qu'un doublon de clé de premier niveau dans
 `fr.yml` s'est manifesté en `undefined method 'each'` au fond d'un partiel.
+
+**Un doublon de clé YAML se cache aussi en profondeur.** Le cas s'est reproduit
+avec deux `status:` sous `admin:`, que le contrôle des clés de premier niveau ne
+voyait pas. `test/integration/locale_integrity_test.rb` lit désormais l'arbre
+Psych brut — le seul endroit où les deux clés existent encore, le chargeur
+normal ne gardant que la dernière — et échoue sur un doublon à n'importe quelle
+profondeur.
+
+**Une policy oubliée ferme un écran entier, sans rien dire.**
+`ReviewPolicy#index?` n'autorisait que le client et le graphiste : la liste des
+vérifications était inaccessible à l'administration, et la redirection Pundit
+ressemblait à une page vide. Quand un espace gagne un écran déjà existant,
+vérifier que `index?` connaît le nouveau rôle.
 
 **L'unicité est le travail de l'index, pas d'une validation.** Une
 `validates :uniqueness` lit la table puis écrit : deux livraisons de webhook
