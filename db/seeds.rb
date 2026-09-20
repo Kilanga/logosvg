@@ -28,7 +28,24 @@ def workshop!(user, name:, techniques:, **attributes)
   end
 
   printer.update!(status: :published)
+  # Depuis l'étape 6, publier ne suffit plus : une fiche sans abonnement actif
+  # n'apparaît nulle part.
+  subscription = Subscription.find_or_initialize_by(printer: printer)
+  subscription.update!(plan: attributes[:featured] ? "atelier_plus" : "listing",
+                       status: "active", current_period_end: 1.month.from_now)
   printer
+end
+
+def review_level!(key, **attributes)
+  ReviewLevel.find_or_initialize_by(key: key).tap { |l| l.assign_attributes(attributes) }.save!
+end
+
+def designer!(user, display_name:, levels:, **attributes)
+  profile = DesignerProfile.find_or_initialize_by(user: user)
+  profile.assign_attributes(display_name: display_name, **attributes)
+  profile.save!
+  profile.review_levels = ReviewLevel.where(key: levels)
+  profile
 end
 
 ActiveRecord::Base.transaction do
@@ -95,11 +112,52 @@ ActiveRecord::Base.transaction do
     ]
   )
 
+  # --- Niveaux de vérification ------------------------------------------------
+  # ⚠ DÉCISION OUVERTE : les prix restent à fixer. Ceux-ci ne servent qu'à la
+  # démonstration.
+  review_level!("check", name: "Contrôle", price_cents: 1900, turnaround_hours: 24,
+                         revisions_included: 1, position: 1,
+                         description: "Un graphiste vérifie le fichier : tracés, encres, netteté des bords.")
+  review_level!("retouch", name: "Retouche", price_cents: 4900, turnaround_hours: 48,
+                           revisions_included: 2, position: 2,
+                           description: "Reprise du visuel pour l'impression : nettoyage, séparation des encres, ajustements.")
+  review_level!("custom", name: "Création sur mesure", price_cents: nil, turnaround_hours: 96,
+                          revisions_included: 3, position: 3,
+                          description: "Redessin complet à partir de votre idée. Le prix est proposé par le graphiste.")
+
+  # --- Graphistes -------------------------------------------------------------
+  # L'un peut travailler, l'autre non : c'est la règle de l'étape 7 rendue
+  # visible dès les données de démonstration.
+  designer!(
+    account!("ines@example.invalid", first_name: "Inès", last_name: "Nadeau",
+                                     role: "designer", city: "Lyon"),
+    display_name: "Inès Nadeau",
+    bio: "Dix ans de sérigraphie et d'illustration vectorielle. Je reprends vos visuels pour qu'ils sortent proprement des écrans.",
+    city: "Lyon", latitude: 45.7640, longitude: 4.8357,
+    specialties: %w[ illustration vectorisation retouche ], languages: %w[ fr en ],
+    status: "active", payouts_enabled: true, accepting_work: true,
+    rating_avg: 4.8, ratings_count: 23,
+    levels: %w[ check retouch custom ]
+  )
+
+  designer!(
+    account!("tom@example.invalid", first_name: "Tom", last_name: "Vidal",
+                                    role: "designer", city: "Bordeaux"),
+    display_name: "Tom Vidal",
+    bio: "Lettering et logos, surtout pour le textile. Je travaille en aplats et j'aime les contraintes d'encres.",
+    city: "Bordeaux", latitude: 44.8378, longitude: -0.5792,
+    specialties: %w[ lettering logo ], languages: %w[ fr ],
+    status: "pending_review", payouts_enabled: false,
+    levels: %w[ check ]
+  )
+
   account!("admin@example.invalid", first_name: "Sam", last_name: "Oubre", role: "admin")
   account!("client@example.invalid", first_name: "Camille", last_name: "Rousseau", role: "client")
 end
 
 puts "#{Printer.listed.count} ateliers publiés, #{PrinterTechnique.count} techniques déclarées."
+puts "#{DesignerProfile.listed.count} graphiste(s) publié(s) sur #{DesignerProfile.count}, " \
+     "#{ReviewLevel.offered.count} niveaux de vérification."
 puts "Comptes de démonstration, mot de passe #{PASSWORD} :"
 User.order(:role, :email_address).pluck(:role, :email_address).each do |role, email|
   puts "  #{role.ljust(8)} #{email}"

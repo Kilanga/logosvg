@@ -1,0 +1,47 @@
+<li class="flex flex-wrap items-center gap-4 py-4">
+  <div class="size-12 flex-none overflow-hidden rounded-xs border border-line bg-paper">
+    <% if designer.avatar.attached? %>
+      <%= image_tag designer.avatar, alt: "", class: "size-full object-cover" %>
+    <% else %>
+      <span class="flex size-full items-center justify-center font-display font-bold text-muted">
+        <%= designer.display_name.first.upcase %>
+      </span>
+    <% end %>
+  </div>
+
+  <div class="min-w-0 flex-1">
+    <p class="font-medium">
+      <%= link_to designer.display_name, designer_path(designer),
+            class: "underline-offset-4 hover:underline" %>
+    </p>
+    <p class="mt-0.5 text-sm text-muted">
+      <%= designer.user.email_address %>
+      <% if designer.city.present? %> · <%= designer.city %><% end %>
+    </p>
+    <%# The two gates, side by side: an administrator deciding on a profile
+        wants to know whether Stripe has cleared it too. %>
+    <p class="label-rule mt-1 flex flex-wrap gap-3">
+      <span class="<%= designer.payouts_enabled? ? 'text-success' : 'text-muted' %>">
+        <%= t(".payouts.#{designer.payouts_enabled?}") %>
+      </span>
+      <span class="text-muted"><%= t(".levels", count: designer.review_levels.size) %></span>
+    </p>
+  </div>
+
+  <div class="flex flex-none flex-wrap items-center gap-3">
+    <%= designer_status_pill(designer) %>
+
+    <% if decidable %>
+      <%= button_to t(".activate"), admin_designer_path(designer), method: :patch,
+            params: { status: "active" }, class: "btn btn-primary text-sm" %>
+      <%= button_to t(".suspend"), admin_designer_path(designer), method: :patch,
+            params: { status: "suspended" }, class: "btn btn-secondary text-sm" %>
+    <% elsif designer.active? %>
+      <%= button_to t(".suspend"), admin_designer_path(designer), method: :patch,
+            params: { status: "suspended" }, class: "btn btn-secondary text-sm" %>
+    <% elsif designer.suspended? %>
+      <%= button_to t(".activate"), admin_designer_path(designer), method: :patch,
+            params: { status: "active" }, class: "btn btn-secondary text-sm" %>
+    <% end %>
+  </div>
+</li>

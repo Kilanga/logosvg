@@ -16,6 +16,8 @@ class User < ApplicationRecord
 
   # Only a printer account has one, and it has exactly one.
   has_one :printer, dependent: :destroy
+  # Same for a designer.
+  has_one :designer_profile, dependent: :destroy
 
   has_many :designs, dependent: :destroy
   # A client's own orders. Never destroyed with the account: the workshop has a

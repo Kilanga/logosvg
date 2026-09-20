@@ -1,0 +1,71 @@
+<%# Un profil par situation qui décide s'il peut recevoir du travail : prêt,
+    non validé, sans versements, en congés, suspendu. %>
+
+ines:
+  user: designer
+  display_name: Inès Nadeau
+  bio: Dix ans de sérigraphie et d'illustration vectorielle pour le textile.
+  city: Lyon
+  latitude: 45.764000
+  longitude: 4.835700
+  remote: true
+  specialties: [ illustration, vectorisation ]
+  languages: [ fr, en ]
+  status: active
+  payouts_enabled: true
+  accepting_work: true
+  stripe_account_id: acct_test_ines
+  rating_avg: 4.80
+  ratings_count: 23
+
+<%# Validé et payable, mais en congés. %>
+tom:
+  user: designer_away
+  display_name: Tom Vidal
+  bio: Lettrage et logos pour le textile, en aplats et sous contrainte d'encres.
+  city: Bordeaux
+  latitude: 44.837800
+  longitude: -0.579200
+  specialties: [ lettering, logo ]
+  languages: [ fr ]
+  status: active
+  payouts_enabled: true
+  accepting_work: false
+  stripe_account_id: acct_test_tom
+
+<%# Profil complet, versements activés, mais jamais validé par l'admin. %>
+nour:
+  user: designer_pending
+  display_name: Nour Haddad
+  bio: Illustration et mascottes, surtout pour les clubs et les associations.
+  city: Lille
+  specialties: [ illustration, mascotte ]
+  languages: [ fr ]
+  status: pending_review
+  payouts_enabled: true
+  accepting_work: true
+  stripe_account_id: acct_test_nour
+
+<%# Validé, mais Stripe ne peut pas le payer : le cas que l'étape 7 doit
+    rendre impossible à contourner. %>
+leo:
+  user: designer_unpaid
+  display_name: Léo Fabre
+  bio: Vectorisation fine et séparation d'encres pour la sérigraphie.
+  city: Toulouse
+  specialties: [ vectorisation ]
+  languages: [ fr ]
+  status: active
+  payouts_enabled: false
+  accepting_work: true
+
+suspendu:
+  user: designer_suspended
+  display_name: Alex Roy
+  bio: Profil suspendu pour les besoins des tests de visibilité.
+  city: Nice
+  specialties: [ retouche ]
+  languages: [ fr ]
+  status: suspended
+  payouts_enabled: true
+  accepting_work: true

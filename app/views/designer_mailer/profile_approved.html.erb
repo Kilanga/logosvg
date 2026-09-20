@@ -1,0 +1,28 @@
+<div style="font-family:Helvetica,Arial,sans-serif;color:#1D2433;max-width:600px;">
+  <p style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#1F5F7A;margin:0 0 8px;">
+    <%= t("mailers.designer.profile_approved.eyebrow") %>
+  </p>
+
+  <h1 style="font-size:24px;margin:0 0 16px;">
+    <%= t("mailers.designer.profile_approved.heading", name: @profile.display_name) %>
+  </h1>
+
+  <p style="margin:0 0 24px;line-height:1.5;">
+    <%= t("mailers.designer.profile_approved.body") %>
+  </p>
+
+  <%# The one thing still standing between them and work. %>
+  <% unless @profile.payouts_enabled? %>
+    <p style="margin:0 0 24px;line-height:1.5;border-left:2px solid #6B4200;background:#FFF3DC;padding:12px 16px;">
+      <%= t("mailers.designer.profile_approved.payouts_pending") %>
+    </p>
+  <% end %>
+
+  <p style="margin:0 0 32px;">
+    <a href="<%= designer_dashboard_url %>"
+       style="display:inline-block;background:#1F5F7A;color:#FFFFFF;padding:14px 24px;
+              text-decoration:none;font-weight:600;border-radius:2px;">
+      <%= t("mailers.designer.profile_approved.action") %>
+    </a>
+  </p>
+</div>

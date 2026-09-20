@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_20_210200) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_20_210203) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,42 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210200) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "designer_levels", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "designer_profile_id", null: false
+    t.bigint "review_level_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["designer_profile_id", "review_level_id"], name: "index_designer_levels_on_pair", unique: true
+    t.index ["designer_profile_id"], name: "index_designer_levels_on_designer_profile_id"
+    t.index ["review_level_id"], name: "index_designer_levels_on_review_level_id"
+  end
+
+  create_table "designer_profiles", force: :cascade do |t|
+    t.boolean "accepting_work", default: true, null: false
+    t.text "bio"
+    t.string "city"
+    t.datetime "created_at", null: false
+    t.string "display_name", null: false
+    t.string "languages", default: [], null: false, array: true
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.datetime "onboarding_started_at"
+    t.boolean "payouts_enabled", default: false, null: false
+    t.decimal "rating_avg", precision: 3, scale: 2
+    t.integer "ratings_count", default: 0, null: false
+    t.boolean "remote", default: true, null: false
+    t.string "specialties", default: [], null: false, array: true
+    t.string "status", default: "pending_review", null: false
+    t.string "stripe_account_id"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["specialties"], name: "index_designer_profiles_on_specialties", using: :gin
+    t.index ["status", "payouts_enabled", "accepting_work"], name: "index_designer_profiles_on_availability"
+    t.index ["status"], name: "index_designer_profiles_on_status"
+    t.index ["stripe_account_id"], name: "index_designer_profiles_on_stripe_account_id", unique: true
+    t.index ["user_id"], name: "index_designer_profiles_on_user_id", unique: true
   end
 
   create_table "designs", force: :cascade do |t|
@@ -198,6 +234,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210200) do
     t.index ["user_id"], name: "index_printers_on_user_id", unique: true
   end
 
+  create_table "review_levels", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "key", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.integer "price_cents"
+    t.integer "revisions_included", default: 1, null: false
+    t.integer "turnaround_hours", default: 48, null: false
+    t.datetime "updated_at", null: false
+    t.index ["active", "position"], name: "index_review_levels_on_active_and_position"
+    t.index ["key"], name: "index_review_levels_on_key", unique: true
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -264,6 +315,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210200) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "designer_levels", "designer_profiles"
+  add_foreign_key "designer_levels", "review_levels"
+  add_foreign_key "designer_profiles", "users"
   add_foreign_key "designs", "designs", column: "parent_id"
   add_foreign_key "designs", "designs", column: "root_id"
   add_foreign_key "designs", "printers"

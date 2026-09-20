@@ -1,0 +1,32 @@
+<%# Les trois niveaux du cahier des charges. `custom` n'a pas de prix : il se
+    chiffre au cas par cas, et c'est une règle, pas un oubli. %>
+
+check:
+  key: check
+  name: Contrôle
+  description: Vérification du fichier avant impression.
+  price_cents: 1900
+  turnaround_hours: 24
+  revisions_included: 1
+  position: 1
+  active: true
+
+retouch:
+  key: retouch
+  name: Retouche
+  description: Reprise du visuel pour l'impression.
+  price_cents: 4900
+  turnaround_hours: 48
+  revisions_included: 2
+  position: 2
+  active: true
+
+custom:
+  key: custom
+  name: Création sur mesure
+  description: Redessin complet à partir de votre idée.
+  price_cents:
+  turnaround_hours: 96
+  revisions_included: 3
+  position: 3
+  active: true

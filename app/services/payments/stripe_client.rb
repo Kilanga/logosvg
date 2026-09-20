@@ -79,6 +79,42 @@ module Payments
       request(nil) { @stripe.v1.subscriptions.retrieve(id).to_hash }
     end
 
+    # --- Connect Express ------------------------------------------------------
+    #
+    # Express because the platform has no business holding a designer's identity
+    # documents or bank details: Stripe hosts the whole onboarding and hands
+    # back one boolean, `payouts_enabled`.
+
+    def create_connect_account(email:)
+      request(nil) do
+        @stripe.v1.accounts.create(
+          type: "express", email: email, country: "FR",
+          capabilities: { transfers: { requested: true } },
+          business_type: "individual"
+        )
+      end
+    end
+
+    # Single-use and short-lived, by Stripe's design: a fresh one is minted
+    # every time the designer starts or resumes onboarding.
+    def create_account_link(account:, return_url:, refresh_url:)
+      request(nil) do
+        @stripe.v1.account_links.create(
+          account: account, type: "account_onboarding",
+          return_url: return_url, refresh_url: refresh_url
+        )
+      end
+    end
+
+    # Where a designer reads their own payouts. Also Stripe-hosted.
+    def create_login_link(account:)
+      request(nil) { @stripe.v1.accounts.login_links.create(account) }
+    end
+
+    def retrieve_account(id)
+      request(nil) { @stripe.v1.accounts.retrieve(id).to_hash }
+    end
+
     # Verifies the signature and returns the event. An unsigned or missigned
     # payload never becomes an event at all.
     def self.decode_webhook(payload:, signature:)

@@ -1,0 +1,31 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<% waiting, decided = @designers.partition(&:pending_review?) %>
+
+<div class="max-w-5xl space-y-12">
+  <section>
+    <h2 class="label-rule border-b border-line pb-3 text-emulsion">
+      <%= t(".waiting", count: waiting.size) %>
+    </h2>
+
+    <% if waiting.any? %>
+      <ul class="divide-y divide-line">
+        <% waiting.each do |designer| %>
+          <%= render "row", designer: designer, decidable: true %>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="py-8 text-muted"><%= t(".nothing_waiting") %></p>
+    <% end %>
+  </section>
+
+  <section>
+    <h2 class="label-rule border-b border-line pb-3"><%= t(".all", count: decided.size) %></h2>
+    <ul class="divide-y divide-line">
+      <% decided.each do |designer| %>
+        <%= render "row", designer: designer, decidable: false %>
+      <% end %>
+    </ul>
+  </section>
+</div>

@@ -1,0 +1,116 @@
+<% content_for :title, t(".title") %>
+
+<div class="mx-auto w-full max-w-6xl px-5 py-10">
+  <header class="border-b border-line pb-6">
+    <p class="label-rule text-emulsion"><%= t(".eyebrow") %></p>
+    <h1 class="mt-2 font-display text-4xl font-bold uppercase lg:text-5xl"><%= t(".title") %></h1>
+    <p class="mt-3 max-w-2xl text-muted"><%= t(".subtitle") %></p>
+  </header>
+
+  <div class="mt-8 grid gap-8 lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start">
+    <%# Filters on the left, as in the printer directory: same shape for the
+        same job. %>
+    <form method="get" class="space-y-6 lg:sticky lg:top-8">
+      <fieldset>
+        <legend class="label-rule"><%= t(".filters.specialty") %></legend>
+        <div class="mt-3 space-y-1">
+          <% DesignerProfile::SPECIALTIES.each do |specialty| %>
+            <label class="flex min-h-touch cursor-pointer items-center gap-2.5 text-sm">
+              <%= radio_button_tag :specialite, specialty, params[:specialite] == specialty,
+                    class: "size-4 border-line text-emulsion" %>
+              <%= t("enums.designer_profile.specialties.#{specialty}") %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="label-rule"><%= t(".filters.level") %></legend>
+        <div class="mt-3 space-y-1">
+          <% ReviewLevel.offered.each do |level| %>
+            <label class="flex min-h-touch cursor-pointer items-center gap-2.5 text-sm">
+              <%= radio_button_tag :niveau, level.id, params[:niveau].to_s == level.id.to_s,
+                    class: "size-4 border-line text-emulsion" %>
+              <%= level.name %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <label class="flex min-h-touch cursor-pointer items-center gap-2.5 text-sm">
+        <%= check_box_tag :disponibles, "1", params[:disponibles].present?,
+              class: "size-4 rounded-xs border-line text-emulsion" %>
+        <%= t(".filters.available") %>
+      </label>
+
+      <div class="flex flex-wrap gap-3 border-t border-line pt-5">
+        <button type="submit" class="btn btn-primary text-sm"><%= t(".filters.apply") %></button>
+        <%= link_to t(".filters.reset"), designers_path,
+              class: "flex min-h-touch items-center text-sm underline underline-offset-4" %>
+      </div>
+    </form>
+
+    <section>
+      <p class="label-rule border-b border-line pb-3">
+        <%= t(".count", count: @designers.size) %>
+      </p>
+
+      <% if @designers.any? %>
+        <ul class="mt-5 grid gap-4 sm:grid-cols-2">
+          <% @designers.each do |designer| %>
+            <li class="panel flex flex-col p-5">
+              <div class="flex items-start gap-4">
+                <div class="size-14 flex-none overflow-hidden rounded-xs border border-line bg-paper">
+                  <% if designer.avatar.attached? %>
+                    <%= image_tag designer.avatar, alt: "", class: "size-full object-cover" %>
+                  <% else %>
+                    <span class="flex size-full items-center justify-center font-display text-lg font-bold text-muted">
+                      <%= designer.display_name.first.upcase %>
+                    </span>
+                  <% end %>
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <h2 class="font-display text-lg font-bold uppercase leading-tight">
+                    <%= link_to designer.display_name, designer_path(designer),
+                          class: "underline-offset-4 hover:underline" %>
+                  </h2>
+                  <p class="mt-0.5 text-sm text-muted">
+                    <%= designer.city.presence || t(".remote_only") %>
+                    <% if designer.remote? %> · <%= t(".remote") %><% end %>
+                  </p>
+                  <p class="label-rule mt-1 text-muted"><%= rating_summary(designer) %></p>
+                </div>
+              </div>
+
+              <% if designer.specialties.any? %>
+                <ul class="mt-4 flex flex-wrap gap-1.5">
+                  <% designer.specialties.first(3).each do |specialty| %>
+                    <li class="pill border border-line text-muted">
+                      <%= t("enums.designer_profile.specialties.#{specialty}") %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% end %>
+
+              <p class="mt-4 flex-1 text-sm text-muted"><%= designer.bio.to_s.truncate(120) %></p>
+
+              <p class="mt-4 border-t border-line pt-3 text-sm
+                        <%= designer.can_take_work? ? 'text-success' : 'text-muted' %>">
+                <%= availability_note(designer) %>
+              </p>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <div class="panel mt-5 flex flex-col items-center gap-3 p-12 text-center">
+          <span class="flex gap-3 text-line" aria-hidden="true">
+            <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+          </span>
+          <p class="label-rule"><%= t(".empty") %></p>
+          <p class="max-w-sm text-sm text-muted"><%= t(".empty_body") %></p>
+        </div>
+      <% end %>
+    </section>
+  </div>
+</div>

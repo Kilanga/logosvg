@@ -1,10 +1,17 @@
-<%# Studio space. Steps 7 and 8 add the profile, the payouts and the review
-    queue. %>
+<%# Studio space. Step 8 adds the review queue. %>
 <% content_for :space_name, t("nav.studio") %>
 <% content_for :space_nav do %>
   <%= render "layouts/space_link",
         label: t("nav.dashboard"),
         path: designer_dashboard_path,
         current: current_page?(designer_dashboard_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.my_profile"),
+        path: edit_designer_profile_path,
+        current: current_page?(edit_designer_profile_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.payouts"),
+        path: designer_payouts_path,
+        current: current_page?(designer_payouts_path) %>
 <% end %>
 <%= render template: "layouts/console" %>
