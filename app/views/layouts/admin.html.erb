@@ -10,5 +10,9 @@
         label: t("nav.printers"),
         path: admin_printers_path,
         current: current_page?(admin_printers_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.designers"),
+        path: admin_designers_path,
+        current: current_page?(admin_designers_path) %>
 <% end %>
 <%= render template: "layouts/console" %>

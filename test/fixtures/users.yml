@@ -65,6 +65,51 @@ designer:
   role: designer
   terms_accepted_at: <%= 3.months.ago.to_fs(:db) %>
 
+<%# Quatre autres graphistes, un par situation d'indisponibilité. %>
+designer_away:
+  email_address: tom@example.invalid
+  password_digest: <%= digest %>
+  first_name: Tom
+  last_name: Vidal
+  city: Bordeaux
+  role: designer
+  terms_accepted_at: <%= 2.months.ago.to_fs(:db) %>
+
+designer_pending:
+  email_address: nour@example.invalid
+  password_digest: <%= digest %>
+  first_name: Nour
+  last_name: Haddad
+  city: Lille
+  role: designer
+  terms_accepted_at: <%= 1.month.ago.to_fs(:db) %>
+
+designer_unpaid:
+  email_address: leo@example.invalid
+  password_digest: <%= digest %>
+  first_name: Léo
+  last_name: Fabre
+  city: Toulouse
+  role: designer
+  terms_accepted_at: <%= 3.weeks.ago.to_fs(:db) %>
+
+designer_suspended:
+  email_address: alex@example.invalid
+  password_digest: <%= digest %>
+  first_name: Alex
+  last_name: Roy
+  city: Nice
+  role: designer
+  terms_accepted_at: <%= 5.months.ago.to_fs(:db) %>
+
+designer_blank:
+  email_address: nouveau-graphiste@example.invalid
+  password_digest: <%= digest %>
+  first_name: Sasha
+  last_name: Morel
+  role: designer
+  terms_accepted_at: <%= 2.days.ago.to_fs(:db) %>
+
 admin:
   email_address: admin@example.invalid
   password_digest: <%= digest %>

@@ -175,6 +175,8 @@ fr:
     my_account: "Mon compte"
     my_link: "Mon lien"
     subscription: "Abonnement"
+    my_profile: "Mon profil"
+    payouts: "Mes paiements"
 
   # Libellés partagés par l'annuaire, la fiche publique et les espaces pros.
   printers:
@@ -264,6 +266,10 @@ fr:
               blank: "doivent être acceptées"
             current_password:
               invalid: "ne correspond pas à votre mot de passe actuel"
+        designer_profile:
+          attributes:
+            review_levels:
+              blank: "sont obligatoires : indiquez au moins un niveau que vous acceptez"
         printer:
           attributes:
             techniques:
@@ -295,7 +301,20 @@ fr:
       printer_technique: "Technique"
       design: "Design"
       print_request: "Demande d'impression"
+      designer_profile: "Profil graphiste"
+      review_level: "Niveau de vérification"
     attributes:
+      designer_profile:
+        display_name: "Nom affiché"
+        bio: "Présentation"
+        city: "Ville"
+        remote: "Je travaille à distance"
+        accepting_work: "J'accepte de nouvelles demandes"
+        specialties: "Spécialités"
+        languages: "Langues"
+        avatar: "Photo"
+        portfolio: "Portfolio"
+        review_levels: "Niveaux acceptés"
       design:
         prompt: "Votre idée"
         style: "Style"
@@ -417,6 +436,24 @@ fr:
       textile_source:
         printer: "L'atelier fournit le textile"
         client: "Je fournis le textile"
+    designer_profile:
+      status:
+        pending_review: "En attente de validation"
+        active: "Publié"
+        suspended: "Suspendu"
+      specialties:
+        illustration: "Illustration"
+        lettering: "Lettrage"
+        logo: "Logo"
+        mascotte: "Mascotte"
+        vectorisation: "Vectorisation"
+        retouche: "Retouche pour l'impression"
+      languages:
+        fr: "Français"
+        en: "Anglais"
+        es: "Espagnol"
+        de: "Allemand"
+        it: "Italien"
     subscription:
       plan:
         listing: "Référencement"
@@ -434,6 +471,29 @@ fr:
       not_configured: "Les paiements ne sont pas encore configurés. Réessayez plus tard."
       unavailable: "Le service de paiement n'est pas joignable. Réessayez dans quelques minutes."
       unknown_plan: "Cette formule n'existe pas."
+
+  # --- Graphistes, textes partagés -----------------------------------------
+  designers:
+    errors:
+      not_configured: "Les paiements ne sont pas encore configurés. Réessayez plus tard."
+      unavailable: "Le service de paiement n'est pas joignable. Réessayez dans quelques minutes."
+    available: "Disponible"
+    unavailable:
+      pending_review: "Profil en attente de validation"
+      suspended: "Profil suspendu"
+      payouts_disabled: "Versements à activer"
+      not_accepting: "N'accepte pas de nouvelle demande"
+    no_rating: "Pas encore d'avis"
+    rating: "%{score} / 5 · %{count} avis"
+    levels:
+      quoted: "Sur devis"
+      turnaround:
+        one: "%{count} h"
+        other: "%{count} h"
+      revisions:
+        zero: "Sans retour inclus"
+        one: "%{count} retour inclus"
+        other: "%{count} retours inclus"
 
   # --- Demandes d'impression, textes partagés entre écrans et emails --------
   print_requests:
@@ -586,6 +646,40 @@ fr:
         eyebrow: "Demande %{reference}"
         follow: "Voir ma demande"
         workshop: "Atelier : %{printer}"
+
+    designer:
+      profile_approved:
+        subject: "Votre profil de graphiste est publié"
+        eyebrow: "Profil validé"
+        heading: "Bienvenue, %{name}"
+        body: >-
+          Votre profil vient d'être publié : les clients peuvent vous trouver
+          dans la liste des graphistes.
+        payouts_pending: >-
+          Il reste à activer vos versements. Tant que Stripe ne peut pas vous
+          payer, aucune demande ne vous sera confiée.
+        action: "Voir mon studio"
+      payouts_enabled:
+        subject: "Vos versements sont activés"
+        eyebrow: "Versements"
+        heading: "Stripe peut désormais vous payer"
+        body: >-
+          Votre compte est vérifié. Les vérifications que vous prendrez en
+          charge vous seront réglées automatiquement à leur validation.
+        review_pending: >-
+          Votre profil attend encore sa validation par notre équipe avant
+          d'être publié.
+        action: "Voir mon studio"
+      payouts_disabled:
+        subject: "Vos versements sont suspendus"
+        eyebrow: "Versements"
+        heading: "Stripe ne peut plus vous verser vos gains"
+        body: >-
+          Il manque probablement une pièce ou une information à votre dossier.
+          Tant que ce n'est pas réglé, aucune nouvelle demande ne vous sera
+          confiée.
+        action: "Compléter mon dossier"
+        work_in_hand: "Les vérifications que vous avez déjà en cours ne sont pas affectées."
 
     subscription:
       payment_failed:
@@ -1045,12 +1139,84 @@ fr:
       show:
         title: "Studio"
         heading: "Bonjour %{name}"
-        body: "Votre profil, vos niveaux et la file des vérifications à traiter arriveront ici."
-        upcoming:
-          - step: "07"
-            label: "Profil, portfolio, niveaux acceptés et versements Stripe"
-          - step: "08"
-            label: "Prendre une revue, déposer une version, échanger avec le client"
+        before_you_start: "Avant de recevoir des demandes"
+        step:
+          profile:
+            title: "Remplir votre profil"
+            body: "Présentation, spécialités, portfolio et niveaux que vous acceptez."
+            action: "Compléter mon profil"
+          payouts:
+            title: "Activer vos versements"
+            body: "Stripe vérifie votre identité et votre compte bancaire. Rien ne vous est confié tant que ce n'est pas fait."
+            action: "Activer mes versements"
+          review:
+            title: "Validation de votre profil"
+            body: "Notre équipe relit votre profil avant de le publier. Vous serez prévenu par email."
+        ready: "Tout est en place : vous pouvez recevoir des demandes."
+        queue: "Vos vérifications"
+        queue_body: >-
+          La file des demandes à prendre en charge, les dépôts de version et
+          les échanges avec les clients arrivent prochainement.
+
+    profiles:
+      edit:
+        title: "Mon profil"
+        heading: "Mon profil de graphiste"
+        preview: "Aperçu public"
+        status_hint:
+          pending_review: "Votre profil est en attente de validation. Vous pouvez continuer à le modifier."
+          active: "Votre profil est publié : les clients peuvent vous trouver."
+          suspended: "Votre profil est suspendu et n'apparaît plus. Écrivez-nous pour en connaître la raison."
+        who: "Qui vous êtes"
+        display_name_hint: "Le nom sous lequel les clients vous verront."
+        bio_placeholder: "Votre parcours, vos habitudes de travail, ce que vous aimez reprendre…"
+        bio_hint: "Quarante caractères au moins. C'est le premier texte que lira un client."
+        city_hint: "Sert à vous situer sur la carte. Facultatif si vous travaillez uniquement à distance."
+        what: "Ce que vous faites"
+        portfolio_hint: "Quelques pièces suffisent. Elles s'affichent sur votre profil public."
+        levels: "Niveaux acceptés"
+        levels_hint: >-
+          Une demande ne vous est proposée que pour un niveau que vous avez
+          accepté. Les prix sont fixés par la plateforme ; la création sur
+          mesure se chiffre au cas par cas.
+        availability: "Disponibilité"
+        availability_hint: >-
+          Décochez pendant vos congés : vous ne recevrez plus de nouvelle
+          demande, sans perdre celles que vous avez en cours.
+        save: "Enregistrer"
+      update:
+        saved: "Profil enregistré."
+
+    payouts:
+      show:
+        title: "Mes paiements"
+        heading: "Mes paiements"
+        status: "Versements"
+        enabled: "Activés"
+        disabled: "À activer"
+        enabled_body: "Stripe peut vous verser vos gains. Vous pouvez recevoir des demandes."
+        start_body: >-
+          Stripe vérifie votre identité et vos coordonnées bancaires. Tant que
+          ce n'est pas fait, aucune demande ne peut vous être confiée.
+        resume_body: >-
+          Votre inscription chez Stripe est commencée mais pas terminée.
+          Reprenez là où vous en étiez.
+        start: "Activer mes versements"
+        resume: "Reprendre mon inscription"
+        open_dashboard: "Voir mes versements"
+        dashboard_hint: "Vos virements et vos justificatifs sont chez Stripe."
+        who_holds_what: "Qui détient quoi"
+        who_holds_what_body: >-
+          Vos pièces d'identité et vos coordonnées bancaires sont transmises
+          directement à Stripe, notre prestataire de paiement. La plateforme
+          ne les voit jamais et n'en conserve aucune.
+        how_paid: "Comment vous êtes payé"
+        how_paid_body: >-
+          Le client paie à la commande. À sa validation, votre part vous est
+          virée automatiquement : le prix du niveau moins %{rate} de
+          commission.
+      dashboard:
+        no_account: "Activez d'abord vos versements."
 
   admin:
     dashboards:
@@ -1061,10 +1227,36 @@ fr:
         upcoming:
           - step: "02"
             label: "Valider les fiches des imprimeurs"
-          - step: "07"
-            label: "Valider les profils des graphistes"
           - step: "09"
             label: "Litiges, remboursements, niveaux, termes bloqués, état du service"
+
+    designers:
+      index:
+        title: "Graphistes"
+        heading: "Profils de graphistes"
+        waiting:
+          zero: "Aucun profil en attente"
+          one: "%{count} profil en attente"
+          other: "%{count} profils en attente"
+        nothing_waiting: "Aucun profil à valider pour l'instant."
+        all:
+          zero: "Aucun autre profil"
+          one: "%{count} autre profil"
+          other: "%{count} autres profils"
+      row:
+        activate: "Publier"
+        suspend: "Suspendre"
+        payouts:
+          "true": "Versements activés"
+          "false": "Versements à activer"
+        levels:
+          zero: "Aucun niveau"
+          one: "%{count} niveau"
+          other: "%{count} niveaux"
+      update:
+        active: "Le profil de %{name} est publié."
+        suspended: "Le profil de %{name} est suspendu."
+        incomplete: "Le profil de %{name} est incomplet : présentation, ville et au moins un niveau sont nécessaires."
 
     printers:
       index:
@@ -1115,6 +1307,42 @@ fr:
     workshop_links:
       show:
         unknown: "Cet atelier n'est plus référencé. Choisissez-en un autre."
+
+    designers:
+      index:
+        title: "Les graphistes"
+        eyebrow: "Vérification"
+        subtitle: >-
+          Des graphistes professionnels qui reprennent votre visuel pour
+          l'impression. Leurs tarifs sont fixés par la plateforme ; la
+          création sur mesure se chiffre au cas par cas.
+        count:
+          zero: "Aucun graphiste"
+          one: "%{count} graphiste"
+          other: "%{count} graphistes"
+        remote: "à distance"
+        remote_only: "À distance"
+        filters:
+          specialty: "Spécialité"
+          level: "Niveau"
+          available: "Disponibles maintenant"
+          apply: "Filtrer"
+          reset: "Tout effacer"
+        empty: "Aucun graphiste ne correspond"
+        empty_body: "Élargissez votre recherche ou retirez un filtre."
+      show:
+        preview_only: "Aperçu privé"
+        preview_only_body: "Ce profil n'est pas encore publié : vous seul pouvez le voir."
+        about: "Présentation"
+        portfolio: "Portfolio"
+        levels: "Ce que propose ce graphiste"
+        no_level: "Ce graphiste n'a encore déclaré aucun niveau."
+        specialties: "Spécialités"
+        languages: "Langues"
+        ask_title: "Faire vérifier un design"
+        ask_body: >-
+          La demande de vérification se fera depuis la page de votre design.
+          Cette option sera bientôt disponible.
 
     print_request_confirmations:
       show:

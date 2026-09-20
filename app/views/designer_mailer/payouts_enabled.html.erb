@@ -1,0 +1,27 @@
+<div style="font-family:Helvetica,Arial,sans-serif;color:#1D2433;max-width:600px;">
+  <p style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#1E6B40;margin:0 0 8px;">
+    <%= t("mailers.designer.payouts_enabled.eyebrow") %>
+  </p>
+
+  <h1 style="font-size:24px;margin:0 0 16px;">
+    <%= t("mailers.designer.payouts_enabled.heading") %>
+  </h1>
+
+  <p style="margin:0 0 24px;line-height:1.5;">
+    <%= t("mailers.designer.payouts_enabled.body") %>
+  </p>
+
+  <% unless @profile.active? %>
+    <p style="margin:0 0 24px;line-height:1.5;border-left:2px solid #6B4200;background:#FFF3DC;padding:12px 16px;">
+      <%= t("mailers.designer.payouts_enabled.review_pending") %>
+    </p>
+  <% end %>
+
+  <p style="margin:0 0 32px;">
+    <a href="<%= designer_dashboard_url %>"
+       style="display:inline-block;background:#1F5F7A;color:#FFFFFF;padding:14px 24px;
+              text-decoration:none;font-weight:600;border-radius:2px;">
+      <%= t("mailers.designer.payouts_enabled.action") %>
+    </a>
+  </p>
+</div>

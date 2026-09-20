@@ -1,0 +1,12 @@
+<%= t("mailers.designer.payouts_enabled.eyebrow") %>
+
+<%= t("mailers.designer.payouts_enabled.heading") %>
+
+<%= t("mailers.designer.payouts_enabled.body") %>
+<% unless @profile.active? -%>
+
+<%= t("mailers.designer.payouts_enabled.review_pending") %>
+<% end -%>
+
+<%= t("mailers.designer.payouts_enabled.action") %> :
+<%= designer_dashboard_url %>

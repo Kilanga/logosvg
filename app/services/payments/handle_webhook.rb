@@ -12,6 +12,7 @@ module Payments
       customer.subscription.deleted
       invoice.payment_failed
       invoice.paid
+      account.updated
     ].freeze
 
     def self.call(...) = new(...).call
@@ -44,8 +45,18 @@ module Payments
         when "checkout.session.completed" then complete_checkout
         when /\Acustomer\.subscription\./ then sync_from_event
         when "invoice.payment_failed", "invoice.paid" then sync_from_invoice
+        when "account.updated" then sync_connect_account
         else :ignored
         end
+      end
+
+      # A designer finished — or fell out of — Stripe's onboarding. This is the
+      # only thing that ever sets `payouts_enabled`.
+      def sync_connect_account
+        profile = DesignerProfile.find_by(stripe_account_id: object[:id])
+        return if profile.nil?
+
+        SyncConnectAccount.call(profile: profile, account: object)
       end
 
       # The first webhook of a new subscription. It carries the customer id we

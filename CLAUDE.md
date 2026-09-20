@@ -334,8 +334,8 @@ Règles côté Rails :
 | 3     | Designs                       | terminée                       |
 | 4     | Demandes d'impression         | terminée                       |
 | 5     | Espace client                 | terminée                       |
-| 6     | Abonnements                   | **terminée**, en attente de validation |
-| 7     | Graphistes                    | à faire                        |
+| 6     | Abonnements                   | terminée                       |
+| 7     | Graphistes                    | **terminée**, en attente de validation |
 | 8     | Revues                        | à faire                        |
 | 9     | Administration                | à faire                        |
 | 10    | Finitions                     | à faire                        |
@@ -504,8 +504,18 @@ l'annuaire mais reste lisible par quiconque a le lien.
 
 **Les horodatages de migration ne peuvent pas être dans le futur.** Rails 8
 refuse un fichier dont le nom dépasse l'heure courante : « Timestamp must be in
-form YYYYMMDDHHMMSS, and less than … ». Écrire l'heure réelle, pas une ronde du
-lendemain.
+form YYYYMMDDHHMMSS, and less than … ». Ne pas les écrire à la main :
+l'horloge de cette machine a déjà reculé en cours de session, et des migrations
+déjà appliquées se sont retrouvées « dans le futur ». `bin/rails generate
+migration` repart de la dernière migration existante et s'en sort tout seul.
+
+**Une validation de complétude appartient au moment où elle compte.** Le profil
+graphiste se sauvegarde à moitié écrit — on rédige sa présentation en trois
+fois — mais l'administration ne peut pas publier une page vide. D'où un contexte
+`on: :activation`, interrogé par `ready_for_activation?`. Le réflexe de faire
+passer l'enregistrement par l'état cible pour « déclencher les validations »,
+puis de revenir en arrière avec `update_column`, rend l'objet publiquement
+visible entre les deux et saute les callbacks.
 
 **`assert_text` prend le *type* en second argument positionnel**, pas un message
 d'échec. `assert_text shown(x), "mon message"` lève

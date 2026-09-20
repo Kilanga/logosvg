@@ -1,0 +1,163 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-3xl">
+  <div class="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-5">
+    <p class="flex items-center gap-3">
+      <%= designer_status_pill(@profile) %>
+      <span class="text-sm text-muted"><%= t(".status_hint.#{@profile.status}") %></span>
+    </p>
+
+    <% if @profile.active? %>
+      <%= link_to t(".preview"), designer_path(@profile), class: "btn btn-secondary text-sm" %>
+    <% end %>
+  </div>
+
+  <%= form_with model: @profile, url: designer_profile_path, method: :patch,
+        class: "mt-8 space-y-10" do |form| %>
+    <% if @profile.errors.any? %>
+      <div class="border-l-2 border-warning bg-warning-bg px-4 py-3">
+        <p class="font-semibold text-warning">
+          <%= t("errors.template.header", count: @profile.errors.count) %>
+        </p>
+        <p class="mt-1 text-sm text-warning"><%= t("errors.template.body") %></p>
+      </div>
+    <% end %>
+
+    <fieldset>
+      <div class="flex items-baseline gap-4 border-b border-line pb-3">
+        <span class="font-display text-xl font-bold text-emulsion">01</span>
+        <legend class="font-display text-xl font-bold uppercase"><%= t(".who") %></legend>
+      </div>
+
+      <div class="mt-6 space-y-5">
+        <%= render "shared/field", form: form, field: :display_name,
+              label: t("activerecord.attributes.designer_profile.display_name"),
+              options: { required: true },
+              hint: t(".display_name_hint") %>
+
+        <div>
+          <%= form.label :bio, t("activerecord.attributes.designer_profile.bio"),
+                class: "label-rule block" %>
+          <%= form.text_area :bio, rows: 5,
+                placeholder: t(".bio_placeholder"),
+                class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+          <p class="mt-1.5 text-sm text-muted"><%= t(".bio_hint") %></p>
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-2">
+          <%= render "shared/field", form: form, field: :city,
+                label: t("activerecord.attributes.designer_profile.city"),
+                hint: t(".city_hint") %>
+          <div>
+            <%= form.label :avatar, t("activerecord.attributes.designer_profile.avatar"),
+                  class: "label-rule block" %>
+            <%= form.file_field :avatar, accept: "image/png,image/jpeg,image/webp",
+                  class: "mt-2 block w-full text-sm" %>
+          </div>
+        </div>
+
+        <%= render "designer/profiles/toggle", form: form, field: :remote %>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <div class="flex items-baseline gap-4 border-b border-line pb-3">
+        <span class="font-display text-xl font-bold text-emulsion">02</span>
+        <legend class="font-display text-xl font-bold uppercase"><%= t(".what") %></legend>
+      </div>
+
+      <div class="mt-6 space-y-5">
+        <fieldset>
+          <legend class="label-rule"><%= t("activerecord.attributes.designer_profile.specialties") %></legend>
+          <div class="mt-3 grid gap-2 sm:grid-cols-2">
+            <% DesignerProfile::SPECIALTIES.each do |specialty| %>
+              <label class="flex min-h-touch cursor-pointer items-center gap-2.5 rounded-xs border border-line px-3 text-sm
+                            has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+                <%= check_box_tag "designer_profile[specialties][]", specialty,
+                      @profile.specialties.include?(specialty),
+                      id: "specialty_#{specialty}",
+                      class: "size-4 rounded-xs border-line text-emulsion" %>
+                <%= t("enums.designer_profile.specialties.#{specialty}") %>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="label-rule"><%= t("activerecord.attributes.designer_profile.languages") %></legend>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <% DesignerProfile::LANGUAGES.each do |language| %>
+              <label class="cursor-pointer rounded-xs border border-line px-3 py-2 text-sm
+                            has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+                <%= check_box_tag "designer_profile[languages][]", language,
+                      @profile.languages.include?(language),
+                      id: "language_#{language}", class: "sr-only" %>
+                <%= t("enums.designer_profile.languages.#{language}") %>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+
+        <div>
+          <%= form.label :portfolio, t("activerecord.attributes.designer_profile.portfolio"),
+                class: "label-rule block" %>
+          <%= form.file_field :portfolio, multiple: true,
+                accept: "image/png,image/jpeg,image/webp",
+                class: "mt-2 block w-full text-sm" %>
+          <p class="mt-1.5 text-sm text-muted"><%= t(".portfolio_hint") %></p>
+        </div>
+      </div>
+    </fieldset>
+
+    <%# 03 — The levels. A review is only ever offered to someone who signed up
+        for that level, so this is not decoration. %>
+    <fieldset>
+      <div class="flex items-baseline gap-4 border-b border-line pb-3">
+        <span class="font-display text-xl font-bold text-emulsion">03</span>
+        <legend class="font-display text-xl font-bold uppercase"><%= t(".levels") %></legend>
+      </div>
+      <p class="mt-3 text-sm text-muted"><%= t(".levels_hint") %></p>
+
+      <div class="mt-4 space-y-2">
+        <% ReviewLevel.offered.each do |level| %>
+          <label class="flex cursor-pointer gap-3 rounded-xs border border-line p-4
+                        has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+            <%= check_box_tag "designer_profile[review_level_ids][]", level.id,
+                  @profile.accepts?(level), id: "level_#{level.key}",
+                  class: "mt-0.5 size-4 flex-none rounded-xs border-line text-emulsion" %>
+            <span class="min-w-0 flex-1">
+              <span class="flex flex-wrap items-baseline justify-between gap-2">
+                <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
+                  <%= level.name %>
+                </span>
+                <span class="font-display font-bold text-emulsion"><%= level_price(level) %></span>
+              </span>
+              <span class="mt-1 block text-sm text-muted"><%= level.description %></span>
+              <span class="label-rule mt-1.5 block text-muted"><%= level_terms(level) %></span>
+            </span>
+          </label>
+        <% end %>
+        <%# Hidden field so unchecking every level still submits the key, and
+            clears the set rather than being read as "no opinion". %>
+        <%= hidden_field_tag "designer_profile[review_level_ids][]", "" %>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <div class="flex items-baseline gap-4 border-b border-line pb-3">
+        <span class="font-display text-xl font-bold text-emulsion">04</span>
+        <legend class="font-display text-xl font-bold uppercase"><%= t(".availability") %></legend>
+      </div>
+      <p class="mt-3 text-sm text-muted"><%= t(".availability_hint") %></p>
+
+      <div class="mt-4">
+        <%= render "designer/profiles/toggle", form: form, field: :accepting_work %>
+      </div>
+    </fieldset>
+
+    <div class="flex flex-wrap gap-3 border-t border-line pt-8">
+      <%= form.submit t(".save"), class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>

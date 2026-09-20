@@ -45,6 +45,9 @@ Rails.application.routes.draw do
   get "imprimeurs",       to: "public/printers#index", as: :printers
   get "imprimeurs/:slug", to: "public/printers#show",  as: :printer
 
+  get "graphistes",     to: "public/designers#index", as: :designers
+  get "graphistes/:id", to: "public/designers#show",  as: :designer
+
   # --- Espaces professionnels ------------------------------------------------
   # One entry point per role. Later steps nest their screens under each of them.
   get "mon-espace", to: "client/dashboards#show",   as: :client_dashboard
@@ -84,9 +87,23 @@ Rails.application.routes.draw do
   get   "atelier/demandes/:token", to: "workshop/print_requests#show",   as: :workshop_print_request
   patch "atelier/demandes/:token", to: "workshop/print_requests#update"
 
+  # Le profil du graphiste, ses niveaux et ses versements.
+  # Pas d'action « soumettre » : un profil naît en relecture, et c'est
+  # l'administration qui l'active.
+  get   "studio/profil", to: "designer/profiles#edit",   as: :edit_designer_profile
+  patch "studio/profil", to: "designer/profiles#update", as: :designer_profile
+
+  get  "studio/paiements",            to: "designer/payouts#show",   as: :designer_payouts
+  post "studio/paiements/inscription", to: "designer/payouts#onboard", as: :designer_payouts_onboarding
+  post "studio/paiements/tableau-de-bord", to: "designer/payouts#dashboard",
+       as: :designer_payouts_dashboard
+
   # Validation des fiches par l'administration.
   get   "admin/imprimeurs",       to: "admin/printers#index",  as: :admin_printers
   patch "admin/imprimeurs/:slug", to: "admin/printers#update", as: :admin_printer
+
+  get   "admin/graphistes",     to: "admin/designers#index",  as: :admin_designers
+  patch "admin/graphistes/:id", to: "admin/designers#update", as: :admin_designer
 
   # --- Webhooks ---------------------------------------------------------------
   # Signature vérifiée, jamais de session : Stripe n'est pas un visiteur.

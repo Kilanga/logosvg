@@ -1,0 +1,7 @@
+<%# A yes/no the designer answers about themselves. Same shape as the shop's,
+    with its own attribute names. %>
+<label class="flex min-h-touch cursor-pointer items-center gap-3 rounded-xs border border-line px-3
+              has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+  <%= form.check_box field, class: "size-4 rounded-xs border-line text-emulsion" %>
+  <span class="text-sm font-medium"><%= t("activerecord.attributes.designer_profile.#{field}") %></span>
+</label>

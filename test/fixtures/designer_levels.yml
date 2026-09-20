@@ -1,0 +1,26 @@
+<%# Qui accepte quoi. Inès prend tout, les autres une partie : une revue n'est
+    proposée qu'à quelqu'un qui a accepté ce niveau-là. %>
+
+ines_check:
+  designer_profile: ines
+  review_level: check
+
+ines_retouch:
+  designer_profile: ines
+  review_level: retouch
+
+ines_custom:
+  designer_profile: ines
+  review_level: custom
+
+tom_check:
+  designer_profile: tom
+  review_level: check
+
+nour_retouch:
+  designer_profile: nour
+  review_level: retouch
+
+leo_check:
+  designer_profile: leo
+  review_level: check

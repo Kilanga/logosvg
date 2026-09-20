@@ -1,0 +1,49 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-2xl space-y-8">
+  <%# One boolean decides everything on this page, so it leads. %>
+  <section class="panel p-6">
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
+      <h2 class="font-display text-xl font-bold uppercase"><%= t(".status") %></h2>
+      <span class="pill <%= @profile.payouts_enabled? ? 'pill-success' : 'border border-line text-muted' %>">
+        <%= t(".#{@profile.payouts_enabled? ? 'enabled' : 'disabled'}") %>
+      </span>
+    </div>
+
+    <% if @profile.payouts_enabled? %>
+      <p class="mt-4 text-muted"><%= t(".enabled_body") %></p>
+
+      <div class="mt-5 border-t border-line pt-5">
+        <%= button_to t(".open_dashboard"), designer_payouts_dashboard_path, class: "btn btn-primary" %>
+        <p class="mt-3 text-sm text-muted"><%= t(".dashboard_hint") %></p>
+      </div>
+    <% else %>
+      <p class="mt-4 text-muted">
+        <%= t(@profile.onboarding_started? ? ".resume_body" : ".start_body") %>
+      </p>
+
+      <div class="mt-5 border-t border-line pt-5">
+        <%= button_to t(@profile.onboarding_started? ? ".resume" : ".start"),
+              designer_payouts_onboarding_path, class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </section>
+
+  <%# Said plainly, because handing identity documents to a stranger is a
+      reasonable thing to hesitate over. %>
+  <section class="panel p-6">
+    <p class="label-rule flex items-center gap-2.5 text-emulsion">
+      <%= registration_mark %><%= t(".who_holds_what") %>
+    </p>
+    <p class="mt-3 text-muted"><%= t(".who_holds_what_body") %></p>
+  </section>
+
+  <section class="panel p-6">
+    <p class="label-rule"><%= t(".how_paid") %></p>
+    <p class="mt-3 text-muted">
+      <%= t(".how_paid_body", rate: number_to_percentage(
+            Rails.application.config.tshirt.reviews[:platform_fee_rate] * 100, precision: 0)) %>
+    </p>
+  </section>
+</div>
