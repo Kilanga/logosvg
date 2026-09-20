@@ -335,8 +335,8 @@ Règles côté Rails :
 | 4     | Demandes d'impression         | terminée                       |
 | 5     | Espace client                 | terminée                       |
 | 6     | Abonnements                   | terminée                       |
-| 7     | Graphistes                    | **terminée**, en attente de validation |
-| 8     | Revues                        | à faire                        |
+| 7     | Graphistes                    | terminée                       |
+| 8     | Revues                        | **terminée**, en attente de validation |
 | 9     | Administration                | à faire                        |
 | 10    | Finitions                     | à faire                        |
 
@@ -508,6 +508,30 @@ form YYYYMMDDHHMMSS, and less than … ». Ne pas les écrire à la main :
 l'horloge de cette machine a déjà reculé en cours de session, et des migrations
 déjà appliquées se sont retrouvées « dans le futur ». `bin/rails generate
 migration` repart de la dernière migration existante et s'en sort tout seul.
+
+**`form_with` ne devine `multipart` qu'à partir d'un `file_field` du form
+builder.** Avec un `file_field_tag` nu, le formulaire reste urlencodé et **le
+fichier ne quitte jamais le navigateur** — le serveur reçoit un paramètre vide
+et répond « joignez un fichier ». Écrire `multipart: true` explicitement dès
+qu'on n'utilise pas le builder.
+
+**`def methode = expression if condition` ne fait pas ce qu'on croit.** Ruby lit
+`(def methode = expression) if condition` : la condition est évaluée **dans le
+corps de la classe**, pas dans la méthode. `def read! = update!(...) if
+read_at.nil?` levait donc `NameError: undefined local variable read_at` au
+chargement du modèle. Écrire la méthode en toutes lettres.
+
+**Deux champs de même nom sur une page rendent les tests ambigus — et le
+formulaire aussi.** L'écran d'une revue portait deux `message` et deux `body`
+dans des formulaires différents. Capybara lève `Capybara::Ambiguous`, et un
+navigateur remplit n'importe lequel. Donner un `id:` distinct à chacun.
+
+**Un test qui compte des emails doit dire de quelle ligne il parle.** Les
+balayages parcourent toutes les fixtures : `SweepReviewsJob` en notifiait
+plusieurs, et `assert_emails 1` échouait sur des envois sans rapport. Neutraliser
+les autres candidats dans le `setup`, et **vider la file** (`perform_enqueued_jobs`)
+avant une assertion qui en contient un deuxième — sinon la livraison du premier
+passage est comptée dans le second.
 
 **Une validation de complétude appartient au moment où elle compte.** Le profil
 graphiste se sauvegarde à moitié écrit — on rédige sa présentation en trois

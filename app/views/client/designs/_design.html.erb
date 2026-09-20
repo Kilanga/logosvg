@@ -71,7 +71,19 @@
       <% end %>
     </div>
 
-    <% if design.refinements_left %>
+    <%# Budget spent. The two ways of reworking it yourself give way to the
+        one that is left: a designer, and it is paid for. See docs/SPEC.md,
+        "Reprise d'un design". %>
+    <% if design.refinements_left&.zero? %>
+      <div class="border-t border-line bg-emulsion/5 p-4">
+        <p class="label-rule flex items-center gap-2.5 text-emulsion">
+          <%= registration_mark %><%= t("client.designs.design.budget_spent") %>
+        </p>
+        <p class="mt-2 text-sm text-muted"><%= t("client.designs.design.budget_spent_body") %></p>
+        <%= link_to t("client.designs.design.ask_designer"), new_design_review_path(design),
+              class: "btn btn-primary mt-4 text-sm" %>
+      </div>
+    <% elsif design.refinements_left %>
       <p class="border-t border-line px-4 py-3 text-sm text-muted">
         <%= t("client.designs.design.refinements_left", count: design.refinements_left) %>
       </p>

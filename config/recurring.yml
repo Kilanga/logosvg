@@ -23,6 +23,12 @@ default: &default
   sweep_print_requests:
     class: SweepPrintRequestsJob
     schedule: every hour at minute 7
+  # Validation automatique, expiration des propositions et graphiste choisi
+  # silencieux. Toutes les heures pour la même raison : les délais se comptent
+  # en heures ou en jours.
+  sweep_reviews:
+    class: SweepReviewsJob
+    schedule: every hour at minute 22
 
 development:
   <<: *default

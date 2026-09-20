@@ -1,0 +1,6 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.paid.eyebrow"),
+      heading: t("mailers.review.paid.heading", amount: number_to_currency(@review.designer_share_cents / 100.0, unit: "€", format: "%n %u")),
+      body: t("mailers.review.paid.body"),
+      url: designer_payouts_url,
+      action: t("mailers.review.paid.action") %>

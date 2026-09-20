@@ -177,6 +177,7 @@ fr:
     subscription: "Abonnement"
     my_profile: "Mon profil"
     payouts: "Mes paiements"
+    review_queue: "Vérifications"
 
   # Libellés partagés par l'annuaire, la fiche publique et les espaces pros.
   printers:
@@ -303,7 +304,12 @@ fr:
       print_request: "Demande d'impression"
       designer_profile: "Profil graphiste"
       review_level: "Niveau de vérification"
+      review: "Vérification"
     attributes:
+      review:
+        client_brief: "Ce que vous attendez"
+        review_level: "Niveau"
+        designer_profile: "Graphiste"
       designer_profile:
         display_name: "Nom affiché"
         bio: "Présentation"
@@ -436,6 +442,27 @@ fr:
       textile_source:
         printer: "L'atelier fournit le textile"
         client: "Je fournis le textile"
+    review:
+      status:
+        awaiting_payment: "En attente de paiement"
+        queued: "En attente d'un graphiste"
+        in_progress: "En cours"
+        delivered: "Version à valider"
+        returned_to_client: "Renvoyée pour décision"
+        accepted: "Terminée"
+        canceled: "Annulée"
+      return_reason:
+        level_too_low: "La demande dépasse le niveau payé"
+        level_too_high: "Un niveau inférieur suffirait"
+        unusable_design: "Le design n'est pas exploitable"
+        forbidden_content: "Contenu protégé ou interdit"
+        other: "Autre raison"
+      return_hint:
+        level_too_low: "Proposez le niveau qui convient ; le client paiera la différence."
+        level_too_high: "Proposez le niveau qui convient ; la différence lui sera remboursée."
+        unusable_design: "La revue est annulée et remboursée. Le client est invité à régénérer son design."
+        forbidden_content: "La revue est annulée et remboursée immédiatement."
+        other: "La revue est annulée et remboursée. Expliquez pourquoi."
     designer_profile:
       status:
         pending_review: "En attente de validation"
@@ -471,6 +498,56 @@ fr:
       not_configured: "Les paiements ne sont pas encore configurés. Réessayez plus tard."
       unavailable: "Le service de paiement n'est pas joignable. Réessayez dans quelques minutes."
       unknown_plan: "Cette formule n'existe pas."
+
+  # --- Vérifications, textes partagés --------------------------------------
+  reviews:
+    version: "Version %{number}"
+    no_version: "Aucune version déposée pour l'instant."
+    conversation: "Échanges"
+    no_message: "Aucun message pour l'instant."
+    write: "Écrire un message"
+    write_placeholder: "Une précision, une question…"
+    send: "Envoyer"
+    you: "Vous"
+    due: "Échéance %{when}"
+    checkout:
+      product: "Vérification — %{level}"
+    checks:
+      inks:
+        zero: "Aucune encre détectée"
+        one: "%{count} encre"
+        other: "%{count} encres"
+      transparent: "Fond transparent"
+    warnings:
+      no_transparency: "Le fichier n'a pas de fond transparent : l'atelier devra le détourer."
+      low_resolution: "La définition est faible pour la taille demandée : le rendu risque de manquer de netteté."
+    errors:
+      no_file: "Joignez un fichier."
+      svg_refused: "Ce SVG n'a pas passé nos contrôles de sécurité."
+      raster_refused: "Ce fichier n'a pas passé nos contrôles."
+      svg:
+        forbidden_element: "Ce SVG contient un élément interdit (script, image externe…)."
+        event_handler: "Ce SVG contient un gestionnaire d'événement."
+        external_reference: "Ce SVG pointe vers une ressource extérieure."
+        entity: "Ce SVG contient des entités XML."
+        not_svg: "Ce fichier n'est pas un SVG."
+        empty: "Ce fichier est vide."
+        too_large: "Ce SVG dépasse la taille maximale."
+      raster:
+        not_a_png: "Le fichier attendu est un PNG."
+        unreadable: "Ce fichier est illisible."
+        empty: "Ce fichier est vide."
+        too_large: "Ce PNG dépasse la taille maximale."
+      already_taken: "Cette vérification a déjà été prise par quelqu'un."
+      level_not_accepted: "Vous n'acceptez pas ce niveau."
+      not_for_you: "Cette vérification ne vous est pas destinée."
+      unknown_reason: "Choisissez un motif."
+      message_required: "Un message est obligatoire."
+      already_returned: "Cette vérification a déjà été renvoyée une fois."
+      proposal_required: "Indiquez le niveau ou le prix que vous proposez."
+      not_configured: "Les paiements ne sont pas encore configurés. Réessayez plus tard."
+      unavailable: "Le service de paiement n'est pas joignable. Réessayez dans quelques minutes."
+      nothing_to_pay: "Il n'y a rien à payer."
 
   # --- Graphistes, textes partagés -----------------------------------------
   designers:
@@ -647,6 +724,80 @@ fr:
         follow: "Voir ma demande"
         workshop: "Atelier : %{printer}"
 
+    review:
+      notify_designers:
+        subject: "Une vérification à prendre"
+        eyebrow: "Nouvelle demande"
+        heading: "Une vérification %{level} attend un graphiste"
+        body: "Ce que demande le client : %{brief}"
+        no_brief: "aucune précision particulière."
+        action: "Voir la demande"
+        footer: "Votre part si vous la prenez et qu'elle est validée : %{amount}."
+      claimed:
+        subject: "%{designer} prend votre vérification en charge"
+        eyebrow: "Prise en charge"
+        heading: "%{designer} s'occupe de votre design"
+        body: "Première version attendue pour le %{due}."
+        action: "Suivre ma vérification"
+      version_delivered:
+        subject: "Une version vous attend"
+        eyebrow: "Version %{number}"
+        heading: "Votre graphiste a déposé une version"
+        body: "Le fichier repris est prêt. Validez-le, ou demandez un retour."
+        action: "Voir la version"
+        footer: "Sans réponse de votre part sous %{days} jours, elle est validée automatiquement."
+      revision_requested:
+        subject: "Le client demande un retour"
+        eyebrow: "Retour demandé"
+        heading: "Le client vous demande une reprise"
+        body: "Voyez son message sur la page de la vérification."
+        action: "Voir la demande"
+        footer: "Retours inclus restants : %{left}."
+      returned_to_client:
+        subject: "Votre vérification vous est renvoyée"
+        eyebrow: "Demande renvoyée"
+        heading: "%{designer} vous renvoie votre demande"
+        action: "Voir la proposition"
+        footer: "Vous avez %{hours} h pour répondre. Sans réponse, vous êtes remboursé."
+      proposal_reminder:
+        subject: "Il vous reste peu de temps pour répondre"
+        eyebrow: "Rappel"
+        heading: "Une proposition attend votre réponse"
+        body: "Sans réponse avant le %{when}, votre vérification sera annulée et remboursée."
+        action: "Répondre"
+      proposal_expired:
+        subject: "Votre vérification a été annulée et remboursée"
+        eyebrow: "Proposition expirée"
+        heading: "Faute de réponse, nous avons annulé votre vérification"
+        body: "Le montant payé vous est remboursé. Votre design, lui, est intact."
+        action: "Revoir mon design"
+      designer_silent:
+        subject: "Votre graphiste n'a pas répondu"
+        eyebrow: "Sans réponse"
+        heading: "%{designer} n'a pas pris votre demande"
+        body: >-
+          Passé %{hours} h sans réponse, vous pouvez ouvrir la demande à tous
+          les graphistes disponibles, ou être remboursé.
+        action: "Choisir la suite"
+      auto_accepted:
+        subject: "Votre vérification a été validée automatiquement"
+        eyebrow: "Validation automatique"
+        heading: "Votre vérification est terminée"
+        body: "Sans retour de votre part sous %{days} jours, la dernière version a été validée et le graphiste réglé."
+        action: "Voir la vérification"
+      paid:
+        subject: "Vous avez été payé"
+        eyebrow: "Versement"
+        heading: "%{amount} vous ont été versés"
+        body: "Le client a validé votre travail. Le virement part vers votre compte Stripe."
+        action: "Voir mes versements"
+      refunded:
+        subject: "Vous avez été remboursé"
+        eyebrow: "Remboursement"
+        heading: "%{amount} vous ont été remboursés"
+        body: "Le remboursement apparaît sous quelques jours selon votre banque."
+        action: "Revoir mon design"
+
     designer:
       profile_approved:
         subject: "Votre profil de graphiste est publié"
@@ -746,15 +897,95 @@ fr:
       index:
         title: "Mes vérifications"
         heading: "Mes vérifications"
+        count:
+          zero: "Aucune vérification"
+          one: "%{count} vérification"
+          other: "%{count} vérifications"
+        unassigned: "En attente d'un graphiste"
         empty: "Aucune vérification"
         empty_body: >-
-          Vous n'avez encore fait vérifier aucun design par un graphiste.
-        what_is_it: "La vérification par un graphiste"
-        what_is_it_body: >-
           Un graphiste professionnel reprend votre visuel pour l'impression :
           il nettoie les tracés, ajuste les encres et vous renvoie un fichier
-          que l'atelier pourra sortir sans retouche.
-        coming: "Cette option sera bientôt disponible."
+          que l'atelier sortira sans retouche.
+        browse_designs: "Voir mes designs"
+      new:
+        title: "Faire vérifier ce design"
+        heading: "Faire vérifier ce design"
+        level: "Ce que vous demandez"
+        who: "Qui s'en charge"
+        who_hint: >-
+          Le premier disponible répond en général plus vite. Si vous choisissez
+          quelqu'un et qu'il ne prend pas la demande sous %{hours} h, vous
+          pourrez changer d'avis ou être remboursé.
+        first_available: "Le premier graphiste disponible"
+        brief: "Vos attentes"
+        brief_placeholder: "Ce qui vous gêne, ce que vous aimeriez voir changer…"
+        brief_hint: "Facultatif, mais c'est ce qui évite un aller-retour."
+        submit: "Payer et envoyer"
+        payment_hint: "Le paiement passe par Stripe. Le graphiste n'est réglé qu'une fois que vous avez validé son travail."
+        the_design: "Le design à vérifier"
+        what_you_get: "Ce que vous recevez"
+        what_you_get_body: >-
+          Un fichier repris, prêt pour l'impression, au même format que celui
+          que votre atelier attend. Vous validez, ou vous demandez un retour.
+      create:
+        started: "Votre demande est enregistrée."
+      show:
+        title: "Vérification"
+        heading: "Vérification — %{level}"
+        versions: "Versions"
+        level: "Niveau"
+        paid: "Payé"
+        refunded: "Remboursé"
+        designer: "Graphiste"
+        due: "Échéance"
+        your_brief: "Vos attentes"
+        your_turn: "À vous de jouer"
+        your_turn_body: >-
+          Validez si le fichier vous convient. Sans réponse de votre part sous
+          %{days} jours, il est validé automatiquement.
+        accept: "Valider ce travail"
+        revision_label: "Demander un retour"
+        revision_placeholder: "Ce qui ne va pas encore, précisément."
+        request_revision: "Demander un retour"
+        revisions_left:
+          zero: "Plus de retour inclus."
+          one: "%{count} retour inclus restant."
+          other: "%{count} retours inclus restants."
+        no_revision_left: "Vous avez utilisé tous les retours inclus dans ce niveau."
+        returned: "Le graphiste a renvoyé votre demande"
+        proposed_level: "Niveau proposé"
+        difference: "Différence"
+        answer_before: "À répondre avant le"
+        accept_and_pay: "Accepter et payer la différence"
+        accept_and_refund: "Accepter, la différence vous est remboursée"
+        decline: "Refuser et être remboursé"
+        decline_confirm: "Refuser cette proposition et être remboursé ?"
+        rework_design: "Modifier ou régénérer mon design"
+        designer_silent: "Votre graphiste n'a pas répondu"
+        designer_silent_body: >-
+          %{designer} n'a pas pris votre demande en charge dans les %{hours} h.
+          Vous pouvez l'ouvrir à tous les graphistes, ou être remboursé.
+        reopen: "Ouvrir à tous les graphistes"
+        cancel_and_refund: "Annuler et être remboursé"
+        rate: "Noter ce graphiste"
+        rate_placeholder: "Un mot sur le travail rendu, si vous le souhaitez."
+        send_rating: "Envoyer ma note"
+      accept:
+        accepted: "Travail validé. Le graphiste va être réglé."
+      revision:
+        requested: "Votre demande de retour est partie."
+        message_required: "Expliquez ce qui doit changer."
+      accept_proposal:
+        accepted: "Proposition acceptée. Votre demande repart en file."
+      decline_proposal:
+        declined: "Proposition refusée. Vous allez être remboursé."
+      reopen:
+        reopened: "Votre demande est ouverte à tous les graphistes."
+      rate:
+        rated: "Merci pour votre note."
+      message:
+        empty: "Écrivez un message avant de l'envoyer."
 
     designs:
       index:
@@ -840,6 +1071,12 @@ fr:
           zero: "Plus de reprise disponible pour ce design."
           one: "Il reste %{count} reprise pour ce design."
           other: "Il reste %{count} reprises pour ce design."
+        budget_spent: "Vous avez utilisé vos trois reprises"
+        budget_spent_body: >-
+          Pour aller plus loin, un graphiste professionnel peut reprendre ce
+          visuel : tracés nettoyés, encres ajustées, fichier prêt pour votre
+          atelier.
+        ask_designer: "Faire vérifier par un graphiste"
       variants:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
       refine:
@@ -1217,6 +1454,75 @@ fr:
           commission.
       dashboard:
         no_account: "Activez d'abord vos versements."
+
+    reviews:
+      index:
+        title: "Vérifications"
+        heading: "Mes vérifications"
+        mine:
+          zero: "Rien à faire"
+          one: "%{count} à faire"
+          other: "%{count} à faire"
+        nothing_mine: "Vous n'avez aucune vérification en cours."
+        available:
+          zero: "Aucune à prendre"
+          one: "%{count} à prendre"
+          other: "%{count} à prendre"
+        nothing_available: "La file est vide"
+        nothing_available_body: >-
+          Aucune demande ne correspond à vos niveaux pour l'instant. Elles
+          apparaîtront ici dès qu'un client en paiera une.
+        unavailable_body: >-
+          Tant que ce point n'est pas réglé, aucune demande ne peut vous être
+          confiée.
+        fix_it: "Voir ce qu'il manque"
+        waiting:
+          one: "%{count} en attente du client"
+          other: "%{count} en attente du client"
+        settled: "Terminées"
+      row:
+        claim: "Prendre"
+      show:
+        title: "Vérification"
+        heading: "Vérification — %{level}"
+        brief: "Ce que demande le client"
+        available: "Vous pouvez prendre cette vérification"
+        available_body: "Vous aurez %{hours} h pour livrer une première version."
+        claim: "Prendre en charge"
+        versions: "Versions livrées"
+        deliver: "Déposer une version"
+        deliver_hint:
+          vector: "Le client attend un SVG : c'est le format que son atelier imprime."
+          raster: "Le client attend un PNG détouré, imprimé sur %{width} cm de large."
+        file: "Fichier"
+        message: "Message au client"
+        message_placeholder: "Ce que vous avez repris, ce qu'il reste à décider…"
+        send_version: "Envoyer cette version"
+        return_title: "Renvoyer la demande"
+        return_body: >-
+          À faire avant toute livraison, une seule fois, si l'option choisie ne
+          permet pas de travailler correctement. Votre lecture n'est pas
+          facturée.
+        reason: "Motif"
+        proposed_level: "Niveau proposé"
+        proposed_price: "Prix proposé (€)"
+        proposed_price_hint: "Pour une création sur mesure uniquement."
+        return_message: "Message au client"
+        return_message_placeholder: "Expliquez ce qui bloque et ce que vous proposez."
+        return_action: "Renvoyer au client"
+        return_confirm: "Renvoyer cette demande au client ? Vous ne pourrez pas revenir en arrière."
+        the_design: "Le design"
+        what_you_earn: "Ce que vous touchez"
+        earn_hint: "Prix payé %{price}, commission plateforme %{fee}."
+        generator_warnings: "Alertes du générateur"
+      claim:
+        claimed: "Vérification prise en charge. À vous de jouer."
+      deliver:
+        delivered: "Version %{number} envoyée au client."
+      return_to_client:
+        returned: "Demande renvoyée au client."
+      message:
+        empty: "Écrivez un message avant de l'envoyer."
 
   admin:
     dashboards:

@@ -1,0 +1,29 @@
+<div class="panel flex flex-wrap items-center gap-4 p-4">
+  <div class="screen-tint size-16 flex-none overflow-hidden rounded-xs">
+    <%= image_tag design_image_path(review.design), alt: "", class: "size-full object-contain" %>
+  </div>
+
+  <div class="min-w-0 flex-1">
+    <p class="label-rule text-emulsion"><%= review.review_level.name %></p>
+    <p class="mt-0.5 truncate font-medium">
+      <%= link_to review.design.prompt.truncate(60), designer_review_path(review),
+            class: "underline-offset-4 hover:underline" %>
+    </p>
+    <p class="mt-0.5 text-sm text-muted">
+      <%= money(review.designer_share_cents) %>
+      · <%= review.design.technique_label %>
+      <% if review.design.vector? && review.design.inks_count %>
+        · <%= t("client.designs.design.screens", count: review.design.inks_count) %>
+      <% end %>
+    </p>
+  </div>
+
+  <div class="flex flex-none flex-col items-end gap-2">
+    <%= review_status_pill(review) %>
+    <%= due_badge(review) %>
+
+    <% if claimable %>
+      <%= button_to t(".claim"), claim_designer_review_path(review), class: "btn btn-primary text-sm" %>
+    <% end %>
+  </div>
+</div>

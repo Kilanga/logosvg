@@ -1,0 +1,6 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.auto_accepted.eyebrow"),
+      heading: t("mailers.review.auto_accepted.heading"),
+      body: t("mailers.review.auto_accepted.body", days: Rails.application.config.tshirt.reviews[:auto_accept_days]),
+      url: review_url(@review),
+      action: t("mailers.review.auto_accepted.action") %>

@@ -1,0 +1,7 @@
+<%= render "frame",
+      tone: "#6B4200",
+      eyebrow: t("mailers.review.designer_silent.eyebrow"),
+      heading: t("mailers.review.designer_silent.heading", designer: @review.designer_profile&.display_name),
+      body: t("mailers.review.designer_silent.body", hours: Rails.application.config.tshirt.reviews[:designer_claim_timeout_hours]),
+      url: review_url(@review),
+      action: t("mailers.review.designer_silent.action") %>

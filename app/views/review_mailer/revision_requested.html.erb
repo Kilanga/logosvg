@@ -1,0 +1,7 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.revision_requested.eyebrow"),
+      heading: t("mailers.review.revision_requested.heading"),
+      body: @review.messages.last&.body.presence || t("mailers.review.revision_requested.body"),
+      url: designer_review_url(@review),
+      action: t("mailers.review.revision_requested.action"),
+      footer: t("mailers.review.revision_requested.footer", left: @review.revisions_left) %>

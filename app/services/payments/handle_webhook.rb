@@ -59,10 +59,39 @@ module Payments
         SyncConnectAccount.call(profile: profile, account: object)
       end
 
+      # Two different things arrive here: a shop subscribing, and a client
+      # paying for a review. The session's own mode tells them apart.
+      def complete_checkout
+        if object[:mode].to_s == "payment" || review_token.present?
+          complete_review_checkout
+        else
+          complete_subscription_checkout
+        end
+      end
+
+      def review_token = object.dig(:metadata, :review_token)
+
+      # A client paid for a review, or for the difference on a proposal.
+      def complete_review_checkout
+        review = Review.find_by(token: review_token) ||
+                 Review.find_by(stripe_checkout_session_id: object[:id])
+        return if review.nil?
+
+        review.update!(stripe_payment_intent_id: object[:payment_intent])
+
+        if object.dig(:metadata, :purpose).to_s == "upgrade"
+          Reviews::ApplyProposal.call(review: review)
+        elsif review.may_pay?
+          review.pay!
+          review.save!
+          ReviewMailer.notify_designers(review).deliver_later
+        end
+      end
+
       # The first webhook of a new subscription. It carries the customer id we
       # had no way of knowing before, so it is stored even if the rest of the
       # subscription arrives in a later event.
-      def complete_checkout
+      def complete_subscription_checkout
         subscription = subscription_for_customer(object[:customer]) ||
                        subscription_for_client_reference(object[:client_reference_id])
         return if subscription.nil?

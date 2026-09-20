@@ -1,0 +1,35 @@
+<%# The conversation. Drawn as a thread rather than a table: the two sides are
+    talking, and who said what is the first thing to read. %>
+<div class="panel p-5">
+  <h2 class="label-rule border-b border-line pb-3"><%= t("reviews.conversation") %></h2>
+
+  <% if messages.any? %>
+    <ol class="mt-4 space-y-3">
+      <% messages.each do |message| %>
+        <% mine = message.author_id == Current.user.id %>
+        <li class="flex <%= mine ? 'justify-end' : 'justify-start' %>">
+          <div class="max-w-[85%] rounded-xs border px-3 py-2
+                      <%= mine ? 'border-emulsion bg-emulsion/5' : 'border-line bg-paper' %>">
+            <p class="label-rule <%= mine ? 'text-emulsion' : 'text-muted' %>">
+              <%= mine ? t("reviews.you") : message.author.first_name %>
+              · <%= l(message.created_at, format: :short) %>
+            </p>
+            <p class="mt-1 whitespace-pre-line text-sm"><%= message.body %></p>
+          </div>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p class="mt-4 text-sm text-muted"><%= t("reviews.no_message") %></p>
+  <% end %>
+
+  <% if local_assigns[:post_to] %>
+    <%= form_with url: post_to, class: "mt-5 border-t border-line pt-4" do %>
+      <%= label_tag :message_body, t("reviews.write"), class: "label-rule block" %>
+      <%= text_area_tag :body, nil, rows: 3, maxlength: 2000, id: "message_body",
+            placeholder: t("reviews.write_placeholder"),
+            class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+      <button type="submit" class="btn btn-secondary mt-3 text-sm"><%= t("reviews.send") %></button>
+    <% end %>
+  <% end %>
+</div>
