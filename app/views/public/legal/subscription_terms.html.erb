@@ -1,0 +1,8 @@
+<% content_for :title, t("legal.subscription_terms.title") %>
+
+<%= render layout: "public/legal/frame", locals: { title: t("legal.subscription_terms.title") } do %>
+  <%= legal_section("plans") %>
+  <%= legal_section("billing") %>
+  <%= legal_section("visibility") %>
+  <%= legal_section("cancellation") %>
+<% end %>

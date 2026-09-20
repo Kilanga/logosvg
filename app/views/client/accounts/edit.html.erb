@@ -70,10 +70,32 @@
     <% end %>
   </section>
 
-  <%# Export and closing the account arrive at step 10; saying so beats an
-      empty section or a button that does nothing. %>
   <section class="panel p-6">
-    <h2 class="label-rule"><%= t(".data") %></h2>
-    <p class="mt-3 text-sm text-muted"><%= t(".data_coming") %></p>
+    <div class="flex items-baseline gap-4 border-b border-line pb-3">
+      <span class="font-display text-xl font-bold text-emulsion">03</span>
+      <h2 class="font-display text-xl font-bold uppercase"><%= t(".data") %></h2>
+    </div>
+
+    <p class="mt-4 text-sm text-muted"><%= t(".export_body") %></p>
+    <%= link_to t(".export"), client_account_export_path, class: "btn btn-secondary mt-4 text-sm" %>
+
+    <%# Closing the account. Kept last, asked for twice, and plain about what
+        survives: a print request already sent is the workshop's record too. %>
+    <div class="mt-8 border-t border-line pt-6">
+      <p class="label-rule text-warning"><%= t(".close") %></p>
+      <p class="mt-2 text-sm text-muted"><%= t(".close_body") %></p>
+      <p class="mt-2 text-sm text-muted"><%= t(".close_kept", days: Rails.application.config.tshirt.privacy[:deleted_account_purge_days]) %></p>
+
+      <%= form_with url: client_account_path, method: :delete, class: "mt-4 max-w-64" do %>
+        <%= label_tag :current_password, t(".close_password"), class: "label-rule block" %>
+        <%= password_field_tag :current_password, nil, required: true,
+              autocomplete: "current-password",
+              class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+        <button type="submit" class="btn btn-secondary mt-3 text-sm"
+                data-turbo-confirm="<%= t('.close_confirm') %>">
+          <%= t(".close_action") %>
+        </button>
+      <% end %>
+    </div>
   </section>
 </div>

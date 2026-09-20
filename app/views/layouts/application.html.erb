@@ -60,11 +60,21 @@
             <p class="mt-2 max-w-sm text-sm text-paper/70"><%= t("platform.tagline") %></p>
           </div>
 
-          <%# Legal pages are built in step 10; nothing is linked before it exists. %>
-          <p class="label-rule text-paper/50">
-            © <%= Time.zone.today.year %> <%= platform_name %> · <%= t("footer.rights") %>
-          </p>
+          <nav aria-label="<%= t("legal.other_pages") %>">
+            <ul class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              <% legal_pages.each do |key, path| %>
+                <li>
+                  <%= link_to t("legal.#{key}.title"), path,
+                        class: "text-paper/70 underline-offset-4 hover:text-paper hover:underline" %>
+                </li>
+              <% end %>
+            </ul>
+          </nav>
         </div>
+
+        <p class="label-rule mt-10 border-t border-paper/15 pt-6 text-paper/50">
+          © <%= Time.zone.today.year %> <%= platform_name %> · <%= t("footer.rights") %>
+        </p>
       </div>
     </footer>
   </body>

@@ -44,6 +44,34 @@ module Client
       end
     end
 
+    # Everything the platform holds about this account, as JSON. Served rather
+    # than emailed: the person asking is signed in, and a file that lands in an
+    # inbox is a copy nobody can take back.
+    def export
+      @user = Current.user
+      authorize @user, :update?
+
+      send_data JSON.pretty_generate(AccountExport.call(user: @user, host: request.host_with_port)),
+                type: "application/json", disposition: "attachment",
+                filename: "#{t('.filename')}-#{Date.current.iso8601}.json"
+    end
+
+    # Closing the account. Not destroyed here: print requests and reviews are
+    # commercial records that outlive it, and the purge task empties the row a
+    # month later. What happens now is that the account stops working.
+    def destroy
+      @user = Current.user
+      authorize @user, :update?
+
+      unless @user.authenticate(params[:current_password].to_s)
+        @user.errors.add(:current_password, :invalid)
+        return render :edit, status: :unprocessable_entity
+      end
+
+      @user.soft_delete!
+      redirect_to root_path, notice: t(".closed")
+    end
+
     private
       # The role is not here, and neither is the email confirmation flow: an
       # account changes hands through neither of them.

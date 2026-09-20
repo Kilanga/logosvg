@@ -29,6 +29,12 @@ default: &default
   sweep_reviews:
     class: SweepReviewsJob
     schedule: every hour at minute 22
+  # Conservation des données : brouillons expirés, demandes anonymisées,
+  # comptes fermés vidés. Une fois par jour, la nuit : rien n'y est urgent et
+  # le balayage touche beaucoup de lignes.
+  purge_stale_data:
+    class: PurgeStaleDataJob
+    schedule: every day at 4:15am
 
 development:
   <<: *default
