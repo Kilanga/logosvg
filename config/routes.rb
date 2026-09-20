@@ -77,6 +77,8 @@ Rails.application.routes.draw do
   patch  "mon-espace/compte",        to: "client/accounts#update"
   patch  "mon-espace/compte/mot-de-passe", to: "client/accounts#update_password",
          as: :client_account_password
+  get    "mon-espace/compte/export", to: "client/accounts#export",  as: :client_account_export
+  delete "mon-espace/compte",        to: "client/accounts#destroy"
 
   delete "designs/:token", to: "client/designs#destroy", as: :delete_design
   get "atelier",    to: "workshop/dashboards#show",  as: :workshop_dashboard
@@ -142,6 +144,17 @@ Rails.application.routes.draw do
   resources :admin_blocked_terms, path: "admin/termes", controller: "admin/blocked_terms",
             only: %i[ index create update destroy ]
   get "admin/etat", to: "admin/status#show", as: :admin_status
+
+  # --- Pages légales -----------------------------------------------------------
+  # Une action, une page par document : le contenu vit dans les vues, pas dans
+  # une base que personne ne relit.
+  get "mentions-legales",        to: "public/legal#show", page: "legal_notice",   as: :legal_notice
+  get "conditions-utilisation",  to: "public/legal#show", page: "terms",          as: :terms
+  get "conditions-abonnement",   to: "public/legal#show", page: "subscription_terms",
+      as: :subscription_terms
+  get "conditions-graphistes",   to: "public/legal#show", page: "designer_terms", as: :designer_terms
+  get "confidentialite",         to: "public/legal#show", page: "privacy",        as: :privacy
+  get "classement-annuaire",     to: "public/legal#show", page: "ranking",        as: :ranking
 
   # --- Webhooks ---------------------------------------------------------------
   # Signature vérifiée, jamais de session : Stripe n'est pas un visiteur.

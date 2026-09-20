@@ -1,1 +1,8 @@
+<%= Rails.application.config.tshirt.platform_name.upcase %>
+
 <%= yield %>
+
+--
+<%= t("mailers.footer.sent_by", name: Rails.application.config.tshirt.platform_name) %>
+<%= t("legal.privacy.title") %> : <%= privacy_url %>
+<%= t("legal.terms.title") %> : <%= terms_url %>

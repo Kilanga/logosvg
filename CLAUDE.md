@@ -337,8 +337,14 @@ Règles côté Rails :
 | 6     | Abonnements                   | terminée                       |
 | 7     | Graphistes                    | terminée                       |
 | 8     | Revues                        | terminée                       |
-| 9     | Administration                | **terminée**, en attente de validation |
-| 10    | Finitions                     | à faire                        |
+| 9     | Administration                | terminée                       |
+| 10    | Finitions                     | **terminée**, en attente de validation |
+
+Le plan de construction est arrivé à son terme. Ce qui reste avant une mise en
+production est listé en §8 (décisions ouvertes) et dans « Décisions ouvertes »
+du cahier des charges : prix, taux de commission, durées de conservation,
+validation juridique des pages légales, clés Stripe réelles, hébergement et
+fournisseur d'emails.
 
 ---
 
@@ -557,7 +563,19 @@ visible entre les deux et saute les callbacks.
 **`assert_text` prend le *type* en second argument positionnel**, pas un message
 d'échec. `assert_text shown(x), "mon message"` lève
 « is not a valid type for a text query ». Et la valeur d'un champ n'est pas du
-texte : c'est `assert_field with:` qu'il faut.
+texte : c'est `assert_field with:` qu'il faut. **`assert_select` a le même
+piège** : l'argument suivant le sélecteur sert de texte à comparer, si bien
+qu'un message d'échec devient une assertion sur le contenu de la page.
+
+**Un service qui construit des URL ne s'appelle pas sans requête.** La leçon a
+resservi deux fois — `ClientDashboard`, puis `AccountExport`. Un service ne
+reçoit pas la vue : soit le chemin se calcule dans un helper, soit on lui passe
+l'hôte. Sinon il devient impossible à appeler depuis un job ou une console, et
+impossible à tester sans fabriquer une requête.
+
+**`strict_loading` est actif en développement, et il a raison.** `db/seeds.rb`
+a échoué sur un `profil.user` paresseux. Charger avec `includes`, ne pas
+contourner.
 
 **Une validation qui rejuge le passé fige l'enregistrement.** Le minimum de
 commande d'un atelier et la date souhaitée par le client jugent la demande

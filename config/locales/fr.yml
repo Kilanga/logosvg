@@ -681,9 +681,13 @@ fr:
       mismatch: "Les deux mots de passe ne correspondent pas."
 
   mailers:
+    footer:
+      sent_by: "Cet email vous a été envoyé par %{name}."
+
     passwords:
       reset:
         subject: "Réinitialiser votre mot de passe"
+        eyebrow: "Mot de passe"
         greeting: "Bonjour %{name},"
         body: >-
           Vous avez demandé à réinitialiser votre mot de passe. Ce lien est
@@ -911,7 +915,26 @@ fr:
         change_password: "Changer de mot de passe"
         other_sessions: "Vos autres sessions seront déconnectées."
         data: "Vos données"
-        data_coming: "L'export et la suppression du compte arrivent prochainement."
+        export_body: >-
+          Tout ce que la plateforme conserve sur vous, au format JSON :
+          coordonnées, designs, demandes d'impression, vérifications et
+          échanges.
+        export: "Exporter mes données"
+        close: "Fermer mon compte"
+        close_body: >-
+          Votre compte cesse immédiatement de fonctionner et vos designs sont
+          supprimés.
+        close_kept: >-
+          Les demandes d'impression déjà envoyées restent chez les ateliers
+          concernés : ce sont leurs commandes autant que les vôtres. Vos
+          données personnelles sont effacées sous %{days} jours.
+        close_password: "Votre mot de passe"
+        close_action: "Fermer définitivement mon compte"
+        close_confirm: "Fermer votre compte ? Cette action est irréversible."
+      export:
+        filename: "mes-donnees"
+      destroy:
+        closed: "Votre compte a été fermé. Merci d'avoir utilisé le service."
       update:
         saved: "Vos coordonnées sont à jour."
       update_password:
@@ -1547,6 +1570,163 @@ fr:
         returned: "Demande renvoyée au client."
       message:
         empty: "Écrivez un message avant de l'envoyer."
+
+  # --- Confidentialité -----------------------------------------------------
+  privacy:
+    anonymised: "Compte supprimé"
+
+  # --- Pages légales -------------------------------------------------------
+  # ⚠ DÉCISION OUVERTE : ces textes sont des brouillons de travail. Ils doivent
+  #   être relus par un juriste avant toute mise en production — le cahier des
+  #   charges le dit explicitement (« Validation juridique »).
+  legal:
+    eyebrow: "Informations légales"
+    updated_on: "2026-09-20"
+    updated: "Mise à jour le %{date}"
+    draft_title: "Document de travail"
+    draft_body: >-
+      Ce texte n'a pas encore été relu par un juriste. Il décrit fidèlement le
+      fonctionnement de la plateforme, mais il ne doit pas être considéré comme
+      définitif.
+    other_pages: "Autres documents"
+
+    legal_notice:
+      title: "Mentions légales"
+      publisher:
+        title: "Éditeur"
+        body:
+          - "Le site est édité par l'exploitant de la plateforme, dont la raison sociale, la forme juridique, le capital social, le numéro d'immatriculation et l'adresse du siège restent à renseigner."
+          - "Directeur de la publication : à renseigner."
+      hosting:
+        title: "Hébergement"
+        body:
+          - "L'hébergeur du site et l'adresse de ses serveurs restent à renseigner. Les fichiers générés sont stockés chez ce même hébergeur."
+          - "Le moteur de génération d'images s'exécute sur une machine distincte, dont l'emplacement est précisé dans la politique de confidentialité."
+      contact:
+        title: "Nous écrire"
+        body:
+          - "Pour toute question sur ces documents ou sur le fonctionnement du service, écrivez à l'adresse de contact indiquée en pied de page."
+
+    terms:
+      title: "Conditions d'utilisation"
+      purpose:
+        title: "Ce que fait le service"
+        body:
+          - "La plateforme met en relation des personnes qui veulent faire imprimer un visuel sur du textile et des ateliers d'impression référencés."
+          - "Le visuel est produit par un modèle d'intelligence artificielle, puis préparé pour la technique d'impression de l'atelier choisi. Le devis et l'impression se font directement avec l'atelier, hors plateforme."
+      account:
+        title: "Votre compte"
+        body:
+          - "Un compte porte un rôle et un seul : client, imprimeur, graphiste ou administrateur. Vous êtes responsable de la confidentialité de votre mot de passe."
+          - "Vous pouvez exporter vos données ou fermer votre compte à tout moment depuis votre espace."
+      generation:
+        title: "Les visuels générés"
+        body:
+          - "Le nombre de créations par jour est limité, et chaque design dispose d'un budget de reprises. Une génération qui échoue ne vous est pas décomptée."
+          - "Certains termes ne peuvent pas être dessinés : marques déposées, personnages protégés, contenus interdits. La demande est alors refusée avant tout traitement."
+      files:
+        title: "Les fichiers"
+        body:
+          - "Vous recevez un aperçu filigrané de votre visuel. Le fichier d'impression lui-même n'est transmis qu'à l'atelier que vous choisissez et, le cas échéant, au graphiste que vous sollicitez."
+          - "Vous restez responsable de ce que vous demandez à dessiner et de son usage."
+      liability:
+        title: "Responsabilités"
+        body:
+          - "La plateforme n'imprime pas et ne vend pas de textile. Elle ne garantit ni le délai, ni le prix, ni la qualité du travail d'un atelier, avec lequel vous contractez directement."
+          - "Les limites de responsabilité applicables restent à préciser avec un juriste."
+
+    subscription_terms:
+      title: "Conditions d'abonnement"
+      plans:
+        title: "Les deux formules"
+        body:
+          - "Référencement donne à un atelier sa fiche publique, sa place dans l'annuaire et sur la carte, son lien client et la réception des demandes d'impression."
+          - "Atelier+ y ajoute la mise en avant en tête d'annuaire, la couleur de marque sur l'écran de création et les statistiques du lien."
+      billing:
+        title: "Facturation"
+        body:
+          - "L'abonnement est mensuel, sans engagement, et facturé par Stripe. Aucune donnée bancaire ne transite par la plateforme."
+          - "Les factures, le changement de formule et le moyen de paiement se gèrent depuis le portail client Stripe, accessible depuis l'espace atelier."
+      visibility:
+        title: "Visibilité de la fiche"
+        body:
+          - "Une fiche est visible si elle est publiée et si l'abonnement est actif. Sans abonnement actif, elle n'apparaît ni dans l'annuaire, ni sur la carte, ni parmi les ateliers compatibles."
+          - "En cas d'échec de paiement, la fiche reste visible quelques jours, le temps de mettre le moyen de paiement à jour. La date exacte est indiquée par email."
+      cancellation:
+        title: "Résiliation"
+        body:
+          - "La résiliation se fait depuis le portail Stripe et prend effet à la fin de la période en cours."
+          - "Les demandes d'impression déjà reçues restent accessibles à l'atelier."
+
+    designer_terms:
+      title: "Conditions graphistes"
+      status:
+        title: "Votre statut"
+        body:
+          - "Vous intervenez comme prestataire indépendant. La plateforme ne vous emploie pas et ne vous garantit aucun volume de travail."
+          - "Votre profil est relu avant publication, et vos versements sont vérifiés par Stripe. Tant que l'un des deux n'est pas acquis, aucune demande ne vous est confiée."
+      rights:
+        title: "Cession des droits"
+        body:
+          - "Le fichier que vous livrez est destiné à être imprimé par l'atelier du client. Les termes exacts de la cession des droits d'exploitation restent à établir avec un juriste."
+          - "Vous vous engagez à ne livrer que des fichiers dont vous détenez les droits ou qui dérivent du visuel fourni par le client."
+      payment:
+        title: "Votre rémunération"
+        body:
+          - "Le client paie à la commande. Votre part vous est virée automatiquement dès qu'il valide votre travail, ou à sa validation automatique après le délai prévu."
+          - "La plateforme prélève une commission sur le prix du niveau. Son taux est indiqué sur votre écran de paiements."
+      returns:
+        title: "Renvoyer une demande"
+        body:
+          - "Si l'option payée par le client ne permet pas de faire le travail correctement, vous pouvez lui renvoyer la demande avant toute livraison, une seule fois, en proposant le niveau qui convient. Votre lecture n'est pas facturée."
+          - "Un taux de renvoi anormalement élevé est signalé à l'administration."
+
+    privacy:
+      title: "Politique de confidentialité"
+      collected:
+        title: "Ce que nous collectons"
+        body:
+          - "Les informations de votre compte : nom, adresse email, et si vous les renseignez, téléphone et ville."
+          - "Ce que vous créez : descriptions, visuels générés, demandes d'impression et échanges avec les graphistes."
+      purposes:
+        title: "Pourquoi"
+        body:
+          - "Faire fonctionner le service : générer un visuel, le transmettre à l'atelier que vous choisissez, suivre votre demande."
+          - "Aucun traceur publicitaire n'est déposé. Les polices sont hébergées par nos soins : votre navigateur ne contacte aucun service tiers pour les charger."
+      recipients:
+        title: "Qui reçoit quoi"
+        body:
+          - "L'atelier que vous choisissez reçoit votre demande, vos coordonnées et le fichier d'impression — uniquement après que vous ayez explicitement accepté cette transmission."
+          - "Le moteur de génération reçoit votre description et un identifiant pseudonymisé calculé à partir de votre compte. Il n'apprend jamais qui vous êtes."
+          - "Stripe traite les paiements et reçoit les informations nécessaires à ce titre."
+      retention:
+        title: "Combien de temps"
+        body:
+          - "Un design que vous n'avez jamais envoyé à un atelier est supprimé après un délai de conservation. Une demande d'impression est anonymisée passé ce même type de délai : l'atelier garde la trace de ce qu'il a imprimé, plus de qui l'a commandé."
+          - "Un compte fermé est vidé de ses données personnelles dans le mois qui suit, à l'exception de ce qui doit être conservé comme pièce comptable."
+      rights_of_person:
+        title: "Vos droits"
+        body:
+          - "Vous pouvez exporter l'ensemble de vos données au format JSON depuis votre espace, à tout moment et sans nous écrire."
+          - "Vous pouvez fermer votre compte depuis le même écran. Les droits d'accès, de rectification, d'effacement et d'opposition s'exercent auprès de l'adresse de contact."
+
+    ranking:
+      title: "Classement de l'annuaire"
+      how_listed:
+        title: "Comment l'annuaire est ordonné"
+        body:
+          - "Les ateliers mis en avant apparaissent en tête, puis les autres par ordre alphabétique. Aucun autre critère n'intervient dans l'ordre d'affichage."
+          - "Les filtres que vous appliquez — technique, secteur, services — réduisent la liste mais n'en changent pas l'ordre."
+      featured:
+        title: "La mise en avant est payante"
+        body:
+          - "La mise en avant est un service de l'abonnement Atelier+. Elle est toujours signalée par une étiquette « Mis en avant » visible sur chaque fiche concernée."
+          - "Elle ne modifie ni les caractéristiques affichées, ni la compatibilité avec votre design."
+      compatibility:
+        title: "La compatibilité n'est pas un classement"
+        body:
+          - "Un atelier est compatible avec votre design s'il pratique la technique choisie, s'il accepte le nombre d'encres et s'il peut imprimer à la taille demandée."
+          - "Ce sont des faits déclarés par l'atelier, vérifiés par le service, et indépendants de son abonnement."
 
   # --- Administration, textes partagés -------------------------------------
   admin:

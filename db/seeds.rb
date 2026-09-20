@@ -48,6 +48,69 @@ def designer!(user, display_name:, levels:, **attributes)
   profile
 end
 
+# Un design prêt, avec son fichier. Le SVG est dessiné ici plutôt que téléchargé :
+# la démonstration ne doit pas dépendre du service de génération.
+def design!(user, token:, printer:, technique:, palette:, **attributes)
+  design = Design.find_or_initialize_by(token: token)
+  design.assign_attributes(
+    user: user, printer: printer, technique: technique,
+    status: "ready", print_format: "svg", palette: palette,
+    inks_count: palette.size, paths_count: 42, refinements_left: 3,
+    stats: { "paths" => 42, "opaque_share" => 0.34 },
+    **attributes
+  )
+  design.save!
+
+  unless design.print_file.attached?
+    design.print_file.attach(io: StringIO.new(demo_svg(palette)), filename: "design.svg",
+                             content_type: "image/svg+xml")
+  end
+
+  design
+end
+
+# Des aplats, comme en sérigraphie : une bande par encre. Suffisant pour que
+# l'aperçu, le filigrane et le comptage d'encres soient visibles.
+def demo_svg(palette)
+  width = 120
+  band = width / palette.size
+  bands = palette.each_with_index.map do |ink, index|
+    %(<rect x="#{index * band}" y="0" width="#{band}" height="120" fill="#{ink['hex']}"/>)
+  end
+
+  %(<svg xmlns="http://www.w3.org/2000/svg" width="#{width}" height="120" ) +
+    %(viewBox="0 0 #{width} 120">#{bands.join}</svg>)
+end
+
+def print_request!(design, printer:, token:, sizes:, **attributes)
+  request = PrintRequest.find_or_initialize_by(token: token)
+  request.assign_attributes(
+    design: design, client: design.user, printer: printer,
+    print_width_cm: design.print_width_cm, sizes: sizes,
+    contact_name: design.user.full_name, contact_email: design.user.email_address,
+    contact_city: design.user.city,
+    consent_text_version: Rails.application.config.tshirt.privacy[:consent_text_version],
+    consented_at: Time.current, sent_at: Time.current,
+    **attributes
+  )
+  request.save!
+  request
+end
+
+def review!(design, level:, token:, **attributes)
+  review = Review.find_or_initialize_by(token: token)
+  review.assign_attributes(
+    design: design, client: design.user, review_level: level,
+    price_cents: level.price_cents.to_i,
+    platform_fee_cents: level.platform_fee_cents.to_i,
+    revisions_included: level.revisions_included,
+    paid_at: 1.day.ago,
+    **attributes
+  )
+  review.save!
+  review
+end
+
 ActiveRecord::Base.transaction do
   # --- Sérigraphie seule -----------------------------------------------------
   workshop!(
@@ -152,12 +215,85 @@ ActiveRecord::Base.transaction do
   )
 
   account!("admin@example.invalid", first_name: "Sam", last_name: "Oubre", role: "admin")
-  account!("client@example.invalid", first_name: "Camille", last_name: "Rousseau", role: "client")
+
+  # --- Un client, et son parcours complet -------------------------------------
+  # C'est le critère de l'étape 10 : on doit pouvoir montrer la chaîne entière
+  # sans rien générer ni payer.
+  camille = account!("client@example.invalid", first_name: "Camille", last_name: "Rousseau",
+                                               role: "client", city: "Nantes")
+
+  thabor = Printer.find_by!(slug: "serigraphie-du-thabor")
+  loire = Printer.find_by!(slug: "atelier-loire")
+
+  # 1. Un design prêt, envoyé à un atelier, que celui-ci a confirmé.
+  renard = design!(
+    camille, token: "demo-renard", printer: thabor, technique: "screen_printing",
+    prompt: "un renard qui fait du skate, style rétro", style: "mascotte",
+    colors_requested: 3, print_width_cm: 25,
+    prompt_used: "screen print separation artwork, a fox on a skateboard, retro",
+    subject: "a fox on a skateboard", seed: 123_456,
+    palette: [ { "hex" => "#1F5F7A" }, { "hex" => "#E4572E" }, { "hex" => "#F2C14E" } ]
+  )
+
+  print_request!(
+    renard, printer: thabor, token: "demo-demande-confirmee",
+    status: "acknowledged", textile_source: "printer",
+    textile_model: "Stanley Stella Creator", textile_color: "Noir",
+    placements: %w[ chest_center ], sizes: { "M" => 12, "L" => 8 }, total_qty: 20,
+    message: "Pour une équipe de skate. Merci de garder les aplats bien nets.",
+    acknowledged_at: 2.hours.ago
+  )
+
+  # 2. Un design en attente de réponse d'un autre atelier.
+  montagne = design!(
+    camille, token: "demo-montagne", printer: loire, technique: "embroidery",
+    prompt: "une montagne au lever du soleil, deux couleurs", style: "badge",
+    colors_requested: 2, print_width_cm: 18,
+    prompt_used: "embroidery artwork, a mountain at sunrise, two colours",
+    subject: "a mountain at sunrise", seed: 654_321,
+    palette: [ { "hex" => "#1D2433" }, { "hex" => "#F2C14E" } ]
+  )
+
+  print_request!(
+    montagne, printer: loire, token: "demo-demande-en-attente",
+    status: "sent", textile_source: "client",
+    placements: %w[ chest_left ], sizes: { "S" => 5, "M" => 5 }, total_qty: 10,
+    sent_at: 6.hours.ago
+  )
+
+  # 3. Un design dont les reprises sont épuisées : c'est là que le parcours
+  #    graphiste devient la suite naturelle.
+  phare = design!(
+    camille, token: "demo-phare", printer: thabor, technique: "screen_printing",
+    prompt: "un phare dans la tempête", style: "illustration",
+    colors_requested: 4, print_width_cm: 30, refinements_left: 0,
+    prompt_used: "screen print separation artwork, a lighthouse in a storm",
+    subject: "a lighthouse in a storm", seed: 987_654,
+    palette: [ { "hex" => "#1D2433" }, { "hex" => "#1F5F7A" },
+               { "hex" => "#C8D0D4" }, { "hex" => "#E4572E" } ]
+  )
+
+  # 4. Une vérification en cours chez Inès, avec un échange.
+  # `includes` plutôt qu'un accès paresseux : `strict_loading` est actif en
+  # développement, et il a raison de refuser.
+  ines = DesignerProfile.includes(:user).find_by!(display_name: "Inès Nadeau")
+  revue = review!(
+    phare, level: ReviewLevel.find_by!(key: "retouch"), token: "demo-revue",
+    designer_profile: ines, assignment_mode: "chosen", status: "in_progress",
+    client_brief: "Les quatre encres passent mal sur le ciel, il faudrait simplifier.",
+    due_at: 1.day.from_now
+  )
+
+  if revue.messages.none?
+    revue.messages.create!(author: camille, body: "Le dégradé du ciel est-il tenable en quatre encres ?")
+    revue.messages.create!(author: ines.user, body: "Je vais le séparer en deux aplats. Je vous montre ça demain.")
+  end
 end
 
 puts "#{Printer.listed.count} ateliers publiés, #{PrinterTechnique.count} techniques déclarées."
 puts "#{DesignerProfile.listed.count} graphiste(s) publié(s) sur #{DesignerProfile.count}, " \
      "#{ReviewLevel.offered.count} niveaux de vérification."
+puts "#{Design.count} designs, #{PrintRequest.count} demandes d'impression, #{Review.count} vérification(s)."
 puts "Comptes de démonstration, mot de passe #{PASSWORD} :"
 User.order(:role, :email_address).pluck(:role, :email_address).each do |role, email|
   puts "  #{role.ljust(8)} #{email}"
