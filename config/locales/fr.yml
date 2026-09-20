@@ -178,6 +178,10 @@ fr:
     my_profile: "Mon profil"
     payouts: "Mes paiements"
     review_queue: "Vérifications"
+    reviews: "Vérifications"
+    levels: "Niveaux"
+    blocked_terms: "Termes bloqués"
+    status: "État du service"
 
   # Libellés partagés par l'annuaire, la fiche publique et les espaces pros.
   printers:
@@ -271,6 +275,10 @@ fr:
           attributes:
             review_levels:
               blank: "sont obligatoires : indiquez au moins un niveau que vous acceptez"
+        design:
+          attributes:
+            prompt:
+              blocked_term: "contient un terme que nous ne pouvons pas dessiner : « %{term} »"
         printer:
           attributes:
             techniques:
@@ -305,11 +313,21 @@ fr:
       designer_profile: "Profil graphiste"
       review_level: "Niveau de vérification"
       review: "Vérification"
+      blocked_term: "Terme bloqué"
     attributes:
       review:
         client_brief: "Ce que vous attendez"
         review_level: "Niveau"
         designer_profile: "Graphiste"
+      blocked_term:
+        term: "Terme"
+        reason: "Motif"
+      review_level:
+        name: "Nom"
+        description: "Description"
+        price: "Prix (€)"
+        turnaround_hours: "Délai (h)"
+        revisions_included: "Retours inclus"
       designer_profile:
         display_name: "Nom affiché"
         bio: "Présentation"
@@ -791,6 +809,12 @@ fr:
         heading: "%{amount} vous ont été versés"
         body: "Le client a validé votre travail. Le virement part vers votre compte Stripe."
         action: "Voir mes versements"
+      settled_by_admin:
+        subject: "Votre vérification a été close par notre équipe"
+        eyebrow: "Décision"
+        heading: "Nous avons tranché votre vérification"
+        refunded: "Montant remboursé au client : %{amount}."
+        action: "Voir la vérification"
       refunded:
         subject: "Vous avez été remboursé"
         eyebrow: "Remboursement"
@@ -1524,17 +1548,160 @@ fr:
       message:
         empty: "Écrivez un message avant de l'envoyer."
 
+  # --- Administration, textes partagés -------------------------------------
   admin:
+    disputes:
+      errors:
+        note_required: "Expliquez votre décision : elle est envoyée aux deux parties."
+        not_open: "Cette vérification est déjà close."
+        too_much: "Le remboursement dépasse ce qui reste à rendre."
     dashboards:
       show:
         title: "Administration"
         heading: "Administration"
-        body: "Les validations, les litiges et les réglages de la plateforme se gèreront depuis cet espace."
-        upcoming:
-          - step: "02"
-            label: "Valider les fiches des imprimeurs"
-          - step: "09"
-            label: "Litiges, remboursements, niveaux, termes bloqués, état du service"
+        waiting_on_you: "Ce qui vous attend"
+        printers: "Fiches d'atelier"
+        designers: "Profils de graphiste"
+        disputes: "Vérifications à trancher"
+        nothing_waiting: "Rien ne vous attend."
+        return_rates: "Taux de renvoi"
+        return_rate_body: "Renvoie ses demandes plus souvent que le seuil fixé, sur 30 jours."
+        no_return_alert: "Aucun graphiste ne dépasse le seuil de %{threshold} sur 30 jours."
+        platform: "État de la plateforme"
+        platform_body: "Service de génération, clés Stripe, file de tâches et catalogue des techniques."
+        see_status: "Voir l'état"
+
+    reviews:
+      index:
+        title: "Vérifications"
+        heading: "Vérifications"
+        filters: "Filtrer"
+        filter:
+          open: "En cours"
+          disputed: "À trancher"
+          returned: "Renvoyées"
+          settled: "Réglées"
+          all: "Toutes"
+        unassigned: "sans graphiste"
+        settled: "Réglée"
+        empty:
+          open: "Aucune vérification en cours"
+          disputed: "Rien à trancher"
+          returned: "Aucune vérification renvoyée"
+          settled: "Aucune vérification réglée"
+          all: "Aucune vérification"
+      show:
+        title: "Vérification"
+        heading: "Vérification — %{level}"
+        brief: "Demande du client"
+        returned: "Renvoyée au client"
+        versions: "Versions"
+        conversation: "Échanges"
+        money: "Montants"
+        paid: "Payé"
+        platform_fee: "Commission"
+        designer_share: "Part graphiste"
+        refunded: "Remboursé"
+        transferred: "Versé au graphiste"
+        yes: "Oui"
+        parties: "Parties"
+        client: "Client"
+        designer: "Graphiste"
+        return_rate: "Taux de renvoi %{rate}"
+        settled_title: "Décision"
+        settled_by: "Par %{name}, le %{when}"
+        settle_title: "Trancher"
+        settle_body: >-
+          Clôturer et rembourser sont un même geste : une vérification close
+          sans que l'argent bouge laisse un client qui a payé pour rien.
+        refund_amount: "Montant à rembourser (€)"
+        refund_hint: "Au plus %{max}. Zéro est un choix valable."
+        note: "Votre décision"
+        note_placeholder: "Ce que vous avez décidé et pourquoi."
+        note_hint: "Ce texte est envoyé au client et au graphiste."
+        settle_action: "Clôturer cette vérification"
+        settle_confirm: "Clôturer et rembourser ? Cette décision est définitive."
+      settle:
+        settled: "Vérification close. Les deux parties ont été prévenues."
+
+    blocked_terms:
+      index:
+        title: "Termes bloqués"
+        heading: "Termes bloqués"
+        add: "Ajouter un terme"
+        add_hint: >-
+          Vérifié avant tout appel au service de génération : un prompt refusé
+          ici ne coûte aucun essai au client. La correspondance se fait sur le
+          mot entier, pas sur un fragment.
+        add_action: "Ajouter"
+        list:
+          zero: "Aucun terme"
+          one: "%{count} terme"
+          other: "%{count} termes"
+        hits:
+          zero: "jamais déclenché"
+          one: "%{count} fois"
+          other: "%{count} fois"
+        activate: "Réactiver"
+        deactivate: "Désactiver"
+        remove: "Supprimer"
+        remove_confirm: "Supprimer « %{term} » définitivement ?"
+        empty: "Aucun terme bloqué pour l'instant."
+      create:
+        added: "« %{term} » est désormais bloqué."
+      update:
+        activated: "« %{term} » est réactivé."
+        deactivated: "« %{term} » est désactivé."
+      destroy:
+        removed: "« %{term} » a été supprimé."
+
+    review_levels:
+      index:
+        title: "Niveaux"
+        heading: "Niveaux de vérification"
+        safe_title: "Modifier un niveau ne change rien au passé"
+        safe_body: >-
+          Le prix, la commission et le nombre de retours sont recopiés sur
+          chaque vérification à l'achat. Une vérification déjà payée garde les
+          siens.
+        quoted_hint: "Laissez vide : ce niveau se chiffre au cas par cas."
+        offered: "Proposé aux clients"
+        save: "Enregistrer"
+      create:
+        created: "Niveau « %{name} » créé."
+      update:
+        saved: "Niveau « %{name} » enregistré."
+
+    # Un seul bloc `status:` sous `admin:` — deux clés de même niveau en YAML,
+    # et la seconde écrase silencieusement la première, imbriquée ou non.
+    status:
+      not_configured: "Adresse non configurée"
+      failed_jobs:
+        one: "%{count} tâche en échec"
+        other: "%{count} tâches en échec"
+      pending_jobs:
+        zero: "Aucune tâche en attente"
+        one: "%{count} tâche en attente"
+        other: "%{count} tâches en attente"
+      techniques:
+        one: "%{count} technique au catalogue"
+        other: "%{count} techniques au catalogue"
+      show:
+        title: "État du service"
+        heading: "État de la plateforme"
+        body: "Quatre choses dont la plateforme dépend et qu'elle ne contrôle pas."
+        check:
+          generator: "Service de génération"
+          stripe: "Clés Stripe"
+          queue: "File de tâches"
+          catalogue: "Catalogue des techniques"
+        state:
+          ok: "En service"
+          warning: "À surveiller"
+          down: "Injoignable"
+        footer: >-
+          Une file qui n'est pas traitée est la panne la plus discrète : les
+          pages s'affichent et les générations n'aboutissent jamais.
 
     designers:
       index:

@@ -131,6 +131,18 @@ Rails.application.routes.draw do
   get   "admin/graphistes",     to: "admin/designers#index",  as: :admin_designers
   patch "admin/graphistes/:id", to: "admin/designers#update", as: :admin_designer
 
+  # Revues et litiges : l'admin ne rejoue pas la conversation, il tranche.
+  get  "admin/verifications",        to: "admin/reviews#index", as: :admin_reviews
+  get  "admin/verifications/:token", to: "admin/reviews#show",  as: :admin_review
+  post "admin/verifications/:token/regler", to: "admin/reviews#settle", as: :settle_admin_review
+
+  # Niveaux de vérification, termes bloqués, état du service.
+  resources :admin_levels, path: "admin/niveaux", controller: "admin/review_levels",
+            only: %i[ index create update ]
+  resources :admin_blocked_terms, path: "admin/termes", controller: "admin/blocked_terms",
+            only: %i[ index create update destroy ]
+  get "admin/etat", to: "admin/status#show", as: :admin_status
+
   # --- Webhooks ---------------------------------------------------------------
   # Signature vérifiée, jamais de session : Stripe n'est pas un visiteur.
   post "webhooks/stripe", to: "webhooks/stripe#create", as: :stripe_webhook

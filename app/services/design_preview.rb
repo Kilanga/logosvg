@@ -18,7 +18,13 @@ class DesignPreview
   end
 
   def call
-    return nil unless @design.print_file.attached?
+    # Said out loud: every way this returns nil ends with a caller quietly
+    # showing no preview, and "there was no file" and "the file was refused"
+    # are very different faults to chase.
+    unless @design.print_file.attached?
+      Rails.logger.info("[preview] no print file attached to #{@design.token}")
+      return nil
+    end
 
     # A refusal is not cached: it is a fault to fix, not an answer to keep.
     Rails.cache.fetch(cache_key, expires_in: CACHE_TTL, skip_nil: true) { render }
@@ -37,11 +43,19 @@ class DesignPreview
     def safe?(file)
       return true unless svg?
 
-      result = SvgInspector.call(file.read)
+      bytes = file.read
       file.rewind
+
+      result = SvgInspector.call(bytes)
       return true if result.valid?
 
-      Rails.logger.error("[preview] refused the stored SVG for #{@design.token}: #{result.reason}")
+      # The byte count is here because `:empty` and `:not_svg` on a file that
+      # stored perfectly well mean the read came back short, not that the
+      # designer sent something bad.
+      Rails.logger.error(
+        "[preview] refused the stored SVG for #{@design.token}: " \
+        "#{result.reason} (#{bytes.to_s.bytesize} octets lus)"
+      )
       false
     end
 

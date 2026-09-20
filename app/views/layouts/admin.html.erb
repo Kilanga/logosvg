@@ -1,5 +1,4 @@
-<%# Administration. Step 9 adds disputes, refunds, review levels, blocked terms
-    and the generator service status. %>
+<%# Administration. %>
 <% content_for :space_name, t("nav.admin") %>
 <% content_for :space_nav do %>
   <%= render "layouts/space_link",
@@ -14,5 +13,21 @@
         label: t("nav.designers"),
         path: admin_designers_path,
         current: current_page?(admin_designers_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.reviews"),
+        path: admin_reviews_path,
+        current: current_page?(admin_reviews_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.levels"),
+        path: admin_levels_path,
+        current: current_page?(admin_levels_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.blocked_terms"),
+        path: admin_blocked_terms_path,
+        current: current_page?(admin_blocked_terms_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.status"),
+        path: admin_status_path,
+        current: current_page?(admin_status_path) %>
 <% end %>
 <%= render template: "layouts/console" %>

@@ -7,9 +7,13 @@ module Payments
   class RefundReview
     def self.call(...) = new(...).call
 
-    def initialize(review:, amount_cents: nil)
+    # `notify` is false when the refund is part of a larger message the client
+    # is about to receive anyway — an administrator's decision already states
+    # the amount, and two emails about one event read as a mistake.
+    def initialize(review:, amount_cents: nil, notify: true)
       @review = review
       @amount_cents = amount_cents
+      @notify = notify
     end
 
     def call
@@ -19,7 +23,7 @@ module Payments
       return :not_configured unless StripeClient.configured?
 
       refund(amount)
-      ReviewMailer.refunded(@review, amount).deliver_later
+      ReviewMailer.refunded(@review, amount).deliver_later if @notify
       :refunded
     rescue StripeClient::NotConfigured
       :not_configured

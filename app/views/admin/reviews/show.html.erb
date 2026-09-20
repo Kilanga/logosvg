@@ -1,0 +1,156 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading", level: @review.review_level.name) %>
+
+<div class="grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)] lg:items-start">
+  <div class="space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
+      <%= review_status_pill(@review) %>
+      <%= due_badge(@review) %>
+    </div>
+
+    <%# Already settled: what was decided, and by whom. %>
+    <% if @review.settled_at %>
+      <section class="panel border-l-2 border-l-line p-5">
+        <p class="label-rule"><%= t(".settled_title") %></p>
+        <p class="mt-2 whitespace-pre-line"><%= @review.admin_note %></p>
+        <p class="mt-3 text-sm text-muted">
+          <%= t(".settled_by", name: @review.settled_by&.full_name,
+                when: l(@review.settled_at, format: :long)) %>
+        </p>
+      </section>
+    <% end %>
+
+    <% if @review.client_brief.present? %>
+      <section class="panel p-5">
+        <h2 class="label-rule"><%= t(".brief") %></h2>
+        <p class="mt-2 whitespace-pre-line"><%= @review.client_brief %></p>
+      </section>
+    <% end %>
+
+    <% if @review.return_reason_code.present? %>
+      <section class="panel border-l-2 border-l-warning p-5">
+        <p class="label-rule text-warning"><%= t(".returned") %></p>
+        <p class="mt-2 font-medium"><%= t("enums.review.return_reason.#{@review.return_reason_code}") %></p>
+        <p class="mt-2 whitespace-pre-line text-muted"><%= @review.return_message %></p>
+      </section>
+    <% end %>
+
+    <section>
+      <h2 class="font-display text-xl font-bold uppercase border-b border-line pb-3">
+        <%= t(".versions") %>
+      </h2>
+      <div class="mt-4"><%= render "reviews/versions", versions: @versions %></div>
+    </section>
+
+    <%# Read, not joined: an administrator settles a dispute, they do not take
+        a side in the conversation. %>
+    <% if @messages.any? %>
+      <section class="panel p-5">
+        <h2 class="label-rule border-b border-line pb-3"><%= t(".conversation") %></h2>
+        <ol class="mt-4 space-y-3">
+          <% @messages.each do |message| %>
+            <li class="border-l-2 border-line pl-3">
+              <p class="label-rule text-muted">
+                <%= message.author.full_name %> · <%= l(message.created_at, format: :short) %>
+              </p>
+              <p class="mt-1 whitespace-pre-line text-sm"><%= message.body %></p>
+            </li>
+          <% end %>
+        </ol>
+      </section>
+    <% end %>
+  </div>
+
+  <aside class="space-y-6">
+    <div class="panel p-5">
+      <h2 class="label-rule"><%= t(".money") %></h2>
+      <dl class="mt-3 space-y-2 text-sm">
+        <div class="flex justify-between gap-4">
+          <dt class="text-muted"><%= t(".paid") %></dt>
+          <dd class="font-medium"><%= money(@review.price_cents) %></dd>
+        </div>
+        <div class="flex justify-between gap-4">
+          <dt class="text-muted"><%= t(".platform_fee") %></dt>
+          <dd><%= money(@review.platform_fee_cents) %></dd>
+        </div>
+        <div class="flex justify-between gap-4">
+          <dt class="text-muted"><%= t(".designer_share") %></dt>
+          <dd><%= money(@review.designer_share_cents) %></dd>
+        </div>
+        <div class="flex justify-between gap-4 border-t border-line pt-2">
+          <dt class="text-muted"><%= t(".refunded") %></dt>
+          <dd class="font-medium <%= "text-success" if @review.refunded_cents.positive? %>">
+            <%= money(@review.refunded_cents) %>
+          </dd>
+        </div>
+        <% if @review.stripe_transfer_id %>
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted"><%= t(".transferred") %></dt>
+            <dd class="text-success"><%= t(".yes") %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+
+    <div class="panel p-5">
+      <h2 class="label-rule"><%= t(".parties") %></h2>
+      <dl class="mt-3 space-y-2 text-sm">
+        <div>
+          <dt class="text-muted"><%= t(".client") %></dt>
+          <dd class="font-medium"><%= @review.client.full_name %></dd>
+          <dd class="text-muted"><%= @review.client.email_address %></dd>
+        </div>
+        <% if @review.designer_profile %>
+          <div class="border-t border-line pt-2">
+            <dt class="text-muted"><%= t(".designer") %></dt>
+            <dd class="font-medium">
+              <%= link_to @review.designer_profile.display_name,
+                    designer_path(@review.designer_profile),
+                    class: "underline underline-offset-4" %>
+            </dd>
+            <% if @review.designer_profile.return_rate %>
+              <dd class="label-rule mt-1 <%= @review.designer_profile.return_rate_alarming? ? 'text-warning' : 'text-muted' %>">
+                <%= t(".return_rate",
+                      rate: number_to_percentage(@review.designer_profile.return_rate * 100, precision: 0)) %>
+              </dd>
+            <% end %>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+
+    <%# Settling. Closing and refunding are one act: a review closed without
+        the money moving leaves a client who paid for nothing. %>
+    <% if policy(@review).settle? %>
+      <div class="panel border-l-2 border-l-warning p-5">
+        <p class="label-rule text-warning"><%= t(".settle_title") %></p>
+        <p class="mt-2 text-sm text-muted"><%= t(".settle_body") %></p>
+
+        <%= form_with url: settle_admin_review_path(@review), class: "mt-4 space-y-4" do %>
+          <div>
+            <%= label_tag :refund, t(".refund_amount"), class: "label-rule block" %>
+            <%= number_field_tag :refund, (@review.price_cents - @review.refunded_cents) / 100.0,
+                  min: 0, max: (@review.price_cents - @review.refunded_cents) / 100.0, step: 0.01,
+                  class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+            <p class="mt-1.5 text-sm text-muted">
+              <%= t(".refund_hint", max: money(@review.price_cents - @review.refunded_cents)) %>
+            </p>
+          </div>
+
+          <div>
+            <%= label_tag :note, t(".note"), class: "label-rule block" %>
+            <%= text_area_tag :note, nil, rows: 4, required: true,
+                  placeholder: t(".note_placeholder"),
+                  class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+            <p class="mt-1.5 text-sm text-muted"><%= t(".note_hint") %></p>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-full text-sm"
+                  data-turbo-confirm="<%= t('.settle_confirm') %>">
+            <%= t(".settle_action") %>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+  </aside>
+</div>

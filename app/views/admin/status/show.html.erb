@@ -1,0 +1,33 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-3xl">
+  <p class="border-b border-line pb-4 text-muted"><%= t(".body") %></p>
+
+  <ul class="mt-6 space-y-3">
+    <% @checks.each do |check| %>
+      <%# Drawn by state rather than written: an administrator scans this page,
+          they do not read it. %>
+      <li class="panel flex flex-wrap items-center gap-4 border-l-2 p-4
+                 <%= { ok: 'border-l-success', warning: 'border-l-warning', down: 'border-l-warning' }[check.state] %>">
+        <span class="flex-none <%= { ok: 'text-success', warning: 'text-warning', down: 'text-warning' }[check.state] %>"
+              aria-hidden="true">
+          <%= registration_mark %>
+        </span>
+
+        <div class="min-w-0 flex-1">
+          <p class="font-medium"><%= t(".check.#{check.key}") %></p>
+          <% if check.detail.present? %>
+            <p class="mt-0.5 break-all text-sm text-muted"><%= check.detail %></p>
+          <% end %>
+        </div>
+
+        <span class="pill flex-none <%= check.ok? ? 'pill-success' : 'pill-warning' %>">
+          <%= t(".state.#{check.state}") %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+
+  <p class="mt-6 text-sm text-muted"><%= t(".footer") %></p>
+</div>

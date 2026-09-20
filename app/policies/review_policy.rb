@@ -3,7 +3,9 @@
 class ReviewPolicy < ApplicationPolicy
   def show? = client? || designer? || user&.admin?
 
-  def index? = user&.client? || user&.designer?
+  # Each of the three has a list of their own; the scope is what tells them
+  # apart. The administration's is a different scope, not a different rule.
+  def index? = user&.client? || user&.designer? || user&.admin?
 
   # Only a client buys one, and only for a finished design of their own.
   def create? = user&.client? && owns_design? && record.design&.ready?
@@ -35,6 +37,20 @@ class ReviewPolicy < ApplicationPolicy
 
   # Both sides write; an administrator reads.
   def message? = (client? || designer?) && record.open?
+
+  # --- The administration's ---------------------------------------------------
+  #
+  # An administrator does not rejoin the conversation or deliver files: they
+  # settle what the two sides could not, and only while it is still open.
+  def settle? = user&.admin? && record.may_cancel?
+
+  class AdminScope < ApplicationPolicy::Scope
+    def resolve
+      raise Pundit::NotAuthorizedError unless user&.admin?
+
+      scope.all
+    end
+  end
 
   class Scope < ApplicationPolicy::Scope
     def resolve

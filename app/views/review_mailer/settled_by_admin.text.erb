@@ -1,0 +1,7 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.settled_by_admin.eyebrow"),
+      heading: t("mailers.review.settled_by_admin.heading"),
+      body: @review.admin_note,
+      notice: (t("mailers.review.settled_by_admin.refunded", amount: number_to_currency(@amount_cents / 100.0, unit: "€", format: "%n %u")) if @amount_cents.positive?),
+      url: review_url(@review),
+      action: t("mailers.review.settled_by_admin.action") %>

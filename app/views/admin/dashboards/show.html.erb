@@ -1,6 +1,65 @@
 <% content_for :title, t(".title") %>
 <% content_for :heading, t(".heading") %>
 
-<%= render "shared/space_placeholder",
-      body: t(".body"),
-      items: t(".upcoming") %>
+<div class="max-w-4xl space-y-10">
+  <%# The counts are the point: an administrator opens this to find out whether
+      anything needs them, not to read figures. %>
+  <section>
+    <h2 class="label-rule border-b border-line pb-3 text-emulsion"><%= t(".waiting_on_you") %></h2>
+
+    <dl class="mt-4 grid gap-4 sm:grid-cols-3">
+      <%= render "tile", count: @waiting[:printers], label: t(".printers"),
+            path: admin_printers_path %>
+      <%= render "tile", count: @waiting[:designers], label: t(".designers"),
+            path: admin_designers_path %>
+      <%= render "tile", count: @waiting[:disputes], label: t(".disputes"),
+            path: admin_reviews_path(filtre: "disputed") %>
+    </dl>
+
+    <% if @waiting.values.sum.zero? %>
+      <p class="mt-4 flex items-center gap-3 text-muted">
+        <span class="text-success" aria-hidden="true"><%= registration_mark %></span>
+        <%= t(".nothing_waiting") %>
+      </p>
+    <% end %>
+  </section>
+
+  <%# Designers handing work back more often than the platform expects. Not a
+      sanction, a signal: usually the levels are wrong, sometimes the designer
+      is picking. %>
+  <section>
+    <h2 class="label-rule border-b border-line pb-3"><%= t(".return_rates") %></h2>
+
+    <% if @returning.any? %>
+      <ul class="mt-4 space-y-2">
+        <% @returning.each do |profile| %>
+          <li class="panel flex flex-wrap items-center gap-4 border-l-2 border-l-warning p-4">
+            <div class="min-w-0 flex-1">
+              <p class="font-medium">
+                <%= link_to profile.display_name, designer_path(profile),
+                      class: "underline-offset-4 hover:underline" %>
+              </p>
+              <p class="mt-0.5 text-sm text-muted"><%= t(".return_rate_body") %></p>
+            </div>
+            <p class="font-display text-2xl font-bold text-warning">
+              <%= number_to_percentage(profile.return_rate * 100, precision: 0) %>
+            </p>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-4 text-muted">
+        <%= t(".no_return_alert",
+              threshold: number_to_percentage(
+                Rails.application.config.tshirt.reviews[:return_rate_alert_threshold] * 100,
+                precision: 0)) %>
+      </p>
+    <% end %>
+  </section>
+
+  <section>
+    <h2 class="label-rule border-b border-line pb-3"><%= t(".platform") %></h2>
+    <p class="mt-4 text-muted"><%= t(".platform_body") %></p>
+    <%= link_to t(".see_status"), admin_status_path, class: "btn btn-secondary mt-4 text-sm" %>
+  </section>
+</div>

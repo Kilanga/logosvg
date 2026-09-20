@@ -13,6 +13,8 @@ class Review < ApplicationRecord
   belongs_to :designer_profile, optional: true
   belongs_to :review_level
   belongs_to :proposed_level, class_name: "ReviewLevel", optional: true
+  # Who settled a dispute, when the two sides could not.
+  belongs_to :settled_by, class_name: "User", optional: true
 
   has_many :versions, -> { order(:number) }, class_name: "ReviewVersion",
            dependent: :destroy, inverse_of: :review

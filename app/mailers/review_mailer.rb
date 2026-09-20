@@ -74,6 +74,16 @@ class ReviewMailer < ApplicationMailer
     mail to: review.client.email_address, subject: t("mailers.review.refunded.subject")
   end
 
+  # An administrator closed a dispute. Both sides are told, together, with the
+  # same account of what was decided.
+  def settled_by_admin(review, amount_cents)
+    @review = review
+    @amount_cents = amount_cents
+    recipients = [ review.client.email_address, review.designer_profile&.user&.email_address ].compact
+
+    mail to: recipients, subject: t("mailers.review.settled_by_admin.subject")
+  end
+
   private
     def addresses_for(review)
       if review.chosen? && review.designer_profile

@@ -1,0 +1,65 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-3xl space-y-8">
+  <section class="panel p-6">
+    <h2 class="label-rule"><%= t(".add") %></h2>
+    <p class="mt-2 text-sm text-muted"><%= t(".add_hint") %></p>
+
+    <%= form_with model: @term, url: admin_blocked_terms_path, class: "mt-4 space-y-4" do |form| %>
+      <% if @term.errors.any? %>
+        <p class="border-l-2 border-warning bg-warning-bg px-3 py-2 text-sm text-warning">
+          <%= @term.errors.full_messages.to_sentence %>
+        </p>
+      <% end %>
+
+      <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <%= render "shared/field", form: form, field: :term,
+              label: t("activerecord.attributes.blocked_term.term"),
+              options: { required: true, autocomplete: "off" } %>
+        <%= render "shared/field", form: form, field: :reason,
+              label: t("activerecord.attributes.blocked_term.reason") %>
+      </div>
+
+      <%= form.submit t(".add_action"), class: "btn btn-primary text-sm" %>
+    <% end %>
+  </section>
+
+  <section>
+    <h2 class="label-rule border-b border-line pb-3"><%= t(".list", count: @terms.size) %></h2>
+
+    <% if @terms.any? %>
+      <ul class="divide-y divide-line">
+        <% @terms.each do |term| %>
+          <li class="flex flex-wrap items-center gap-4 py-3">
+            <div class="min-w-0 flex-1">
+              <p class="font-mono <%= "text-muted line-through decoration-line" unless term.active? %>">
+                <%= term.term %>
+              </p>
+              <% if term.reason.present? %>
+                <p class="mt-0.5 text-sm text-muted"><%= term.reason %></p>
+              <% end %>
+            </div>
+
+            <%# How often it actually catches something is what tells an
+                administrator whether it earns its place. %>
+            <p class="label-rule flex-none text-muted">
+              <%= t(".hits", count: term.hits_count) %>
+            </p>
+
+            <div class="flex flex-none gap-2">
+              <%= button_to t(".#{term.active? ? 'deactivate' : 'activate'}"),
+                    admin_blocked_term_path(term), method: :patch,
+                    class: "btn btn-secondary text-sm" %>
+              <%= button_to t(".remove"), admin_blocked_term_path(term), method: :delete,
+                    class: "flex min-h-touch items-center text-sm text-muted underline underline-offset-4 hover:text-warning",
+                    form: { data: { turbo_confirm: t(".remove_confirm", term: term.term) } } %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="py-8 text-muted"><%= t(".empty") %></p>
+    <% end %>
+  </section>
+</div>
