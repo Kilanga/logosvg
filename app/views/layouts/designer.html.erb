@@ -1,10 +1,14 @@
-<%# Studio space. Step 8 adds the review queue. %>
+<%# Studio space. %>
 <% content_for :space_name, t("nav.studio") %>
 <% content_for :space_nav do %>
   <%= render "layouts/space_link",
         label: t("nav.dashboard"),
         path: designer_dashboard_path,
         current: current_page?(designer_dashboard_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.review_queue"),
+        path: designer_reviews_path,
+        current: current_page?(designer_reviews_path) %>
   <%= render "layouts/space_link",
         label: t("nav.my_profile"),
         path: edit_designer_profile_path,

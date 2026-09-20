@@ -79,6 +79,54 @@ module Payments
       request(nil) { @stripe.v1.subscriptions.retrieve(id).to_hash }
     end
 
+    # --- Reviews --------------------------------------------------------------
+    #
+    # Charged on the platform's own account, then transferred to the designer
+    # once the client accepts: separate charges and transfers, so a review that
+    # is refunded never became the designer's money in the first place.
+
+    def create_payment_session(amount_cents:, product_name:, client_email:,
+                               success_url:, cancel_url:, client_reference_id:,
+                               metadata: {}, idempotency_key:)
+      request(idempotency_key) do
+        @stripe.v1.checkout.sessions.create({
+          mode: "payment",
+          line_items: [ {
+            quantity: 1,
+            price_data: {
+              currency: "eur",
+              unit_amount: amount_cents,
+              product_data: { name: product_name }
+            }
+          } ],
+          customer_email: client_email,
+          client_reference_id: client_reference_id,
+          metadata: metadata,
+          success_url: success_url,
+          cancel_url: cancel_url
+        }, { idempotency_key: idempotency_key })
+      end
+    end
+
+    # The designer's share, moved to their Connect account.
+    def create_transfer(amount_cents:, destination:, source_transaction: nil, idempotency_key:)
+      request(idempotency_key) do
+        @stripe.v1.transfers.create({
+          amount: amount_cents, currency: "eur",
+          destination: destination, source_transaction: source_transaction
+        }.compact, { idempotency_key: idempotency_key })
+      end
+    end
+
+    def create_refund(payment_intent:, amount_cents: nil, idempotency_key:)
+      request(idempotency_key) do
+        @stripe.v1.refunds.create(
+          { payment_intent: payment_intent, amount: amount_cents }.compact,
+          { idempotency_key: idempotency_key }
+        )
+      end
+    end
+
     # --- Connect Express ------------------------------------------------------
     #
     # Express because the platform has no business holding a designer's identity

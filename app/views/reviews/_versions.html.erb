@@ -1,0 +1,42 @@
+<%# The versions handed back, newest last, numbered as both sides call them.
+    Shared by the client's screen and the designer's. %>
+<% if versions.any? %>
+  <ol class="space-y-3">
+    <% versions.each do |version| %>
+      <li class="panel overflow-hidden">
+        <div class="flex flex-wrap items-baseline justify-between gap-3 border-b border-line px-4 py-3">
+          <p class="label-rule text-emulsion">
+            <%= t("reviews.version", number: version.number) %>
+          </p>
+          <time class="text-sm text-muted" datetime="<%= version.created_at.iso8601 %>">
+            <%= l(version.created_at, format: :short) %>
+          </time>
+        </div>
+
+        <% if version.message.present? %>
+          <p class="border-b border-line px-4 py-3 whitespace-pre-line"><%= version.message %></p>
+        <% end %>
+
+        <dl class="flex flex-wrap gap-x-6 gap-y-1 px-4 py-3 text-sm">
+          <% version_checks(version).each do |check| %>
+            <dd class="text-muted"><%= check %></dd>
+          <% end %>
+        </dl>
+
+        <% if version_warnings(version).any? %>
+          <ul class="border-t border-line">
+            <% version_warnings(version).each do |warning| %>
+              <li class="flex gap-3 border-l-2 border-warning bg-warning-bg px-4 py-2 text-sm text-warning">
+                <%= registration_mark css_class: "mt-0.5 flex-none" %><%= warning %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+<% else %>
+  <div class="panel p-6 text-center">
+    <p class="text-muted"><%= t("reviews.no_version") %></p>
+  </div>
+<% end %>

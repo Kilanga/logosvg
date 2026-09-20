@@ -25,6 +25,8 @@ class User < ApplicationRecord
   # these rather than deleting them — that is step 10's business.
   has_many :print_requests, foreign_key: :client_id,
            dependent: :restrict_with_error, inverse_of: :client
+  has_many :reviews, foreign_key: :client_id,
+           dependent: :restrict_with_error, inverse_of: :client
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
   normalizes :phone, with: ->(p) { p.gsub(/[^\d+]/, "") }

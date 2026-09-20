@@ -1,0 +1,108 @@
+<%# Une revue par état vivant de la machine. Les montants sont en centimes, et
+    la part plateforme est celle du niveau au moment de l'achat. %>
+
+<%# Payée, personne ne l'a encore prise. %>
+queued:
+  design: fox_screen
+  client: client
+  review_level: check
+  token: revue-en-file
+  status: queued
+  assignment_mode: first_available
+  client_brief: Merci de vérifier les tracés avant impression.
+  price_cents: 1900
+  platform_fee_cents: 380
+  revisions_included: 1
+  paid_at: <%= 2.hours.ago.to_fs(:db) %>
+  stripe_checkout_session_id: cs_test_queued
+  stripe_payment_intent_id: pi_test_queued
+
+<%# Prise en charge par Inès, échéance à venir. %>
+in_progress:
+  design: fox_dtf
+  client: client
+  designer_profile: ines
+  review_level: retouch
+  token: revue-en-cours
+  status: in_progress
+  assignment_mode: chosen
+  client_brief: Le dégradé du fond passe mal, pouvez-vous le reprendre ?
+  price_cents: 4900
+  platform_fee_cents: 980
+  revisions_included: 2
+  paid_at: <%= 1.day.ago.to_fs(:db) %>
+  due_at: <%= 1.day.from_now.to_fs(:db) %>
+  stripe_checkout_session_id: cs_test_progress
+  stripe_payment_intent_id: pi_test_progress
+
+<%# Même état, mais sur un design vectoriel : le format attendu décide de ce
+    qu'un graphiste a le droit de rendre. %>
+in_progress_vector:
+  design: fox_screen
+  client: client
+  designer_profile: ines
+  review_level: retouch
+  token: revue-en-cours-svg
+  status: in_progress
+  assignment_mode: chosen
+  price_cents: 4900
+  platform_fee_cents: 980
+  revisions_included: 2
+  paid_at: <%= 1.day.ago.to_fs(:db) %>
+  due_at: <%= 1.day.from_now.to_fs(:db) %>
+  stripe_checkout_session_id: cs_test_progress_svg
+  stripe_payment_intent_id: pi_test_progress_svg
+
+<%# Une version déposée, le client n'a pas encore répondu. %>
+delivered:
+  design: fox_screen
+  client: client
+  designer_profile: ines
+  review_level: check
+  token: revue-livree
+  status: delivered
+  assignment_mode: chosen
+  price_cents: 1900
+  platform_fee_cents: 380
+  revisions_included: 1
+  paid_at: <%= 3.days.ago.to_fs(:db) %>
+  delivered_at: <%= 1.day.ago.to_fs(:db) %>
+  stripe_checkout_session_id: cs_test_delivered
+  stripe_payment_intent_id: pi_test_delivered
+
+<%# Renvoyée au client avec une proposition de niveau supérieur. %>
+returned:
+  design: fox_dtf
+  client: client
+  designer_profile: ines
+  review_level: check
+  proposed_level: retouch
+  token: revue-renvoyee
+  status: returned_to_client
+  assignment_mode: chosen
+  price_cents: 1900
+  platform_fee_cents: 380
+  revisions_included: 1
+  paid_at: <%= 2.days.ago.to_fs(:db) %>
+  return_reason_code: level_too_low
+  return_message: Il faut redessiner les contours, un simple contrôle ne suffira pas.
+  returned_at: <%= 1.day.ago.to_fs(:db) %>
+  proposal_expires_at: <%= 2.days.from_now.to_fs(:db) %>
+  stripe_checkout_session_id: cs_test_returned
+  stripe_payment_intent_id: pi_test_returned
+
+<%# Le graphiste choisi n'a pas répondu depuis longtemps. %>
+silent:
+  design: fox_screen
+  client: client
+  designer_profile: ines
+  review_level: check
+  token: revue-sans-reponse
+  status: queued
+  assignment_mode: chosen
+  price_cents: 1900
+  platform_fee_cents: 380
+  revisions_included: 1
+  paid_at: <%= 2.days.ago.to_fs(:db) %>
+  stripe_checkout_session_id: cs_test_silent
+  stripe_payment_intent_id: pi_test_silent

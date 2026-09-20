@@ -1,0 +1,9 @@
+<%= render "frame",
+      tone: "#6B4200",
+      eyebrow: t("mailers.review.returned_to_client.eyebrow"),
+      heading: t("mailers.review.returned_to_client.heading", designer: @review.designer_profile&.display_name),
+      body: t("enums.review.return_reason.#{@review.return_reason_code}"),
+      notice: @review.return_message,
+      url: review_url(@review),
+      action: t("mailers.review.returned_to_client.action"),
+      footer: t("mailers.review.returned_to_client.footer", hours: Rails.application.config.tshirt.reviews[:proposal_expiry_hours]) %>

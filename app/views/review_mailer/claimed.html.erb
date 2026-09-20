@@ -1,0 +1,6 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.claimed.eyebrow"),
+      heading: t("mailers.review.claimed.heading", designer: @review.designer_profile.display_name),
+      body: t("mailers.review.claimed.body", due: l(@review.due_at, format: :long)),
+      url: review_url(@review),
+      action: t("mailers.review.claimed.action") %>

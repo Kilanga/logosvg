@@ -1,0 +1,18 @@
+<%= eyebrow %>
+
+<%= heading %>
+
+<%= body %>
+<% if local_assigns[:notice].present? -%>
+
+<%= notice %>
+<% end -%>
+<% if local_assigns[:url].present? -%>
+
+<%= action %> :
+<%= url %>
+<% end -%>
+<% if local_assigns[:footer].present? -%>
+
+<%= footer %>
+<% end -%>

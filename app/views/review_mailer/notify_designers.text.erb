@@ -1,0 +1,7 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.notify_designers.eyebrow"),
+      heading: t("mailers.review.notify_designers.heading", level: @review.review_level.name),
+      body: t("mailers.review.notify_designers.body", brief: @review.client_brief.presence || t("mailers.review.notify_designers.no_brief")),
+      url: designer_review_url(@review),
+      action: t("mailers.review.notify_designers.action"),
+      footer: t("mailers.review.notify_designers.footer", amount: number_to_currency(@review.designer_share_cents / 100.0, unit: "€", format: "%n %u")) %>

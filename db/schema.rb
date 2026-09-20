@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_20_210203) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_20_210208) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -149,6 +149,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210203) do
     t.bigint "printer_id", null: false
     t.datetime "quoted_at"
     t.datetime "reminded_at"
+    t.bigint "review_version_id"
     t.datetime "sent_at"
     t.jsonb "sizes", default: {}, null: false
     t.string "status", default: "sent", null: false
@@ -164,6 +165,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210203) do
     t.index ["design_id"], name: "index_print_requests_on_design_id"
     t.index ["printer_id", "status", "sent_at"], name: "index_print_requests_on_printer_id_and_status_and_sent_at"
     t.index ["printer_id"], name: "index_print_requests_on_printer_id"
+    t.index ["review_version_id"], name: "index_print_requests_on_review_version_id"
     t.index ["status", "sent_at"], name: "index_print_requests_on_status_and_sent_at"
     t.index ["token"], name: "index_print_requests_on_token", unique: true
   end
@@ -249,6 +251,80 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210203) do
     t.index ["key"], name: "index_review_levels_on_key", unique: true
   end
 
+  create_table "review_messages", force: :cascade do |t|
+    t.bigint "author_id", null: false
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "read_at"
+    t.bigint "review_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_review_messages_on_author_id"
+    t.index ["review_id", "created_at"], name: "index_review_messages_on_review_id_and_created_at"
+    t.index ["review_id", "read_at"], name: "index_review_messages_on_review_id_and_read_at"
+    t.index ["review_id"], name: "index_review_messages_on_review_id"
+  end
+
+  create_table "review_versions", force: :cascade do |t|
+    t.jsonb "checks", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.integer "inks_count"
+    t.text "message"
+    t.integer "number", null: false
+    t.bigint "review_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["review_id", "number"], name: "index_review_versions_on_review_id_and_number", unique: true
+    t.index ["review_id"], name: "index_review_versions_on_review_id"
+  end
+
+  create_table "reviews", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.string "assignment_mode", default: "first_available", null: false
+    t.datetime "canceled_at"
+    t.text "client_brief"
+    t.bigint "client_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "delivered_at"
+    t.bigint "design_id", null: false
+    t.bigint "designer_profile_id"
+    t.datetime "designer_reminded_at"
+    t.datetime "due_at"
+    t.datetime "paid_at"
+    t.integer "platform_fee_cents", default: 0, null: false
+    t.integer "price_cents", default: 0, null: false
+    t.datetime "proposal_expires_at"
+    t.datetime "proposal_reminded_at"
+    t.bigint "proposed_level_id"
+    t.integer "proposed_price_cents"
+    t.integer "rating"
+    t.text "rating_comment"
+    t.integer "refunded_cents", default: 0, null: false
+    t.text "return_message"
+    t.string "return_reason_code"
+    t.datetime "returned_at"
+    t.bigint "review_level_id", null: false
+    t.integer "revisions_included", default: 0, null: false
+    t.integer "revisions_used", default: 0, null: false
+    t.string "status", default: "awaiting_payment", null: false
+    t.string "stripe_checkout_session_id"
+    t.string "stripe_payment_intent_id"
+    t.string "stripe_transfer_id"
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_id", "created_at"], name: "index_reviews_on_client_id_and_created_at"
+    t.index ["client_id"], name: "index_reviews_on_client_id"
+    t.index ["design_id"], name: "index_reviews_on_design_id"
+    t.index ["designer_profile_id", "status"], name: "index_reviews_on_designer_profile_id_and_status"
+    t.index ["designer_profile_id"], name: "index_reviews_on_designer_profile_id"
+    t.index ["proposed_level_id"], name: "index_reviews_on_proposed_level_id"
+    t.index ["review_level_id"], name: "index_reviews_on_review_level_id"
+    t.index ["status", "delivered_at"], name: "index_reviews_on_status_and_delivered_at"
+    t.index ["status", "due_at"], name: "index_reviews_on_status_and_due_at"
+    t.index ["status", "proposal_expires_at"], name: "index_reviews_on_status_and_proposal_expires_at"
+    t.index ["stripe_checkout_session_id"], name: "index_reviews_on_stripe_checkout_session_id", unique: true
+    t.index ["stripe_payment_intent_id"], name: "index_reviews_on_stripe_payment_intent_id"
+    t.index ["token"], name: "index_reviews_on_token", unique: true
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -325,9 +401,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210203) do
   add_foreign_key "generation_counters", "users"
   add_foreign_key "print_requests", "designs"
   add_foreign_key "print_requests", "printers"
+  add_foreign_key "print_requests", "review_versions"
   add_foreign_key "print_requests", "users", column: "client_id"
   add_foreign_key "printer_techniques", "printers"
   add_foreign_key "printers", "users"
+  add_foreign_key "review_messages", "reviews"
+  add_foreign_key "review_messages", "users", column: "author_id"
+  add_foreign_key "review_versions", "reviews"
+  add_foreign_key "reviews", "designer_profiles"
+  add_foreign_key "reviews", "designs"
+  add_foreign_key "reviews", "review_levels"
+  add_foreign_key "reviews", "review_levels", column: "proposed_level_id"
+  add_foreign_key "reviews", "users", column: "client_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "subscriptions", "printers"
   add_foreign_key "workshop_link_visits", "printers"

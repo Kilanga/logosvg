@@ -85,12 +85,21 @@ class ClientSpaceTest < ActionDispatch::IntegrationTest
     assert_response :redirect, "a printer has no client space"
   end
 
-  test "the reviews screen is drawn and empty, ready for step 8" do
+  test "the reviews list holds to the signed-in client" do
     sign_in_as users(:client)
 
     get client_reviews_path
 
     assert_response :success
+    assert_select "a[href=?]", review_path(reviews(:delivered))
+  end
+
+  test "a client with no review sees a drawn empty state" do
+    users(:deleted_client).update!(deleted_at: nil)
+    sign_in_as users(:deleted_client)
+
+    get client_reviews_path
+
     assert_select "body", text: /#{Regexp.escape(I18n.t('client.reviews.index.empty'))}/i
   end
 

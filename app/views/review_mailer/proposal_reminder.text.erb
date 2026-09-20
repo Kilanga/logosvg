@@ -1,0 +1,7 @@
+<%= render "frame",
+      tone: "#6B4200",
+      eyebrow: t("mailers.review.proposal_reminder.eyebrow"),
+      heading: t("mailers.review.proposal_reminder.heading"),
+      body: t("mailers.review.proposal_reminder.body", when: l(@review.proposal_expires_at, format: :long)),
+      url: review_url(@review),
+      action: t("mailers.review.proposal_reminder.action") %>

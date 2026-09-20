@@ -28,7 +28,8 @@ class ClientSpaceTest < ApplicationSystemTestCase
 
     click_on I18n.t("nav.my_reviews")
 
-    assert_text displayed("client.reviews.index.empty")
+    assert_selector "h1", text: displayed("client.reviews.index.heading")
+    assert_text shown(review_levels(:check).name)
 
     click_on I18n.t("nav.my_account")
 

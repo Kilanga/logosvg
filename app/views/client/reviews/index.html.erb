@@ -1,23 +1,47 @@
 <% content_for :title, t(".title") %>
 <% content_for :heading, t(".heading") %>
 
-<div class="max-w-3xl">
-  <%# The list is empty until step 8 brings reviews. The screen exists now so
-      the space is whole, and so the empty state is designed rather than
-      discovered the day the first review lands. %>
-  <div class="panel flex flex-col items-center gap-3 p-12 text-center">
-    <span class="flex gap-3 text-line" aria-hidden="true">
-      <%= registration_mark %><%= registration_mark %><%= registration_mark %>
-    </span>
-    <p class="label-rule"><%= t(".empty") %></p>
-    <p class="max-w-md text-sm text-muted"><%= t(".empty_body") %></p>
-  </div>
+<div class="max-w-4xl">
+  <p class="border-b border-line pb-4 text-sm text-muted">
+    <%= t(".count", count: @reviews.size) %>
+  </p>
 
-  <div class="panel mt-6 p-6">
-    <p class="label-rule flex items-center gap-2.5 text-emulsion">
-      <%= registration_mark %><%= t(".what_is_it") %>
-    </p>
-    <p class="mt-3 text-muted"><%= t(".what_is_it_body") %></p>
-    <p class="mt-4 text-sm text-muted"><%= t(".coming") %></p>
-  </div>
+  <% if @reviews.any? %>
+    <ul class="mt-6 space-y-3">
+      <% @reviews.each do |review| %>
+        <li>
+          <%= link_to review_path(review),
+                class: "panel flex flex-wrap items-center gap-4 p-4 hover:border-emulsion" do %>
+            <div class="screen-tint size-16 flex-none overflow-hidden rounded-xs">
+              <%= image_tag design_image_path(review.design), alt: "",
+                    class: "size-full object-contain" %>
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <p class="label-rule"><%= review.review_level.name %></p>
+              <p class="mt-0.5 truncate font-medium"><%= review.design.prompt.truncate(60) %></p>
+              <p class="mt-0.5 text-sm text-muted">
+                <%= review.designer_profile&.display_name || t(".unassigned") %>
+                · <%= money(review.price_cents) %>
+              </p>
+            </div>
+
+            <div class="flex flex-none flex-col items-end gap-1.5">
+              <%= review_status_pill(review) %>
+              <%= due_badge(review) %>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="panel mt-6 flex flex-col items-center gap-3 p-12 text-center">
+      <span class="flex gap-3 text-line" aria-hidden="true">
+        <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+      </span>
+      <p class="label-rule"><%= t(".empty") %></p>
+      <p class="max-w-md text-sm text-muted"><%= t(".empty_body") %></p>
+      <%= link_to t(".browse_designs"), client_designs_path, class: "btn btn-secondary mt-2" %>
+    </div>
+  <% end %>
 </div>

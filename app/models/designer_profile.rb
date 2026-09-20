@@ -11,6 +11,9 @@ class DesignerProfile < ApplicationRecord
 
   has_many :designer_levels, dependent: :destroy
   has_many :review_levels, through: :designer_levels
+  # Work already in hand is never destroyed with a profile: it has been paid
+  # for, and an administrator settles what is left.
+  has_many :reviews, dependent: :restrict_with_error, inverse_of: :designer_profile
 
   has_one_attached :avatar
   has_many_attached :portfolio

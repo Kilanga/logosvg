@@ -1,0 +1,122 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="grid max-w-5xl gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)] lg:items-start">
+  <%= form_with model: @review, url: design_reviews_path(@design), class: "space-y-10" do |form| %>
+    <% if @review.errors.any? %>
+      <div class="border-l-2 border-warning bg-warning-bg px-4 py-3">
+        <p class="font-semibold text-warning">
+          <%= t("errors.template.header", count: @review.errors.count) %>
+        </p>
+      </div>
+    <% end %>
+
+    <%# 01 — What they are buying. The level decides the price, the deadline
+        and how many goes are included, so it leads. %>
+    <fieldset>
+      <div class="flex items-baseline gap-4 border-b border-line pb-3">
+        <span class="font-display text-xl font-bold text-emulsion">01</span>
+        <legend class="font-display text-xl font-bold uppercase"><%= t(".level") %></legend>
+      </div>
+
+      <div class="mt-4 space-y-2">
+        <% @levels.each_with_index do |level, index| %>
+          <label class="flex cursor-pointer gap-3 rounded-xs border border-line p-4
+                        has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+            <%= form.radio_button :review_level_id, level.id,
+                  checked: index.zero?,
+                  class: "mt-0.5 size-4 flex-none border-line text-emulsion" %>
+            <span class="min-w-0 flex-1">
+              <span class="flex flex-wrap items-baseline justify-between gap-2">
+                <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
+                  <%= level.name %>
+                </span>
+                <span class="font-display font-bold text-emulsion"><%= level_price(level) %></span>
+              </span>
+              <span class="mt-1 block text-sm text-muted"><%= level.description %></span>
+              <span class="label-rule mt-1.5 block text-muted"><%= level_terms(level) %></span>
+            </span>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <%# 02 — Who does it. "First available" is the default because it is the
+        fastest; picking someone is the exception, and it can wait. %>
+    <fieldset>
+      <div class="flex items-baseline gap-4 border-b border-line pb-3">
+        <span class="font-display text-xl font-bold text-emulsion">02</span>
+        <legend class="font-display text-xl font-bold uppercase"><%= t(".who") %></legend>
+      </div>
+      <p class="mt-3 text-sm text-muted"><%= t(".who_hint", hours: Rails.application.config.tshirt.reviews[:designer_claim_timeout_hours]) %></p>
+
+      <div class="mt-4 space-y-2">
+        <label class="flex min-h-touch cursor-pointer items-center gap-3 rounded-xs border border-line px-3
+                      has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+          <%= form.radio_button :designer_profile_id, "", checked: true,
+                class: "size-4 border-line text-emulsion" %>
+          <span class="text-sm font-medium"><%= t(".first_available") %></span>
+        </label>
+
+        <% DesignerProfile.listed.accepting.by_reputation.limit(8).each do |profile| %>
+          <label class="flex min-h-touch cursor-pointer items-center gap-3 rounded-xs border border-line px-3
+                        has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+            <%= form.radio_button :designer_profile_id, profile.id,
+                  class: "size-4 flex-none border-line text-emulsion" %>
+            <span class="min-w-0 flex-1 text-sm">
+              <span class="font-medium"><%= profile.display_name %></span>
+              <span class="text-muted"> · <%= rating_summary(profile) %></span>
+            </span>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <div class="flex items-baseline gap-4 border-b border-line pb-3">
+        <span class="font-display text-xl font-bold text-emulsion">03</span>
+        <legend class="font-display text-xl font-bold uppercase"><%= t(".brief") %></legend>
+      </div>
+
+      <div class="mt-4">
+        <%= form.label :client_brief, t("activerecord.attributes.review.client_brief"),
+              class: "label-rule block" %>
+        <%= form.text_area :client_brief, rows: 4, maxlength: 1000,
+              placeholder: t(".brief_placeholder"),
+              class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+        <p class="mt-1.5 text-sm text-muted"><%= t(".brief_hint") %></p>
+      </div>
+    </fieldset>
+
+    <div class="border-t border-line pt-8">
+      <%= form.submit t(".submit"), class: "btn btn-primary w-full sm:w-auto" %>
+      <p class="mt-3 text-sm text-muted"><%= t(".payment_hint") %></p>
+    </div>
+  <% end %>
+
+  <aside class="space-y-6 lg:sticky lg:top-8">
+    <div class="panel overflow-hidden">
+      <div class="screen-tint p-4">
+        <%= image_tag design_image_path(@design), alt: @design.prompt,
+              class: "mx-auto w-full max-w-64" %>
+      </div>
+      <div class="border-t border-line p-4">
+        <h2 class="label-rule"><%= t(".the_design") %></h2>
+        <p class="mt-2 text-sm"><%= @design.prompt.truncate(80) %></p>
+        <p class="mt-1 text-sm text-muted">
+          <%= @design.technique_label %>
+          <% if @design.vector? && @design.inks_count %>
+            · <%= t("client.designs.design.screens", count: @design.inks_count) %>
+          <% end %>
+        </p>
+      </div>
+    </div>
+
+    <div class="panel p-5">
+      <p class="label-rule flex items-center gap-2.5 text-emulsion">
+        <%= registration_mark %><%= t(".what_you_get") %>
+      </p>
+      <p class="mt-3 text-sm text-muted"><%= t(".what_you_get_body") %></p>
+    </div>
+  </aside>
+</div>

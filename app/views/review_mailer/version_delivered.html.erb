@@ -1,0 +1,7 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.version_delivered.eyebrow", number: @version.number),
+      heading: t("mailers.review.version_delivered.heading"),
+      body: @version.message.presence || t("mailers.review.version_delivered.body"),
+      url: review_url(@review),
+      action: t("mailers.review.version_delivered.action"),
+      footer: t("mailers.review.version_delivered.footer", days: Rails.application.config.tshirt.reviews[:auto_accept_days]) %>

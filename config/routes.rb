@@ -41,6 +41,23 @@ Rails.application.routes.draw do
        as: :print_request_confirmation
   post "demandes/confirmation/:token", to: "public/print_request_confirmations#create"
 
+  # --- Vérifications par un graphiste ----------------------------------------
+  get  "designs/:design_token/verification", to: "client/reviews#new",
+       as: :new_design_review
+  post "designs/:design_token/verification", to: "client/reviews#create",
+       as: :design_reviews
+
+  get  "verifications/:token", to: "client/reviews#show", as: :review
+  post "verifications/:token/valider",   to: "client/reviews#accept",   as: :accept_review
+  post "verifications/:token/retour",    to: "client/reviews#revision", as: :revision_review
+  post "verifications/:token/proposition/accepter", to: "client/reviews#accept_proposal",
+       as: :accept_review_proposal
+  post "verifications/:token/proposition/refuser",  to: "client/reviews#decline_proposal",
+       as: :decline_review_proposal
+  post "verifications/:token/relancer",  to: "client/reviews#reopen", as: :reopen_review
+  post "verifications/:token/note",      to: "client/reviews#rate",   as: :rate_review
+  post "verifications/:token/messages",  to: "client/reviews#message", as: :review_messages
+
   # --- Annuaire public -------------------------------------------------------
   get "imprimeurs",       to: "public/printers#index", as: :printers
   get "imprimeurs/:slug", to: "public/printers#show",  as: :printer
@@ -92,6 +109,15 @@ Rails.application.routes.draw do
   # l'administration qui l'active.
   get   "studio/profil", to: "designer/profiles#edit",   as: :edit_designer_profile
   patch "studio/profil", to: "designer/profiles#update", as: :designer_profile
+
+  # La file du graphiste et ce qu'il y fait.
+  get  "studio/revues",        to: "designer/reviews#index", as: :designer_reviews
+  get  "studio/revues/:token", to: "designer/reviews#show",  as: :designer_review
+  post "studio/revues/:token/prendre",   to: "designer/reviews#claim",    as: :claim_designer_review
+  post "studio/revues/:token/versions",  to: "designer/reviews#deliver",  as: :deliver_designer_review
+  post "studio/revues/:token/renvoyer",  to: "designer/reviews#return_to_client",
+       as: :return_designer_review
+  post "studio/revues/:token/messages",  to: "designer/reviews#message", as: :designer_review_messages
 
   get  "studio/paiements",            to: "designer/payouts#show",   as: :designer_payouts
   post "studio/paiements/inscription", to: "designer/payouts#onboard", as: :designer_payouts_onboarding

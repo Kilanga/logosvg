@@ -1,0 +1,66 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-4xl space-y-10">
+  <%# In the order a designer looks at them: what is mine to do, what I could
+      take, what is waiting on the client, what is done. %>
+  <section>
+    <h2 class="label-rule border-b border-line pb-3 text-emulsion">
+      <%= t(".mine", count: @mine.size) %>
+    </h2>
+    <% if @mine.any? %>
+      <ul class="mt-4 space-y-3">
+        <% @mine.each { |review| %><li><%= render "row", review: review, claimable: false %></li><% } %>
+      </ul>
+    <% else %>
+      <p class="py-6 text-muted"><%= t(".nothing_mine") %></p>
+    <% end %>
+  </section>
+
+  <section>
+    <h2 class="label-rule border-b border-line pb-3">
+      <%= t(".available", count: @available.size) %>
+    </h2>
+    <% if @available.any? %>
+      <ul class="mt-4 space-y-3">
+        <% @available.each { |review| %><li><%= render "row", review: review, claimable: true %></li><% } %>
+      </ul>
+    <% else %>
+      <%# Drawn, and it says why: an empty queue and an unavailable designer
+          are two different silences. %>
+      <div class="panel mt-4 flex flex-col items-center gap-3 p-10 text-center">
+        <span class="flex gap-3 text-line" aria-hidden="true">
+          <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+        </span>
+        <% if Current.user.designer_profile&.can_take_work? %>
+          <p class="label-rule"><%= t(".nothing_available") %></p>
+          <p class="max-w-sm text-sm text-muted"><%= t(".nothing_available_body") %></p>
+        <% else %>
+          <p class="label-rule text-warning">
+            <%= t("designers.unavailable.#{Current.user.designer_profile&.unavailable_reason || 'pending_review'}") %>
+          </p>
+          <p class="max-w-sm text-sm text-muted"><%= t(".unavailable_body") %></p>
+          <%= link_to t(".fix_it"), designer_dashboard_path, class: "btn btn-secondary mt-1 text-sm" %>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+
+  <% if @waiting.any? %>
+    <section>
+      <h2 class="label-rule border-b border-line pb-3"><%= t(".waiting", count: @waiting.size) %></h2>
+      <ul class="mt-4 space-y-3">
+        <% @waiting.each { |review| %><li><%= render "row", review: review, claimable: false %></li><% } %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if @settled.any? %>
+    <section>
+      <h2 class="label-rule border-b border-line pb-3"><%= t(".settled") %></h2>
+      <ul class="mt-4 space-y-3">
+        <% @settled.each { |review| %><li><%= render "row", review: review, claimable: false %></li><% } %>
+      </ul>
+    </section>
+  <% end %>
+</div>

@@ -1,0 +1,6 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.refunded.eyebrow"),
+      heading: t("mailers.review.refunded.heading", amount: number_to_currency(@amount_cents / 100.0, unit: "€", format: "%n %u")),
+      body: t("mailers.review.refunded.body"),
+      url: design_url(@review.design),
+      action: t("mailers.review.refunded.action") %>
