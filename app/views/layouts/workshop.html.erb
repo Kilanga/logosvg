@@ -1,4 +1,4 @@
-<%# Workshop space. Step 6 adds the subscription. %>
+<%# Workshop space. %>
 <% content_for :space_name, t("nav.workshop") %>
 <% content_for :space_nav do %>
   <%= render "layouts/space_link",
@@ -13,5 +13,13 @@
         label: t("nav.my_listing"),
         path: edit_workshop_profile_path,
         current: current_page?(edit_workshop_profile_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.my_link"),
+        path: workshop_link_share_path,
+        current: current_page?(workshop_link_share_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.subscription"),
+        path: workshop_subscription_path,
+        current: current_page?(workshop_subscription_path) %>
 <% end %>
 <%= render template: "layouts/console" %>

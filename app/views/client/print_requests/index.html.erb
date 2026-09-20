@@ -1,0 +1,51 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-4xl">
+  <p class="border-b border-line pb-4 text-sm text-muted">
+    <%= t(".count", count: @print_requests.size) %>
+  </p>
+
+  <% if @print_requests.any? %>
+    <ul class="mt-6 space-y-3">
+      <% @print_requests.each do |print_request| %>
+        <li>
+          <%= link_to print_request_path(print_request),
+                class: "panel flex flex-wrap items-center gap-4 p-4 hover:border-emulsion" do %>
+            <div class="screen-tint size-16 flex-none overflow-hidden rounded-xs">
+              <%= image_tag design_image_path(print_request.design), alt: "",
+                    class: "size-full object-contain" %>
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <p class="label-rule"><%= print_request_reference(print_request) %></p>
+              <p class="mt-0.5 truncate font-medium"><%= print_request.printer.name %></p>
+              <p class="mt-0.5 text-sm text-muted">
+                <%= t("workshop.print_requests.index.quantity", count: print_request.total_qty) %>
+                · <%= sizes_summary(print_request) %>
+              </p>
+            </div>
+
+            <div class="flex flex-none flex-col items-end gap-1.5">
+              <%= print_request_status_pill(print_request) %>
+              <% if print_request.sent_at %>
+                <time class="text-sm text-muted" datetime="<%= print_request.sent_at.iso8601 %>">
+                  <%= l(print_request.sent_at.to_date, format: :short) %>
+                </time>
+              <% end %>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="panel mt-6 flex flex-col items-center gap-3 p-12 text-center">
+      <span class="flex gap-3 text-line" aria-hidden="true">
+        <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+      </span>
+      <p class="label-rule"><%= t(".empty") %></p>
+      <p class="max-w-sm text-sm text-muted"><%= t(".empty_body") %></p>
+      <%= link_to t(".browse_designs"), client_designs_path, class: "btn btn-secondary mt-2" %>
+    </div>
+  <% end %>
+</div>

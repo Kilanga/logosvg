@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_20_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_20_210200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -207,6 +207,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_090000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "stripe_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.string "event_type", null: false
+    t.datetime "processed_at"
+    t.string "stripe_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_type"], name: "index_stripe_events_on_event_type"
+    t.index ["stripe_id"], name: "index_stripe_events_on_stripe_id", unique: true
+  end
+
+  create_table "subscriptions", force: :cascade do |t|
+    t.datetime "canceled_at"
+    t.datetime "created_at", null: false
+    t.datetime "current_period_end"
+    t.datetime "past_due_since"
+    t.string "plan", default: "listing", null: false
+    t.bigint "printer_id", null: false
+    t.string "status", default: "incomplete", null: false
+    t.string "stripe_customer_id"
+    t.string "stripe_subscription_id"
+    t.datetime "updated_at", null: false
+    t.index ["printer_id"], name: "index_subscriptions_on_printer_id", unique: true
+    t.index ["status", "past_due_since"], name: "index_subscriptions_on_status_and_past_due_since"
+    t.index ["stripe_customer_id"], name: "index_subscriptions_on_stripe_customer_id"
+    t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "city"
     t.datetime "created_at", null: false
@@ -224,6 +252,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_090000) do
     t.index ["role"], name: "index_users_on_role"
   end
 
+  create_table "workshop_link_visits", force: :cascade do |t|
+    t.integer "count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.date "day", null: false
+    t.bigint "printer_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["printer_id", "day"], name: "index_workshop_link_visits_on_printer_id_and_day", unique: true
+    t.index ["printer_id"], name: "index_workshop_link_visits_on_printer_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "designs", "designs", column: "parent_id"
@@ -237,4 +275,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_090000) do
   add_foreign_key "printer_techniques", "printers"
   add_foreign_key "printers", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "subscriptions", "printers"
+  add_foreign_key "workshop_link_visits", "printers"
 end

@@ -1,0 +1,94 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-5xl">
+  <div class="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
+    <p class="text-sm text-muted"><%= t(".count", count: @lineages.size) %></p>
+    <%= link_to t("nav.create"), new_design_path, class: "btn btn-primary text-sm" %>
+  </div>
+
+  <% if @lineages.any? %>
+    <%# One card per lineage. The variants sit inside it as a strip of
+        thumbnails: they are other takes on the same idea, not other ideas. %>
+    <ul class="mt-6 grid gap-4 sm:grid-cols-2">
+      <% @lineages.each do |design| %>
+        <li class="panel flex flex-col overflow-hidden">
+          <%= link_to design_path(design), class: "screen-tint block aspect-4/3 p-4" do %>
+            <% if design.ready? %>
+              <%= image_tag design_image_path(design), alt: design.prompt,
+                    class: "mx-auto size-full object-contain" %>
+            <% else %>
+              <span class="flex size-full items-center justify-center">
+                <span class="label-rule text-muted"><%= t("enums.design.status.#{design.status}") %></span>
+              </span>
+            <% end %>
+          <% end %>
+
+          <div class="flex flex-1 flex-col border-t border-line p-4">
+            <div class="flex items-start justify-between gap-3">
+              <h2 class="min-w-0 font-medium">
+                <%= link_to design.prompt.truncate(60), design_path(design),
+                      class: "underline-offset-4 hover:underline" %>
+              </h2>
+              <%= design_status_pill(design) %>
+            </div>
+
+            <%# Vector output is counted in screens, raster output in pixels. %>
+            <p class="mt-1.5 text-sm text-muted">
+              <%= design.technique_label %>
+              <% if design.vector? && design.inks_count %>
+                · <%= t("client.designs.design.screens", count: design.inks_count) %>
+              <% elsif design.print_width_cm %>
+                · <%= design.print_width_cm %> cm
+              <% end %>
+              · <%= l(design.created_at.to_date, format: :short) %>
+            </p>
+
+            <% if design.printer %>
+              <p class="mt-0.5 text-sm text-muted"><%= design.printer.name %></p>
+            <% end %>
+
+            <% variants = design.children.select(&:ready?) %>
+            <% if variants.any? %>
+              <div class="mt-3">
+                <p class="label-rule"><%= t(".variants", count: variants.size) %></p>
+                <ul class="mt-2 flex flex-wrap gap-2">
+                  <% variants.first(4).each do |variant| %>
+                    <li>
+                      <%= link_to design_path(variant),
+                            class: "screen-tint block size-11 overflow-hidden rounded-xs border border-line hover:border-emulsion" do %>
+                        <%= image_tag design_image_path(variant), alt: t(".variant_alt"),
+                              class: "size-full object-contain" %>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-3 text-sm">
+              <% if design.ready? %>
+                <%= link_to t(".send_to_workshop"), new_design_print_request_path(design),
+                      class: "font-medium text-emulsion underline underline-offset-4" %>
+              <% end %>
+              <%= button_to t(".delete"), delete_design_path(design), method: :delete,
+                    class: "ms-auto text-muted underline underline-offset-4 hover:text-warning",
+                    form: { data: { turbo_confirm: t(".delete_confirm") } } %>
+            </div>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <%# Drawn, not left to the browser: three registration marks on a screen
+        tint, the way an unexposed frame looks. %>
+    <div class="panel mt-6 flex flex-col items-center gap-3 p-12 text-center">
+      <span class="flex gap-3 text-line" aria-hidden="true">
+        <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+      </span>
+      <p class="label-rule"><%= t(".empty") %></p>
+      <p class="max-w-sm text-sm text-muted"><%= t(".empty_body") %></p>
+      <%= link_to t("nav.create"), new_design_path, class: "btn btn-primary mt-2" %>
+    </div>
+  <% end %>
+</div>

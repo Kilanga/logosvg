@@ -1,0 +1,36 @@
+<%# Un abonnement par cas qui décide de la visibilité : payé, payé avec mise en
+    avant, en échec dans le délai de grâce, en échec au-delà, et résilié. %>
+
+rennes:
+  printer: rennes
+  plan: listing
+  status: active
+  stripe_customer_id: cus_test_rennes
+  stripe_subscription_id: sub_test_rennes
+  current_period_end: <%= 20.days.from_now.to_fs(:db) %>
+
+lyon:
+  printer: lyon
+  plan: atelier_plus
+  status: active
+  stripe_customer_id: cus_test_lyon
+  stripe_subscription_id: sub_test_lyon
+  current_period_end: <%= 12.days.from_now.to_fs(:db) %>
+
+nantes:
+  printer: nantes
+  plan: listing
+  status: trialing
+  stripe_customer_id: cus_test_nantes
+  stripe_subscription_id: sub_test_nantes
+  current_period_end: <%= 5.days.from_now.to_fs(:db) %>
+
+<%# En attente de validation, donc jamais dans l'annuaire de toute façon ;
+    l'abonnement est là pour que le test porte bien sur le statut de la fiche. %>
+attente:
+  printer: attente
+  plan: listing
+  status: active
+  stripe_customer_id: cus_test_attente
+  stripe_subscription_id: sub_test_attente
+  current_period_end: <%= 25.days.from_now.to_fs(:db) %>

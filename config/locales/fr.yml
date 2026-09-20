@@ -169,6 +169,12 @@ fr:
     dashboard: "Tableau de bord"
     my_listing: "Ma fiche"
     print_requests: "Demandes"
+    my_designs: "Mes designs"
+    my_requests: "Mes demandes"
+    my_reviews: "Mes vérifications"
+    my_account: "Mon compte"
+    my_link: "Mon lien"
+    subscription: "Abonnement"
 
   # Libellés partagés par l'annuaire, la fiche publique et les espaces pros.
   printers:
@@ -256,6 +262,8 @@ fr:
           attributes:
             terms_accepted_at:
               blank: "doivent être acceptées"
+            current_password:
+              invalid: "ne correspond pas à votre mot de passe actuel"
         printer:
           attributes:
             techniques:
@@ -392,6 +400,11 @@ fr:
         logo: "Logo"
         mascotte: "Mascotte"
         badge: "Badge"
+      status:
+        pending: "En attente"
+        generating: "Génération en cours"
+        ready: "Prêt"
+        failed: "Échec"
     print_request:
       status:
         sent: "Envoyée"
@@ -404,6 +417,23 @@ fr:
       textile_source:
         printer: "L'atelier fournit le textile"
         client: "Je fournis le textile"
+    subscription:
+      plan:
+        listing: "Référencement"
+        atelier_plus: "Atelier+"
+      status:
+        incomplete: "À finaliser"
+        trialing: "Période d'essai"
+        active: "Active"
+        past_due: "Paiement en échec"
+        canceled: "Résiliée"
+
+  # --- Abonnements, textes partagés ----------------------------------------
+  subscriptions:
+    errors:
+      not_configured: "Les paiements ne sont pas encore configurés. Réessayez plus tard."
+      unavailable: "Le service de paiement n'est pas joignable. Réessayez dans quelques minutes."
+      unknown_plan: "Cette formule n'existe pas."
 
   # --- Demandes d'impression, textes partagés entre écrans et emails --------
   print_requests:
@@ -557,6 +587,20 @@ fr:
         follow: "Voir ma demande"
         workshop: "Atelier : %{printer}"
 
+    subscription:
+      payment_failed:
+        subject: "Votre paiement d'abonnement a échoué"
+        eyebrow: "Abonnement"
+        heading: "Nous n'avons pas pu encaisser votre abonnement"
+        body: >-
+          Le paiement de l'abonnement de %{printer} a été refusé. C'est souvent
+          une carte expirée ou un plafond atteint.
+        hidden_from: "Votre fiche reste visible jusqu'au %{date}. Passé cette date, elle est masquée jusqu'au paiement."
+        action: "Mettre à jour mon moyen de paiement"
+        requests_kept: >-
+          Vos demandes d'impression en cours ne sont pas affectées : vous
+          gardez l'accès à votre espace et aux fichiers déjà reçus.
+
   # Un seul bloc `client:` — deux clés de même niveau en YAML, et la seconde
   # écrase silencieusement la première.
   client:
@@ -564,16 +608,81 @@ fr:
       show:
         title: "Mon espace"
         heading: "Bonjour %{name}"
-        body: "Vos demandes d'impression et vos vérifications se retrouveront ici."
-        upcoming:
-          - step: "04"
-            label: "Envoyer une demande d'impression à un atelier"
-          - step: "05"
-            label: "Suivre vos designs, vos demandes et votre compte"
-          - step: "08"
-            label: "Faire vérifier un design par un graphiste"
+        waiting_on_you: "Ce qui vous attend"
+        nothing_waiting: "Rien ne vous attend. Vos designs et vos demandes suivent leur cours."
+        action:
+          design_failed:
+            label: "Génération à relancer"
+            hint: "Cet essai ne vous a pas été décompté."
+            cta: "Recommencer"
+          design_unsent:
+            label: "Design prêt, jamais envoyé"
+            hint: "Aucun atelier n'a encore reçu ce visuel."
+            cta: "Envoyer"
+          print_request_silent:
+            label: "Atelier sans réponse"
+            hint: "L'atelier n'a pas encore confirmé la réception."
+            cta: "Voir"
+        recent_designs: "Derniers designs"
+        recent_requests: "Dernières demandes"
+        see_all: "Tout voir"
+        no_design: "Vous n'avez pas encore créé de design."
+        no_request: "Aucune demande d'impression pour l'instant."
+
+    accounts:
+      edit:
+        title: "Mon compte"
+        heading: "Mon compte"
+        details: "Vos coordonnées"
+        email_locked: "L'adresse email identifie votre compte. Écrivez-nous pour la changer."
+        save: "Enregistrer"
+        password: "Mot de passe"
+        password_hint: "Votre mot de passe actuel est demandé, même connecté : c'est ce qui protège un navigateur resté ouvert."
+        current_password: "Mot de passe actuel"
+        change_password: "Changer de mot de passe"
+        other_sessions: "Vos autres sessions seront déconnectées."
+        data: "Vos données"
+        data_coming: "L'export et la suppression du compte arrivent prochainement."
+      update:
+        saved: "Vos coordonnées sont à jour."
+      update_password:
+        changed: "Mot de passe modifié. Vos autres sessions ont été déconnectées."
+
+    reviews:
+      index:
+        title: "Mes vérifications"
+        heading: "Mes vérifications"
+        empty: "Aucune vérification"
+        empty_body: >-
+          Vous n'avez encore fait vérifier aucun design par un graphiste.
+        what_is_it: "La vérification par un graphiste"
+        what_is_it_body: >-
+          Un graphiste professionnel reprend votre visuel pour l'impression :
+          il nettoie les tracés, ajuste les encres et vous renvoie un fichier
+          que l'atelier pourra sortir sans retouche.
+        coming: "Cette option sera bientôt disponible."
 
     designs:
+      index:
+        title: "Mes designs"
+        heading: "Mes designs"
+        count:
+          zero: "Aucun design"
+          one: "%{count} design"
+          other: "%{count} designs"
+        variants:
+          one: "%{count} variante"
+          other: "%{count} variantes"
+        variant_alt: "Variante du design"
+        send_to_workshop: "Envoyer à un atelier"
+        delete: "Supprimer"
+        delete_confirm: "Supprimer ce design ? Les demandes déjà envoyées ne sont pas concernées."
+        empty: "Aucun design pour l'instant"
+        empty_body: >-
+          Décrivez une idée et l'IA la dessine pour la machine de votre
+          atelier. Vous gardez trois reprises par design.
+      destroy:
+        deleted: "Design supprimé."
       new:
         title: "Créer un design"
         heading: "Créer un design"
@@ -618,6 +727,7 @@ fr:
         what_was_asked: "Votre demande"
         workshop: "Atelier"
         who_can_print: "Qui peut l'imprimer"
+        workshop_unavailable: "Cet atelier n'est plus référencé."
         send_to: "Envoyer"
         see_directory: "Voir tous les ateliers compatibles"
         no_compatible_printer: "Aucun atelier référencé ne pratique cette technique pour l'instant."
@@ -642,6 +752,18 @@ fr:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
 
     print_requests:
+      index:
+        title: "Mes demandes"
+        heading: "Mes demandes d'impression"
+        count:
+          zero: "Aucune demande"
+          one: "%{count} demande"
+          other: "%{count} demandes"
+        empty: "Aucune demande d'impression"
+        empty_body: >-
+          Quand un design vous convient, envoyez-le à l'atelier qui
+          l'imprimera. Le devis se fait ensuite directement avec lui.
+        browse_designs: "Voir mes designs"
       new:
         title: "Envoyer à un atelier"
         heading: "Envoyer à %{printer}"
@@ -716,12 +838,110 @@ fr:
         create_listing: "Créer ma fiche"
         edit_listing: "Modifier ma fiche"
         view_listing: "Voir la fiche publique"
-        body: "Vos demandes d'impression et votre abonnement se piloteront depuis cet espace."
-        upcoming:
-          - step: "04"
-            label: "Recevoir et suivre les demandes d'impression"
-          - step: "06"
-            label: "Abonnement, lien client, QR code et affiche comptoir"
+        not_visible: "Votre fiche n'est visible par personne"
+        not_visible_body: >-
+          Elle est publiée, mais votre abonnement n'est pas actif : elle
+          n'apparaît ni dans l'annuaire, ni sur la carte, ni dans les ateliers
+          compatibles.
+        recent_requests: "Dernières demandes"
+        see_all: "Tout voir"
+        this_month: "Ce mois-ci"
+        to_confirm: "À confirmer"
+        garments: "Pièces"
+        no_request: "Aucune demande reçue pour l'instant."
+        your_link: "Votre lien client"
+        share_link: "Partager mon lien"
+        subscription: "Abonnement"
+        no_subscription: "Aucun abonnement"
+        manage_subscription: "Gérer mon abonnement"
+
+    subscriptions:
+      show:
+        title: "Abonnement"
+        heading: "Mon abonnement"
+        current_plan: "Formule actuelle"
+        renews_on: "Prochain renouvellement"
+        listing_visibility: "Visibilité de la fiche"
+        visible: "Visible dans l'annuaire"
+        past_due_title: "Votre dernier paiement a échoué"
+        past_due_body: "Votre fiche reste visible jusqu'au %{date}. Mettez votre moyen de paiement à jour depuis le portail."
+        open_portal: "Gérer mon abonnement"
+        portal_hint: "Changement de formule, moyen de paiement et factures se font chez Stripe, notre prestataire de paiement."
+        not_visible: "Votre fiche n'est pas visible"
+        not_visible_body: >-
+          Sans abonnement actif, votre atelier n'apparaît ni dans l'annuaire,
+          ni sur la carte, ni parmi les ateliers compatibles avec un design.
+        price_tbd: "Prix à venir"
+        plan_pitch:
+          listing: "Votre atelier dans l'annuaire, avec ses techniques et ses limites."
+          atelier_plus: "Le référencement, plus la mise en avant et les statistiques."
+        plan_features:
+          listing:
+            - "Fiche publique et carte"
+            - "Filtre par technique d'impression"
+            - "Lien client, QR code et affiche comptoir"
+            - "Demandes d'impression par email"
+          atelier_plus:
+            - "Tout le Référencement"
+            - "Mise en avant en tête d'annuaire"
+            - "Votre couleur de marque sur l'écran de création"
+            - "Statistiques du lien sur 30 jours"
+        subscribe: "M'abonner"
+        billing_title: "Facturation"
+        billing_body: >-
+          Les paiements sont traités par Stripe. Nous ne conservons aucune
+          donnée bancaire. Vos factures sont disponibles dans le portail.
+      portal:
+        no_customer: "Aucun abonnement à gérer pour l'instant."
+
+    links:
+      show:
+        title: "Mon lien"
+        heading: "Mon lien client"
+        no_listing: "Créez d'abord votre fiche : c'est elle qui donne son adresse à votre lien."
+        your_link: "Votre adresse"
+        your_link_body: >-
+          Partagez-la à vos clients : ils arrivent directement sur l'écran de
+          création, avec vos techniques déjà sélectionnées.
+        copy: "Copier"
+        copied: "Copié"
+        qr: "Votre QR code"
+        take_it_away: "À emporter"
+        take_it_away_body: >-
+          L'affiche est prête à imprimer en A4. Le QR code se télécharge à part
+          pour vos propres supports.
+        poster: "Affiche comptoir"
+        qr_svg: "QR code (SVG)"
+        qr_png: "QR code (PNG)"
+        statistics: "Statistiques du lien"
+        visits: "Visites"
+        designs: "Designs créés"
+        requests: "Demandes reçues"
+        last_30_days: "30 derniers jours"
+        visit_count:
+          zero: "aucune visite"
+          one: "%{count} visite"
+          other: "%{count} visites"
+        statistics_locked: "Statistiques réservées à Atelier+"
+        statistics_locked_body: >-
+          Voyez combien de personnes scannent votre affiche, combien créent un
+          design et combien vous envoient une demande.
+        see_plans: "Voir les formules"
+      poster:
+        title: "Affiche — %{printer}"
+        eyebrow: "Impression textile"
+        headline: "Imaginez votre t-shirt, on l'imprime"
+        subhead: >-
+          Décrivez votre idée, une IA la dessine pour nos machines, et nous
+          l'imprimons dans notre atelier.
+        scan: "Scannez pour commencer"
+        steps:
+          - "Scannez le code"
+          - "Décrivez votre idée"
+          - "Nous vous envoyons un devis"
+        print: "Imprimer"
+        print_hint: "Cette page est prête pour une impression A4."
+        back: "Retour"
 
     profiles:
       edit:

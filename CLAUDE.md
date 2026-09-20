@@ -332,9 +332,9 @@ Règles côté Rails :
 | 1     | Comptes                       | terminée                       |
 | 2     | Imprimeurs                    | terminée                       |
 | 3     | Designs                       | terminée                       |
-| 4     | Demandes d'impression         | **terminée**, en attente de validation |
-| 5     | Espace client                 | à faire                        |
-| 6     | Abonnements                   | à faire                        |
+| 4     | Demandes d'impression         | terminée                       |
+| 5     | Espace client                 | terminée                       |
+| 6     | Abonnements                   | **terminée**, en attente de validation |
 | 7     | Graphistes                    | à faire                        |
 | 8     | Revues                        | à faire                        |
 | 9     | Administration                | à faire                        |
@@ -489,6 +489,28 @@ placé à l'intérieur d'un `render "section" do` cherche
 manquante rend une chaîne « translation missing » et l'échec survient bien plus
 loin, méconnaissable — c'est ainsi qu'un doublon de clé de premier niveau dans
 `fr.yml` s'est manifesté en `undefined method 'each'` au fond d'un partiel.
+
+**L'unicité est le travail de l'index, pas d'une validation.** Une
+`validates :uniqueness` lit la table puis écrit : deux livraisons de webhook
+arrivant ensemble la passent toutes les deux, et surtout elle lève
+`RecordInvalid` **avant** que l'index ait la moindre chance de dire non — le
+`rescue ActiveRecord::RecordNotUnique` de `StripeEvent.claim` ne se déclenchait
+donc jamais. Index unique seul, et `rescue RecordNotUnique`.
+
+**Un scope et son équivalent d'instance doivent s'accorder.** `Printer.listed`
+filtre l'annuaire, mais c'est `Printer#listed?` que la policy interroge pour la
+page d'un atelier. Le premier mis à jour sans le second, une fiche disparaît de
+l'annuaire mais reste lisible par quiconque a le lien.
+
+**Les horodatages de migration ne peuvent pas être dans le futur.** Rails 8
+refuse un fichier dont le nom dépasse l'heure courante : « Timestamp must be in
+form YYYYMMDDHHMMSS, and less than … ». Écrire l'heure réelle, pas une ronde du
+lendemain.
+
+**`assert_text` prend le *type* en second argument positionnel**, pas un message
+d'échec. `assert_text shown(x), "mon message"` lève
+« is not a valid type for a text query ». Et la valeur d'un champ n'est pas du
+texte : c'est `assert_field with:` qu'il faut.
 
 **Une validation qui rejuge le passé fige l'enregistrement.** Le minimum de
 commande d'un atelier et la date souhaitée par le client jugent la demande

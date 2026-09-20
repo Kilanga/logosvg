@@ -10,6 +10,10 @@ class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
 
+  # Never stored. It exists so the account screen can ask for the current
+  # password before changing it, and so the failure has somewhere to hang.
+  attr_accessor :current_password
+
   # Only a printer account has one, and it has exactly one.
   has_one :printer, dependent: :destroy
 

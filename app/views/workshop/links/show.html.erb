@@ -1,0 +1,91 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-4xl space-y-8">
+  <div class="panel p-6">
+    <h2 class="label-rule"><%= t(".your_link") %></h2>
+    <p class="mt-3 text-muted"><%= t(".your_link_body") %></p>
+
+    <%# Selected on click: a shop about to paste this into a newsletter should
+        not have to drag across it. %>
+    <div class="mt-5 flex flex-wrap items-center gap-3"
+         data-controller="clipboard"
+         data-clipboard-copied-value="<%= t('.copied') %>">
+      <input type="text" readonly value="<%= workshop_link_url(slug: @printer.slug) %>"
+             data-clipboard-target="source"
+             onclick="this.select()"
+             class="min-h-touch flex-1 rounded-xs border border-line bg-paper px-3 font-mono text-sm"
+             aria-label="<%= t('.your_link') %>">
+      <button type="button" class="btn btn-secondary text-sm"
+              data-clipboard-target="button" data-action="clipboard#copy">
+        <%= t(".copy") %>
+      </button>
+    </div>
+  </div>
+
+  <div class="grid gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
+    <div class="panel justify-self-center p-6">
+      <%# The QR code is drawn, not fetched: it encodes nothing but the URL. %>
+      <div class="flex justify-center"><%= raw WorkshopQrCode.svg(workshop_link_url(slug: @printer.slug)) %></div>
+      <p class="label-rule mt-4 text-center"><%= t(".qr") %></p>
+    </div>
+
+    <div class="panel p-6">
+      <h2 class="label-rule"><%= t(".take_it_away") %></h2>
+      <p class="mt-3 text-sm text-muted"><%= t(".take_it_away_body") %></p>
+
+      <div class="mt-5 flex flex-wrap gap-3">
+        <%= link_to t(".poster"), workshop_link_poster_path, class: "btn btn-primary text-sm",
+              target: "_blank", rel: "noopener" %>
+        <%= link_to t(".qr_svg"), workshop_link_qr_path(format: :svg), class: "btn btn-secondary text-sm" %>
+        <%= link_to t(".qr_png"), workshop_link_qr_path(format: :png), class: "btn btn-secondary text-sm" %>
+      </div>
+    </div>
+  </div>
+
+  <%# Atelier+ buys the statistics. Without it the page still gives the link,
+      the code and the poster — those are what a shop needs to be found. %>
+  <% if @statistics %>
+    <section class="panel p-6">
+      <div class="flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-4">
+        <h2 class="font-display text-xl font-bold uppercase"><%= t(".statistics") %></h2>
+        <span class="pill pill-success"><%= t("enums.subscription.plan.atelier_plus") %></span>
+      </div>
+
+      <dl class="mt-5 grid grid-cols-3 gap-4">
+        <div>
+          <dt class="label-rule"><%= t(".visits") %></dt>
+          <dd class="font-display text-3xl font-bold"><%= @statistics[:series].sum(&:last) %></dd>
+        </div>
+        <div>
+          <dt class="label-rule"><%= t(".designs") %></dt>
+          <dd class="font-display text-3xl font-bold"><%= @statistics[:designs] %></dd>
+        </div>
+        <div>
+          <dt class="label-rule"><%= t(".requests") %></dt>
+          <dd class="font-display text-3xl font-bold"><%= @statistics[:print_requests] %></dd>
+        </div>
+      </dl>
+
+      <%# Thirty bars, drawn as divs: it has to print, and it is not worth a
+          charting dependency. %>
+      <div class="mt-6">
+        <p class="label-rule"><%= t(".last_30_days") %></p>
+        <ol class="mt-3 flex h-24 items-end gap-0.5">
+          <% visit_bars(@statistics[:series]).each do |bar| %>
+            <li class="flex-1">
+              <div class="bg-emulsion/70" style="height: <%= [ bar[:height], 2 ].max %>%"
+                   title="<%= l(bar[:day], format: :short) %> — <%= t('.visit_count', count: bar[:count]) %>"></div>
+            </li>
+          <% end %>
+        </ol>
+      </div>
+    </section>
+  <% else %>
+    <section class="panel border-l-2 border-l-emulsion p-6">
+      <p class="label-rule text-emulsion"><%= t(".statistics_locked") %></p>
+      <p class="mt-2 text-muted"><%= t(".statistics_locked_body") %></p>
+      <%= link_to t(".see_plans"), workshop_subscription_path, class: "btn btn-secondary mt-4 text-sm" %>
+    </section>
+  <% end %>
+</div>

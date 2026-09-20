@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><%= yield(:title) %></title>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+
+    <style nonce="<%= content_security_policy_nonce %>">
+      /* Made to come out of a printer: one A4 page, no interface furniture,
+         and no ink spent on a background that would be paper anyway. */
+      @page { size: A4 portrait; margin: 12mm; }
+
+      @media print {
+        .no-print { display: none !important; }
+        body { background: #FFFFFF; }
+        .poster { border: none; box-shadow: none; }
+      }
+    </style>
+  </head>
+
+  <body class="bg-paper text-ink antialiased">
+    <div class="no-print border-b border-line bg-surface px-5 py-3">
+      <div class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3">
+        <p class="text-sm text-muted"><%= t("workshop.links.poster.print_hint") %></p>
+        <div class="flex gap-3">
+          <%= link_to t("workshop.links.poster.back"), workshop_link_share_path,
+                class: "btn btn-secondary text-sm" %>
+          <button type="button" class="btn btn-primary text-sm"
+                  data-controller="print" data-action="print#now">
+            <%= t("workshop.links.poster.print") %>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <main class="mx-auto max-w-3xl px-5 py-8 print:p-0">
+      <%= yield %>
+    </main>
+  </body>
+</html>

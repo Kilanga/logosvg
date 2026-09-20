@@ -10,8 +10,10 @@ class PrintRequestPolicy < ApplicationPolicy
   # The client calls it off; the workshop refuses by simply not answering.
   def cancel? = client? && record.may_cancel?
 
-  # The workshop's own list and its status changes.
-  def index? = user&.printer?
+  # Both sides have a list of their own; the scope is what tells them apart.
+  def index? = user&.client? || user&.printer?
+
+  # Moving the job along is the workshop's.
   def update? = workshop? && record.open?
 
   class Scope < ApplicationPolicy::Scope

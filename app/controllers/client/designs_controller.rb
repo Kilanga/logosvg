@@ -4,10 +4,21 @@ module Client
   # The technique is the first field, because it shapes the prompt and not only
   # the output file — see docs/SPEC.md, "Techniques d'impression".
   class DesignsController < BaseController
-    before_action :set_design, only: %i[ show image variants refine ]
+    before_action :set_design, only: %i[ show image variants refine destroy ]
 
     rate_limit to: 10, within: 1.minute, only: %i[ create variants refine ],
                with: -> { redirect_to new_design_path, alert: t("flash.rate_limited") }
+
+    # The client's own designs, one card per lineage. A variant is not a design
+    # of its own in this list — it is another take on the same idea, and showing
+    # six near-identical cards would bury the six distinct ones.
+    def index
+      authorize Design
+
+      @lineages = policy_scope(Design).roots.newest_first
+                                      .includes(:printer, children: :print_file_attachment)
+                                      .with_attached_print_file
+    end
 
     def new
       @design = Design.new(defaults)
@@ -67,6 +78,15 @@ module Client
       take_it_further do
         GeneratorClient.new.refine(@design.generator_job_id, instruction: @instruction, user: Current.user)
       end
+    end
+
+    # Soft-deleted, never destroyed: a print request already sent keeps its own
+    # copies of the files, and the workshop's job must not lose its origin.
+    def destroy
+      authorize @design
+
+      @design.soft_delete!
+      redirect_to client_designs_path, notice: t(".deleted")
     end
 
     private

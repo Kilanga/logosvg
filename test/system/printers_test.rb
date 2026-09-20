@@ -112,6 +112,13 @@ class PrintersTest < ApplicationSystemTestCase
     sign_out_from(admin_dashboard_path)
     visit printers_path
 
+    # Publishing alone no longer puts a shop in the directory: since step 6 the
+    # listing has to be paid for as well.
+    assert_no_text shown(printers(:brouillon).name)
+
+    printers(:brouillon).create_subscription!(plan: "listing", status: "active")
+    visit printers_path
+
     assert_text shown(printers(:brouillon).name)
   end
 
