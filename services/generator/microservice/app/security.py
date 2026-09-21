@@ -11,7 +11,7 @@ from .config import settings
 
 
 def require_api_key(x_api_key: str = Header(default="")) -> None:
-    """Seul le site WordPress, qui connaît la clé, peut appeler le service."""
+    """Seule l'application Rails, qui connaît la clé, peut appeler le service."""
     expected = settings.api_key.encode()
     if not expected or not hmac.compare_digest(x_api_key.encode(), expected):
         raise HTTPException(status_code=401, detail="Clé API invalide.")

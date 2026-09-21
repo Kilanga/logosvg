@@ -1,4 +1,4 @@
-# CLAUDE.md — T-shirt IA
+# CLAUDE.md — Prêt-à-tirer
 
 Guide de travail pour Claude Code sur ce dépôt. Le cahier des charges fait foi :
 [docs/SPEC.md](docs/SPEC.md). Ce fichier en résume les règles opérationnelles et
@@ -99,6 +99,7 @@ vite…), toute dépendance HTTP supplémentaire (`GeneratorClient` utilise
 ```bash
 bin/setup                      # install + préparation de la base
 bin/dev                        # app + tailwind watch + Solid Queue + service mock
+bin/dev -m all=1,generator=0   # idem, sans le mock : le vrai generateur tient deja le port 5000
 bin/rails db:prepare
 bin/rails db:seed
 
@@ -254,7 +255,7 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 
 | Clé                                | Valeur provisoire | Question ouverte                      |
 | ---------------------------------- | ----------------- | ------------------------------------- |
-| `platform_name`                    | `T-shirt IA`      | nom définitif et domaine              |
+| `platform_name`                    | `Prêt-à-tirer`    | **décidé** — domaine `pretatirer.fr`  |
 | `generation_quota_per_day`         | `5`               | confirmé par le cahier des charges     |
 | `review_auto_accept_days`          | `7`               | validation automatique                 |
 | `proposal_expiry_hours`            | `72`              | réponse à une proposition              |
@@ -350,19 +351,51 @@ fournisseur d'emails.
 
 ## 11. Environnement de développement
 
-Tout tourne dans **WSL2 / Ubuntu 26.04 LTS**, jamais côté Windows. Le dépôt
-reste sur le disque Windows et se voit depuis Ubuntu sous
-`/mnt/c/Users/ARNAU/Downloads/logo svg`.
+Tout tourne dans **WSL2 / Ubuntu**, jamais côté Windows. Le dépôt vit dans le
+**HOME de la distribution** (`~/logosvg`), sur ext4 — pas sous `/mnt/c`, où
+chaque accès fichier traverse une passerelle et où le démarrage de Rails prend
+plusieurs fois plus de temps.
+
+**Une seule machine porte désormais les deux moitiés du projet** : l'application
+dans WSL, et le moteur de génération (ComfyUI + SDXL + Ollama + le microservice)
+côté Windows, sur le même poste. Il n'y a donc **ni tunnel ni réseau privé en
+développement** : `GENERATOR_URL=http://127.0.0.1:5000` suffit.
+
+Ce que cela impose, et qui se paie cher si on l'oublie : le microservice n'écoute
+que sur `127.0.0.1` de Windows, et en mode réseau NAT — le défaut de WSL2 — une
+distribution Linux **n'atteint pas** le `127.0.0.1` de son hôte. Il faut le mode
+`mirrored`, dans `%USERPROFILE%\.wslconfig` :
+
+```ini
+[wsl2]
+networkingMode=mirrored
+
+[experimental]
+hostAddressLoopback=true
+```
+
+puis `wsl --shutdown`. La tentation inverse — lier le service à `0.0.0.0` —
+l'exposerait au réseau local alors qu'il tourne sur une machine personnelle :
+c'est précisément ce que l'architecture refuse.
+
+Corollaire au lancement : `bin/dev` démarre un service de substitution sur le
+port 5000, qui **entre en collision** avec le vrai. Sur cette machine, lancer
+`bin/dev -m all=1,generator=0`.
 
 | Outil            | Version installée              | Provenance                    |
 | ---------------- | ------------------------------ | ----------------------------- |
-| Ruby             | 3.3.8                          | paquet Ubuntu                 |
-| Rails            | 8.1.3.1                        | `gem install`                 |
-| Bundler          | 4.0.21                         | `gem install`                 |
-| PostgreSQL       | 16.15                          | dépôt PGDG (`resolute-pgdg`)  |
-| libvips          | 8.18.0                         | paquet Ubuntu                 |
-| Google Chrome    | 153                            | dépôt Google (tests système)  |
-| Python           | 3.14.4                         | paquet Ubuntu (microservice)  |
+| Ruby             | ≥ 3.2 (3.3 visé)               | paquet Ubuntu                 |
+| Rails            | 8.1.3.1                        | `bundle install`              |
+| Bundler          | 4.0.21 (`BUNDLED WITH`)        | `gem install`                 |
+| PostgreSQL       | 16                             | paquet Ubuntu                 |
+| libvips          | ≥ 8.15 + librsvg               | paquet Ubuntu                 |
+| Chrome/Chromium  | présent                        | tests système                 |
+| Python           | 3.12 ou 3.13                   | service de substitution seul  |
+
+Le Gemfile ne fixe pas de version de Ruby et `Gemfile.lock` n'a pas de section
+`RUBY VERSION` : toute version ≥ 3.2 convient. `.ruby-version` (3.3.8) n'est
+qu'une indication. **libvips sans librsvg** est le piège silencieux : le SVG se
+stocke très bien, et seuls les aperçus rasterisés manquent.
 
 **Node n'est pas installé et n'est pas nécessaire** : `tailwindcss-rails`
 embarque le binaire Tailwind autonome, et les modules JS passent par importmap.
@@ -408,8 +441,9 @@ jamais au navigateur. Solid Cable, lui, le fait.
 En test, une seule base : les tests utilisent l'adaptateur de job `:test`, le
 cache `:null_store` et l'adaptateur cable `test`.
 
-Connexion par socket Unix avec le rôle système `arnaud` : aucun mot de passe à
-stocker nulle part.
+Connexion par socket Unix avec le rôle système de l'utilisateur : aucun mot de
+passe à stocker nulle part. WSL n'a pas toujours `systemd`, donc le cluster ne
+démarre pas seul — `service postgresql start` à l'ouverture d'un terminal.
 
 ### Pièges rencontrés, à ne pas réintroduire
 
@@ -610,7 +644,11 @@ un test qui attendait « aucun fichier ». Nettoyer, ou envelopper dans un
 
 ### Ce que la machine impose
 
-4 Go de RAM et un i3-5005U de 2015. `bundle install` complet prend ~3 min 30,
-les tests système sont volontairement sérialisés (`parallelize(workers: 1)` dans
-`ApplicationSystemTestCase`) : plusieurs Chrome en parallèle feraient basculer
-la machine dans le swap.
+Les tests système restent volontairement sérialisés (`parallelize(workers: 1)`
+dans `ApplicationSystemTestCase`). C'était une nécessité sur l'ancien poste
+(4 Go de RAM, i3-5005U de 2015) ; sur la machine actuelle c'est une précaution
+peu coûteuse, et la sérialisation supprime une source d'échecs intermittents.
+
+Cette machine porte aussi le GPU de génération (RTX 4070 Ti, 12 Go). Une
+génération réelle occupe la carte pendant ~20 à 45 s ; les tests, eux, ne
+touchent jamais au service — tout appel sortant passe par WebMock.

@@ -1,4 +1,4 @@
-# T-shirt IA — cahier des charges de l'application Rails
+# Prêt-à-tirer — cahier des charges de l'application Rails
 
 2026-09-17 · @Someone
 
@@ -339,7 +339,7 @@ Un design `ready` ne se modifie pas : le client le reprend, et chaque reprise cr
 
 ## Écrans et routes
 
-Les routes publiques sont en français ; chaque espace a son propre layout et son espace de noms de contrôleurs. Les maquettes de référence sont sur le canevas « T-shirt IA — maquettes ».
+Les routes publiques sont en français ; chaque espace a son propre layout et son espace de noms de contrôleurs. Les maquettes de référence sont sur le canevas « Prêt-à-tirer — maquettes ».
 
 ### Public et client
 
@@ -548,7 +548,7 @@ Onze étapes, chacune livrable et testée seule ; Claude Code s'arrête après c
 
 Ces points bloquent la mise en production, pas la construction : Claude Code utilise une valeur de configuration en attendant.
 
-- [ ] Nom de la plateforme et nom de domaine
+- [x] Nom de la plateforme et nom de domaine (décidé le 21/09/2026 : **Prêt-à-tirer**, domaine `pretatirer.fr`. Le nom joue sur « prêt-à-porter » et sur « tirer » — lancer une série. Il évite « IA », qui date vite et désigne le moyen plutôt que la promesse, et « t-shirt », que le catalogue dépasse déjà avec la broderie, le flex et la sublimation. Réserve : le nom est descriptif, donc faible comme marque déposée)
 - [ ] Prix des deux abonnements et période d'essai éventuelle
 - [ ] Prix des niveaux de revue : fixés par la plateforme (hypothèse actuelle) ou par chaque graphiste
 - [ ] Taux de commission sur les revues

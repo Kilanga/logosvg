@@ -1,4 +1,4 @@
-# T-shirt IA — service de génération
+# Prêt-à-tirer — service de génération
 
 Le client décrit son design, l'IA le génère en aplats, le service le vectorise,
 et l'atelier reçoit un **SVG prêt pour l'impression**.
