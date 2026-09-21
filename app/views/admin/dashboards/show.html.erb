@@ -42,7 +42,7 @@
               <p class="mt-0.5 text-sm text-muted"><%= t(".return_rate_body") %></p>
             </div>
             <p class="font-display text-2xl font-bold text-warning">
-              <%= number_to_percentage(profile.return_rate * 100, precision: 0) %>
+              <%= number_to_percentage(@return_rates[profile.id] * 100, precision: 0) %>
             </p>
           </li>
         <% end %>

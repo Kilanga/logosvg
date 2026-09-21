@@ -14,11 +14,21 @@ module Admin
       }
 
       # Designers handing work back more often than the platform expects. The
-      # threshold is a configured value, not a number buried here.
-      @returning = DesignerProfile.listed.includes(:reviews).select(&:return_rate_alarming?)
+      # rates are computed for all of them at once — asking each profile in
+      # turn cost two queries apiece.
+      @return_rates = DesignerProfile.return_rates(DesignerProfile.listed)
+      @returning = DesignerProfile.listed
+                                  .where(id: alarming_ids)
+                                  .order(:display_name)
     end
 
     private
+      def alarming_ids
+        threshold = Rails.application.config.tshirt.reviews[:return_rate_alert_threshold]
+
+        @return_rates.select { |_, rate| rate >= threshold }.keys
+      end
+
       # Work past its deadline, or delivered and plainly unanswered.
       def disputes_count
         overdue = Review.where(status: "in_progress").where(due_at: ...Time.current).count

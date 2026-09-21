@@ -73,12 +73,19 @@ class DesignerProfile < ApplicationRecord
   # Counted over reviews they actually took, so a quiet month does not read as
   # a perfect one.
   def return_rate(days: 30)
-    taken = reviews.where(created_at: days.days.ago..).where.not(returned_at: nil).count
-    total = reviews.where(created_at: days.days.ago..).count
+    self.class.return_rates([ self ], days: days)[id]
+  end
 
-    return nil if total.zero?
+  # The same figure for many designers, in two queries rather than two each.
+  # `includes(:reviews)` does not help here: a `where` on a loaded association
+  # goes back to the database anyway, which is what made the administration's
+  # dashboard cost two queries per profile.
+  def self.return_rates(profiles, days: 30)
+    scope = Review.where(designer_profile: profiles, created_at: days.days.ago..)
+    totals = scope.group(:designer_profile_id).count
+    returned = scope.where.not(returned_at: nil).group(:designer_profile_id).count
 
-    (taken.to_f / total).round(3)
+    totals.to_h { |id, total| [ id, (returned.fetch(id, 0).to_f / total).round(3) ] }
   end
 
   def return_rate_alarming?(days: 30)
