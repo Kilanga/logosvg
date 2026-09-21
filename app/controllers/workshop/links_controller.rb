@@ -37,7 +37,7 @@ module Workshop
     end
 
     private
-      def set_printer = @printer = Current.user.printer
+      def set_printer = @printer = current_printer
 
       # There is no link to share until the listing exists and is public.
       def require_listing

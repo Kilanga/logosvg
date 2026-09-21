@@ -83,7 +83,7 @@ module Designer
     end
 
     private
-      def profile = Current.user.designer_profile
+      def profile = current_designer_profile
 
       def set_review
         @review = policy_scope(Review).find_by!(token: params[:token])

@@ -7,7 +7,7 @@ module Workshop
     skip_after_action :verify_policy_scoped
 
     def show
-      @printer = Current.user.printer
+      @printer = current_printer
       @subscription = @printer&.subscription
       @print_requests = recent_requests
       @month = month_figures

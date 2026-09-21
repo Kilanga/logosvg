@@ -16,7 +16,7 @@
     <% end %>
 
     <%# Taking it on. One button, and only when it is actually takeable. %>
-    <% if @review.claimable_by?(Current.user.designer_profile) %>
+    <% if @review.claimable_by?(current_designer_profile) %>
       <section class="panel border-l-2 border-l-emulsion p-6">
         <p class="label-rule text-emulsion"><%= t(".available") %></p>
         <p class="mt-2 text-muted"><%= t(".available_body", hours: @review.review_level.turnaround_hours) %></p>

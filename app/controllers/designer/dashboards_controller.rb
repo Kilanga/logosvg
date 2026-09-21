@@ -5,7 +5,7 @@ module Designer
     skip_after_action :verify_policy_scoped
 
     def show
-      @profile = Current.user.designer_profile
+      @profile = current_designer_profile
     end
   end
 end

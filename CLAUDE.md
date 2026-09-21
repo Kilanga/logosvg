@@ -611,6 +611,30 @@ impossible à tester sans fabriquer une requête.
 a échoué sur un `profil.user` paresseux. Charger avec `includes`, ne pas
 contourner.
 
+**Et il ne protège que le développement, où personne ne regarde.** Le réglage
+n'existe qu'en développement : la suite de tests, elle, tourne sans. Un saut
+paresseux oublié passe donc l'intégration continue et casse la page dans le
+navigateur. C'est arrivé au pire endroit — `Current.user` déréférence la
+session, Pundit le lit dès le premier `before_action`, et **toutes** les pages
+authentifiées levaient `StrictLoadingViolationError`, sans qu'aucun des
+750 tests ne bronche. `test/integration/strict_loading_test.rb` active
+désormais le réglage et rejoue chaque écran d'accueil : la panne apparaît là.
+
+**L'utilisateur courant n'est le point de départ d'aucun chargement.** Ni
+`Current.user.printer`, ni `Current.user.designer_profile`, ni
+`Current.user.sessions` : personne ne l'a préchargé, et le précharger dans la
+lecture de session ferait payer à chaque page client des enregistrements que
+seuls les professionnels possèdent. Chaque espace charge le sien dans son
+`BaseController` (`current_printer`, `current_designer_profile`), avec les
+associations que cet espace montre. Une policy, qui ne voit pas ces aides, fait
+sa propre requête ou une sous-requête — jamais un saut depuis `user`.
+
+**`strict_loading_mode = :n_plus_one_only` ne remplace pas `:all`.** La piste
+paraissait élégante : n'interdire que les N+1, ce que dit la règle. Mesure
+faite, sous ce mode `Design.limit(5).each { |d| d.user }` ne lève **plus rien** —
+c'est-à-dire précisément la forme de N+1 la plus courante. Le mode ne resserre
+pas la garde, il l'ouvre.
+
 **Une validation qui rejuge le passé fige l'enregistrement.** Le minimum de
 commande d'un atelier et la date souhaitée par le client jugent la demande
 *telle qu'elle a été envoyée* : en `on: :create` uniquement. Sans cela, un

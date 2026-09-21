@@ -55,7 +55,7 @@ module Workshop
 
     private
       def set_printer
-        @printer = Current.user.printer || Printer.new(user: Current.user)
+        @printer = current_printer || Printer.new(user: Current.user)
       end
   end
 end

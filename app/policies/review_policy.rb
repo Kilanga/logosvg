@@ -70,7 +70,9 @@ class ReviewPolicy < ApplicationPolicy
       # take from. A queued review nobody owns yet is visible to everyone who
       # could do it — that is what "first available" means.
       def designer_scope
-        profile = user.designer_profile
+        # Même raison que dans PrintRequestPolicy : la policy charge ce dont elle
+        # a besoin, au lieu de l'atteindre depuis l'utilisateur courant.
+        profile = DesignerProfile.includes(:review_levels).find_by(user_id: user.id)
         return scope.none if profile.nil?
 
         scope.where(designer_profile: profile)
