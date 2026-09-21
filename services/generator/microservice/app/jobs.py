@@ -142,6 +142,29 @@ class JobManager:
             raise GenerationError("L'image de départ a expiré. Relancez la création.")
         return source.read_bytes()
 
+    async def _hires(self, png: bytes, positive: str, negative: str, seed: int) -> tuple:
+        """Redessine l'image plus grande, pour les techniques matricielles.
+
+        Une poitrine de t-shirt se demande à 25 cm : en 1 024 px, le fichier ne vaut que
+        104 dpi réels et l'atelier voit passer une alerte « définition faible » sur chaque
+        commande. Cette passe ne se contente pas d'agrandir — elle repasse l'image dans le
+        modèle à la taille voulue, avec un bruit faible : les détails sont dessinés.
+
+        Elle n'est jamais bloquante : si le GPU manque de mémoire, on garde l'image
+        d'origine et on le dit au client plutôt que de perdre sa génération.
+        """
+        target = int(settings.image_size * settings.hires_scale)
+        try:
+            return await self.generator.hires(
+                positive, negative, seed, png, settings.hires_denoise, target
+            ), None
+        except GenerationError as exc:
+            log.warning("Passe haute définition abandonnée : %s", exc)
+            return png, (
+                "La passe haute définition n'a pas abouti : le fichier reste imprimable, "
+                "mais les détails fins seront plus doux à grande taille."
+            )
+
     async def _run(self, job: Job) -> None:
         subject = await self._subject_for(job)
         # Les marques survivent à la traduction comme à la réécriture : on refiltre le texte.
@@ -162,7 +185,13 @@ class JobManager:
             png = await self.generator.generate(positive, negative, job.seed, colors)
 
         job.directory.mkdir(parents=True, exist_ok=True)
+        # L'image de référence gardée pour le client et pour l'atelier est celle que le
+        # modèle a dessinée, avant toute préparation d'impression.
         (job.directory / "source.png").write_bytes(png)
+
+        hires_warning = None
+        if profile.family == "raster" and settings.hires_scale > 1:
+            png, hires_warning = await self._hires(png, positive, negative, job.seed)
 
         # Préparation du fichier d'impression : du calcul CPU, sorti de la boucle asynchrone.
         if profile.family == "vector":
@@ -176,6 +205,8 @@ class JobManager:
                 rasterize, png, profile, job.remove_background, job.print_width_cm
             )
             (job.directory / "print.png").write_bytes(out["png"])
+            if hires_warning:
+                out["warnings"].append(hires_warning)
 
         job.result = {
             "technique": profile.key,

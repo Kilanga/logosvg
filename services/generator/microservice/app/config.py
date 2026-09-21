@@ -31,6 +31,17 @@ class Settings:
 
     # Retouches : combien de reprises (variantes ou corrections) par design, et a quel point
     # la retouche s'ecarte de l'image de depart (0 = identique, 1 = image entierement nouvelle).
+    # Passe haute définition, pour les techniques matricielles seulement (DTF, DTG,
+    # sublimation). SDXL dessine en 1 024 px : à 25 cm de large, cela ne fait que 104 dpi
+    # réels, et le fichier serait signalé « définition faible » à chaque commande. Une
+    # seconde passe de diffusion agrandit l'image en *dessinant* les pixels manquants au
+    # lieu de les interpoler. 1,5 tient confortablement dans 12 Go de VRAM ; 2,0 donne
+    # 208 dpi mais frôle la limite. 1,0 désactive la passe.
+    hires_scale: float = _float("HIRES_SCALE", 1.5)
+    # Ce que la seconde passe a le droit de réinventer : assez pour créer du détail,
+    # pas assez pour changer le dessin.
+    hires_denoise: float = _float("HIRES_DENOISE", 0.35)
+
     max_refinements: int = _int("MAX_REFINEMENTS", 3)
     max_variants: int = _int("MAX_VARIANTS", 3)
     refine_denoise: float = _float("REFINE_DENOISE", 0.55)

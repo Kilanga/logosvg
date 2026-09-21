@@ -15,11 +15,13 @@ Aucune réduction de couleurs : le nombre d'encres n'a pas de sens ici, la palet
 renvoyée n'est qu'indicative (elle alimente l'affichage, pas la compatibilité).
 """
 import io
+from collections import Counter
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 from .techniques import Technique
 from .vectorizer import (
+    _edge_seeds,
     extract_palette,
     flatten_near_white,
     opaque_share,
@@ -52,6 +54,87 @@ def _white_share(img: Image.Image) -> float:
     return white / float(total)
 
 
+# Le détourage vectoriel part d'une image réduite à quelques aplats : deux pixels du fond
+# y sont rigoureusement identiques, et le remplissage peut être sans tolérance. En
+# matriciel il n'y a pas de réduction de couleurs — le fond d'une image SDXL est un léger
+# dégradé bruité (74 teintes distinctes sur le seul pourtour d'un essai réel). Sans
+# tolérance, le remplissage s'arrête au premier pixel et le fond reste : un rectangle
+# beige imprimé autour du sujet.
+#
+# Tolérance exprimée comme Pillow la mesure : somme des écarts sur les trois canaux,
+# soit ici une vingtaine de points par canal. Un fond dégradé passe, un contour noir sur
+# fond beige en est à plus de cinq cents.
+BACKGROUND_TOLERANCE = 60
+# Pas de la postérisation qui sert à trouver la couleur du fond : sans elle, la couleur
+# « dominante » du pourtour ne représente que 16 % des pixels et le fond passe inaperçu.
+POSTERIZE_STEP = 16
+# Part du pourtour que le fond doit occuper une fois les teintes voisines regroupées.
+BORDER_SHARE_MIN = 0.4
+# Couleur de marquage, choisie pour n'apparaître dans aucune image générée.
+SENTINEL = (1, 254, 3)
+
+
+def _scout_image(rgba: Image.Image) -> Image.Image:
+    """Copie RGB de travail où les pixels déjà transparents sont marqués comme fond.
+
+    Sans ça, un `convert("RGB")` rend noirs les pixels déjà détourés : le liseré retiré
+    par le premier passage masque le vrai fond, et plus aucun germe ne le reconnaît.
+    """
+    scout = Image.new("RGB", rgba.size)
+    scout.putdata([SENTINEL if pixel[3] == 0 else pixel[:3] for pixel in rgba.getdata()])
+    return scout
+
+
+def _dominant_border_color(scout: Image.Image):
+    """Couleur du fond, cherchée sur un pourtour volontairement grossier."""
+    w, h = scout.size
+    px = scout.load()
+    border = [px[x, 0] for x in range(w)] + [px[x, h - 1] for x in range(w)] + \
+             [px[0, y] for y in range(h)] + [px[w - 1, y] for y in range(h)]
+    border = [p for p in border if p != SENTINEL]
+    if not border:
+        return None
+
+    buckets = Counter(tuple((v // POSTERIZE_STEP) * POSTERIZE_STEP for v in p) for p in border)
+    bucket, seen = buckets.most_common(1)[0]
+    if seen / float(len(border)) < BORDER_SHARE_MIN:
+        return None
+
+    # Moyenne des vrais pixels du groupe : le remplissage part d'une couleur qui existe
+    # dans l'image, pas d'un arrondi.
+    members = [p for p in border
+               if tuple((v // POSTERIZE_STEP) * POSTERIZE_STEP for v in p) == bucket]
+    return tuple(round(sum(c[i] for c in members) / len(members)) for i in range(3))
+
+
+def remove_background_tolerant(rgba: Image.Image, tolerance: int = BACKGROUND_TOLERANCE) -> None:
+    """Détoure un fond dégradé, en partant des bords et sans entamer le sujet.
+
+    Le remplissage ne démarre que depuis les points du pourtour proches de la couleur du
+    fond : un sujet qui touche le bord n'est donc pas mangé.
+    """
+    scout = _scout_image(rgba)
+    dominant = _dominant_border_color(scout)
+    if dominant is None:
+        return
+
+    marked = False
+    for xy in _edge_seeds(rgba.width, rgba.height):
+        pixel = scout.getpixel(xy)
+        if pixel == SENTINEL:
+            continue
+        if sum(abs(a - b) for a, b in zip(pixel, dominant)) <= tolerance:
+            ImageDraw.floodfill(scout, xy, SENTINEL, thresh=tolerance)
+            marked = True
+    if not marked:
+        return
+
+    rgba.putdata([
+        (0, 0, 0, 0) if scout_pixel == SENTINEL else pixel
+        for pixel, scout_pixel in zip(rgba.getdata(), scout.getdata())
+    ])
+
+
 def prepare_raster(png_bytes: bytes, profile: Technique, remove_bg: bool) -> tuple:
     """Renvoie l'image détourée et la part de blanc que la machine ne saura pas imprimer."""
     img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
@@ -64,7 +147,12 @@ def prepare_raster(png_bytes: bytes, profile: Technique, remove_bg: bool) -> tup
     dropped_white = 0.0
     if remove_bg:
         before = rgba.copy()
-        remove_background(rgba)
+        # Le tolérant d'abord : c'est le cas courant d'une image générée, dont le fond est
+        # un léger dégradé. L'exact ensuite, en repli, pour les fonds parfaitement unis
+        # (mode simulation) où il ne reste qu'un liseré.
+        remove_background_tolerant(rgba)
+        if opaque_share(rgba) > 0.92:
+            remove_background(rgba)
         if not profile.white_is_ink:
             # Pas d'encre blanche : ces zones prendront la couleur du textile. On les
             # mesure avant de les rendre transparentes, pour pouvoir en avertir le client.
