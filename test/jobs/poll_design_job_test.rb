@@ -113,6 +113,28 @@ class PollDesignJobTest < ActiveJob::TestCase
     assert_not_requested :get, %r{/jobs/job-42}
   end
 
+  # Le filet, et sa raison d'etre exacte. Une panne imprevue pendant le
+  # rapatriement annule la transaction, mais l'objet en memoire garde les
+  # attributs qui l'ont fait echouer : sans rechargement, `fail!` bute sur les
+  # memes validations, l'erreur est avalee, et le design reste « en cours »
+  # pour toujours. C'est ce qui s'est produit sur le premier DTF.
+  test "an unexpected failure leaves the design failed, never still generating" do
+    # Un nombre de couleurs que le modele refuse : le rapatriement l'ecrit en
+    # memoire, `succeed!` leve, la transaction est annulee — et l'objet reste
+    # invalide entre les mains du filet.
+    stub_answer(status: "done", refinements_left: 2, result: {
+      print_file: "design.svg", palette: [ { hex: "#1F5F7A" } ], inks: 1,
+      colors: 99, stats: { paths: 12 }, warnings: [], seed: 7
+    })
+    stub_request(:get, %r{/jobs/job-42/design\.svg}).to_return(body: svg)
+    stub_request(:get, %r{/jobs/job-42/source\.png}).to_return(status: 404, body: "{}")
+
+    assert_raises(ActiveRecord::RecordInvalid) { PollDesignJob.perform_now(@design) }
+
+    assert_predicate @design.reload, :failed?
+    assert_predicate @design.error_message, :present?
+  end
+
   private
     def stub_answer(**answer)
       stub_request(:get, %r{/jobs/job-42\?}).to_return(body: answer.to_json)

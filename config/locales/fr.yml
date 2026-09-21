@@ -125,6 +125,11 @@ fr:
       less_than_or_equal_to: "doit être inférieur ou égal à %{count}"
       equal_to: "doit être égal à %{count}"
       other_than: "doit être différent de %{count}"
+      # Produit par `numericality: { in: ... }`. Son absence ne se voyait nulle
+      # part jusqu'au jour où une valeur est sortie de l'intervalle : la
+      # fabrication du message levait alors I18n::MissingTranslationData, et
+      # l'erreur de validation disparaissait derrière elle.
+      in: "n'est pas dans l'intervalle autorisé (%{count})"
       inclusion: "n'est pas une valeur autorisée"
       exclusion: "n'est pas disponible"
       required: "doit exister"

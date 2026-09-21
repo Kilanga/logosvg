@@ -658,6 +658,28 @@ ce qu'il lui faut. `DesignChannel.broadcast` relit ainsi le design avec son
 fichier : sans cela la diffusion lève, et elle lève juste après un échec, au
 moment précis où l'écran du client attend la nouvelle.
 
+**Une technique matricielle n'a pas de budget d'encres.** Le microservice
+renvoie un nombre de couleurs pour *toutes* les techniques ; pour le DTF, le DTG
+et la sublimation c'est son propre défaut — huit — parce que ces machines
+impriment en quadrichromie. `StoreGeneratedDesign` le recopiait dans
+`colors_requested`, validé entre 1 et 6 : l'enregistrement devenait invalide,
+`succeed!` levait, la transaction était annulée, et le design restait « en
+cours » pour toujours. On ne reprend ce chiffre que là où c'en est un
+(`PrintTechniques#limited_colors?`).
+
+**Une clé de message d'erreur manquante ne manque que le jour où l'erreur
+arrive.** `fr.yml` n'avait pas `errors.messages.in`, produit par
+`numericality: { in: ... }`. Avec `raise_on_missing_translations`, la
+fabrication du message a levé `I18n::MissingTranslationData` — et l'erreur de
+validation a disparu derrière l'erreur de traduction. Le journal accusait I18n
+là où le fautif était un 8 dans une colonne qui n'en voulait pas.
+
+**Un filet doit recharger ce qu'il rattrape.** Quand l'échec vient d'une
+transaction annulée, l'enregistrement garde en mémoire les attributs qui l'ont
+fait échouer : `fail!` bute sur les mêmes validations, l'erreur est avalée par
+le garde-fou, et le design reste dans l'état qu'on voulait justement quitter.
+`refuse` et `give_up` relisent donc le design avant de le marquer échoué.
+
 **Un travail qui lève laisse l'écran du client tourner pour toujours.** La file
 enregistre bien l'échec, mais le design reste dans son état et rien ne le
 diffuse : côté navigateur, « génération en cours » à l'infini. `GenerateDesignJob`

@@ -49,6 +49,43 @@ class StoreGeneratedDesignTest < ActiveSupport::TestCase
     assert_requested :get, %r{/jobs/job-42/print\.png}
   end
 
+  # Le chemin qui a bloque une generation entiere en production. Le service
+  # renvoie un nombre de couleurs pour toutes les techniques : huit pour le DTF,
+  # qui imprime en quadrichromie. L'ecrire dans `colors_requested`, valide entre
+  # 1 et 6, rendait l'enregistrement invalide — `succeed!` levait, la
+  # transaction etait annulee, et le design restait « en cours » pour toujours.
+  #
+  # Le design de ce cas est un vrai design DTF, pas un design de serigraphie a
+  # qui l'on sert une reponse matricielle : c'est precisement ce melange qui
+  # faisait passer les cas precedents a cote du defaut.
+  test "a raster technique keeps its empty ink budget and turns ready" do
+    dtf = designs(:fox_dtf)
+    dtf.update!(generator_job_id: "job-42", status: "generating", colors_requested: nil)
+    stub_file("print.png", png)
+    stub_file("source.png", png)
+
+    StoreGeneratedDesign.call(
+      design: dtf, answer: raster_answer.deep_merge("result" => { "colors" => 8 })
+    )
+    dtf.reload
+
+    assert_predicate dtf, :ready?
+    assert_nil dtf.colors_requested, "une machine sans plafond d'encres n'en compte pas"
+    assert_predicate dtf.print_file, :attached?
+  end
+
+  # Et l'inverse : la ou les encres se comptent, le chiffre du service fait foi.
+  test "a vector technique records the ink budget the service settled on" do
+    stub_file("design.svg", svg)
+    stub_file("source.png", png)
+
+    StoreGeneratedDesign.call(
+      design: @design, answer: vector_answer.deep_merge("result" => { "colors" => 2 })
+    )
+
+    assert_equal 2, @design.reload.colors_requested
+  end
+
   # Screens are counted on vector output and meaningless on raster output.
   test "inks and paths are recorded for a vector file and left empty for a raster one" do
     stub_file("print.png", png)

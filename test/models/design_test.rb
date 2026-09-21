@@ -103,6 +103,19 @@ class DesignStateMachineTest < ActiveSupport::TestCase
 end
 
 class DesignTest < ActiveSupport::TestCase
+  # Le message existe-t-il seulement ? `raise_on_missing_translations` est
+  # actif en developpement comme en test : une cle manquante ne rend pas une
+  # chaine approximative, elle leve — et l'erreur de validation disparait
+  # derriere l'erreur de traduction. C'est ainsi qu'un simple « 8 couleurs pour
+  # du DTF » est devenu une generation bloquee sans aucun message.
+  test "an out-of-range ink budget says so in French" do
+    design = designs(:pending_design)
+    design.colors_requested = 8
+
+    assert_not design.valid?
+    assert_match(/1\.\.6/, design.errors.full_messages_for(:colors_requested).first)
+  end
+
   test "a design needs a prompt the service will accept" do
     assert_not valid_design(prompt: "ok").valid?
     assert_not valid_design(prompt: "a" * 301).valid?
