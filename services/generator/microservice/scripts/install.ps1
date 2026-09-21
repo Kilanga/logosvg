@@ -12,6 +12,6 @@ if (-not (Test-Path ".env")) {
     Copy-Item ".env.example" ".env"
     $key = .\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(32))"
     (Get-Content ".env") -replace "API_KEY=change-moi", "API_KEY=$key" | Set-Content ".env"
-    Write-Host "Fichier .env cree. Cle API a copier dans le plugin WordPress :"
+    Write-Host "Fichier .env cree. Cle API a reporter dans le .env de l'application Rails (GENERATOR_API_KEY et API_KEY) :"
     Write-Host $key
 }
