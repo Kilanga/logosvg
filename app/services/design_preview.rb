@@ -88,8 +88,12 @@ class DesignPreview
       end
     end
 
+    # Le nom de l'atelier, sans passer par l'association : ce service est appelé
+    # depuis un travail de fond comme depuis une requête, et le design y arrive
+    # parfois sans rien de préchargé.
     def credit
-      I18n.t("designs.watermark",
-             name: @design.printer&.name || Rails.application.config.tshirt.platform_name)
+      shop = Printer.where(id: @design.printer_id).pick(:name) if @design.printer_id
+
+      I18n.t("designs.watermark", name: shop || Rails.application.config.tshirt.platform_name)
     end
 end

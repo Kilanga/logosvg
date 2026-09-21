@@ -650,6 +650,14 @@ sur l'enregistrement (`design.user_id`). `test/channels/application_cable/connec
 et `test/jobs/strict_loading_test.rb` rejouent ces chemins avec le réglage du
 développement.
 
+**La règle qui en découle : un point d'entrée charge ses propres
+enregistrements.** Une action de contrôleur, un travail de fond, un mailer et
+une diffusion Turbo reçoivent tous un enregistrement nu, et chacun doit
+demander ce qu'il va lire — ou ne demander que l'identifiant quand c'est tout
+ce qu'il lui faut. `DesignChannel.broadcast` relit ainsi le design avec son
+fichier : sans cela la diffusion lève, et elle lève juste après un échec, au
+moment précis où l'écran du client attend la nouvelle.
+
 **Un travail qui lève laisse l'écran du client tourner pour toujours.** La file
 enregistre bien l'échec, mais le design reste dans son état et rien ne le
 diffuse : côté navigateur, « génération en cours » à l'infini. `GenerateDesignJob`

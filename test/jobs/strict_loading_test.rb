@@ -84,6 +84,21 @@ class JobsStrictLoadingTest < ActiveJob::TestCase
     assert_predicate design, :ready?
   end
 
+  # L'aperçu filigrané est produit aussi bien depuis une requête que depuis
+  # l'envoi d'une demande d'impression, où le design arrive sans rien.
+  test "the watermarked preview is produced with strict loading on" do
+    # Un design rattaché à un atelier : le filigrane porte son nom, et c'est
+    # cette lecture-là qui saute vers une association que personne n'a chargée.
+    ActiveRecord::Base.strict_loading_by_default = false
+    id = designs(:fox_screen).id
+    Design.find(id).print_file.attach(
+      io: StringIO.new(svg), filename: "design.svg", content_type: "image/svg+xml"
+    )
+    ActiveRecord::Base.strict_loading_by_default = true
+
+    assert_not_nil DesignPreview.call(Design.with_attached_print_file.find(id))
+  end
+
   private
     def prepare_generating
       ActiveRecord::Base.strict_loading_by_default = false
