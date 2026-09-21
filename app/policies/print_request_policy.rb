@@ -21,7 +21,10 @@ class PrintRequestPolicy < ApplicationPolicy
       return scope.none if user.nil?
 
       if user.printer?
-        scope.where(printer_id: user.printer&.id)
+        # Une sous-requête plutôt qu'un saut depuis `user` : une policy ne voit
+        # pas les aides du contrôleur, et l'utilisateur courant lui arrive tel
+        # que Pundit l'a reçu, sans préchargement.
+        scope.where(printer_id: Printer.where(user_id: user.id).select(:id))
       elsif user.client?
         scope.where(client: user)
       else

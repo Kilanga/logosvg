@@ -30,8 +30,14 @@ module Authentication
       Current.session ||= find_session_by_cookie
     end
 
+    # The user is preloaded, not lazily reached: `Current.user` delegates to this
+    # session, and Pundit reads it in the very first before_action of every
+    # authenticated request. Development runs with `strict_loading_by_default`,
+    # so a lazy `session.user` raises there — on every page, for every signed-in
+    # user — while the test suite, which does not set that flag, stays green.
+    # In production the same preload is simply one query fewer.
     def find_session_by_cookie
-      Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
+      Session.includes(:user).find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
     end
 
     def request_authentication

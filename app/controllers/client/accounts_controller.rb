@@ -37,7 +37,7 @@ module Client
       if @user.update(password_params)
         # Every other session is dropped: changing a password is how someone
         # locks out whoever they think is reading their mail.
-        Current.user.sessions.where.not(id: Current.session.id).destroy_all
+        Session.where(user_id: Current.user.id).where.not(id: Current.session.id).destroy_all
         redirect_to client_account_path, notice: t(".changed")
       else
         render :edit, status: :unprocessable_entity

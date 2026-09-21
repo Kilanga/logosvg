@@ -39,7 +39,7 @@ module Workshop
       # A printer who has never filled anything in still gets a form, not a
       # dead end.
       def set_printer
-        @printer = Current.user.printer ||
+        @printer = current_printer ||
                    Current.user.build_printer(orders_email: Current.user.email_address)
       end
 

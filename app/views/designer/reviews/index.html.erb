@@ -32,12 +32,12 @@
         <span class="flex gap-3 text-line" aria-hidden="true">
           <%= registration_mark %><%= registration_mark %><%= registration_mark %>
         </span>
-        <% if Current.user.designer_profile&.can_take_work? %>
+        <% if current_designer_profile&.can_take_work? %>
           <p class="label-rule"><%= t(".nothing_available") %></p>
           <p class="max-w-sm text-sm text-muted"><%= t(".nothing_available_body") %></p>
         <% else %>
           <p class="label-rule text-warning">
-            <%= t("designers.unavailable.#{Current.user.designer_profile&.unavailable_reason || 'pending_review'}") %>
+            <%= t("designers.unavailable.#{current_designer_profile&.unavailable_reason || 'pending_review'}") %>
           </p>
           <p class="max-w-sm text-sm text-muted"><%= t(".unavailable_body") %></p>
           <%= link_to t(".fix_it"), designer_dashboard_path, class: "btn btn-secondary mt-1 text-sm" %>

@@ -49,7 +49,7 @@ module Designer
 
     private
       def set_profile
-        @profile = Current.user.designer_profile ||
+        @profile = current_designer_profile ||
                    Current.user.build_designer_profile(display_name: Current.user.full_name)
       end
   end
