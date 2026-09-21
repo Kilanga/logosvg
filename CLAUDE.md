@@ -629,6 +629,25 @@ seuls les professionnels possèdent. Chaque espace charge le sien dans son
 associations que cet espace montre. Une policy, qui ne voit pas ces aides, fait
 sa propre requête ou une sous-requête — jamais un saut depuis `user`.
 
+**Et le filet posé sur les contrôleurs ne couvre pas les travaux de fond.** Le
+même oubli s'est reproduit deux fois de suite après le correctif des
+contrôleurs : dans `ApplicationCable::Connection`, qui relit la session pour son
+compte hors du cycle d'une requête, puis dans toute la chaîne de génération, que
+Solid Queue nourrit d'un `Design.find` nu. Un travail y est rendu **sans aucune
+association**, et `design.user` — lu au fond de `GeneratorClient` pour le seul
+pseudonyme RGPD — tuait la génération avant son premier appel HTTP. La réponse
+n'est pas de précharger : c'est de ne demander que l'identifiant, qui est déjà
+sur l'enregistrement (`design.user_id`). `test/channels/application_cable/connection_test.rb`
+et `test/jobs/strict_loading_test.rb` rejouent ces chemins avec le réglage du
+développement.
+
+**Un travail qui lève laisse l'écran du client tourner pour toujours.** La file
+enregistre bien l'échec, mais le design reste dans son état et rien ne le
+diffuse : côté navigateur, « génération en cours » à l'infini. `GenerateDesignJob`
+et `PollDesignJob` attrapent donc `StandardError` en dernier recours, marquent le
+design échoué, rendent l'essai, **puis relancent l'erreur** — elle est notre
+affaire et doit rester visible dans la file.
+
 **`strict_loading_mode = :n_plus_one_only` ne remplace pas `:all`.** La piste
 paraissait élégante : n'interdire que les N+1, ce que dit la règle. Mesure
 faite, sous ce mode `Design.limit(5).each { |d| d.user }` ne lève **plus rien** —

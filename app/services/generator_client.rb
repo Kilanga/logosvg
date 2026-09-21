@@ -67,39 +67,45 @@ class GeneratorClient
       colors: design.colors_requested,
       print_width_cm: design.print_width_cm,
       remove_background: design.remove_background,
-      user_id: pseudonym(design.user),
+      user_id: pseudonym(design.user_id),
       seed: design.seed
     }.compact)
   end
 
-  def refine(job_id, instruction:, user:)
-    post("/jobs/#{job_id}/refine", { instruction: instruction, user_id: pseudonym(user) })
+  def refine(job_id, instruction:, user_id:)
+    post("/jobs/#{job_id}/refine", { instruction: instruction, user_id: pseudonym(user_id) })
   end
 
-  def variants(job_id, user:, count: 3)
-    post("/jobs/#{job_id}/variants", { user_id: pseudonym(user), count: count })
+  def variants(job_id, user_id:, count: 3)
+    post("/jobs/#{job_id}/variants", { user_id: pseudonym(user_id), count: count })
   end
 
-  def job(job_id, user:)
-    get("/jobs/#{job_id}", user_id: pseudonym(user))
+  def job(job_id, user_id:)
+    get("/jobs/#{job_id}", user_id: pseudonym(user_id))
   end
 
   # The generated file, as bytes. `name` comes from `result.print_file`: the
   # application never presumes an extension.
-  def download(job_id, name, user:)
-    fetch_body("/jobs/#{job_id}/#{name}", user_id: pseudonym(user))
+  def download(job_id, name, user_id:)
+    fetch_body("/jobs/#{job_id}/#{name}", user_id: pseudonym(user_id))
   end
 
   private
     # The service never learns who the client is: it receives an HMAC of the
     # account id, truncated to what its own pattern accepts. See docs/SPEC.md,
     # "RGPD".
-    def pseudonym(user)
+    #
+    # An id, not a User: the id is all this ever needed, and asking for the
+    # record would mean loading it. The generation pipeline runs on designs
+    # handed to background jobs, where `design.user` is an association nobody
+    # preloaded — in development, with `strict_loading_by_default`, reaching
+    # for it raised and the generation died before its first HTTP call.
+    def pseudonym(user_id)
       key = ENV["GENERATOR_USER_KEY"].presence ||
             Rails.application.credentials.dig(:generator, :user_key)
       raise Unavailable, "GENERATOR_USER_KEY is not configured" if key.blank?
 
-      OpenSSL::HMAC.hexdigest("SHA256", key, user.id.to_s).first(32)
+      OpenSSL::HMAC.hexdigest("SHA256", key, user_id.to_s).first(32)
     end
 
     def get(path, **query) = JSON.parse(fetch_body(path, **query))

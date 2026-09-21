@@ -16,7 +16,7 @@ class PollDesignJob < ApplicationJob
       return give_up(design, I18n.t("designs.errors.timed_out"))
     end
 
-    answer = GeneratorClient.new.job(design.generator_job_id, user: design.user)
+    answer = GeneratorClient.new.job(design.generator_job_id, user_id: design.user_id)
 
     case answer["status"]
     when "done"  then complete(design, answer)
@@ -32,9 +32,22 @@ class PollDesignJob < ApplicationJob
     # same five minutes as everything else.
     Rails.logger.info("[generator] #{e.message}, still waiting for #{design.token}")
     reschedule(design, started_at)
+  rescue StandardError => e
+    # Même filet que GenerateDesignJob : une panne imprévue ici laisserait le
+    # design en `generating` sans que rien ne le relance, et l'écran du client
+    # tournerait indéfiniment.
+    Rails.logger.error("[generator] panne imprévue : #{e.class} — #{e.message}")
+    safely { give_up(design, I18n.t("designs.errors.failed")) }
+    raise
   end
 
   private
+    def safely
+      yield
+    rescue StandardError => e
+      Rails.logger.error("[generator] échec du filet lui-même : #{e.class} — #{e.message}")
+    end
+
     def settings = Rails.application.config.tshirt.generation
 
     def timed_out?(started_at) = Time.current - started_at > settings[:poll_timeout_seconds]
@@ -54,7 +67,7 @@ class PollDesignJob < ApplicationJob
     end
 
     def give_up(design, message)
-      GenerationQuota.for(design.user).refund!
+      GenerationQuota.for_user_id(design.user_id).refund!
       design.fail!(message)
       design.save!
       DesignChannel.broadcast(design)

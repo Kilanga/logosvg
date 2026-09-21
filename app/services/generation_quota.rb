@@ -8,10 +8,14 @@
 class GenerationQuota
   def self.per_day = Rails.application.config.tshirt.generation[:quota_per_day]
 
-  def self.for(user) = new(user)
+  def self.for(user) = new(user.id)
 
-  def initialize(user)
-    @user = user
+  # Pour les travaux de fond, qui tiennent un design et non un compte :
+  # `design.user` y est une association que personne n'a préchargée.
+  def self.for_user_id(user_id) = new(user_id)
+
+  def initialize(user_id)
+    @user_id = user_id
   end
 
   def used = counter&.count.to_i
@@ -30,7 +34,7 @@ class GenerationQuota
     return false if exceeded?
 
     GenerationCounter.upsert(
-      { user_id: @user.id, day: today, count: 1, created_at: Time.current, updated_at: Time.current },
+      { user_id: @user_id, day: today, count: 1, created_at: Time.current, updated_at: Time.current },
       unique_by: %i[ user_id day ],
       on_duplicate: Arel.sql("count = generation_counters.count + 1, updated_at = EXCLUDED.updated_at")
     )
@@ -54,6 +58,6 @@ class GenerationQuota
     def counter
       return @counter if defined?(@counter) && @counter
 
-      @counter = GenerationCounter.find_by(user: @user, day: today)
+      @counter = GenerationCounter.find_by(user_id: @user_id, day: today)
     end
 end

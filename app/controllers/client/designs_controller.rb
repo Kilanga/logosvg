@@ -69,14 +69,14 @@ module Client
 
     def variants
       authorize @design
-      take_it_further { GeneratorClient.new.variants(@design.generator_job_id, user: Current.user) }
+      take_it_further { GeneratorClient.new.variants(@design.generator_job_id, user_id: Current.user.id) }
     end
 
     def refine
       authorize @design
       @instruction = params[:instruction].to_s.strip
       take_it_further do
-        GeneratorClient.new.refine(@design.generator_job_id, instruction: @instruction, user: Current.user)
+        GeneratorClient.new.refine(@design.generator_job_id, instruction: @instruction, user_id: Current.user.id)
       end
     end
 

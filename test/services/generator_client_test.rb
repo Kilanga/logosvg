@@ -87,7 +87,7 @@ class GeneratorClientTest < ActiveSupport::TestCase
     )
 
     assert_raises(GeneratorClient::BudgetExhausted) do
-      GeneratorClient.new.refine("abc", instruction: "un casque rouge", user: users(:client))
+      GeneratorClient.new.refine("abc", instruction: "un casque rouge", user_id: users(:client).id)
     end
   end
 
@@ -95,7 +95,7 @@ class GeneratorClientTest < ActiveSupport::TestCase
     stub_request(:post, %r{/jobs/abc/refine}).to_return(status: 409, body: { detail: "Pas prêt." }.to_json)
 
     assert_raises(GeneratorClient::NotReady) do
-      GeneratorClient.new.refine("abc", instruction: "un casque rouge", user: users(:client))
+      GeneratorClient.new.refine("abc", instruction: "un casque rouge", user_id: users(:client).id)
     end
   end
 
@@ -122,13 +122,13 @@ class GeneratorClientTest < ActiveSupport::TestCase
   test "a job belonging to someone else is not found" do
     stub_request(:get, %r{/jobs/abc}).to_return(status: 404, body: "{}")
 
-    assert_raises(GeneratorClient::NotFound) { GeneratorClient.new.job("abc", user: users(:client)) }
+    assert_raises(GeneratorClient::NotFound) { GeneratorClient.new.job("abc", user_id: users(:client).id) }
   end
 
   test "a file is fetched by the name the service gave, never by a guessed extension" do
     stub_request(:get, %r{/jobs/abc/print\.png}).to_return(body: "des octets")
 
-    assert_equal "des octets", GeneratorClient.new.download("abc", "print.png", user: users(:client))
+    assert_equal "des octets", GeneratorClient.new.download("abc", "print.png", user_id: users(:client).id)
   end
 
   test "without a pseudonymisation key nothing leaves the application" do
