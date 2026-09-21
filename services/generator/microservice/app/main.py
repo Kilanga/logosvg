@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
         task.cancel()
 
 
-app = FastAPI(title="T-shirt IA — génération vectorielle", lifespan=lifespan, docs_url=None, redoc_url=None)
+app = FastAPI(title="Prêt-à-tirer — génération vectorielle", lifespan=lifespan, docs_url=None, redoc_url=None)
 
 
 class GenerateRequest(BaseModel):

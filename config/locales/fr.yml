@@ -145,7 +145,10 @@ fr:
   platform:
     # Le nom vient de config/settings.yml (décision ouverte) : il est injecté
     # dans ces phrases plutôt que recopié.
-    tagline: "Le design imprimable, décrit puis vectorisé"
+    # Le nom dit « prêt à imprimer » ; l'accroche dit pour qui et par qui.
+    # Elle ne parle plus de vectorisation : depuis que la technique décide de
+    # la sortie, un DTF repart en PNG détouré et non en SVG.
+    tagline: "Décrit par le client, imprimable par l'atelier"
 
   layout:
     skip_to_content: "Aller au contenu"

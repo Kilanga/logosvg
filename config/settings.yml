@@ -10,8 +10,10 @@
 
 shared:
   # --- Identité ------------------------------------------------------------
-  # ⚠ DÉCISION OUVERTE : nom de la plateforme et nom de domaine.
-  platform_name: "T-shirt IA"
+  # Décidé le 21/09/2026. Écrit avec les traits d'union de « prêt-à-porter » :
+  # c'est ce rapprochement qui fait le nom, et « tirer » est le mot du métier
+  # pour lancer une série. Nom de domaine : pretatirer.fr.
+  platform_name: "Prêt-à-tirer"
   support_email: "contact@example.invalid"
 
   # --- Génération de designs ----------------------------------------------

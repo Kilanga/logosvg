@@ -1,4 +1,4 @@
-# CLAUDE.md — T-shirt IA
+# CLAUDE.md — Prêt-à-tirer
 
 Guide de travail pour Claude Code sur ce dépôt. Le cahier des charges fait foi :
 [docs/SPEC.md](docs/SPEC.md). Ce fichier en résume les règles opérationnelles et
@@ -255,7 +255,7 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 
 | Clé                                | Valeur provisoire | Question ouverte                      |
 | ---------------------------------- | ----------------- | ------------------------------------- |
-| `platform_name`                    | `T-shirt IA`      | nom définitif et domaine              |
+| `platform_name`                    | `Prêt-à-tirer`    | **décidé** — domaine `pretatirer.fr`  |
 | `generation_quota_per_day`         | `5`               | confirmé par le cahier des charges     |
 | `review_auto_accept_days`          | `7`               | validation automatique                 |
 | `proposal_expiry_hours`            | `72`              | réponse à une proposition              |

@@ -1,7 +1,7 @@
-# T-shirt IA
+# Prêt-à-tirer
 
-> Le nom de la plateforme est encore une décision ouverte ; « T-shirt IA » est
-> une valeur provisoire, définie dans `config/settings.yml`.
+> Le nom est défini dans `config/settings.yml` (`platform_name`) et n'est
+> recopié nulle part ailleurs : une seule ligne à changer s'il évolue.
 
 Plateforme vendue par abonnement aux **imprimeurs textiles**. Leurs clients
 décrivent une idée, une IA génère un visuel **en aplats** limité aux couleurs
