@@ -29,10 +29,12 @@ class CreateDesignChildren
   private
     def build_child(job_id, answer)
       Design.new(
-        user: @parent.user,
-        printer: @parent.printer,
-        parent: @parent,
-        root: @parent.lineage_root,
+        # Par identifiants : l'enfant n'a besoin que des clés, et le parent
+        # arrive ici tel que le contrôleur l'a trouvé — sans associations.
+        user_id: @parent.user_id,
+        printer_id: @parent.printer_id,
+        parent_id: @parent.id,
+        root_id: @parent.lineage_root_id,
         mode: @instruction ? "refine" : "variant",
         instruction: @instruction,
         # Inherited wholesale: a child of a screen-printing design is a

@@ -586,6 +586,15 @@ les autres candidats dans le `setup`, et **vider la file** (`perform_enqueued_jo
 avant une assertion qui en contient un deuxième — sinon la livraison du premier
 passage est comptée dans le second.
 
+**`ActionMailer::TestHelper` ne vide pas `deliveries`.** Seuls
+`ActionMailer::TestCase` et les tests d'intégration le font. Inclus partout
+depuis `test_helper.rb`, il laissait les envois d'un test visibles par le
+suivant : `deliveries.find { … }` remontait l'email d'un *autre* test, sans
+pièce jointe, et l'assertion tombait environ une fois sur huit — selon le seed,
+c'est-à-dire selon rien. `test_helper.rb` vide donc `deliveries` avant chaque
+test. Un échec qui ne se reproduit qu'un run sur huit n'est pas « la machine » :
+c'est un état qui traverse la frontière d'un test.
+
 **Une validation de complétude appartient au moment où elle compte.** Le profil
 graphiste se sauvegarde à moitié écrit — on rédige sa présentation en trois
 fois — mais l'administration ne peut pas publier une page vide. D'où un contexte
@@ -628,6 +637,33 @@ seuls les professionnels possèdent. Chaque espace charge le sien dans son
 `BaseController` (`current_printer`, `current_designer_profile`), avec les
 associations que cet espace montre. Une policy, qui ne voit pas ces aides, fait
 sa propre requête ou une sous-requête — jamais un saut depuis `user`.
+
+**Et le filet posé sur les contrôleurs ne couvre pas les travaux de fond.** Le
+même oubli s'est reproduit deux fois de suite après le correctif des
+contrôleurs : dans `ApplicationCable::Connection`, qui relit la session pour son
+compte hors du cycle d'une requête, puis dans toute la chaîne de génération, que
+Solid Queue nourrit d'un `Design.find` nu. Un travail y est rendu **sans aucune
+association**, et `design.user` — lu au fond de `GeneratorClient` pour le seul
+pseudonyme RGPD — tuait la génération avant son premier appel HTTP. La réponse
+n'est pas de précharger : c'est de ne demander que l'identifiant, qui est déjà
+sur l'enregistrement (`design.user_id`). `test/channels/application_cable/connection_test.rb`
+et `test/jobs/strict_loading_test.rb` rejouent ces chemins avec le réglage du
+développement.
+
+**La règle qui en découle : un point d'entrée charge ses propres
+enregistrements.** Une action de contrôleur, un travail de fond, un mailer et
+une diffusion Turbo reçoivent tous un enregistrement nu, et chacun doit
+demander ce qu'il va lire — ou ne demander que l'identifiant quand c'est tout
+ce qu'il lui faut. `DesignChannel.broadcast` relit ainsi le design avec son
+fichier : sans cela la diffusion lève, et elle lève juste après un échec, au
+moment précis où l'écran du client attend la nouvelle.
+
+**Un travail qui lève laisse l'écran du client tourner pour toujours.** La file
+enregistre bien l'échec, mais le design reste dans son état et rien ne le
+diffuse : côté navigateur, « génération en cours » à l'infini. `GenerateDesignJob`
+et `PollDesignJob` attrapent donc `StandardError` en dernier recours, marquent le
+design échoué, rendent l'essai, **puis relancent l'erreur** — elle est notre
+affaire et doit rester visible dans la file.
 
 **`strict_loading_mode = :n_plus_one_only` ne remplace pas `:all`.** La piste
 paraissait élégante : n'interdire que les N+1, ce que dit la règle. Mesure

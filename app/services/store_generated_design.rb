@@ -20,7 +20,7 @@ class StoreGeneratedDesign
 
   def call
     file_name = @result.fetch("print_file")
-    bytes = client.download(@design.generator_job_id, file_name, user: @design.user)
+    bytes = client.download(@design.generator_job_id, file_name, user_id: @design.user_id)
     format = file_name.split(".").last
 
     inspect!(format, bytes)
@@ -56,7 +56,7 @@ class StoreGeneratedDesign
         content_type: CONTENT_TYPES.fetch(format, "application/octet-stream")
       )
 
-      source = client.download(@design.generator_job_id, "source.png", user: @design.user)
+      source = client.download(@design.generator_job_id, "source.png", user_id: @design.user_id)
       @design.source_png.attach(io: StringIO.new(source), filename: "source.png", content_type: "image/png")
     rescue GeneratorClient::NotFound
       # The original image is a nicety for comparison, not the deliverable.

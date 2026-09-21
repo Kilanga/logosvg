@@ -69,14 +69,14 @@ module Client
 
     def variants
       authorize @design
-      take_it_further { GeneratorClient.new.variants(@design.generator_job_id, user: Current.user) }
+      take_it_further { GeneratorClient.new.variants(@design.generator_job_id, user_id: Current.user.id) }
     end
 
     def refine
       authorize @design
       @instruction = params[:instruction].to_s.strip
       take_it_further do
-        GeneratorClient.new.refine(@design.generator_job_id, instruction: @instruction, user: Current.user)
+        GeneratorClient.new.refine(@design.generator_job_id, instruction: @instruction, user_id: Current.user.id)
       end
     end
 
@@ -91,7 +91,9 @@ module Client
 
     private
       def set_design
-        @design = policy_scope(Design).find_by!(token: params[:token])
+        @design = policy_scope(Design).with_attached_print_file
+                                      .includes(printer: :subscription)
+                                      .find_by!(token: params[:token])
       end
 
       # Both a variant and a refinement produce children of the same lineage,
@@ -117,7 +119,10 @@ module Client
 
       # The shop in context comes from /a/:slug and lasts the whole session.
       def context_printer
-        @context_printer ||= Printer.listed.find_by(id: session[:printer_id])
+        # Avec ses techniques et son abonnement : `technique_keys` lit les
+        # premières, `listed?` le second, et les deux sont lus dès le formulaire.
+        @context_printer ||= Printer.listed.includes(:techniques, :subscription)
+                                    .find_by(id: session[:printer_id])
       end
 
       # A shop in context narrows the choice to what it actually does; without

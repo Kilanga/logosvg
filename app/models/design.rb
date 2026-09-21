@@ -93,6 +93,12 @@ class Design < ApplicationRecord
 
   def lineage_root = root || self
 
+  # L'identifiant de la racine sans charger la racine. Un enfant se rattache à
+  # la lignée par une clé étrangère : aller chercher l'enregistrement pour lire
+  # son id, c'est une requête de plus et, sur un design rendu par un travail de
+  # fond, un chargement paresseux qui lève en développement.
+  def lineage_root_id = root_id || id
+
   def soft_delete! = update!(deleted_at: Time.current)
 
   def active? = deleted_at.nil?
