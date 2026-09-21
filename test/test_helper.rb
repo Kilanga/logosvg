@@ -26,5 +26,13 @@ module ActiveSupport
     # And email is how it talks to workshops: a print request that sends no
     # email has not been sent. `assert_emails` belongs everywhere too.
     include ActionMailer::TestHelper
+
+    # Mais `ActionMailer::TestHelper` ne vide pas `deliveries` — seuls
+    # `ActionMailer::TestCase` et les tests d'intégration le font. Inclus
+    # partout comme ici, il laisse donc les envois d'un test visibles par le
+    # suivant, et un `deliveries.find { … }` remonte l'email d'un autre test.
+    # La panne intermittente par excellence : elle ne dépend que de l'ordre de
+    # passage, donc du seed, donc de rien.
+    setup { ActionMailer::Base.deliveries.clear }
   end
 end

@@ -586,6 +586,15 @@ les autres candidats dans le `setup`, et **vider la file** (`perform_enqueued_jo
 avant une assertion qui en contient un deuxième — sinon la livraison du premier
 passage est comptée dans le second.
 
+**`ActionMailer::TestHelper` ne vide pas `deliveries`.** Seuls
+`ActionMailer::TestCase` et les tests d'intégration le font. Inclus partout
+depuis `test_helper.rb`, il laissait les envois d'un test visibles par le
+suivant : `deliveries.find { … }` remontait l'email d'un *autre* test, sans
+pièce jointe, et l'assertion tombait environ une fois sur huit — selon le seed,
+c'est-à-dire selon rien. `test_helper.rb` vide donc `deliveries` avant chaque
+test. Un échec qui ne se reproduit qu'un run sur huit n'est pas « la machine » :
+c'est un état qui traverse la frontière d'un test.
+
 **Une validation de complétude appartient au moment où elle compte.** Le profil
 graphiste se sauvegarde à moitié écrit — on rédige sa présentation en trois
 fois — mais l'administration ne peut pas publier une page vide. D'où un contexte
