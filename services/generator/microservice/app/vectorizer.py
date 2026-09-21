@@ -19,6 +19,7 @@ Ordre des opérations, et pourquoi :
 7. respect du nombre d'encres demandé — chaque couleur en trop rejoint la plus proche.
 """
 import io
+import re
 from collections import Counter
 
 import vtracer
@@ -243,6 +244,51 @@ def extract_palette(img: Image.Image, min_share: float = 0.005) -> list:
     return palette
 
 
+FILL_PATTERN = re.compile(r'fill="#([0-9a-fA-F]{6})"')
+
+
+def snap_fills_to_palette(svg: str, palette: list) -> tuple:
+    """Ramène chaque `fill` du SVG sur une couleur de la palette, et dit lesquelles servent.
+
+    Le vectoriseur rééchantillonne la couleur de chaque forme au lieu de reprendre celle
+    du pixel : une image réduite à trois couleurs ressort avec dix-neuf `fill` voisins
+    (#17121d, #1c1a26, #1d1d2c…). À l'œil c'est la même encre, mais l'application compte
+    les `fill` distincts pour annoncer le nombre d'écrans à l'atelier — et un badge à
+    quatre couleurs se retrouvait commandé à cent trente-cinq écrans.
+
+    Chaque teinte est donc recalée sur la plus proche de la palette réellement préparée,
+    et on renvoie les couleurs effectivement présentes : ce que l'atelier comptera.
+    """
+    if not palette:
+        return svg, []
+
+    references = []
+    for entry in palette:
+        hex_value = entry["hex"].lstrip("#")
+        references.append((
+            hex_value,
+            (int(hex_value[0:2], 16), int(hex_value[2:4], 16), int(hex_value[4:6], 16)),
+        ))
+
+    used = set()
+    cache = {}
+
+    def nearest(match) -> str:
+        raw = match.group(1).lower()
+        if raw not in cache:
+            r, g, b = int(raw[0:2], 16), int(raw[2:4], 16), int(raw[4:6], 16)
+            cache[raw] = min(
+                references,
+                key=lambda ref: (ref[1][0] - r) ** 2 + (ref[1][1] - g) ** 2 + (ref[1][2] - b) ** 2,
+            )[0]
+        used.add(cache[raw])
+        return 'fill="#%s"' % cache[raw]
+
+    snapped = FILL_PATTERN.sub(nearest, svg)
+    kept = [entry for entry in palette if entry["hex"].lstrip("#") in used]
+    return snapped, kept
+
+
 def to_svg(img: Image.Image, min_detail: int = 20) -> str:
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -271,7 +317,9 @@ def vectorize(png_bytes: bytes, colors: int, remove_background: bool, max_paths_
     profile = resolve(technique)
     prepared = prepare_image(png_bytes, colors, remove_background, profile.white_is_ink)
     svg = to_svg(prepared, profile.min_detail)
-    palette = extract_palette(prepared)
+    # La palette annoncée est celle du fichier livré, pas celle de l'image intermédiaire :
+    # c'est la seule façon que le client et l'atelier comptent les mêmes encres.
+    svg, palette = snap_fills_to_palette(svg, extract_palette(prepared))
     paths = svg.count("<path")
     # Part de l'image restée opaque : sert à repérer un fond qui n'a pas pu être retiré.
     opaque_share = round(_opaque_share(prepared), 3)

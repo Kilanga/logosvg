@@ -152,6 +152,14 @@ Le nombre d'encres affiché à l'atelier est **recompté par Rails** à partir d
 `<style>` ou des classes CSS plutôt que des attributs `fill`, le compte sera
 faux. **Mettez la couleur dans un attribut `fill` sur chaque forme.**
 
+> Piège vérifié sur de vraies images : le vectoriseur rééchantillonne la couleur de chaque
+> forme au lieu de reprendre celle du pixel. Une image réduite à trois couleurs ressortait
+> avec dix-neuf `fill` voisins (`#17121d`, `#1c1a26`, `#1d1d2c`…) — identiques à l'œil,
+> mais dix-neuf écrans pour l'atelier, et cent trente-cinq sur un badge à quatre couleurs.
+> Le moteur recale donc chaque `fill` sur la palette du dessin avant de livrer, et
+> `result.palette` ne contient que les couleurs réellement présentes dans le fichier :
+> le compte du service et celui de `SvgInspector` sont identiques, par construction.
+
 ### PNG (`RasterInspector`)
 
 Refusé si : ce n'est pas un PNG (vérifié à la signature, pas à l'extension),
@@ -210,24 +218,33 @@ Chaque entrée :
 
 ---
 
-## 7. Le problème connu, à régler côté moteur
+## 7. La définition du fichier matriciel — réglé
 
-> SDXL dessine en 1 024 px de côté. Le fichier est livré à 300 dpi, mais au-delà
-> d'environ 9 cm de large les pixels sont interpolés.
+> SDXL dessine en 1 024 px de côté. À 25 cm de large, cela ne fait que **104 dpi réels** :
+> le fichier partait bien en 300 dpi, mais interpolé, et l'avertissement « définition
+> faible » tombait sur presque chaque commande.
 
-Une poitrine de t-shirt se demande à 25 cm. Sans agrandissement, **le fichier
-est livré à environ 100 dpi réels et l'avertissement « définition faible »
-s'affiche presque à chaque fois** — ce qui le rend inutile.
+Le moteur ajoute désormais, **pour la famille matricielle uniquement**, une seconde passe
+de diffusion : l'image est repassée dans le modèle à la taille visée, avec un bruit faible
+(`HIRES_DENOISE`, 0,35). La composition ne bouge pas, mais les pixels sont **dessinés**
+plutôt qu'étalés.
 
-Deux façons de le régler, toutes deux **côté moteur, pas côté Rails** :
+| `HIRES_SCALE` | Dessin | Résolution réelle à 25 cm | Net jusqu'à | Avertissement |
+| --- | --- | --- | --- | --- |
+| 1,0 (désactivé) | 1 024 px | 104 dpi | 17 cm | à chaque commande |
+| **1,5 (défaut)** | 1 536 px | **156 dpi** | 26 cm | aucun |
+| 2,0 | 2 048 px | 208 dpi | 35 cm | aucun |
 
-1. un nœud d'agrandissement dans le workflow ComfyUI, avant vectorisation ;
-2. un `IMAGE_SIZE` plus élevé.
+1,5 est le défaut parce qu'il tient confortablement dans les 12 Go de VRAM de la machine
+et qu'il suffit à passer le seuil des 150 dpi sur une poitrine de t-shirt. 2,0 donne plus
+de marge et frôle la limite mémoire.
 
-Renseignez alors honnêtement `source_dpi`, `net_width_cm` et `upscale` dans
-`stats` : Rails s'en sert pour dire au client jusqu'où son visuel reste net.
+La passe n'est jamais bloquante : si le GPU manque de mémoire, l'image d'origine est
+conservée, un avertissement est joint, et la génération aboutit quand même. Le vectoriel
+n'est pas concerné — un tracé n'a pas de résolution.
 
----
+`source_dpi`, `net_width_cm` et `upscale` disent la vérité dans les deux cas : `dpi` est
+celui du fichier, `source_dpi` celui du dessin. C'est le second qui dit si le rendu sera net.
 
 ## 8. Attentes de performance
 

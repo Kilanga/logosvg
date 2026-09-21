@@ -18,7 +18,7 @@ class PrinterCompatibilityTest < ActiveSupport::TestCase
 
     assert_not_predicate result, :compatible?
     assert_equal :technique_not_practised, result.reason
-    assert_equal "ne pratique pas DTF", result.message
+    assert_equal "ne pratique pas #{PrintTechniques.fetch('dtf').label}", result.message
   end
 
   test "too many inks for a technique that counts them" do

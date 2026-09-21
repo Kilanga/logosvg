@@ -52,6 +52,17 @@ class MockGenerator:
         img.save(buf, format="PNG")
         return buf.getvalue()
 
+    async def hires(self, positive: str, negative: str, seed: int,
+                    init_png: bytes, denoise: float, size: int) -> bytes:
+        """Sans GPU, la passe haute définition se réduit à un agrandissement."""
+        await asyncio.sleep(0.2)
+        img = Image.open(io.BytesIO(init_png)).convert("RGB")
+        if size > img.width:
+            img = img.resize((size, round(img.height * size / img.width)), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+
     async def refine(self, positive: str, negative: str, seed: int, colors: int,
                      init_png: bytes, denoise: float) -> bytes:
         """Repart de l'image fournie et la modifie visiblement, sans GPU."""
@@ -89,14 +100,15 @@ class ComfyUIGenerator:
         return wf
 
     def _workflow_refine(self, positive: str, negative: str, seed: int,
-                         image_name: str, denoise: float) -> dict:
+                         image_name: str, denoise: float, size: int = None) -> dict:
         if not self.img2img:
             raise GenerationError("Le workflow de retouche est absent du service.")
         wf = self._common(json.loads(json.dumps(self.img2img)), positive, negative, seed)
         wf["3"]["inputs"]["denoise"] = denoise
         wf["10"]["inputs"]["image"] = image_name
-        wf["12"]["inputs"]["width"] = settings.image_size
-        wf["12"]["inputs"]["height"] = settings.image_size
+        target = size or settings.image_size
+        wf["12"]["inputs"]["width"] = target
+        wf["12"]["inputs"]["height"] = target
         return wf
 
     async def _upload(self, client: httpx.AsyncClient, png: bytes) -> str:
@@ -149,6 +161,23 @@ class ComfyUIGenerator:
 
     async def generate(self, positive: str, negative: str, seed: int, colors: int) -> bytes:
         return await self._run(self._workflow(positive, negative, seed))
+
+    async def hires(self, positive: str, negative: str, seed: int,
+                    init_png: bytes, denoise: float, size: int) -> bytes:
+        """Seconde passe de diffusion, à la taille voulue : les pixels sont dessinés.
+
+        Le même workflow que la retouche, avec un bruit faible : la composition ne bouge
+        pas, mais les bords et les détails sont réellement redessinés à la nouvelle
+        résolution, là où un agrandissement se contenterait d'étaler les pixels existants.
+        """
+        try:
+            async with httpx.AsyncClient(base_url=settings.comfyui_url, timeout=60) as client:
+                name = await self._upload(client, init_png)
+        except httpx.HTTPError as exc:
+            raise GenerationError(f"ComfyUI injoignable : {exc}") from exc
+        return await self._run(
+            self._workflow_refine(positive, negative, seed, name, denoise, size=size)
+        )
 
     async def refine(self, positive: str, negative: str, seed: int, colors: int,
                      init_png: bytes, denoise: float) -> bytes:

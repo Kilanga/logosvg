@@ -24,10 +24,10 @@ techniques:
     file_name: design.svg
 
   - key: flex
-    label: Flex ou flocage
+    label: Flex ou flocage (découpe)
     family: vector
     max_colors: 2
-    default_colors: 2
+    default_colors: 1
     gradients: false
     white_is_ink: false
     dpi: 300
@@ -37,27 +37,27 @@ techniques:
     label: Broderie
     family: vector
     max_colors: 6
-    default_colors: 3
+    default_colors: 4
     gradients: false
     white_is_ink: true
     dpi: 300
     file_name: design.svg
 
   - key: dtf
-    label: DTF
+    label: DTF (transfert numérique)
     family: raster
     max_colors:
-    default_colors: 6
+    default_colors: 8
     gradients: true
     white_is_ink: true
     dpi: 300
     file_name: print.png
 
   - key: dtg
-    label: DTG
+    label: DTG (impression directe)
     family: raster
     max_colors:
-    default_colors: 6
+    default_colors: 8
     gradients: true
     white_is_ink: true
     dpi: 300
@@ -67,7 +67,7 @@ techniques:
     label: Sublimation
     family: raster
     max_colors:
-    default_colors: 6
+    default_colors: 8
     gradients: true
     white_is_ink: false
     dpi: 300
