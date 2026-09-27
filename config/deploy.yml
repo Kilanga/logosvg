@@ -38,7 +38,9 @@ registry:
 
 env:
   secret:
-    - RAILS_MASTER_KEY
+    # La clé de signature vient de l'environnement, pas d'un fichier de clé
+    # maîtresse : voir le commentaire dans .kamal/secrets.
+    - SECRET_KEY_BASE
     - TSHIRT_IA_DATABASE_PASSWORD
     - GENERATOR_API_KEY
     - GENERATOR_USER_KEY
