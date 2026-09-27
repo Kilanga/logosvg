@@ -200,14 +200,40 @@ jobs:
 
       # L'adresse du serveur est lue dans config/deploy.yml : une seule source
       # de vérité, sinon les deux finissent par diverger sans prévenir.
+      #
+      # La clé d'hôte est relevée dans un fichier qui n'appartient qu'à nous, et
+      # net-ssh est prié de ne consulter que celui-là. Net::SSH refuse la
+      # connexion dès qu'il connaît au moins une clé pour l'adresse et qu'aucune
+      # ne correspond : une entrée héritée de l'image du runner suffit donc à
+      # tout bloquer, même après l'ajout de la bonne clé.
       - name: Autoriser la connexion SSH au serveur
         run: |
+          set -uo pipefail
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           printf '%s\n' "$CLE_PRIVEE" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+
           hote=$(ruby -ryaml -e 'puts YAML.safe_load_file("config/deploy.yml")["servers"]["web"].first')
           echo "Serveur : $hote"
-          ssh-keyscan -H "$hote" >> ~/.ssh/known_hosts 2>/dev/null
+
+          # Sans -H : les entrées en clair se comparent par simple égalité de
+          # chaîne, le chemin le plus court dans net-ssh. Sans 2>/dev/null : un
+          # relevé qui échoue doit faire échouer cette étape-ci, avec son
+          # message, plutôt que le déploiement trois minutes plus tard.
+          ssh-keyscan -T 10 "$hote" > ~/.ssh/known_hosts_pretatirer
+          if [ ! -s ~/.ssh/known_hosts_pretatirer ]; then
+            echo "Aucune clé d'hôte relevée sur $hote : déploiement interrompu." >&2
+            exit 1
+          fi
+          echo "Clés d'hôte retenues :"
+          ssh-keygen -lf ~/.ssh/known_hosts_pretatirer
+
+          {
+            echo "Host $hote"
+            echo "  UserKnownHostsFile ~/.ssh/known_hosts_pretatirer"
+            echo "  GlobalKnownHostsFile /dev/null"
+          } >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
         env:
           CLE_PRIVEE: ${{ secrets.SSH_PRIVATE_KEY }}
 
