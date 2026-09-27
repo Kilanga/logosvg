@@ -4,9 +4,8 @@
 # de fond, et PostgreSQL. Le générateur, lui, n'est pas ici — il tourne sur le
 # poste à GPU, rejoint par le réseau privé Tailscale (voir GENERATOR_URL).
 #
-# Les valeurs à remplacer avant le premier déploiement sont écrites en
-# capitales : REMPLACER_*. Kamal échoue bruyamment si l'une d'elles reste, ce
-# qui vaut mieux qu'un déploiement silencieux vers la mauvaise machine.
+# VPS OVH : vps-7224b00f.vps.ovh.net, 92.222.36.159, utilisateur `ubuntu`.
+# Reste à renseigner : GENERATOR_URL, une fois Tailscale posé des deux côtés.
 service: pretatirer
 
 # Registre d'images : ghcr.io, gratuit avec un compte GitHub. L'image est
@@ -15,14 +14,14 @@ image: kilanga/pretatirer
 
 servers:
   web:
-    - REMPLACER_PAR_IP_DU_VPS
+    - 92.222.36.159
   # Le worker a son propre conteneur. Une génération se suit par sondage
   # pendant cinq minutes et télécharge des fichiers : logée dans le serveur
   # web, elle prendrait un des trois fils de Puma pendant tout ce temps, et un
   # redéploiement la tuerait au milieu d'un téléchargement.
   job:
     hosts:
-      - REMPLACER_PAR_IP_DU_VPS
+      - 92.222.36.159
     cmd: bin/jobs
 
 # Certificat Let's Encrypt automatique, renouvelé par le proxy.
@@ -45,11 +44,12 @@ env:
     - GENERATOR_USER_KEY
     - SMTP_USER_NAME
     - SMTP_PASSWORD
-    - STRIPE_SECRET_KEY
-    - STRIPE_PUBLISHABLE_KEY
-    - STRIPE_WEBHOOK_SECRET
-    - TURNSTILE_SITE_KEY
-    - TURNSTILE_SECRET_KEY
+    # Les clés Stripe et Turnstile ne sont pas déclarées ici : les comptes
+    # ne sont pas ouverts, et Kamal refuse de déployer si un secret déclaré
+    # est absent de l'environnement. L'application vit très bien sans :
+    # elle les lit paresseusement et PlatformStatus signale leur absence.
+    # Le jour où les comptes existent, remettre les cinq lignes ici et
+    # dans .kamal/secrets.
   clear:
     # Le nom servi. Il alimente à la fois les liens des emails et la protection
     # contre la réécriture d'en-tête `Host`.
@@ -61,7 +61,12 @@ env:
     # Le générateur, sur le poste à GPU, joint par le réseau privé. Jamais une
     # adresse publique : la machine est personnelle et ne doit pas être
     # exposée. L'adresse .ts.net est donnée par RESEAU-PRIVE-TAILSCALE.bat.
-    GENERATOR_URL: REMPLACER_PAR_ADRESSE_TAILSCALE
+    # À remplacer par l'adresse `.ts.net` du poste à GPU, donnée par
+    # RESEAU-PRIVE-TAILSCALE.bat. En attendant, cette adresse ne résout pas :
+    # l'application répond « service de génération indisponible », ce qu'elle
+    # sait faire, et tout le reste du site fonctionne. On peut donc mettre en
+    # ligne avant d'avoir posé le réseau privé.
+    GENERATOR_URL: http://generateur-a-configurer.invalid:5000
 
     # Le worker tourne dans son propre conteneur (rôle job) : le superviseur
     # ne doit surtout pas démarrer une seconde fois dans Puma.
@@ -69,6 +74,16 @@ env:
 
     WEB_CONCURRENCY: 2
     RAILS_MAX_THREADS: 5
+
+# OVH désactive la connexion root par SSH et crée un utilisateur nommé d'après
+# la distribution — `ubuntu` ici. Kamal, lui, se connecte en root par défaut :
+# sans cette section, le tout premier `kamal setup` échoue sur une
+# authentification refusée, et on croit à une clé mal posée.
+#
+# L'utilisateur doit appartenir au groupe `docker` (voir la checklist) : Kamal
+# lance les commandes docker sans sudo.
+ssh:
+  user: ubuntu
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
@@ -91,7 +106,7 @@ builder:
 accessories:
   db:
     image: postgres:16
-    host: REMPLACER_PAR_IP_DU_VPS
+    host: 92.222.36.159
     # Lié à la boucle locale : la base n'est jamais joignable depuis Internet.
     port: "127.0.0.1:5432:5432"
     env:
