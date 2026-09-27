@@ -210,8 +210,27 @@ jobs:
         run: |
           set -uo pipefail
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "$CLE_PRIVEE" > ~/.ssh/id_ed25519
+          # tr -d '\r' par précaution : le secret est collé depuis Windows.
+          printf '%s\n' "$CLE_PRIVEE" | tr -d '\r' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+
+          # net-ssh écarte en silence une clé qu'il ne peut pas lire et passe à
+          # la méthode suivante. Trois défauts se ressemblent alors : clé
+          # tronquée, clé protégée par une phrase de passe, ou clé qui n'est pas
+          # celle du serveur. On les sépare ici : `ssh-keygen -y` échoue sur les
+          # deux premiers (sans terminal, il ne peut pas demander la phrase), et
+          # l'empreinte affichée tranche le troisième — elle doit figurer dans
+          # ~/.ssh/authorized_keys du VPS.
+          journal=$(mktemp)
+          if ! ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub 2> "$journal" < /dev/null; then
+            echo "Le secret SSH_PRIVATE_KEY n'est pas une clé privée utilisable ici." >&2
+            echo "Clé tronquée, ou protégée par une phrase de passe — le" >&2
+            echo "déploiement automatique demande une clé sans phrase." >&2
+            cat "$journal" >&2
+            exit 1
+          fi
+          echo "Empreinte de la clé de déploiement :"
+          ssh-keygen -lf ~/.ssh/id_ed25519.pub
 
           hote=$(ruby -ryaml -e 'puts YAML.safe_load_file("config/deploy.yml")["servers"]["web"].first')
           echo "Serveur : $hote"
@@ -228,10 +247,17 @@ jobs:
           echo "Clés d'hôte retenues :"
           ssh-keygen -lf ~/.ssh/known_hosts_pretatirer
 
+          # PreferredAuthentications publickey : net-ssh n'a alors plus aucune
+          # méthode de repli. Sans cette ligne, une clé refusée le fait
+          # demander un mot de passe à un terminal qui n'existe pas, et
+          # l'échec se lit « Errno::ENOTTY » au lieu de « clé refusée ».
           {
             echo "Host $hote"
             echo "  UserKnownHostsFile ~/.ssh/known_hosts_pretatirer"
             echo "  GlobalKnownHostsFile /dev/null"
+            echo "  IdentityFile ~/.ssh/id_ed25519"
+            echo "  IdentitiesOnly yes"
+            echo "  PreferredAuthentications publickey"
           } >> ~/.ssh/config
           chmod 600 ~/.ssh/config
         env:
