@@ -43,6 +43,9 @@ class Job:
     print_width_cm: float = DEFAULT_PRINT_WIDTH_CM
     id: str = field(default_factory=lambda: uuid.uuid4().hex)
     mode: str = CREATE  # create | variant | refine
+    # Les trois variantes nées d'un même clic partagent ce jeton : elles comptent
+    # alors pour UNE reprise, et non trois. Voir used_refinements.
+    batch_id: Optional[str] = None
     parent_id: Optional[str] = None
     root_id: Optional[str] = None
     instruction: Optional[str] = None
@@ -96,8 +99,22 @@ class JobManager:
         return [j for j in self.jobs.values() if j.root_id == root_id]
 
     def used_refinements(self, root_id: str) -> int:
-        """Nombre de reprises déjà demandées sur ce design (hors création initiale)."""
-        return len([j for j in self.lineage(root_id) if j.id != root_id and j.status != "error"])
+        """Nombre de reprises déjà demandées sur ce design (hors création initiale).
+
+        Une reprise est une **action du client**, pas une image. Un clic sur
+        « proposez-moi d'autres versions » produit trois tirages et ne coûte
+        qu'une reprise : compter les images consommait tout le budget d'un seul
+        geste, et le chat de retouche devenait inaccessible à qui avait demandé
+        des variantes en premier. Les trois tirages d'un même clic partagent un
+        `batch_id` et ne valent donc qu'un.
+        """
+        enfants = [j for j in self.lineage(root_id) if j.id != root_id and j.status != "error"]
+        retouches = sum(1 for j in enfants if j.mode != VARIANT)
+        lots = {j.batch_id for j in enfants if j.mode == VARIANT and j.batch_id}
+        # Une variante sans lot ne peut venir que d'une version antérieure du
+        # service : on la compte seule, faute de mieux.
+        orphelines = sum(1 for j in enfants if j.mode == VARIANT and not j.batch_id)
+        return retouches + len(lots) + orphelines
 
     def refinements_left(self, root_id: str) -> int:
         return max(settings.max_refinements - self.used_refinements(root_id), 0)
@@ -261,7 +278,8 @@ def new_seed() -> int:
     return random.randint(0, 2**32 - 1)
 
 
-def child_job(parent: Job, mode: str, instruction: Optional[str] = None) -> Job:
+def child_job(parent: Job, mode: str, instruction: Optional[str] = None,
+              batch_id: Optional[str] = None) -> Job:
     """Construit une variante ou une retouche à partir d'un design existant."""
     return Job(
         user_id=parent.user_id,
@@ -274,6 +292,7 @@ def child_job(parent: Job, mode: str, instruction: Optional[str] = None) -> Job:
         technique=parent.technique,
         print_width_cm=parent.print_width_cm,
         mode=mode,
+        batch_id=batch_id,
         parent_id=parent.id,
         root_id=parent.root_id or parent.id,
         instruction=instruction,

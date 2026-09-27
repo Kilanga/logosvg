@@ -81,7 +81,8 @@ def test_variantes_gardent_la_description(client):
     assert r.status_code == 202, r.text
     ids = r.json()["job_ids"]
     assert len(ids) == 2
-    assert r.json()["refinements_left"] == 1
+    # Un clic, une reprise : deux tirages nés du même geste n'en coûtent qu'une.
+    assert r.json()["refinements_left"] == 2
 
     seeds = set()
     for job_id in ids:
@@ -112,16 +113,43 @@ def test_budget_de_reprises_puis_graphiste(client):
     assert "graphiste" in body["detail"]
 
 
-def test_variantes_refusees_si_budget_insuffisant(client):
+def test_un_clic_de_variantes_ne_coute_quune_reprise(client):
+    """Le defaut qui a motive cette regle : trois tirages d'un meme clic
+    consommaient les trois reprises, et le chat de retouche devenait
+    inaccessible a qui avait demande des variantes en premier."""
     parent = create_design(client, "r4")
+    r = client.post(f"/jobs/{parent}/variants", headers=HEADERS, json={"user_id": "r4", "count": 3})
+    assert r.status_code == 202, r.text
+    assert len(r.json()["job_ids"]) == 3
+    assert r.json()["refinements_left"] == 2
+    for job_id in r.json()["job_ids"]:
+        assert wait_for(client, job_id, "r4")["status"] == "done"
+
+    # Et la retouche reste possible, ce qui etait tout l'objet de la correction.
     r = client.post(f"/jobs/{parent}/refine", headers=HEADERS,
                     json={"instruction": "mets un fond uni", "user_id": "r4"})
+    assert r.status_code == 202, r.text
+    assert r.json()["refinements_left"] == 1
     assert wait_for(client, r.json()["job_id"], "r4")["status"] == "done"
 
-    # Il reste 2 reprises : en demander 3 doit etre refuse sans rien lancer.
-    r = client.post(f"/jobs/{parent}/variants", headers=HEADERS, json={"user_id": "r4", "count": 3})
+
+def test_budget_epuise_par_trois_actions_melangees(client):
+    parent = create_design(client, "r8")
+    for _ in range(2):
+        r = client.post(f"/jobs/{parent}/variants", headers=HEADERS, json={"user_id": "r8", "count": 3})
+        assert r.status_code == 202, r.text
+        for job_id in r.json()["job_ids"]:
+            wait_for(client, job_id, "r8")
+    r = client.post(f"/jobs/{parent}/refine", headers=HEADERS,
+                    json={"instruction": "un fond uni", "user_id": "r8"})
+    assert r.status_code == 202, r.text
+    assert r.json()["refinements_left"] == 0
+    wait_for(client, r.json()["job_id"], "r8")
+
+    # Deux clics de variantes et une retouche : le budget est epuise.
+    r = client.post(f"/jobs/{parent}/variants", headers=HEADERS, json={"user_id": "r8", "count": 3})
     assert r.status_code == 429
-    assert r.json()["refinements_left"] == 2
+    assert r.json()["reason"] == "refine_budget"
 
 
 def test_instruction_filtree(client):

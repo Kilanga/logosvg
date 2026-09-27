@@ -1119,6 +1119,16 @@ fr:
         print_file: "Fichier d'impression"
         download: "Télécharger l'aperçu"
         variants: "Proposez-moi d'autres versions"
+        refine_title: "Que voulez-vous changer ?"
+        refine_hint: >-
+          Décrivez la modification en une phrase. Le dessin repart de cette
+          version : la composition est conservée, seul ce que vous demandez
+          change.
+        refine_placeholder: "Par exemple : enlève le fond et mets-lui un casque"
+        refine_submit: "Modifier ce design"
+        refine_cost: >-
+          Chaque demande — une modification comme un jeu de variantes —
+          consomme une reprise sur les trois de ce design.
         screens:
           one: "%{count} écran"
           other: "%{count} écrans"

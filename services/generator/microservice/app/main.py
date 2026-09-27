@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import re
+import uuid
 from contextlib import asynccontextmanager
 from typing import Literal, Optional
 
@@ -200,15 +201,18 @@ def variants(job_id: str, req: VariantsRequest):
     if wanted < 1:
         raise HTTPException(status_code=503, detail="Beaucoup de demandes en cours. Réessayez dans quelques minutes.")
 
-    refusal = _budget_refusal(parent.root_id, wanted)
+    # Un clic, une reprise — quel que soit le nombre de tirages qu'il produit.
+    refusal = _budget_refusal(parent.root_id, 1)
     if refusal is not None:
         return refusal
 
+    # Le jeton du lot : il scelle ces tirages comme une seule action du client.
+    lot = uuid.uuid4().hex
     created = []
     for _ in range(wanted):
         if rate_limiter.hit(req.user_id) is not None:
             break
-        created.append(manager.submit(child_job(parent, VARIANT)))
+        created.append(manager.submit(child_job(parent, VARIANT, batch_id=lot)))
 
     if not created:
         return JSONResponse(

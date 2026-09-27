@@ -71,6 +71,29 @@
       <% end %>
     </div>
 
+    <%# The chat the spec asks for: "que voulez-vous changer ?", the request and
+        the new version reading as a conversation. The route, the controller and
+        the microservice were all there; this form was the missing piece, so the
+        client could only ask for other versions. See docs/SPEC.md,
+        "Reprise d'un design". %>
+    <% if design.refinements_left.to_i.positive? %>
+      <div class="border-t border-line p-4">
+        <%# Explicit id: this partial is rendered once per design on the index. %>
+        <% champ = "instruction_#{design.token}" %>
+        <%= label_tag champ, t("client.designs.design.refine_title"), class: "label-rule block" %>
+        <p class="mt-2 text-sm text-muted"><%= t("client.designs.design.refine_hint") %></p>
+        <%= form_with url: design_refine_path(design), class: "mt-3" do %>
+          <%= text_area_tag :instruction, nil, rows: 2, required: true, maxlength: 300, id: champ,
+                placeholder: t("client.designs.design.refine_placeholder"),
+                class: "block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+          <button type="submit" class="btn btn-secondary mt-3 text-sm">
+            <%= t("client.designs.design.refine_submit") %>
+          </button>
+        <% end %>
+        <p class="mt-2 text-sm text-muted"><%= t("client.designs.design.refine_cost") %></p>
+      </div>
+    <% end %>
+
     <%# Budget spent. The two ways of reworking it yourself give way to the
         one that is left: a designer, and it is paid for. See docs/SPEC.md,
         "Reprise d'un design". %>
