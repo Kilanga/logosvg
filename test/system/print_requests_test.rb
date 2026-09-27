@@ -65,6 +65,9 @@ class PrintRequestsTest < ApplicationSystemTestCase
     assert_text shown(print_requests(:waiting).token.first(8).upcase)
 
     click_on I18n.t("workshop.print_requests.index.filter.open"), match: :first
+    # Même course que dans admin_test : la demande figure dans la liste avant
+    # comme après le filtre, et rien n'attend la fin de la visite Turbo.
+    assert_current_path workshop_print_requests_path(statut: "open")
     find("a[href='#{workshop_print_request_path(print_requests(:waiting))}']").click
 
     # One button: the next step, and only if it is possible from here.
