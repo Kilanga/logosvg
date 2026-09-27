@@ -28,6 +28,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # `bin/importmap audit` démarre l'application pour lire l'importmap, donc
+      # il charge ruby-vips, donc il lui faut libvips — ce que Brakeman et
+      # RuboCop, qui analysent le code sans l'exécuter, n'exigent pas. Sans
+      # cette étape le travail échoue au chargement, avant d'avoir audité quoi
+      # que ce soit, et le message parle d'une bibliothèque partagée là où on
+      # cherche une vulnérabilité JavaScript.
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev libvips
+
       - name: Checkout code
         uses: actions/checkout@v7
 
