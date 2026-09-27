@@ -70,6 +70,16 @@ env:
     WEB_CONCURRENCY: 2
     RAILS_MAX_THREADS: 5
 
+# OVH désactive la connexion root par SSH et crée un utilisateur nommé d'après
+# la distribution — `ubuntu` ici. Kamal, lui, se connecte en root par défaut :
+# sans cette section, le tout premier `kamal setup` échoue sur une
+# authentification refusée, et on croit à une clé mal posée.
+#
+# L'utilisateur doit appartenir au groupe `docker` (voir la checklist) : Kamal
+# lance les commandes docker sans sudo.
+ssh:
+  user: ubuntu
+
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
   shell: app exec --interactive --reuse "bash"
