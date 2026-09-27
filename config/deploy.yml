@@ -5,7 +5,7 @@
 # poste à GPU, rejoint par le réseau privé Tailscale (voir GENERATOR_URL).
 #
 # VPS OVH : vps-7224b00f.vps.ovh.net, 92.222.36.159, utilisateur `ubuntu`.
-# Reste à renseigner : GENERATOR_URL, une fois Tailscale posé des deux côtés.
+# Le réseau privé est posé des deux côtés : voir docs/EXPLOITATION.md.
 service: pretatirer
 
 # Registre d'images : ghcr.io, gratuit avec un compte GitHub. L'image est
@@ -60,15 +60,16 @@ env:
     # La base est un conteneur voisin sur le réseau Docker de Kamal.
     DB_HOST: pretatirer-db
 
-    # Le générateur, sur le poste à GPU, joint par le réseau privé. Jamais une
-    # adresse publique : la machine est personnelle et ne doit pas être
-    # exposée. L'adresse .ts.net est donnée par RESEAU-PRIVE-TAILSCALE.bat.
-    # À remplacer par l'adresse `.ts.net` du poste à GPU, donnée par
-    # RESEAU-PRIVE-TAILSCALE.bat. En attendant, cette adresse ne résout pas :
-    # l'application répond « service de génération indisponible », ce qu'elle
-    # sait faire, et tout le reste du site fonctionne. On peut donc mettre en
-    # ligne avant d'avoir posé le réseau privé.
-    GENERATOR_URL: http://generateur-a-configurer.invalid:5000
+    # Le générateur, sur le poste à GPU, joint par le réseau privé Tailscale.
+    # Jamais une adresse publique : ce nom ne se résout QUE depuis l'intérieur
+    # du réseau privé, et depuis Internet il n'existe pas. Le port 5000 est
+    # celui que `tailscale serve --http=5000` republie ; le service lui-même
+    # continue d'écouter sur 127.0.0.1 et n'est lié à aucune autre interface.
+    #
+    # Si la machine à GPU dort, la résolution échoue et l'application répond
+    # « service de génération indisponible » sur la seule page qui en dépend.
+    # C'est le comportement voulu, déjà écrit et testé.
+    GENERATOR_URL: http://nono.tail0cb029.ts.net:5000
 
     # Le worker tourne dans son propre conteneur (rôle job) : le superviseur
     # ne doit surtout pas démarrer une seconde fois dans Puma.
