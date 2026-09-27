@@ -35,7 +35,14 @@ port ENV.fetch("PORT", 3000)
 plugin :tmp_restart
 
 # Run the Solid Queue supervisor inside of Puma for single-server deployments.
-plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
+#
+# La comparaison est explicite, et elle doit l'être : `ENV[...]` renvoie une
+# chaîne, et en Ruby la chaîne "false" est vraie. Le gabarit de Rails testait
+# la simple présence de la variable, si bien que `SOLID_QUEUE_IN_PUMA: false`
+# dans la configuration de déploiement démarrait le superviseur exactement
+# dans le cas où l'on voulait l'en empêcher — et il tournait alors deux fois,
+# dans Puma et dans le conteneur du rôle `job`.
+plugin :solid_queue if %w[ true 1 ].include?(ENV["SOLID_QUEUE_IN_PUMA"].to_s.downcase)
 
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
