@@ -4,9 +4,8 @@
 # de fond, et PostgreSQL. Le générateur, lui, n'est pas ici — il tourne sur le
 # poste à GPU, rejoint par le réseau privé Tailscale (voir GENERATOR_URL).
 #
-# Les valeurs à remplacer avant le premier déploiement sont écrites en
-# capitales : REMPLACER_*. Kamal échoue bruyamment si l'une d'elles reste, ce
-# qui vaut mieux qu'un déploiement silencieux vers la mauvaise machine.
+# VPS OVH : vps-7224b00f.vps.ovh.net, 92.222.36.159, utilisateur `ubuntu`.
+# Reste à renseigner : GENERATOR_URL, une fois Tailscale posé des deux côtés.
 service: pretatirer
 
 # Registre d'images : ghcr.io, gratuit avec un compte GitHub. L'image est
@@ -15,14 +14,14 @@ image: kilanga/pretatirer
 
 servers:
   web:
-    - REMPLACER_PAR_IP_DU_VPS
+    - 92.222.36.159
   # Le worker a son propre conteneur. Une génération se suit par sondage
   # pendant cinq minutes et télécharge des fichiers : logée dans le serveur
   # web, elle prendrait un des trois fils de Puma pendant tout ce temps, et un
   # redéploiement la tuerait au milieu d'un téléchargement.
   job:
     hosts:
-      - REMPLACER_PAR_IP_DU_VPS
+      - 92.222.36.159
     cmd: bin/jobs
 
 # Certificat Let's Encrypt automatique, renouvelé par le proxy.
@@ -61,7 +60,12 @@ env:
     # Le générateur, sur le poste à GPU, joint par le réseau privé. Jamais une
     # adresse publique : la machine est personnelle et ne doit pas être
     # exposée. L'adresse .ts.net est donnée par RESEAU-PRIVE-TAILSCALE.bat.
-    GENERATOR_URL: REMPLACER_PAR_ADRESSE_TAILSCALE
+    # À remplacer par l'adresse `.ts.net` du poste à GPU, donnée par
+    # RESEAU-PRIVE-TAILSCALE.bat. En attendant, cette adresse ne résout pas :
+    # l'application répond « service de génération indisponible », ce qu'elle
+    # sait faire, et tout le reste du site fonctionne. On peut donc mettre en
+    # ligne avant d'avoir posé le réseau privé.
+    GENERATOR_URL: http://generateur-a-configurer.invalid:5000
 
     # Le worker tourne dans son propre conteneur (rôle job) : le superviseur
     # ne doit surtout pas démarrer une seconde fois dans Puma.
@@ -101,7 +105,7 @@ builder:
 accessories:
   db:
     image: postgres:16
-    host: REMPLACER_PAR_IP_DU_VPS
+    host: 92.222.36.159
     # Lié à la boucle locale : la base n'est jamais joignable depuis Internet.
     port: "127.0.0.1:5432:5432"
     env:
