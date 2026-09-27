@@ -16,41 +16,44 @@ n'est jamais négociable.
 """
 from .techniques import Technique, resolve
 
+# Aucune négation ici, et c'est délibéré. L'encodeur de texte de SDXL n'a pas de
+# notion de négation : « no scenery » lui apporte surtout le mot « scenery ».
+# Ces mentions, censées interdire le décor, le demandaient. Deux séries d'essais
+# l'ont montré sur le même prompt — un phare livré deux fois sur deux en paysage
+# complet, avec ciel, mer, horizon et reflets, alors que le prompt disait
+# « no scenery, no landscape, no horizon ». La seconde fois le fond était bleu
+# nuit plutôt que blanc, et le vectoriseur en a fidèlement tiré 8 722 formes :
+# un fichier inimprimable, au bout de quatre minutes d'attente.
+#
+# Tout ce qu'on ne veut pas est désormais dans le prompt négatif, qui est le
+# seul endroit où le modèle sait le lire.
 STYLES = {
-    # Les mentions « no scenery / no landscape » évitent que SDXL livre un paysage complet
-    # là où le client attend un symbole isolé.
-    "logo": (
-        "minimalist vector logo emblem, single centered symbol, simple bold geometric shapes, "
-        "no scenery, no landscape, no horizon"
-    ),
-    "illustration": "flat vector illustration, bold simple shapes, single subject, no scenery",
+    "logo": "minimalist vector logo emblem, single centered symbol, simple bold geometric shapes",
+    "illustration": "flat vector illustration, bold simple shapes, single subject",
     "mascotte": "cartoon mascot character, flat vector style, thick outlines, full body character",
-    "badge": (
-        "vintage badge emblem, compact circular composition, flat vector style, bold outlines, "
-        "no landscape scene"
-    ),
+    "badge": "vintage badge emblem, compact circular composition, flat vector style, bold outlines",
 }
 
 # Styles réécrits pour les techniques qui savent rendre le détail et les dégradés.
 RICH_STYLES = {
-    "logo": "polished logo emblem, single centered symbol, clean shapes, no scenery, no landscape",
-    "illustration": "detailed illustration, single subject, no scenery",
+    "logo": "polished logo emblem, single centered symbol, clean shapes",
+    "illustration": "detailed illustration, single subject",
     "mascotte": "cartoon mascot character, expressive full body character, clean outlines",
-    "badge": "vintage badge emblem, compact circular composition, clean outlines, no landscape scene",
+    "badge": "vintage badge emblem, compact circular composition, clean outlines",
 }
 
 FLAT_TEMPLATE = (
     "{style}, {subject}, {technique}, bold clean outlines, solid flat colors, "
-    "limited palette of exactly {colors} flat colors, no gradients, no shading, no texture, "
-    "centered composition, single subject only, nothing behind the subject, "
-    "isolated on a pure white background (#ffffff), plain empty background, "
+    "limited palette of exactly {colors} flat colors, "
+    "centered composition, single subject only, "
+    "isolated on a pure white background (#ffffff), plain empty white background, "
     "screen print t-shirt design"
 )
 
 RICH_TEMPLATE = (
     "{style}, {subject}, {technique}, clean outlines, rich colors, "
-    "centered composition, single subject only, nothing behind the subject, "
-    "isolated on a pure white background (#ffffff), plain empty background, "
+    "centered composition, single subject only, "
+    "isolated on a pure white background (#ffffff), plain empty white background, "
     "t-shirt print design"
 )
 
@@ -59,6 +62,11 @@ RICH_TEMPLATE = (
 COMMON_NEGATIVE = (
     "photo, photorealistic, 3d render, blur, text, letters, "
     "watermark, signature, frame, border, square frame, panel, poster layout, "
+    # Ce que les négations du prompt positif prétendaient interdire, à leur
+    # véritable place. « landscape scene » et « horizon » manquaient ici : le
+    # phare les a livrés deux fois.
+    "scenery, landscape, landscape scene, horizon, sky, clouds, sea, water, "
+    "ground, floor, terrain, buildings behind subject, "
     "background scenery, background pattern, background shapes, "
     "geometric shapes behind subject, diamond shape behind subject, grey background, "
     "gray background, colored background, off-white background, beige background, "
