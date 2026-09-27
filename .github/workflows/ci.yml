@@ -150,3 +150,57 @@ jobs:
           name: screenshots
           path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore
+
+  # Le déploiement, et seulement si tout ce qui précède est passé.
+  #
+  # Kamal ne se déclenche pas depuis GitHub : il construit l'image ici, la
+  # pousse sur ghcr.io, puis ouvre une session SSH vers le serveur pour
+  # échanger les conteneurs. Ce travail fait donc exactement ce qu'un
+  # `bin/kamal deploy` lancé à la main ferait — à ceci près qu'il ne peut
+  # pas partir d'un `main` dont les tests échouent.
+  deploy:
+    needs: [ scan_ruby, scan_js, lint, test, system-test ]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    # Deux déploiements simultanés se disputeraient le verrou de Kamal. On
+    # n'annule pas celui qui tourne : interrompre un déploiement en cours est
+    # la meilleure façon de laisser le serveur entre deux versions.
+    concurrency:
+      group: deploiement-production
+      cancel-in-progress: false
+
+    env:
+      SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+      KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+      TSHIRT_IA_DATABASE_PASSWORD: ${{ secrets.TSHIRT_IA_DATABASE_PASSWORD }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      GENERATOR_API_KEY: ${{ secrets.GENERATOR_API_KEY }}
+      GENERATOR_USER_KEY: ${{ secrets.GENERATOR_USER_KEY }}
+      SMTP_USER_NAME: ${{ secrets.SMTP_USER_NAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      # L'adresse du serveur est lue dans config/deploy.yml : une seule source
+      # de vérité, sinon les deux finissent par diverger sans prévenir.
+      - name: Autoriser la connexion SSH au serveur
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$CLE_PRIVEE" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          hote=$(ruby -ryaml -e 'puts YAML.safe_load_file("config/deploy.yml")["servers"]["web"].first')
+          echo "Serveur : $hote"
+          ssh-keyscan -H "$hote" >> ~/.ssh/known_hosts 2>/dev/null
+        env:
+          CLE_PRIVEE: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Déployer
+        run: bin/kamal deploy

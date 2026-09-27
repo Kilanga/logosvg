@@ -91,7 +91,8 @@ Interface en français, code et base de données en anglais.
 ## Mise en ligne
 
 L'application tourne en production sur un VPS OVH, déployée par Kamal 2 :
-<https://pretatirer.fr>. Tout est dans **[docs/EXPLOITATION.md](docs/EXPLOITATION.md)** —
+<https://pretatirer.fr>. **Une fusion dans `main` déploie toute seule**, après
+les tests — depuis n'importe quel poste, sans Docker ni secrets en local. Tout est dans **[docs/EXPLOITATION.md](docs/EXPLOITATION.md)** —
 la machine, le déploiement, les secrets, le réseau privé vers le générateur,
 et les commandes d'exploitation. `bin/doctor --deploy` vérifie qu'un poste est
 en état de déployer.

@@ -86,7 +86,7 @@ Quatre rôles sur un seul modèle `User` : `client`, `printer`, `designer`,
 | Emails            | Action Mailer ; `letter_opener_web` en dev ; production à décider   |
 | Tests             | Minitest, fixtures, Capybara (système), `webmock`, faux client Stripe |
 | Qualité           | `rubocop-rails-omakase`, `brakeman`, `bundler-audit`, GitHub Actions |
-| Déploiement       | Kamal (plus tard) ; démo derrière un tunnel Cloudflare              |
+| Déploiement       | **Kamal 2** vers un VPS OVH ; automatique à la fusion dans `main`   |
 
 **Interdit sans accord préalable** : toute autre gem, tout bundler JS (esbuild,
 vite…), toute dépendance HTTP supplémentaire (`GeneratorClient` utilise
@@ -344,8 +344,10 @@ Règles côté Rails :
 Le plan de construction est arrivé à son terme. Ce qui reste avant une mise en
 production est listé en §8 (décisions ouvertes) et dans « Décisions ouvertes »
 du cahier des charges : prix, taux de commission, durées de conservation,
-validation juridique des pages légales, clés Stripe réelles, hébergement et
-fournisseur d'emails.
+validation juridique des pages légales, clés Stripe réelles.
+
+L'hébergement et les emails, eux, sont tranchés et en service : VPS OVH,
+Kamal 2, Brevo. Voir [docs/EXPLOITATION.md](docs/EXPLOITATION.md).
 
 ---
 
