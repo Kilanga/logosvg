@@ -171,6 +171,16 @@ class JobManager:
         if self.prompt_filter.blocked_term(subject):
             raise GenerationError("Cette demande contient un terme non autorisé.")
         job.subject = subject
+
+        # `to_english` renvoie le texte inchangé quand la traduction échoue, et
+        # elle échoue en silence par construction : une génération ne doit
+        # jamais s'arrêter parce qu'un traducteur n'a pas répondu. Le prix, si
+        # personne ne le dit, est un prompt français envoyé à un modèle qui ne
+        # comprend que l'anglais, et un dessin à côté de la demande sans la
+        # moindre erreur nulle part. L'égalité est donc la signature exacte de
+        # l'échec, et elle remonte jusqu'au client.
+        traduction_manquee = bool(settings.ollama_url) and subject == job.prompt
+
         profile = resolve(job.technique)
         colors = profile.clamp_colors(job.colors)
         job.colors = colors
@@ -208,6 +218,13 @@ class JobManager:
             if hires_warning:
                 out["warnings"].append(hires_warning)
 
+
+        if traduction_manquee:
+            out["warnings"].append(
+                "La demande n'a pas pu être traduite : le dessin peut s'écarter du texte. "
+                "Relancez la génération si le résultat ne correspond pas."
+            )
+
         job.result = {
             "technique": profile.key,
             "technique_label": profile.label,
@@ -219,6 +236,10 @@ class JobManager:
             "stats": out["stats"],
             "warnings": out["warnings"],
             "prompt_used": positive,
+            # Le négatif aussi : c'est là que vivent désormais toutes les
+            # interdictions, et un prompt qu'on ne peut pas relire est un prompt
+            # qu'on ne peut pas corriger.
+            "negative_used": negative,
             "subject": subject,
             "instruction": job.instruction,
             "mode": job.mode,

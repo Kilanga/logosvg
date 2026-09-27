@@ -58,7 +58,10 @@ def test_serigraphie_produit_un_svg(client):
     assert data["status"] == "done", data
     assert data["result"]["output"] == "vector"
     assert data["result"]["print_file"] == "design.svg"
-    assert "no gradients" in data["result"]["prompt_used"]
+    # Les interdictions vivent dans le prompt négatif, et nulle part ailleurs :
+    # l'encodeur de SDXL ne sait pas lire une négation dans le prompt positif.
+    assert "gradient" in data["result"]["negative_used"]
+    assert "no gradients" not in data["result"]["prompt_used"]
 
     svg = client.get(f"/jobs/{job_id}/design.svg", params={"user_id": "t1"}, headers=HEADERS)
     assert svg.status_code == 200 and "<svg" in svg.text
@@ -81,9 +84,11 @@ def test_dtf_produit_une_image_dimprimerie(client):
     result = data["result"]
     assert result["output"] == "raster"
     assert result["print_file"] == "print.png"
-    # Les dégradés sont l'intérêt de la machine : le prompt ne les interdit plus.
-    assert "no gradients" not in result["prompt_used"]
-    assert "no shading" not in result["prompt_used"]
+    # Les dégradés sont l'intérêt de la machine : le négatif ne les interdit plus.
+    assert "gradient" not in result["negative_used"]
+    assert "shading" not in result["negative_used"]
+    # Le décor, lui, reste interdit quelle que soit la technique.
+    assert "landscape" in result["negative_used"]
 
     stats = result["stats"]
     assert stats["dpi"] == 300
