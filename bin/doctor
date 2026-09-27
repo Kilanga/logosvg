@@ -1,0 +1,141 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Dit ce qui manque sur cette machine pour travailler sur Prêt-à-tirer, et la
+# commande qui l'installe. Aucune dépendance : ce script doit tourner sur un
+# poste où `bundle install` n'a jamais été lancé.
+#
+#   bin/doctor              développement
+#   bin/doctor --deploy     développement, puis ce qu'il faut pour déployer
+#
+# Voir docs/EXPLOITATION.md pour le détail et pour les secrets.
+
+require "yaml"
+require "etc"
+
+$manques = []
+
+# Le nom du compte Unix : ENV["USER"] n'est pas posé dans tous les shells.
+COMPTE = ENV["USER"] || ENV["LOGNAME"] || (Etc.getlogin rescue nil) || "ton-compte"
+
+APP_ROOT = File.expand_path("..", __dir__)
+Dir.chdir(APP_ROOT)
+
+DEPLOY = ARGV.include?("--deploy")
+def titre(texte)
+  puts
+  puts texte
+  puts "-" * texte.length
+end
+
+# Le résultat d'une vérification. `remede` n'est lu que si elle échoue.
+def verifie(nom, remede, obligatoire: true)
+  detail = yield
+  if detail
+    puts format("  ok       %-22s %s", nom, detail)
+  else
+    puts format("  MANQUE   %-22s %s", nom, remede)
+    $manques << nom if obligatoire
+  end
+rescue StandardError => e
+  puts format("  MANQUE   %-22s %s (%s)", nom, remede, e.class)
+  $manques << nom if obligatoire
+end
+
+def sortie(commande)
+  texte = `#{commande} 2>/dev/null`
+  texte.strip.empty? ? nil : texte.strip.lines.first.strip
+end
+
+def bibliotheque?(nom)
+  !`ldconfig -p 2>/dev/null | grep -F #{nom}`.strip.empty?
+end
+
+puts "Prêt-à-tirer — état de ce poste"
+
+titre "Développement"
+
+attendue = File.read(".ruby-version").strip.sub(/\Aruby-/, "")
+verifie("Ruby #{attendue}",
+        "installe Ruby #{attendue} (rbenv, mise ou asdf) — ici #{RUBY_VERSION}") do
+  RUBY_VERSION == attendue ? RUBY_VERSION : nil
+end
+
+verifie("Bundler", "gem install bundler") { sortie("bundle --version") }
+
+verifie("gems installées", "bundle install") do
+  system("bundle check > /dev/null 2>&1") ? "à jour" : nil
+end
+
+verifie("PostgreSQL", "sudo apt install postgresql-16 postgresql-client") do
+  sortie("psql --version")
+end
+
+verifie("accès PostgreSQL", "sudo -u postgres createuser -s #{COMPTE}") do
+  system("psql -lqt > /dev/null 2>&1") ? "le rôle #{COMPTE} se connecte" : nil
+end
+
+verifie("libvips", "sudo apt install libvips") do
+  bibliotheque?("libvips.so") ? "présente" : nil
+end
+
+# Le piège que ce dépôt connaît : libvips stocke un SVG sans librsvg et
+# n'échoue qu'au moment de le rastériser. Les aperçus reviendraient vides.
+verifie("librsvg", "sudo apt install librsvg2-2  # sinon les aperçus SVG sortent vides") do
+  bibliotheque?("librsvg-2.so") ? "présente" : nil
+end
+
+verifie("polices", "sudo apt install fonts-dejavu-core fontconfig  # sinon le filigrane sort vide") do
+  n = `fc-list 2>/dev/null | wc -l`.strip.to_i
+  n.positive? ? "#{n} disponibles" : nil
+end
+
+verifie("Python 3.10+", "sudo apt install python3 python3-venv") do
+  v = sortie("python3 --version")
+  v && Gem::Version.new(v.split.last) >= Gem::Version.new("3.10") ? v : nil
+end
+
+verifie("Chrome", "pour bin/rails test:system seulement", obligatoire: false) do
+  sortie("google-chrome --version") || sortie("chromium --version")
+end
+
+verifie(".env", "cp .env.example .env  puis remplir les clés") do
+  File.exist?(".env") ? "présent" : nil
+end
+
+if DEPLOY
+  titre "Déploiement"
+
+  verifie("Docker", "sudo apt install docker.io && sudo usermod -aG docker $USER") do
+    system("docker info > /dev/null 2>&1") ? sortie("docker --version") : nil
+  end
+
+  verifie("buildx", "sudo apt install docker-buildx  # le paquet docker.io ne le contient pas") do
+    sortie("docker buildx version")
+  end
+
+  hote = YAML.safe_load_file("config/deploy.yml").dig("servers", "web")&.first
+  compte = YAML.safe_load_file("config/deploy.yml").dig("ssh", "user") || "root"
+
+  verifie("SSH sans mot de passe", "ssh-copy-id #{compte}@#{hote}  # Kamal ouvre des sessions non interactives") do
+    ok = system("ssh -o BatchMode=yes -o ConnectTimeout=5 #{compte}@#{hote} true > /dev/null 2>&1")
+    ok ? "#{compte}@#{hote}" : nil
+  end
+
+  %w[ SECRET_KEY_BASE KAMAL_REGISTRY_PASSWORD TSHIRT_IA_DATABASE_PASSWORD
+      POSTGRES_PASSWORD GENERATOR_API_KEY GENERATOR_USER_KEY
+      SMTP_USER_NAME SMTP_PASSWORD ].each do |nom|
+    verifie(nom, "source ton fichier de secrets — voir docs/EXPLOITATION.md") do
+      ENV[nom].to_s.empty? ? nil : "posé"
+    end
+  end
+end
+
+puts
+if $manques.empty?
+  puts "Rien ne manque. `bin/setup` puis `bin/dev`."
+  exit 0
+else
+  puts "À régler avant de continuer : #{$manques.join(', ')}."
+  exit 1
+end

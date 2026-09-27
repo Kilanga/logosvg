@@ -41,10 +41,16 @@ Prérequis : Ruby 3.3+, PostgreSQL 16, libvips, Python 3.10+ et Google Chrome
 pour les tests système. Sous Windows, tout tourne dans WSL2 — voir CLAUDE.md.
 
 ```bash
+bin/doctor               # dit ce qui manque, et la commande qui l'installe
 cp .env.example .env     # puis remplir les clés
 bin/setup
 bin/dev
 ```
+
+Sur une machine neuve, commencer par `bin/doctor` : il tourne sans qu'aucune
+gem soit installée, et deux de ses lignes valent le détour — sans `librsvg` les
+aperçus filigranés sortent vides, sans police installée le filigrane aussi, et
+dans les deux cas sans la moindre erreur.
 
 `bin/dev` lance quatre processus : le serveur Rails, le watcher Tailwind, le
 worker Solid Queue et le microservice de génération **en mode mock** (il crée
@@ -76,16 +82,33 @@ app/assets/fonts/     Barlow Condensed et Figtree auto-hébergées (RGPD)
 config/locales/fr.yml tout le texte visible
 config/settings.yml   décisions ouvertes, valeurs provisoires marquées
 docs/SPEC.md          cahier des charges
+docs/EXPLOITATION.md  production, déploiement, secrets, sauvegarde
 services/generator/   microservice FastAPI livré — ne pas modifier
 ```
 
 Interface en français, code et base de données en anglais.
 
+## Mise en ligne
+
+L'application tourne en production sur un VPS OVH, déployée par Kamal 2 :
+<https://pretatirer.fr>. Tout est dans **[docs/EXPLOITATION.md](docs/EXPLOITATION.md)** —
+la machine, le déploiement, les secrets, le réseau privé vers le générateur,
+et les commandes d'exploitation. `bin/doctor --deploy` vérifie qu'un poste est
+en état de déployer.
+
 ## Secrets
 
 Rien de sensible dans le dépôt. `.env` est ignoré par git ; `.env.example`
-documente les variables sans valeur. Les secrets de production passent par les
-credentials Rails chiffrés ou par l'environnement.
+documente les variables sans valeur. En production, chaque secret est lu dans
+l'environnement du terminal qui déploie ; `.kamal/secrets` est versionné et ne
+dit que *d'où* lire, jamais quoi.
 
-⚠ `config/master.key` n'est **pas** versionné : sans lui,
-`config/credentials.yml.enc` est illisible. Conservez-le en lieu sûr.
+Ce dépôt **n'a pas de `config/master.key`**, et n'en a jamais eu :
+`config/credentials.yml.enc` est donc indéchiffrable par quiconque. Ce n'est
+pas un problème — `SECRET_KEY_BASE` vient de l'environnement, et les appels à
+`Rails.application.credentials.dig` reçoivent alors une configuration vide,
+ce que le code sait traiter. Ne pas chercher cette clé : elle n'existe pas.
+
+Trois valeurs ne se remplacent pas à la légère — `SECRET_KEY_BASE`,
+`GENERATOR_USER_KEY` et le mot de passe de la base. Le détail est dans
+[docs/EXPLOITATION.md](docs/EXPLOITATION.md#les-secrets).
