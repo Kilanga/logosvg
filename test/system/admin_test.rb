@@ -17,6 +17,14 @@ class AdminTest < ApplicationSystemTestCase
 
     click_on I18n.t("nav.reviews")
     click_on I18n.t("admin.reviews.index.filter.disputed"), match: :first
+    # Attendre que la visite Turbo soit terminée avant de chercher la fiche.
+    # Cette vérification figure dans les deux listes — « en cours » et « à
+    # trancher » — donc `find` peut très bien attraper le lien de la page
+    # précédente, cliquer sur un nœud que Turbo est en train de remplacer, et
+    # perdre le clic : le test échoue alors sur la liste filtrée, en réclamant
+    # un texte de la page de détail. Sur une machine rapide la course se gagne
+    # toujours ; sur un exécuteur chargé, non.
+    assert_current_path admin_reviews_path(filtre: "disputed")
 
     find("a[href='#{admin_review_path(reviews(:in_progress))}']").click
 
