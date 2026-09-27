@@ -66,10 +66,19 @@ class PollDesignJob < ApplicationJob
       give_up(design, I18n.t("designs.errors.unusable_file"))
     end
 
+    # Rechargé, et pas par excès de prudence : quand l'échec vient d'une
+    # transaction annulée, l'objet garde en mémoire les attributs qui l'ont
+    # fait échouer. `fail!` bute alors sur les mêmes validations, l'erreur est
+    # avalée par le filet, et le design reste bloqué en « génération en cours »
+    # — exactement ce qu'on voulait éviter.
     def give_up(design, message)
       GenerationQuota.for_user_id(design.user_id).refund!
-      design.fail!(message)
-      design.save!
-      DesignChannel.broadcast(design)
+
+      fresh = Design.find(design.id)
+      return unless fresh.may_fail?
+
+      fresh.fail!(message)
+      fresh.save!
+      DesignChannel.broadcast(fresh)
     end
 end

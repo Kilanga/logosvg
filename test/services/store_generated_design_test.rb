@@ -49,6 +49,87 @@ class StoreGeneratedDesignTest < ActiveSupport::TestCase
     assert_requested :get, %r{/jobs/job-42/print\.png}
   end
 
+  # Le chemin qui a bloque une generation entiere en production. Le service
+  # renvoie un nombre de couleurs pour toutes les techniques : huit pour le DTF,
+  # qui imprime en quadrichromie. L'ecrire dans `colors_requested`, valide entre
+  # 1 et 6, rendait l'enregistrement invalide — `succeed!` levait, la
+  # transaction etait annulee, et le design restait « en cours » pour toujours.
+  #
+  # Le design de ce cas est un vrai design DTF, pas un design de serigraphie a
+  # qui l'on sert une reponse matricielle : c'est precisement ce melange qui
+  # faisait passer les cas precedents a cote du defaut.
+  test "a raster technique keeps its empty ink budget and turns ready" do
+    dtf = designs(:fox_dtf)
+    dtf.update!(generator_job_id: "job-42", status: "generating", colors_requested: nil)
+    stub_file("print.png", png)
+    stub_file("source.png", png)
+
+    StoreGeneratedDesign.call(
+      design: dtf, answer: raster_answer.deep_merge("result" => { "colors" => 8 })
+    )
+    dtf.reload
+
+    assert_predicate dtf, :ready?
+    assert_nil dtf.colors_requested, "une machine sans plafond d'encres n'en compte pas"
+    assert_predicate dtf.print_file, :attached?
+  end
+
+  # Et l'inverse : la ou les encres se comptent, le chiffre du service fait foi.
+  test "a vector technique records the ink budget the service settled on" do
+    stub_file("design.svg", svg)
+    stub_file("source.png", png)
+
+    StoreGeneratedDesign.call(
+      design: @design, answer: vector_answer.deep_merge("result" => { "colors" => 2 })
+    )
+
+    assert_equal 2, @design.reload.colors_requested
+  end
+
+  # Le catalogue en entier, technique par technique.
+  #
+  # Le defaut du DTF n'avait rien de propre au DTF : le service renvoie le meme
+  # nombre de couleurs par defaut pour les trois techniques matricielles, et les
+  # trois auraient bloque de la meme facon. Plutot que d'ajouter un cas par
+  # technique, ce cas les parcourt toutes — une technique ajoutee au catalogue
+  # est couverte sans qu'on ecrive une ligne de plus.
+  #
+  # La reponse simulee est celle que le service envoie vraiment : son fichier a
+  # lui (`file_name`), et le nombre de couleurs qu'il calcule lui-meme, qui vaut
+  # `default_colors` quand le client n'a rien impose — 3 en serigraphie, 8 en
+  # DTF.
+  test "every technique in the catalogue is brought home and turns ready" do
+    stub_file("design.svg", svg)
+    stub_file("print.png", png)
+    stub_file("source.png", png)
+
+    PrintTechniques.all.each do |entry|
+      design = generating_design_for(entry)
+
+      StoreGeneratedDesign.call(design: design, answer: answer_for(entry))
+      design.reload
+
+      assert_predicate design, :ready?, "#{entry.key} : le design n'est pas passe pret"
+      assert_equal entry.native_format, design.print_format, "#{entry.key} : mauvais format"
+      assert_equal entry.file_name, design.print_file.filename.to_s, "#{entry.key} : mauvais fichier"
+
+      if entry.limited_colors?
+        assert_equal entry.default_colors, design.colors_requested,
+                     "#{entry.key} : le budget d'encres du service n'a pas ete repris"
+        assert_not_nil design.inks_count, "#{entry.key} : une sortie vectorielle compte ses encres"
+      else
+        assert_nil design.colors_requested,
+                   "#{entry.key} : une machine sans plafond d'encres n'en compte pas"
+        assert_nil design.paths_count, "#{entry.key} : une sortie matricielle n'a pas de chemins"
+      end
+
+      # Et le fichier se rasterise : c'est la seule image que le client verra,
+      # et elle passe par librsvg pour les unes, par libvips seul pour les
+      # autres. Un apercu muet vaut un design invisible.
+      assert_not_nil DesignPreview.call(design), "#{entry.key} : pas d'apercu"
+    end
+  end
+
   # Screens are counted on vector output and meaningless on raster output.
   test "inks and paths are recorded for a vector file and left empty for a raster one" do
     stub_file("print.png", png)
@@ -111,6 +192,33 @@ class StoreGeneratedDesignTest < ActiveSupport::TestCase
   end
 
   private
+    # Un design par technique, dans l'etat ou le travail de fond le trouve :
+    # le budget d'encres est renseigne la ou il existe, et vide ailleurs — c'est
+    # exactement ce que fait BoundedGenerationRequest au moment du formulaire.
+    def generating_design_for(entry)
+      design = Design.create!(
+        user: users(:client), prompt: "une montagne au lever du soleil",
+        style: "illustration", technique: entry.key, print_width_cm: 25,
+        colors_requested: (entry.default_colors if entry.limited_colors?),
+        generator_job_id: "job-42"
+      )
+      design.start!
+      design.save!
+      design
+    end
+
+    def answer_for(entry)
+      {
+        "status" => "done", "refinements_left" => 3,
+        "result" => {
+          "print_file" => entry.file_name, "colors" => entry.default_colors,
+          "inks" => 1, "palette" => [ { "hex" => "#1F5F7A" } ], "warnings" => [],
+          "stats" => { "paths" => 12, "dpi" => entry.dpi },
+          "prompt_used" => "a mountain at sunrise", "subject" => "a mountain", "seed" => 7
+        }
+      }
+    end
+
     def stub_file(name, body)
       stub_request(:get, %r{/jobs/job-42/#{Regexp.escape(name)}}).to_return(body: body)
     end

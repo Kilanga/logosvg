@@ -1,6 +1,11 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
+  # Le nom de domaine servi. Déclaré par l'environnement pour qu'une mise en
+  # ligne sur un autre nom — une préproduction, un essai — ne demande pas de
+  # toucher au code.
+  app_host = ENV.fetch("APP_HOST", "pretatirer.fr")
+
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Code is not reloaded between requests.
@@ -24,14 +29,17 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  # config.assume_ssl = true
+  # Le proxy de Kamal termine le TLS et parle en clair au conteneur. Sans ces
+  # deux lignes, Rails se croit en clair : les cookies de session perdent leur
+  # attribut `secure` et les redirections repartent en http — sur une
+  # plateforme qui manipule des comptes et des paiements, ce n'est pas une
+  # option.
+  config.assume_ssl = true
+  config.force_ssl = true
 
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
-
-  # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # Le contrôle de santé est interrogé en http depuis la machine elle-même :
+  # le rediriger ferait échouer chaque déploiement alors que tout va bien.
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
@@ -57,17 +65,23 @@ Rails.application.configure do
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
-  # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
+  # Les liens des emails sortent de l'application sans requête pour les porter :
+  # l'hôte se déclare ici, une fois.
+  config.action_mailer.default_url_options = { host: app_host, protocol: "https" }
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # Le relais SMTP. Les identifiants viennent de l'environnement plutôt que des
+  # credentials chiffrés : Kamal les injecte depuis .kamal/secrets, et changer
+  # de relais ne demande alors aucun déploiement de code.
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.smtp_settings = {
+    address: ENV.fetch("SMTP_ADDRESS", "smtp-relay.brevo.com"),
+    port: ENV.fetch("SMTP_PORT", "587").to_i,
+    user_name: ENV["SMTP_USER_NAME"],
+    password: ENV["SMTP_PASSWORD"],
+    authentication: :plain,
+    enable_starttls_auto: true
+  }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
@@ -79,12 +93,9 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  # Protection contre la réécriture d'en-tête `Host` : seules ces adresses sont
+  # servies. Le contrôle de santé, lui, arrive par l'IP de la machine et n'a
+  # aucun nom à présenter.
+  config.hosts = [ app_host, "www.#{app_host}" ]
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end

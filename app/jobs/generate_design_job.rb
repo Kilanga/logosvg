@@ -59,10 +59,18 @@ class GenerateDesignJob < ApplicationJob
     def poll_interval = Rails.application.config.tshirt.generation[:poll_interval_seconds].seconds
 
     # A generation that never started consumed nothing: the attempt goes back.
+    #
+    # Le design est rechargé pour la même raison que dans PollDesignJob : un
+    # objet resté invalide en mémoire empêcherait de l'enregistrer comme
+    # échoué, et l'écran du client tournerait sans fin.
     def refuse(design, message, refund:)
       GenerationQuota.for_user_id(design.user_id).refund! if refund
-      design.fail!(message)
-      design.save!
-      DesignChannel.broadcast(design)
+
+      fresh = Design.find(design.id)
+      return unless fresh.may_fail?
+
+      fresh.fail!(message)
+      fresh.save!
+      DesignChannel.broadcast(fresh)
     end
 end

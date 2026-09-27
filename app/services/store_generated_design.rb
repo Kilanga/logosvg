@@ -78,9 +78,24 @@ class StoreGeneratedDesign
         subject: @result["subject"],
         seed: @result["seed"],
         refinements_left: @answer["refinements_left"],
-        colors_requested: @result["colors"] || @design.colors_requested,
+        colors_requested: recorded_colors,
         inks_count: (@inspected&.inks || @result["inks"] if format == "svg"),
         paths_count: (stats["paths"] if format == "svg")
       )
+    end
+
+    # `colors_requested` est le budget d'encres du client, et il n'existe que
+    # pour les techniques qui en comptent. Le service, lui, renvoie toujours un
+    # nombre : pour le DTF, le DTG et la sublimation, c'est son propre défaut —
+    # huit — parce que ces machines impriment en quadrichromie.
+    #
+    # Le reprendre tel quel écrivait 8 dans une colonne validée entre 1 et 6.
+    # L'enregistrement devenait invalide, `succeed!` levait, la transaction
+    # était annulée, et le design restait « en cours » pour toujours.
+    def recorded_colors
+      entry = PrintTechniques.find(@design.technique)
+      return @design.colors_requested unless entry&.limited_colors?
+
+      @result["colors"] || @design.colors_requested
     end
 end

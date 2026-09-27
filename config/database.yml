@@ -85,6 +85,10 @@ test:
 production:
   primary: &primary_production
     <<: *default
+    # En production la base est un conteneur voisin, joint par son nom sur le
+    # réseau Docker de Kamal (`<service>-db`). En son absence, la socket locale,
+    # ce qui permet de lancer une commande Rails hors conteneur.
+    host: <%= ENV.fetch("DB_HOST", "localhost") %>
     database: tshirt_ia_production
     username: tshirt_ia
     password: <%= ENV["TSHIRT_IA_DATABASE_PASSWORD"] %>
