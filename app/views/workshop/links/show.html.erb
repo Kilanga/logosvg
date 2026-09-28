@@ -26,7 +26,8 @@
   <div class="grid gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
     <div class="panel justify-self-center p-6">
       <%# The QR code is drawn, not fetched: it encodes nothing but the URL. %>
-      <div class="flex justify-center"><%= raw WorkshopQrCode.svg(workshop_link_url(slug: @printer.slug)) %></div>
+      <%# It carries `?s=qr`, so a scan and a click on the link are told apart. %>
+      <div class="flex justify-center"><%= raw WorkshopQrCode.svg(workshop_link_url(slug: @printer.slug, s: WorkshopLinkVisit::QR)) %></div>
       <p class="label-rule mt-4 text-center"><%= t(".qr") %></p>
     </div>
 
@@ -42,6 +43,57 @@
       </div>
     </div>
   </div>
+
+  <%# One link per place it is handed out. Atelier+ makes them; every shop keeps
+      and tidies the ones it has. %>
+  <% can_name = policy(@printer).manage_link_channels? %>
+  <% if can_name || @channels.any? %>
+    <section class="panel p-6">
+      <h2 class="label-rule"><%= t(".channels") %></h2>
+      <p class="mt-3 text-sm text-muted"><%= t(".channels_body", limit: WorkshopLinkChannel::LIMIT) %></p>
+
+      <% if can_name %>
+        <%= form_with scope: :link_channel, url: workshop_link_channels_path, class: "mt-5 flex flex-wrap items-end gap-3" do |form| %>
+          <div class="flex-1">
+            <%= form.label :label, t(".channel_label"), class: "label-rule" %>
+            <%= form.text_field :label, maxlength: 40, required: true, id: "link_channel_label",
+                  placeholder: t(".channel_placeholder"),
+                  class: "mt-1 min-h-touch w-full rounded-xs border border-line bg-paper px-3" %>
+          </div>
+          <%= form.submit t(".channel_create"), class: "btn btn-primary text-sm" %>
+        <% end %>
+      <% end %>
+
+      <% if @channels.any? %>
+        <ul class="mt-5 divide-y divide-line border-t border-line">
+          <% @channels.each do |channel| %>
+            <li class="py-4" data-controller="clipboard" data-clipboard-copied-value="<%= t('.copied') %>">
+              <div class="flex flex-wrap items-baseline justify-between gap-3">
+                <p class="font-display text-lg font-bold uppercase"><%= channel.label %></p>
+                <div class="flex flex-wrap gap-3 text-sm">
+                  <%= link_to t(".qr_svg"), workshop_link_qr_path(format: :svg, canal: channel.key), class: "underline" %>
+                  <%= link_to t(".qr_png"), workshop_link_qr_path(format: :png, canal: channel.key), class: "underline" %>
+                  <%= button_to t(".channel_delete"), workshop_link_channel_path(key: channel.key),
+                        method: :delete, form: { data: { turbo_confirm: t(".channel_delete_confirm", label: channel.label) } },
+                        class: "text-warning underline" %>
+                </div>
+              </div>
+              <div class="mt-3 flex flex-wrap items-center gap-3">
+                <input type="text" readonly value="<%= workshop_link_url(slug: @printer.slug, s: channel.key) %>"
+                       data-clipboard-target="source" onclick="this.select()"
+                       class="min-h-touch flex-1 rounded-xs border border-line bg-paper px-3 font-mono text-sm"
+                       aria-label="<%= t('.channel_link', label: channel.label) %>">
+                <button type="button" class="btn btn-secondary text-sm"
+                        data-clipboard-target="button" data-action="clipboard#copy">
+                  <%= t(".copy") %>
+                </button>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+  <% end %>
 
   <%# Atelier+ buys the statistics. Without it the page still gives the link,
       the code and the poster — those are what a shop needs to be found. %>
@@ -66,6 +118,22 @@
           <dd class="font-display text-3xl font-bold"><%= @statistics[:print_requests] %></dd>
         </div>
       </dl>
+
+      <%# Where they came from: the plain link, the poster, and each named link. %>
+      <% if @statistics[:sources].any? %>
+        <div class="mt-6">
+          <p class="label-rule"><%= t(".by_source") %></p>
+          <ul class="mt-3 space-y-2">
+            <% source_bars(@statistics[:sources]).each do |bar| %>
+              <li class="grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)_auto] items-center gap-3 text-sm">
+                <span class="truncate"><%= link_source_label(bar[:source], @channels) %></span>
+                <span class="h-3 bg-paper"><span class="block h-3 bg-emulsion/70" style="width: <%= [ bar[:width], 2 ].max %>%"></span></span>
+                <span class="font-display text-lg font-bold"><%= bar[:count] %></span>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
 
       <%# Thirty bars, drawn as divs: it has to print, and it is not worth a
           charting dependency. %>

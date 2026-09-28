@@ -312,6 +312,12 @@ fr:
               blank: "est obligatoire : cochez la case pour transmettre vos coordonnées"
             consent_text_version:
               blank: "est obligatoire : cochez la case pour transmettre vos coordonnées"
+        workshop_link_channel:
+          attributes:
+            label:
+              invalid: "doit contenir au moins une lettre ou un chiffre"
+            base:
+              limit_reached: "Vous avez déjà %{count} liens nommés : supprimez-en un avant d'en créer un autre."
     models:
       user: "Compte"
       printer: "Atelier"
@@ -322,7 +328,10 @@ fr:
       review_level: "Niveau de vérification"
       review: "Vérification"
       blocked_term: "Terme bloqué"
+      workshop_link_channel: "Lien nommé"
     attributes:
+      workshop_link_channel:
+        label: "Nom du lien"
       review:
         client_brief: "Ce que vous attendez"
         review_level: "Niveau"
@@ -1318,10 +1327,26 @@ fr:
           zero: "aucune visite"
           one: "%{count} visite"
           other: "%{count} visites"
+        by_source: "D'où ils viennent"
+        source_link: "Lien"
+        source_qr: "QR code de l'affiche"
+        source_removed: "%{key} (supprimé)"
+        channels: "Vos liens nommés"
+        channels_body: >-
+          Un lien par endroit où vous le distribuez : flyer, salon, réseau
+          social. Chacun a son QR code et son compteur, pour savoir ce qui
+          amène vraiment des clients. Dix liens au plus.
+        channel_label: "Nom du lien"
+        channel_placeholder: "Flyer, salon de Rennes, Instagram…"
+        channel_create: "Créer le lien"
+        channel_delete: "Supprimer"
+        channel_delete_confirm: "Supprimer le lien « %{label} » ? Les flyers déjà imprimés continueront d'amener des clients, comptés comme « Lien »."
+        channel_link: "Adresse du lien « %{label} »"
         statistics_locked: "Statistiques réservées à Atelier+"
         statistics_locked_body: >-
           Voyez combien de personnes scannent votre affiche, combien créent un
-          design et combien vous envoient une demande.
+          design et combien vous envoient une demande. Créez un lien par flyer
+          ou par salon pour savoir lequel marche.
         see_plans: "Voir les formules"
       poster:
         title: "Affiche — %{printer}"
@@ -1338,6 +1363,12 @@ fr:
         print: "Imprimer"
         print_hint: "Cette page est prête pour une impression A4."
         back: "Retour"
+
+    link_channels:
+      create:
+        created: "Le lien « %{label} » est créé."
+      destroy:
+        destroyed: "Le lien « %{label} » est supprimé."
 
     profiles:
       edit:
