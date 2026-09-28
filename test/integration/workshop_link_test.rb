@@ -68,9 +68,11 @@ class WorkshopLinkTest < ActionDispatch::IntegrationTest
 
   # --- Visits ---------------------------------------------------------------
 
+  BROWSER = { "User-Agent" => "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/605.1.15" }.freeze
+
   test "a scan of the poster is counted" do
-    assert_difference -> { WorkshopLinkVisit.where(printer: printers(:rennes)).sum(:count) }, 1 do
-      get workshop_link_path(slug: printers(:rennes).slug)
+    assert_difference -> { visit_count(:rennes) }, 1 do
+      get workshop_link_path(slug: printers(:rennes).slug), headers: BROWSER
     end
   end
 
@@ -78,15 +80,50 @@ class WorkshopLinkTest < ActionDispatch::IntegrationTest
     subscriptions(:rennes).update!(status: "canceled")
 
     assert_no_difference -> { WorkshopLinkVisit.sum(:count) } do
-      get workshop_link_path(slug: printers(:rennes).slug)
+      get workshop_link_path(slug: printers(:rennes).slug), headers: BROWSER
     end
   end
 
-  test "several scans on the same day add up on one row" do
-    3.times { get workshop_link_path(slug: printers(:rennes).slug) }
+  test "several people on the same day add up on one row" do
+    3.times do
+      get workshop_link_path(slug: printers(:rennes).slug), headers: BROWSER
+      reset!
+    end
 
     assert_equal 1, WorkshopLinkVisit.where(printer: printers(:rennes)).count
-    assert_equal 3, WorkshopLinkVisit.where(printer: printers(:rennes)).sum(:count)
+    assert_equal 3, visit_count(:rennes)
+  end
+
+  test "a reload or a second scan by the same visitor is not a second visit" do
+    3.times { get workshop_link_path(slug: printers(:rennes).slug), headers: BROWSER }
+
+    assert_equal 1, visit_count(:rennes)
+  end
+
+  test "the same visitor scanning another shop is a visit for that shop" do
+    get workshop_link_path(slug: printers(:rennes).slug), headers: BROWSER
+    get workshop_link_path(slug: printers(:lyon).slug), headers: BROWSER
+
+    assert_equal 1, visit_count(:rennes)
+    assert_equal 1, visit_count(:lyon)
+  end
+
+  test "a link preview, a search engine or a script is not a visitor" do
+    [ "WhatsApp/2.23.20 A", "Mozilla/5.0 (compatible; Googlebot/2.1)", "facebookexternalhit/1.1",
+      "Slackbot-LinkExpanding 1.0", "curl/8.4.0", "", nil ].each do |agent|
+      assert_no_difference -> { visit_count(:rennes) }, "#{agent.inspect} must not count" do
+        get workshop_link_path(slug: printers(:rennes).slug), headers: { "User-Agent" => agent }
+      end
+
+      reset!
+    end
+  end
+
+  test "a robot is still sent on its way, and still remembers the shop" do
+    get workshop_link_path(slug: printers(:rennes).slug), headers: { "User-Agent" => "curl/8.4.0" }
+
+    assert_redirected_to new_design_path
+    assert_equal printers(:rennes).id, session[:printer_id]
   end
 
   # --- Statistics, which Atelier+ buys --------------------------------------
@@ -128,4 +165,7 @@ class WorkshopLinkTest < ActionDispatch::IntegrationTest
     assert_equal 4, series.to_h[3.days.ago.to_date]
     assert_equal 0, series.to_h[1.day.ago.to_date]
   end
+
+  private
+    def visit_count(key) = WorkshopLinkVisit.where(printer: printers(key)).sum(:count)
 end
