@@ -19,10 +19,13 @@ class ApplicationController < ActionController::Base
 
   rescue_from Pundit::NotAuthorizedError, with: :deny_access
 
-  helper_method :space_path_for
+  helper_method :space_path_for, :shop_context
 
   private
     def listing? = action_name == "index"
+
+    # The workshop that sent this visitor, and their answer about remembering it.
+    def shop_context = @shop_context ||= ShopContext.new(cookies: cookies, session: session)
 
     # Pundit reads the current user from here rather than from `current_user`.
     def pundit_user = Current.user

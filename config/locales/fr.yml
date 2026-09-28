@@ -1628,6 +1628,20 @@ fr:
   # ⚠ DÉCISION OUVERTE : ces textes sont des brouillons de travail. Ils doivent
   #   être relus par un juriste avant toute mise en production — le cahier des
   #   charges le dit explicitement (« Validation juridique »).
+  # Le bandeau : proposé seulement à qui arrive par le lien ou le QR code d'un
+  # atelier, jamais par la porte d'entrée. « Refuser » et « Accepter » sont deux
+  # boutons identiques.
+  consent:
+    title: "Un cookie, si vous le voulez"
+    body: >-
+      L'atelier qui vous a envoyé ici est retenu le temps de votre visite.
+      Avec votre accord, un cookie le retient aussi %{days} jours : vous pouvez
+      revenir plus tard, ou créer un compte, sans que l'atelier soit oublié.
+      Aucun traceur publicitaire.
+    more: "En savoir plus"
+    accept: "Accepter"
+    decline: "Refuser"
+
   legal:
     eyebrow: "Informations légales"
     updated_on: "2026-09-20"
@@ -1742,6 +1756,7 @@ fr:
         body:
           - "Faire fonctionner le service : générer un visuel, le transmettre à l'atelier que vous choisissez, suivre votre demande."
           - "Aucun traceur publicitaire n'est déposé. Les polices sont hébergées par nos soins : votre navigateur ne contacte aucun service tiers pour les charger."
+          - "Un seul cookie facultatif existe : il retient l'atelier qui vous a envoyé sur le site, et seulement si vous l'acceptez. Le détail est sur la page Cookies."
       recipients:
         title: "Qui reçoit quoi"
         body:
@@ -1758,6 +1773,26 @@ fr:
         body:
           - "Vous pouvez exporter l'ensemble de vos données au format JSON depuis votre espace, à tout moment et sans nous écrire."
           - "Vous pouvez fermer votre compte depuis le même écran. Les droits d'accès, de rectification, d'effacement et d'opposition s'exercent auprès de l'adresse de contact."
+
+    cookies:
+      title: "Cookies"
+      essential:
+        title: "Ce qui est nécessaire"
+        body:
+          - "Un cookie de session vous garde connecté(e) et retient, le temps de votre visite, l'atelier qui vous a envoyé. Il est indispensable au fonctionnement du service : il ne demande pas votre accord et disparaît à la fermeture de votre navigateur."
+          - "Ce choix-ci, l'enregistrement de votre réponse, est lui aussi conservé dans un cookie pour ne pas vous reposer la question. Il ne contient rien d'autre que « accepté » ou « refusé »."
+      attribution:
+        title: "Ce que vous pouvez accepter"
+        body:
+          - "Si vous arrivez par le lien ou le QR code d'un atelier, un cookie facultatif peut retenir cet atelier %{days} jours. Vous pouvez ainsi revenir plus tard, ou créer un compte entre-temps, sans que l'atelier soit oublié."
+          - "Il ne contient que l'identifiant de l'atelier, signé pour qu'on ne puisse pas le modifier. Il ne sert ni à vous suivre d'un site à l'autre, ni à vous montrer de la publicité, et n'est transmis à personne."
+          - "Sans lui, le service fonctionne pareil : seul l'atelier est oublié quand vous fermez votre navigateur. Refuser ne coûte rien, et vous pouvez changer d'avis ci-dessous à tout moment."
+      choice:
+        title: "Votre choix"
+        state:
+          undecided: "Vous n'avez pas encore répondu. Aucun cookie facultatif n'est déposé."
+          accepted: "Vous avez accepté : l'atelier qui vous envoie est retenu %{days} jours."
+          declined: "Vous avez refusé : aucun cookie facultatif n'est déposé."
 
     ranking:
       title: "Classement de l'annuaire"
@@ -2009,6 +2044,12 @@ fr:
     workshop_links:
       show:
         unknown: "Cet atelier n'est plus référencé. Choisissez-en un autre."
+
+    cookie_consents:
+      create:
+        accepted: "C'est noté : nous retiendrons l'atelier qui vous a envoyé."
+        declined: "C'est noté : aucun cookie ne retiendra l'atelier qui vous a envoyé."
+        unknown: "Ce choix n'existe pas."
 
     designers:
       index:

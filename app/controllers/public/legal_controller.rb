@@ -8,7 +8,7 @@ module Public
     skip_after_action :verify_authorized
     skip_after_action :verify_policy_scoped
 
-    PAGES = %w[ legal_notice terms subscription_terms designer_terms privacy ranking ].freeze
+    PAGES = %w[ legal_notice terms subscription_terms designer_terms privacy cookies ranking ].freeze
 
     def show
       page = params[:page]
