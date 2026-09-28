@@ -1,0 +1,25 @@
+<%# Asked only of someone a workshop just sent us, and only until they answer.
+    Sticky at the foot of the page rather than fixed over it, so it never covers
+    what it is standing in front of. Neither answer is set apart from the other:
+    same size, same weight, refusal first to read. %>
+<%# Not on the cookies page, which asks the same question in full. %>
+<% if shop_context.choice_pending? && !current_page?(cookies_path) %>
+  <section class="sticky bottom-0 z-40 border-t-2 border-ink bg-surface" aria-labelledby="consent-title">
+    <div class="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-8 gap-y-4 px-5 py-4">
+      <div class="min-w-0 flex-1 basis-80">
+        <p id="consent-title" class="label-rule text-emulsion"><%= t("consent.title") %></p>
+        <p class="mt-1 text-sm">
+          <%= t("consent.body", days: Rails.application.config.tshirt.privacy[:attribution_cookie_days]) %>
+          <%= link_to t("consent.more"), cookies_path, class: "underline underline-offset-4 hover:text-emulsion" %>
+        </p>
+      </div>
+
+      <div class="flex gap-3">
+        <%= button_to t("consent.decline"), cookie_consent_path, params: { choice: "declined" },
+              class: "btn btn-secondary text-sm", form_class: "contents" %>
+        <%= button_to t("consent.accept"), cookie_consent_path, params: { choice: "accepted" },
+              class: "btn btn-secondary text-sm", form_class: "contents" %>
+      </div>
+    </div>
+  </section>
+<% end %>

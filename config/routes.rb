@@ -159,6 +159,10 @@ Rails.application.routes.draw do
   get "conditions-graphistes",   to: "public/legal#show", page: "designer_terms", as: :designer_terms
   get "confidentialite",         to: "public/legal#show", page: "privacy",        as: :privacy
   get "classement-annuaire",     to: "public/legal#show", page: "ranking",        as: :ranking
+  get "cookies",                 to: "public/legal#show", page: "cookies",        as: :cookies
+
+  # Le choix du visiteur sur le cookie qui retient l'atelier qui l'a envoyé.
+  post "cookies", to: "public/cookie_consents#create", as: :cookie_consent
 
   # --- Webhooks ---------------------------------------------------------------
   # Signature vérifiée, jamais de session : Stripe n'est pas un visiteur.
