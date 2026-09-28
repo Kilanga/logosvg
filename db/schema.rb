@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_20_210210) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_173802) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -397,13 +397,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210210) do
     t.index ["role"], name: "index_users_on_role"
   end
 
+  create_table "workshop_link_channels", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "key", null: false
+    t.string "label", null: false
+    t.bigint "printer_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["printer_id", "key"], name: "index_workshop_link_channels_on_printer_id_and_key", unique: true
+  end
+
   create_table "workshop_link_visits", force: :cascade do |t|
     t.integer "count", default: 0, null: false
     t.datetime "created_at", null: false
     t.date "day", null: false
     t.bigint "printer_id", null: false
+    t.string "source", default: "link", null: false
     t.datetime "updated_at", null: false
-    t.index ["printer_id", "day"], name: "index_workshop_link_visits_on_printer_id_and_day", unique: true
+    t.index ["printer_id", "day", "source"], name: "index_workshop_link_visits_on_printer_id_and_day_and_source", unique: true
     t.index ["printer_id"], name: "index_workshop_link_visits_on_printer_id"
   end
 
@@ -435,5 +445,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_20_210210) do
   add_foreign_key "reviews", "users", column: "settled_by_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "subscriptions", "printers"
+  add_foreign_key "workshop_link_channels", "printers"
   add_foreign_key "workshop_link_visits", "printers"
 end

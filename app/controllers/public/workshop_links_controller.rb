@@ -22,7 +22,9 @@ module Public
         # being scanned, whether or not anything is drawn afterwards. Once per
         # visitor, though: the session already knowing the shop means a reload
         # or a second scan, not a second person.
-        WorkshopLinkVisit.record!(printer) if new_visitor?(printer) && !crawler?
+        if new_visitor?(printer) && !crawler?
+          WorkshopLinkVisit.record!(printer, source: printer.link_source(params[:s]))
+        end
 
         session[:printer_id] = printer.id
         redirect_to new_design_path

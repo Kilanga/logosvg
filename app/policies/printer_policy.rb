@@ -6,6 +6,10 @@ class PrinterPolicy < ApplicationPolicy
   def edit?   = owner?
   def update? = owner?
 
+  # Named links are part of what Atelier+ buys: the statistics that tell them
+  # apart are.
+  def manage_link_channels? = owner? && record.subscription&.featured?
+
   # Only from a draft, and only once the listing says enough to be judged.
   def submit? = owner? && record.draft?
 

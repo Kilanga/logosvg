@@ -101,6 +101,10 @@ Rails.application.routes.draw do
   get "atelier/lien/qr.:format", to: "workshop/links#qr",   as: :workshop_link_qr
   get "atelier/lien/affiche",   to: "workshop/links#poster", as: :workshop_link_poster
 
+  # Les liens nommés (flyer, salon, réseau social), un compteur chacun.
+  post   "atelier/lien/canaux",      to: "workshop/link_channels#create",  as: :workshop_link_channels
+  delete "atelier/lien/canaux/:key", to: "workshop/link_channels#destroy", as: :workshop_link_channel
+
   # Les demandes reçues par l'atelier, et leur suivi.
   get   "atelier/demandes",        to: "workshop/print_requests#index",  as: :workshop_print_requests
   get   "atelier/demandes/:token", to: "workshop/print_requests#show",   as: :workshop_print_request

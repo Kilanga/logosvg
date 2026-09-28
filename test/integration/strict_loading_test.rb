@@ -59,6 +59,35 @@ class StrictLoadingTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # L'écran du lien, dans son état le plus chargé : Atelier+, des liens nommés,
+  # des visites de plusieurs provenances, dont celle d'un lien supprimé.
+  test "the link screen of an Atelier+ shop with named links opens with strict loading on" do
+    printer = printers(:lyon)
+    channel = printer.link_channels.create!(label: "Salon")
+    WorkshopLinkVisit.record!(printer, source: "qr")
+    WorkshopLinkVisit.record!(printer, source: channel.key)
+    WorkshopLinkVisit.record!(printer, source: "ancien-flyer")
+    sign_in_as users(:printer_lyon)
+
+    get workshop_link_share_path
+
+    assert_response :success
+    assert_select "body", text: /Salon/
+  end
+
+  test "named links are made and removed with strict loading on" do
+    sign_in_as users(:printer_lyon)
+
+    post workshop_link_channels_path, params: { link_channel: { label: "Flyer" } }
+    assert_redirected_to workshop_link_share_path
+
+    get workshop_link_qr_path(format: :svg, canal: "flyer")
+    assert_response :success
+
+    delete workshop_link_channel_path(key: "flyer")
+    assert_redirected_to workshop_link_share_path
+  end
+
   test "a public page greets a signed-in visitor without a lazy load" do
     sign_in_as users(:client)
 
