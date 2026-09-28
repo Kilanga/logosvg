@@ -156,6 +156,38 @@ class WorkshopLinkTest < ActionDispatch::IntegrationTest
     assert_select "body", text: /#{Regexp.escape(I18n.t('workshop.links.show.statistics_locked'))}/i
   end
 
+  # Lyon's fixtures: "acknowledged" (design fox_dtf, printer lyon — its own
+  # funnel) and "found_in_directory" (design fox_screen, printer rennes, but
+  # sent to lyon — found some other way).
+  test "the requests figure says how many actually confirm the shop's own link" do
+    sign_in_as users(:printer_lyon)
+
+    get workshop_link_share_path
+
+    assert_select "body", text: /#{Regexp.escape(I18n.t('workshop.links.show.requests_from_link', count: 1))}/
+  end
+
+  test "a shop with only directory-found requests is told none came from its link" do
+    print_requests(:acknowledged).destroy
+    sign_in_as users(:printer_lyon)
+
+    get workshop_link_share_path
+
+    assert_select "body",
+      text: /#{Regexp.escape(I18n.t('workshop.links.show.requests_from_link', count: 0))}/
+  end
+
+  test "the breakdown is not shown when there is nothing to break down" do
+    print_requests(:acknowledged).destroy
+    print_requests(:found_in_directory).destroy
+    sign_in_as users(:printer_lyon)
+
+    get workshop_link_share_path
+
+    assert_select "body",
+      text: /#{Regexp.escape(I18n.t('workshop.links.show.requests_from_link', count: 0))}/, count: 0
+  end
+
   test "the chart covers thirty days, holes included" do
     WorkshopLinkVisit.create!(printer: printers(:lyon), day: 3.days.ago.to_date, count: 4)
 

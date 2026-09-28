@@ -85,6 +85,7 @@ class PrintRequestsTest < ApplicationSystemTestCase
   test "a workshop with no request sees a drawn empty state" do
     sign_in users(:printer_lyon)
     print_requests(:acknowledged).destroy
+    print_requests(:found_in_directory).destroy
 
     visit workshop_print_requests_path
 

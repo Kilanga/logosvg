@@ -70,11 +70,17 @@ module Workshop
       def link_statistics
         return nil unless @printer.subscription&.featured?
 
+        requests = @printer.print_requests.where(created_at: 30.days.ago..)
+
         {
           series: WorkshopLinkVisit.series(@printer, days: 30),
           sources: WorkshopLinkVisit.by_source(@printer, days: 30),
           designs: Design.where(printer: @printer).where(created_at: 30.days.ago..).count,
-          print_requests: @printer.print_requests.where(created_at: 30.days.ago..).count
+          print_requests: requests.count,
+          # Of those, how many came from a design this shop's own funnel
+          # produced, versus a client who found the shop some other way —
+          # the directory, most often — for a design started elsewhere.
+          print_requests_from_link: requests.from_designs_printer.count
         }
       end
   end
