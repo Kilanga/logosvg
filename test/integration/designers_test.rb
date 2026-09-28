@@ -182,6 +182,17 @@ class DesignersTest < ActionDispatch::IntegrationTest
     assert_select "body", text: /#{Regexp.escape(designer_profiles(:nour).display_name)}/
   end
 
+  # The "waiting" half of the screen already draws its empty state; the
+  # "decided" half did not, and rendered nothing at all below its own heading.
+  test "no decided profile yet is said, not left blank" do
+    DesignerProfile.where.not(id: designer_profiles(:nour).id).update_all(status: "pending_review")
+    sign_in_as users(:admin)
+
+    get admin_designers_path
+
+    assert_select "body", text: /#{Regexp.escape(I18n.t('admin.designers.index.all', count: 0))}/
+  end
+
   test "an administrator publishes a complete profile, and the designer is told" do
     sign_in_as users(:admin)
 

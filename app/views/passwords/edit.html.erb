@@ -6,7 +6,9 @@
     <%= render "shared/field",
           form: form, field: :password, label: t("passwords.edit.new_password"),
           kind: :password_field,
-          options: { required: true, autofocus: true, autocomplete: "new-password" } %>
+          options: { required: true, autofocus: true, autocomplete: "new-password",
+                     minlength: User::MINIMUM_PASSWORD_LENGTH },
+          hint: t("passwords.edit.password_hint") %>
 
     <%= render "shared/field",
           form: form, field: :password_confirmation, label: t("activerecord.attributes.user.password_confirmation"),

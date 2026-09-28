@@ -22,10 +22,14 @@
 
   <section>
     <h2 class="label-rule border-b border-line pb-3"><%= t(".all", count: decided.size) %></h2>
-    <ul class="divide-y divide-line">
-      <% decided.each do |printer| %>
-        <%= render "row", printer: printer, decidable: false %>
-      <% end %>
-    </ul>
+    <% if decided.any? %>
+      <ul class="divide-y divide-line">
+        <% decided.each do |printer| %>
+          <%= render "row", printer: printer, decidable: false %>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="py-8 text-muted"><%= t(".all", count: 0) %></p>
+    <% end %>
   </section>
 </div>

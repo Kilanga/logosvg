@@ -95,6 +95,28 @@ class UserTest < ActiveSupport::TestCase
     assert_nil User.authenticate_by(email_address: users(:client).email_address, password: "pas-le-bon")
   end
 
+  # `has_secure_password` caps a password at bcrypt's own ceiling but sets no
+  # floor on its own: without this validation, a one-character password would
+  # be accepted, contradicting the "Au moins 8 caractères" the sign-up form
+  # itself tells a visitor.
+  test "a password under eight characters is refused" do
+    user = build_user(password: "court1")
+
+    assert_not user.valid?
+    assert user.errors.include?(:password)
+  end
+
+  test "a password of exactly eight characters is accepted" do
+    assert build_user(password: "12345678").valid?
+  end
+
+  test "updating an account without touching the password is unaffected" do
+    user = users(:client)
+    user.first_name = "Autre"
+
+    assert user.valid?
+  end
+
   private
     def build_user(**attributes)
       User.new({
