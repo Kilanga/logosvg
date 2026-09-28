@@ -44,9 +44,18 @@ class ClientDashboard
 
     # The workshop has not even confirmed receipt. Worth saying so before the
     # sweep expires it.
+    #
+    # `includes(:printer)`: the view names the shop in this sentence. Missed
+    # here, and `strict_loading_by_default` never catches it in development —
+    # a record reached through `Current.user`'s own associations inherits
+    # `Current.user`'s own loaded-by-`includes` state instead of the global
+    # default, so this exact N+1 ran silently under the safety net meant to
+    # catch it. Caught instead by counting queries: see
+    # `query_budget_test.rb`, "the client dashboard stays flat".
     def silent_print_requests
       print_requests.awaiting_acknowledgement
                     .where(sent_at: ..reminder_mark)
+                    .includes(:printer)
                     .map do |print_request|
         Action.new(kind: :print_request_silent, record: print_request, on: print_request.sent_at)
       end
