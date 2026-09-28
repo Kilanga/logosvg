@@ -24,6 +24,8 @@ class Printer < ApplicationRecord
   has_one :subscription, dependent: :destroy
   has_many :link_visits, class_name: "WorkshopLinkVisit", dependent: :delete_all,
            inverse_of: :printer
+  has_many :link_channels, -> { order(:created_at, :id) }, class_name: "WorkshopLinkChannel",
+           dependent: :delete_all, inverse_of: :printer
 
   has_one_attached :logo
   has_many_attached :photos
@@ -109,6 +111,17 @@ class Printer < ApplicationRecord
 
   # Public URLs carry the slug, never the sequential id.
   def to_param = slug
+
+  # Which way in a `?s=` value names: the QR code, one of this shop's own
+  # channels, or — for anything else — the plain link. A typo, or somebody
+  # inventing values, must not be able to fill the visits table.
+  def link_source(param)
+    key = param.to_s
+    return key if key == WorkshopLinkVisit::QR
+    return key if key.present? && link_channels.exists?(key: key)
+
+    WorkshopLinkVisit::LINK
+  end
 
   def full_address = [ address, postal_code, city ].compact_blank.join(", ")
 
