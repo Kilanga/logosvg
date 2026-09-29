@@ -1,0 +1,95 @@
+name: Sauvegarde
+
+# Chaque nuit, et à la demande. Un `push` ne la déclenche jamais : elle ne
+# dépend de rien dans ce dépôt, seulement de l'heure.
+on:
+  schedule:
+    # 3h21 UTC : après l'heure de pointe en France, à une minute qui n'est pas
+    # ronde — GitHub retarde les cron trop demandés, tous calés sur l'heure pile.
+    - cron: "21 3 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  sauvegarder:
+    runs-on: ubuntu-latest
+
+    # Une sauvegarde qui se chevaucherait avec la précédente n'a rien à gagner
+    # à s'exécuter : elle attend son tour plutôt que de doubler la charge du
+    # serveur pendant un pg_dump.
+    concurrency:
+      group: sauvegarde-production
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      # Même bloc que .github/workflows/ci.yml, étape « Déployer » : la clé et
+      # la vérification de l'hôte sont documentées là-bas. Dupliqué plutôt que
+      # factorisé pour l'instant — les deux évolueront ensemble le temps qu'ils
+      # se ressemblent encore.
+      - name: Autoriser la connexion SSH au serveur
+        run: |
+          set -uo pipefail
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$CLE_PRIVEE" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          if ! ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub 2>/dev/null < /dev/null; then
+            echo "Le secret SSH_PRIVATE_KEY n'est pas une clé privée utilisable ici." >&2
+            exit 1
+          fi
+
+          hote=$(ruby -ryaml -e 'puts YAML.safe_load_file("config/deploy.yml")["servers"]["web"].first')
+          echo "hote=$hote" >> "$GITHUB_ENV"
+
+          ssh-keyscan -T 10 "$hote" > ~/.ssh/known_hosts_pretatirer
+          if [ ! -s ~/.ssh/known_hosts_pretatirer ]; then
+            echo "Aucune clé d'hôte relevée sur $hote : sauvegarde interrompue." >&2
+            exit 1
+          fi
+
+          {
+            echo "Host $hote"
+            echo "  UserKnownHostsFile ~/.ssh/known_hosts_pretatirer"
+            echo "  GlobalKnownHostsFile /dev/null"
+            echo "  IdentityFile ~/.ssh/id_ed25519"
+            echo "  IdentitiesOnly yes"
+            echo "  PreferredAuthentications publickey"
+          } >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+        env:
+          CLE_PRIVEE: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # bin/backup vit dans le dépôt mais tourne sur le VPS, où sont Docker et
+      # les volumes : envoyé par l'entrée standard d'une session SSH, jamais
+      # copié ni installé là-bas. La sortie du script est le seul chemin qui
+      # nous intéresse ; tout le reste part sur sa sortie d'erreur.
+      - name: Sauvegarder sur le serveur
+        run: |
+          set -euo pipefail
+          dossier=$(ssh -F ~/.ssh/config "$hote" 'bash -s' < bin/backup)
+          echo "dossier=$dossier" >> "$GITHUB_ENV"
+
+      # Le rapatriement : tant que les deux fichiers ne sont nulle part
+      # ailleurs que sur le VPS lui-même, une panne de disque emporte
+      # l'application et sa seule sauvegarde d'un coup.
+      - name: Rapatrier la sauvegarde
+        run: |
+          set -euo pipefail
+          mkdir -p tmp/sauvegarde
+          scp -F ~/.ssh/config \
+            "$hote:$dossier/base.dump" "$hote:$dossier/stockage.tar.gz" \
+            tmp/sauvegarde/
+
+      # ⚠ DÉCISION OUVERTE : ceci n'est qu'un premier filet, pas une politique
+      # de sauvegarde définitive — voir docs/EXPLOITATION.md, « La sauvegarde ».
+      # Les artefacts GitHub Actions ont un plafond de rétention et ne sont pas
+      # faits pour ça ; une fois un stockage hors-site choisi (S3 compatible,
+      # par exemple l'Object Storage d'OVH), cette étape doit y être remplacée.
+      - name: Conserver la sauvegarde
+        uses: actions/upload-artifact@v7
+        with:
+          name: sauvegarde-${{ github.run_id }}
+          path: tmp/sauvegarde
+          retention-days: 35

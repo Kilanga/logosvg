@@ -1,0 +1,58 @@
+#!/bin/bash
+# Sauvegarde de la base et des fichiers de production.
+#
+# Ce script ne s'exécute pas ici : il est envoyé par SSH sur le VPS et y
+# tourne, où vivent Docker et les deux volumes à sauvegarder. Voir
+# .github/workflows/sauvegarde.yml, qui l'appelle chaque nuit, et
+# docs/EXPLOITATION.md, qui explique le choix et la restauration.
+#
+# Deux choses, toujours ensemble : la base et le volume `pretatirer_storage`.
+# Une base sans ses fichiers donne un catalogue de designs dont aucune image
+# ne s'affiche.
+set -euo pipefail
+
+horodatage="$(date -u +%Y%m%dT%H%M%SZ)"
+dossier="$HOME/sauvegardes/$horodatage"
+mkdir -p "$dossier"
+
+echo "Base…" >&2
+# -Fc : format « custom » de pg_dump, compressé et compatible avec
+# pg_restore --clean --if-exists, seule façon simple de rejouer un schéma déjà
+# peuplé sans le vider à la main d'abord.
+#
+# Le mot de passe est lu dans l'environnement du conteneur lui-même — celui que
+# Kamal y a posé depuis POSTGRES_PASSWORD — plutôt que supposé ou redemandé :
+# ce script ne connaît aucun secret et ne doit jamais avoir à en apprendre un.
+docker exec pretatirer-db bash -c \
+  'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U tshirt_ia -Fc tshirt_ia_production' \
+  > "$dossier/base.dump"
+
+echo "Fichiers…" >&2
+# Un conteneur jetable, pour la seule raison de lire le volume : `busybox` est
+# la plus petite image qui sait faire un tar, et rien n'a besoin d'écrire dans
+# le volume lui-même (:ro).
+docker run --rm \
+  -v pretatirer_storage:/data:ro \
+  -v "$dossier":/sauvegarde \
+  busybox \
+  tar czf /sauvegarde/stockage.tar.gz -C /data .
+
+# Deux fichiers non vides, avant de dire que c'est fait : un pg_dump qui
+# échoue silencieusement (base éteinte, mot de passe changé) laisserait un
+# fichier de zéro octet passer pour une sauvegarde.
+for fichier in base.dump stockage.tar.gz; do
+  taille=$(stat -c%s "$dossier/$fichier")
+  if [ "$taille" -eq 0 ]; then
+    echo "$fichier est vide : la sauvegarde a échoué." >&2
+    exit 1
+  fi
+done
+
+# Le VPS n'est pas le lieu de conservation : ce n'est qu'un relais avant que
+# l'étape suivante (voir le workflow) ne rapatrie les deux fichiers ailleurs.
+# Une semaine de filet local suffit, et évite de remplir le disque si le
+# rapatriement échoue une nuit sans que personne ne le remarque tout de suite.
+find "$HOME/sauvegardes" -maxdepth 1 -mindepth 1 -mtime +7 -exec rm -rf {} +
+
+ls -lh "$dossier" >&2
+echo "$dossier"
