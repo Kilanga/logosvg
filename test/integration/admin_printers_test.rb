@@ -73,4 +73,15 @@ class AdminPrintersTest < ActionDispatch::IntegrationTest
     assert_response :bad_request
     assert_predicate printers(:attente).reload, :pending_review?
   end
+
+  # The "waiting" half of the screen already draws its empty state; the
+  # "decided" half did not, and rendered nothing at all below its own heading.
+  test "no decided listing yet is said, not left blank" do
+    Printer.where.not(id: printers(:attente).id).update_all(status: "pending_review")
+    sign_in_as users(:admin)
+
+    get admin_printers_path
+
+    assert_select "body", text: /#{Regexp.escape(I18n.t('admin.printers.index.all', count: 0))}/
+  end
 end

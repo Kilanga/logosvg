@@ -1,8 +1,11 @@
 require "test_helper"
 
 # "Aucune requête N+1 sur les listes" is a rule, so it is measured rather than
-# reviewed. Each budget is generous — what it catches is a screen that issues
-# one query per row, not a screen that issues a few more than it might.
+# reviewed. Each budget is generous — a screen may cost a couple of queries it
+# strictly should not — but a classic N+1, one extra query per row added, must
+# still fail: `growth < added`, not `<=`. The two differ only when growth
+# equals added exactly, which is precisely what an N+1 looks like — the case
+# this test exists to catch.
 class QueryBudgetTest < ActionDispatch::IntegrationTest
   setup { attach_files }
 
@@ -10,6 +13,15 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
     sign_in_as users(:client)
 
     assert_flat(client_designs_path) { create_design }
+  end
+
+  # Reached through `Current.user`, not through a direct query: exactly the
+  # shape that let a missing `includes(:printer)` through `strict_loading`
+  # unnoticed (see the comment on `ClientDashboard#silent_print_requests`).
+  test "the client dashboard stays flat as silent print requests pile up" do
+    sign_in_as users(:client)
+
+    assert_flat(client_dashboard_path) { create_silent_print_request }
   end
 
   test "the client's print request list stays flat" do
@@ -68,7 +80,7 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
       after = count_queries { get path }
       growth = after - before
 
-      assert_operator growth, :<=, added,
+      assert_operator growth, :<, added,
                       "#{path} : #{growth} requêtes de plus pour #{added} lignes de plus " \
                       "(#{before} → #{after})"
     end
@@ -100,6 +112,14 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
                            contact_name: "Claire", contact_email: "claire@example.invalid",
                            consent_text_version: "2026-09-v1", consented_at: Time.current,
                            sent_at: Time.current)
+    end
+
+    # Old enough that the workshop's silence is worth a line on the dashboard —
+    # what `ClientDashboard#silent_print_requests` looks for.
+    def create_silent_print_request
+      reminder_mark = Rails.application.config.tshirt.print_requests[:reminder_after_hours].hours.ago
+      request = create_print_request
+      request.update!(sent_at: reminder_mark - 1.hour)
     end
 
     def create_review(status: "delivered")

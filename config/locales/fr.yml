@@ -691,6 +691,7 @@ fr:
       title: "Nouveau mot de passe"
       subtitle: "Choisissez un mot de passe que vous n'utilisez nulle part ailleurs."
       new_password: "Nouveau mot de passe"
+      password_hint: "Au moins 8 caractères."
       submit: "Enregistrer"
       invalid_link: "Ce lien n'est plus valable. Demandez-en un nouveau."
     update:

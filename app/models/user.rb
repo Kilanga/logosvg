@@ -7,7 +7,13 @@ class User < ApplicationRecord
   # created from the console or by another administrator.
   SELF_ASSIGNABLE_ROLES = %w[ client printer designer ].freeze
 
+  # `has_secure_password` enforces bcrypt's own ceiling (72 bytes) but sets no
+  # floor: without one, a one-character password is accepted. `allow_nil`
+  # leaves updating an account with no new password untouched.
+  MINIMUM_PASSWORD_LENGTH = 8
+
   has_secure_password
+  validates :password, length: { minimum: MINIMUM_PASSWORD_LENGTH }, allow_nil: true
   has_many :sessions, dependent: :destroy
 
   # Never stored. It exists so the account screen can ask for the current

@@ -57,7 +57,7 @@
       <div class="grid gap-5 sm:grid-cols-2">
         <%= render "shared/field", form: form, field: :password,
               label: t("activerecord.attributes.user.password"), kind: :password_field,
-              options: { required: true, autocomplete: "new-password" } %>
+              options: { required: true, autocomplete: "new-password", minlength: User::MINIMUM_PASSWORD_LENGTH } %>
         <%= render "shared/field", form: form, field: :password_confirmation,
               label: t("activerecord.attributes.user.password_confirmation"), kind: :password_field,
               options: { required: true, autocomplete: "new-password" } %>
