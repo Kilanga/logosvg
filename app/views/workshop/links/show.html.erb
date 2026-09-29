@@ -116,6 +116,13 @@
         <div>
           <dt class="label-rule"><%= t(".requests") %></dt>
           <dd class="font-display text-3xl font-bold"><%= @statistics[:print_requests] %></dd>
+          <%# The part of the funnel a raw total hides: a request can land here
+              from the directory, for a design your link never touched. %>
+          <% if @statistics[:print_requests].positive? %>
+            <p class="mt-1 text-xs text-muted">
+              <%= t(".requests_from_link", count: @statistics[:print_requests_from_link]) %>
+            </p>
+          <% end %>
         </div>
       </dl>
 

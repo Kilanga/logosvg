@@ -1322,6 +1322,10 @@ fr:
         visits: "Visites"
         designs: "Designs créés"
         requests: "Demandes reçues"
+        requests_from_link:
+          zero: "aucune depuis votre lien : trouvées dans l'annuaire, pour un design commencé ailleurs"
+          one: "dont %{count} depuis votre lien"
+          other: "dont %{count} depuis votre lien"
         last_30_days: "30 derniers jours"
         visit_count:
           zero: "aucune visite"

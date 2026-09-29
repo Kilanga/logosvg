@@ -18,6 +18,13 @@ class PrintRequest < ApplicationRecord
 
   normalizes :contact_email, with: ->(e) { e.strip.downcase }
 
+  # Sent to the shop that generated the design: the link or QR code held all
+  # the way through the funnel, rather than the client finding this shop
+  # afterwards — in the directory, or already carrying another shop's design.
+  # A design made with no shop in context (`designs.printer_id` null) never
+  # matches here, whichever shop the request was finally sent to.
+  scope :from_designs_printer, -> { joins(:design).where("designs.printer_id = print_requests.printer_id") }
+
   validates :textile_source, inclusion: { in: TEXTILE_SOURCES }
   validates :placements, inclusion: { in: Printer::PLACEMENTS }, allow_blank: true
   validates :print_width_cm, numericality: { in: 3..60 }
