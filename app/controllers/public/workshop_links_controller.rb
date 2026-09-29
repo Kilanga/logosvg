@@ -20,13 +20,14 @@ module Public
       if printer
         # Counted here rather than on the creation screen: this is the poster
         # being scanned, whether or not anything is drawn afterwards. Once per
-        # visitor, though: the session already knowing the shop means a reload
-        # or a second scan, not a second person.
+        # visitor, though: already knowing the shop — from this session or from
+        # the cookie a returning visitor agreed to — means a reload or a second
+        # scan, not a second person.
         if new_visitor?(printer) && !crawler?
           WorkshopLinkVisit.record!(printer, source: printer.link_source(params[:s]))
         end
 
-        session[:printer_id] = printer.id
+        shop_context.remember(printer)
         redirect_to new_design_path
       else
         # A shop that has been suspended, or a mistyped poster: the directory is
@@ -36,7 +37,7 @@ module Public
     end
 
     private
-      def new_visitor?(printer) = session[:printer_id] != printer.id
+      def new_visitor?(printer) = shop_context.printer_id != printer.id
 
       def crawler? = request.user_agent.blank? || request.user_agent.match?(CRAWLER)
   end

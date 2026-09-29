@@ -113,6 +113,11 @@ shared:
     design_retention_days: 180
     print_request_anonymize_days: 365
     deleted_account_purge_days: 30
+    # ⚠ DÉCISION OUVERTE : durée du cookie qui retient l'atelier d'un visiteur
+    #   arrivé par un lien ou un QR code, et durée de mémorisation de son choix.
+    #   La CNIL recommande de redemander le consentement au bout de 6 mois au plus.
+    attribution_cookie_days: 30
+    consent_cookie_months: 6
 
 development:
   support_email: "dev@example.invalid"

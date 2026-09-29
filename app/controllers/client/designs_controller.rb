@@ -117,12 +117,13 @@ module Client
         redirect_to design_path(@design), alert: t("designs.errors.unavailable")
       end
 
-      # The shop in context comes from /a/:slug and lasts the whole session.
+      # The shop in context comes from /a/:slug and lasts the whole session — or
+      # thirty days, for a visitor who agreed to the cookie that remembers it.
       def context_printer
         # Avec ses techniques et son abonnement : `technique_keys` lit les
         # premières, `listed?` le second, et les deux sont lus dès le formulaire.
         @context_printer ||= Printer.listed.includes(:techniques, :subscription)
-                                    .find_by(id: session[:printer_id])
+                                    .find_by(id: shop_context.printer_id)
       end
 
       # A shop in context narrows the choice to what it actually does; without

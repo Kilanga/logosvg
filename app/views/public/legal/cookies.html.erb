@@ -1,0 +1,24 @@
+<% content_for :title, t("legal.cookies.title") %>
+<% attribution_days = Rails.application.config.tshirt.privacy[:attribution_cookie_days] %>
+
+<%= render layout: "public/legal/frame", locals: { title: t("legal.cookies.title") } do %>
+  <%= legal_section("essential") %>
+  <%= legal_section("attribution", days: attribution_days) %>
+
+  <%# The choice itself, on the page where it can be changed at any time. Both
+      answers are one click, and neither is dressed up as the better one. %>
+  <section aria-labelledby="cookie-choice">
+    <h2 id="cookie-choice" class="font-display text-xl font-bold uppercase"><%= t("legal.cookies.choice.title") %></h2>
+
+    <p class="mt-3 border-l-2 px-4 py-3 text-sm <%= shop_context.accepted? ? "border-success bg-success-bg text-success" : "border-line bg-surface text-muted" %>">
+      <%= t("legal.cookies.choice.state.#{shop_context.choice || :undecided}", days: attribution_days) %>
+    </p>
+
+    <div class="mt-4 flex flex-wrap gap-3">
+      <%= button_to t("consent.decline"), cookie_consent_path, params: { choice: "declined" },
+            class: "btn btn-secondary text-sm", form_class: "contents" %>
+      <%= button_to t("consent.accept"), cookie_consent_path, params: { choice: "accepted" },
+            class: "btn btn-secondary text-sm", form_class: "contents" %>
+    </div>
+  </section>
+<% end %>
