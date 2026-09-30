@@ -82,6 +82,7 @@ app/assets/fonts/     Barlow Condensed et Figtree auto-hébergées (RGPD)
 config/locales/fr.yml tout le texte visible
 config/settings.yml   décisions ouvertes, valeurs provisoires marquées
 docs/SPEC.md          cahier des charges
+docs/PITCH.md         pitch et user stories, pour vérifier l'accord sur ce qui est construit
 docs/EXPLOITATION.md  production, déploiement, secrets, sauvegarde
 services/generator/   microservice FastAPI livré — ne pas modifier
 ```
