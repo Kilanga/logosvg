@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.3", ">= 8.1.3.1"
+gem "rails", "~> 8.1.4"
 # Held below 3.0 on purpose. ActiveSupport 8.1.3.1 calls `JSON.parse(json, options)`
 # with two positional arguments, but json 3.0 made everything after `source` a
 # keyword argument. ActiveSupport::JSON.decode therefore raises ArgumentError,
