@@ -178,15 +178,19 @@ ActiveRecord::Base.transaction do
   # --- Niveaux de vérification ------------------------------------------------
   # ⚠ DÉCISION OUVERTE : les prix restent à fixer. Ceux-ci ne servent qu'à la
   # démonstration.
+  # Deux niveaux, pas trois : la formule intermédiaire a été retirée au profit
+  # de deux offres nettes — un ajustement à prix fixe, une création sur devis.
+  # « check » reste en base, désactivé, pour les vérifications déjà vendues
+  # sous ce niveau : l'historique ne doit pas perdre sa référence.
   review_level!("check", name: "Contrôle", price_cents: 1900, turnaround_hours: 24,
-                         revisions_included: 1, position: 1,
+                         revisions_included: 1, position: 1, active: false,
                          description: "Un graphiste vérifie le fichier : tracés, encres, netteté des bords.")
   review_level!("retouch", name: "Retouche", price_cents: 4900, turnaround_hours: 48,
                            revisions_included: 2, position: 2,
-                           description: "Reprise du visuel pour l'impression : nettoyage, séparation des encres, ajustements.")
+                           description: "Adaptation du visuel au format de l'atelier, ou léger ajout : deux allers-retours avec le graphiste inclus.")
   review_level!("custom", name: "Création sur mesure", price_cents: nil, turnaround_hours: 96,
                           revisions_included: 3, position: 3,
-                          description: "Redessin complet à partir de votre idée. Le prix est proposé par le graphiste.")
+                          description: "Modification complète ou création à partir de votre idée. Le prix est proposé par le graphiste, sur devis.")
 
   # --- Graphistes -------------------------------------------------------------
   # L'un peut travailler, l'autre non : c'est la règle de l'étape 7 rendue

@@ -1,5 +1,7 @@
-<%# Les trois niveaux du cahier des charges. `custom` n'a pas de prix : il se
-    chiffre au cas par cas, et c'est une règle, pas un oubli. %>
+<%# Deux niveaux offerts, plus un troisième gardé en base, désactivé : les
+    vérifications vendues sous « check » avant son retrait doivent encore
+    pouvoir se lire. `custom` n'a pas de prix : il se chiffre au cas par cas,
+    et c'est une règle, pas un oubli. %>
 
 check:
   key: check
@@ -9,12 +11,12 @@ check:
   turnaround_hours: 24
   revisions_included: 1
   position: 1
-  active: true
+  active: false
 
 retouch:
   key: retouch
   name: Retouche
-  description: Reprise du visuel pour l'impression.
+  description: Adaptation au format de l'atelier, ou léger ajout.
   price_cents: 4900
   turnaround_hours: 48
   revisions_included: 2
