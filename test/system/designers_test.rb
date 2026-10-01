@@ -15,7 +15,7 @@ class DesignersTest < ApplicationSystemTestCase
     fill_in "designer_profile_bio", with: "Lettrage et illustration pour le textile, depuis huit ans."
     fill_in "designer_profile_city", with: "Brest"
     check "specialty_lettering"
-    check "level_check"
+    check "level_retouch"
 
     click_on I18n.t("designer.profiles.edit.save")
 
@@ -24,7 +24,7 @@ class DesignersTest < ApplicationSystemTestCase
 
     profile = users(:designer_blank).reload.designer_profile
 
-    assert_equal [ review_levels(:check) ], profile.review_levels
+    assert_equal [ review_levels(:retouch) ], profile.review_levels
     assert_not_predicate profile, :can_take_work?, "neither gate is passed yet"
 
     # Payouts is the second gate, and the studio says so.
@@ -74,8 +74,11 @@ class DesignersTest < ApplicationSystemTestCase
     find("a[href='#{designer_path(designer_profiles(:ines))}']", match: :first).click
 
     assert_selector "h1", text: shown(designer_profiles(:ines).display_name)
-    assert_text shown(review_levels(:check).name)
+    assert_text shown(review_levels(:retouch).name)
     assert_text displayed("designers.levels.quoted"), exact: false
+    # Accepted before the level was retired, but no longer something a new
+    # client can request: it has no business showing up here.
+    assert_no_text shown(review_levels(:check).name)
   end
 
   test "the available filter leaves only the designers who could take the job" do

@@ -134,7 +134,7 @@ end
 
 class ReviewLevelTest < ActiveSupport::TestCase
   test "the offered levels come in the order a client reads them" do
-    assert_equal %w[ check retouch custom ], ReviewLevel.offered.map(&:key)
+    assert_equal %w[ retouch custom ], ReviewLevel.offered.map(&:key)
   end
 
   # A level with no price is quoted case by case. That is a rule, not a gap.

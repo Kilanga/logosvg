@@ -18,7 +18,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     get new_design_review_path(designs(:fox_screen))
 
     assert_response :success
-    assert_select "body", text: /#{Regexp.escape(review_levels(:check).name)}/
+    assert_select "body", text: /#{Regexp.escape(review_levels(:retouch).name)}/
   end
 
   # The natural sequel to a spent refinement budget: the two ways of reworking
@@ -73,7 +73,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     sign_in_as users(:client)
 
     post design_reviews_path(designs(:fox_screen)), params: { review: {
-      review_level_id: review_levels(:check).id,
+      review_level_id: review_levels(:retouch).id,
       designer_profile_id: designer_profiles(:ines).id
     } }
 
@@ -88,7 +88,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     sign_in_as users(:client)
 
     post design_reviews_path(designs(:fox_screen)), params: { review: {
-      review_level_id: review_levels(:check).id,
+      review_level_id: review_levels(:retouch).id,
       designer_profile_id: designer_profiles(:leo).id
     } }
 
@@ -102,7 +102,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     sign_in_as users(:client)
 
     post design_reviews_path(designs(:fox_screen)), params: { review: {
-      review_level_id: review_levels(:check).id
+      review_level_id: review_levels(:retouch).id
     } }
 
     assert_response :redirect

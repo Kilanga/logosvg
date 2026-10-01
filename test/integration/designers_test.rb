@@ -76,7 +76,7 @@ class DesignersTest < ActionDispatch::IntegrationTest
         display_name: "Sasha Morel", city: "Brest",
         bio: "Illustration et lettrage pour le textile, depuis huit ans.",
         specialties: [ "lettering" ], languages: [ "fr" ],
-        review_level_ids: [ review_levels(:check).id.to_s ]
+        review_level_ids: [ review_levels(:retouch).id.to_s ]
       } }
     end
 
@@ -84,7 +84,7 @@ class DesignersTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to edit_designer_profile_path
     assert_predicate profile, :pending_review?
-    assert_equal [ review_levels(:check) ], profile.review_levels
+    assert_equal [ review_levels(:retouch) ], profile.review_levels
   end
 
   # Publication is never the designer's own decision.
