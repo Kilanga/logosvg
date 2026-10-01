@@ -95,10 +95,13 @@
     <div class="panel p-5">
       <h2 class="label-rule"><%= t(".parties") %></h2>
       <dl class="mt-3 space-y-2 text-sm">
+        <%# Le nom identifie le litige à trancher ; ni l'email ni le téléphone
+            ne sont affichés ici — l'administration n'a pas à connaître les
+            coordonnées des clients pour régler un différend entre un graphiste
+            et eux. %>
         <div>
           <dt class="text-muted"><%= t(".client") %></dt>
           <dd class="font-medium"><%= @review.client.full_name %></dd>
-          <dd class="text-muted"><%= @review.client.email_address %></dd>
         </div>
         <% if @review.designer_profile %>
           <div class="border-t border-line pt-2">
