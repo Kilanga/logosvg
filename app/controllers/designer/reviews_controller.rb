@@ -85,8 +85,12 @@ module Designer
     private
       def profile = current_designer_profile
 
+      # `:client` joins the show page here for the first time, alongside what it
+      # already reads without ever having declared: the design and its level.
+      # `strict_loading` had no test on this exact page to catch the gap before.
       def set_review
-        @review = policy_scope(Review).find_by!(token: params[:token])
+        @review = policy_scope(Review).includes(:client, :review_level, design: :print_file_attachment)
+                                      .find_by!(token: params[:token])
       end
 
       # Euros on the form, cents in the database — never a float for money.

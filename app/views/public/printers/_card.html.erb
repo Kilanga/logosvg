@@ -17,7 +17,7 @@
         <h2 class="font-display text-xl font-bold uppercase">
           <%= link_to printer.name, printer_path(printer), class: "hover:text-emulsion" %>
         </h2>
-        <% if printer.featured? %>
+        <% if printer.prominent?(near: local_assigns[:near]) %>
           <span class="pill pill-success"><%= t("printers.featured") %></span>
         <% end %>
       </div>

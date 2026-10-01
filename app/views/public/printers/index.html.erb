@@ -21,7 +21,7 @@
       <% if @directory.any? %>
         <ul class="divide-y divide-line">
           <% @directory.printers.each do |printer| %>
-            <%= render "card", printer: printer %>
+            <%= render "card", printer: printer, near: @directory.center %>
           <% end %>
         </ul>
       <% else %>
@@ -43,7 +43,7 @@
           <%= tag.div class: "screen-tint h-[32rem] w-full",
                 data: {
                   controller: "map",
-                  map_points_value: map_points(@directory.located).to_json,
+                  map_points_value: map_points(@directory.located, near: @directory.center).to_json,
                   map_center_value: @directory.center&.to_json,
                   attribution: t(".osm_attribution")
                 } %>

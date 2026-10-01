@@ -59,6 +59,18 @@ class StrictLoadingTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # Pas dans la liste ci-dessus : une revue précise prend un jeton, pas une
+  # route sans argument. `@review.client`, lu pour son numéro de téléphone,
+  # n'avait jamais été préchargé — ni lui, ni le design ni le niveau que la
+  # page lit déjà depuis toujours, faute d'un test sur cette page précise.
+  test "a designer's own review opens with strict loading on" do
+    sign_in_as users(:designer)
+
+    get designer_review_path(reviews(:in_progress))
+
+    assert_response :success
+  end
+
   # L'écran du lien, dans son état le plus chargé : Atelier+, des liens nommés,
   # des visites de plusieurs provenances, dont celle d'un lien supprimé.
   test "the link screen of an Atelier+ shop with named links opens with strict loading on" do

@@ -90,8 +90,57 @@ class PrinterTest < ActiveSupport::TestCase
     assert_not_includes Printer.in_department("35"), printers(:nantes)
   end
 
-  test "featured listings come first" do
+  test "featured listings come first when no search centre is known" do
     assert_equal printers(:lyon), Printer.listed.by_prominence.first
+  end
+
+  # Lyon is featured, but some 700 km from Rennes — a national lead would send
+  # a Rennes client to a shop that cannot serve them any faster than the rest.
+  # Nobody is both featured and close here, so the fallback is the same plain
+  # alphabetical order as when nobody is featured at all.
+  test "a featured shop leads only within reach of a known search centre" do
+    rennes_centre = { latitude: printers(:rennes).latitude, longitude: printers(:rennes).longitude }
+
+    ordered = Printer.listed.by_prominence(near: rennes_centre).to_a
+
+    assert_not_equal printers(:lyon), ordered.first
+    assert_equal ordered.sort_by(&:name), ordered, "alphabetical, since nobody is prominent here"
+  end
+
+  test "a featured shop leads once the search centre is close enough to it" do
+    printers(:rennes).update!(featured: true)
+    rennes_centre = { latitude: printers(:rennes).latitude, longitude: printers(:rennes).longitude }
+
+    assert_equal printers(:rennes), Printer.listed.by_prominence(near: rennes_centre).first
+  end
+
+  test "prominence follows the plan, then distance, never the reverse" do
+    near = { latitude: printers(:lyon).latitude, longitude: printers(:lyon).longitude }
+
+    assert printers(:lyon).prominent?(near: near), "featured, and right at the centre"
+    assert printers(:lyon).prominent?, "without a centre, the plan alone decides"
+    assert_not printers(:rennes).prominent?(near: near), "not featured at all"
+  end
+
+  test "a featured shop stops being prominent beyond the radius" do
+    rennes_centre = { latitude: printers(:rennes).latitude, longitude: printers(:rennes).longitude }
+
+    assert_not printers(:lyon).prominent?(near: rennes_centre), "featured, but 700 km away"
+  end
+
+  test "distance is measured in kilometres, both ways" do
+    rennes = printers(:rennes)
+    nantes_point = { latitude: printers(:nantes).latitude, longitude: printers(:nantes).longitude }
+
+    distance = rennes.distance_km_to(nantes_point)
+
+    assert_in_delta 107, distance, 10
+  end
+
+  test "an unlocated shop has no distance to anyone" do
+    rennes_point = { latitude: printers(:rennes).latitude, longitude: printers(:rennes).longitude }
+
+    assert_nil printers(:brouillon).distance_km_to(rennes_point)
   end
 
   test "a shop knows which techniques it practises" do

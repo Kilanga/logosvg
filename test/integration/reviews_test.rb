@@ -135,6 +135,39 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # --- The client's phone number, once taken on -----------------------------
+
+  test "a designer sees the client's phone number once they have claimed the review" do
+    users(:client).update!(phone: "+33612345678")
+    sign_in_as users(:designer)
+
+    get designer_review_path(reviews(:in_progress))
+
+    assert_select "a[href=?]", "tel:+33612345678"
+  end
+
+  test "no phone on file is said plainly, not left blank" do
+    sign_in_as users(:designer)
+
+    get designer_review_path(reviews(:delivered))
+
+    assert_select "body", text: /#{Regexp.escape(I18n.t('designer.reviews.show.no_phone'))}/
+  end
+
+  # Chosen upfront, so the page opens (the claim button needs that much), but
+  # not yet claimed: a phone number does not belong in front of a designer who
+  # has not actually committed to the work yet.
+  test "a review chosen but not yet claimed shows no contact information" do
+    reviews(:in_progress).update_column(:status, "queued")
+    users(:client).update!(phone: "+33612345678")
+    sign_in_as users(:designer)
+
+    get designer_review_path(reviews(:in_progress))
+
+    assert_select "a[href=?]", "tel:+33612345678", count: 0
+    assert_select "body", text: /#{Regexp.escape(I18n.t('designer.reviews.show.contact'))}/, count: 0
+  end
+
   test "a client accepts the work, and the designer is settled" do
     sign_in_as users(:client)
 

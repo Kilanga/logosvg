@@ -71,7 +71,26 @@ class Printer < ApplicationRecord
   scope :listed, -> { published.where(id: Subscription.visible_printer_ids) }
   scope :located, -> { where.not(latitude: nil, longitude: nil) }
   scope :shipping_nationwide, -> { where(ships: true) }
-  scope :by_prominence, -> { order(featured: :desc, name: :asc) }
+  PROMINENCE_RADIUS_KM = 50
+
+  # Prominence is Atelier+ within reach of the shop itself, not nationwide: a
+  # shop stays the obvious choice for the clients actually close enough to use
+  # it, and gains nothing by outranking every workshop in the country for a
+  # client it could never serve. `near` is the search centre the visitor gave;
+  # without one — most visits to the directory, which asks for a location but
+  # never requires it — prominence falls back to the plan alone, as it always
+  # has.
+  scope :by_prominence, ->(near: nil) {
+    if near
+      prominent = sanitize_sql_array([
+        "featured AND (#{DISTANCE_KM_SQL})",
+        { latitude: near[:latitude], longitude: near[:longitude], radius: PROMINENCE_RADIUS_KM }
+      ])
+      order(Arel.sql("(CASE WHEN #{prominent} THEN 0 ELSE 1 END)"), name: :asc)
+    else
+      order(featured: :desc, name: :asc)
+    end
+  }
   scope :in_department, ->(code) { where("left(postal_code, 2) = ?", code.to_s[0, 2]) }
   # ILIKE, not unaccent: the extension is not installed, and a directory of
   # French towns matches well enough on case alone.
@@ -111,6 +130,32 @@ class Printer < ApplicationRecord
 
   # Public URLs carry the slug, never the sequential id.
   def to_param = slug
+
+  # The same great-circle formula as DISTANCE_KM_SQL, in Ruby: a directory page
+  # already has every shop's coordinates loaded, and asking the database "how
+  # far is this one" a second time, per row, would be exactly the N+1 the rest
+  # of the app refuses.
+  def distance_km_to(point)
+    return nil unless located? && point
+
+    lat1, lng1 = Math::PI * latitude / 180, Math::PI * longitude / 180
+    lat2, lng2 = Math::PI * point[:latitude] / 180, Math::PI * point[:longitude] / 180
+
+    6371 * Math.acos(
+      [ 1, Math.cos(lat1) * Math.cos(lat2) * Math.cos(lng2 - lng1) + Math.sin(lat1) * Math.sin(lat2) ].min
+    )
+  end
+
+  # Whether this shop reads as "mis en avant" right now: Atelier+, and — once a
+  # search centre is known — close enough to it to mean something. See
+  # `by_prominence`, the ordering this same rule drives.
+  def prominent?(near: nil)
+    return false unless featured?
+    return true if near.nil?
+
+    distance = distance_km_to(near)
+    distance.present? && distance <= PROMINENCE_RADIUS_KM
+  end
 
   # Which way in a `?s=` value names: the QR code, one of this shop's own
   # channels, or — for anything else — the plain link. A typo, or somebody

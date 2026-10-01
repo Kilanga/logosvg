@@ -32,6 +32,19 @@ class PrintersDirectoryTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, printers(:nantes).name
   end
 
+  # Lyon is the only featured shop in the fixtures, and ships nationwide — it
+  # stays in a Rennes search, but 700 km away "mis en avant" would mean nothing.
+  test "the featured label follows the search centre, not the subscription alone" do
+    get printers_path
+
+    assert_select "span.pill-success", text: I18n.t("printers.featured"), count: 1
+
+    get printers_path, params: { latitude: "48.1173", longitude: "-1.6778", radius: 200 }
+
+    assert_select "body", text: /#{Regexp.escape(printers(:lyon).name)}/, count: 1
+    assert_select "span.pill-success", text: I18n.t("printers.featured"), count: 0
+  end
+
   test "a published shop page is open to everyone" do
     get printer_path(printers(:rennes))
 

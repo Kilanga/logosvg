@@ -33,7 +33,7 @@ class PrinterDirectory
     relation = apply_label(relation)
 
     Result.new(
-      printers: relation.by_prominence.limit(LIMIT).to_a,
+      printers: relation.by_prominence(near: center).limit(LIMIT).to_a,
       filters: @filters,
       center: center,
       radius_km: radius_km
