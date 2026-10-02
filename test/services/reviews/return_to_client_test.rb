@@ -17,6 +17,26 @@ module Reviews
       assert_in_delta 72.hours.from_now, review.proposal_expires_at, 1.minute
     end
 
+    # The reassignment cap counts proposing returns only — see
+    # Review::MAX_DESIGNER_REFUSALS.
+    test "a proposal counts as a refusal and excludes that designer from the next pick" do
+      call(reason: "level_too_low", proposed_level: review_levels(:retouch))
+
+      review = reviews(:in_progress).reload
+
+      assert_equal 1, review.designer_refusals_count
+      assert_equal [ designer_profiles(:ines).id ], review.refused_designer_profile_ids
+    end
+
+    test "a reason with no proposal does not count toward the reassignment cap" do
+      call(reason: "unusable_design")
+
+      review = reviews(:in_progress).reload
+
+      assert_equal 0, review.designer_refusals_count
+      assert_empty review.refused_designer_profile_ids
+    end
+
     test "a level that is too high proposes the cheaper one" do
       review = reviews(:in_progress)
       review.update!(review_level: review_levels(:retouch), price_cents: 4900)

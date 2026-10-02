@@ -93,6 +93,21 @@ module Client
       redirect_to review_path(@review), notice: t(".declined")
     end
 
+    # Not paying the difference does not have to mean giving up: a new
+    # designer, chosen by the client, takes it over at the same level and
+    # price — once per review.
+    def pick_designer
+      authorize @review
+
+      result = Reviews::PickDesigner.call(review: @review, designer_profile_id: params[:designer_profile_id])
+
+      if result.success?
+        redirect_to review_path(@review), notice: t(".picked")
+      else
+        redirect_to review_path(@review), alert: result.error
+      end
+    end
+
     # The chosen designer went quiet. The client opens it to everyone rather
     # than waiting longer.
     def reopen

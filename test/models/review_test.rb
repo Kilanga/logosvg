@@ -148,6 +148,51 @@ class ReviewStateMachineTest < ActiveSupport::TestCase
     assert_not_nil review.canceled_at
   end
 
+  # Not paying the difference does not have to mean giving up.
+  test "the client may try a different designer after a proposal" do
+    review = reviews(:returned)
+    review.designer_profile = designer_profiles(:maya)
+
+    assert review.may_pick_new_designer?
+    review.pick_new_designer!
+
+    assert_predicate review, :queued?
+  end
+
+  # No level would make an unusable design usable, so there is no designer
+  # left to try — the reason the other three return reasons cancel outright.
+  test "a refusal with no proposal offers no other designer" do
+    review = reviews(:returned)
+    review.update!(return_reason_code: "unusable_design")
+
+    assert_not review.may_pick_new_designer?
+    assert_raises(AASM::InvalidTransition) { review.pick_new_designer! }
+  end
+
+  test "two refusals close the door on a third designer" do
+    review = reviews(:returned)
+    review.update!(designer_refusals_count: Review::MAX_DESIGNER_REFUSALS)
+
+    assert_not review.may_pick_new_designer?
+    assert_raises(AASM::InvalidTransition) { review.pick_new_designer! }
+  end
+
+  test "a review still waiting on nobody cannot pick a new designer" do
+    assert_not reviews(:in_progress).may_pick_new_designer?
+    assert_raises(AASM::InvalidTransition) { reviews(:in_progress).pick_new_designer! }
+  end
+
+  test "reassignment candidates exclude the designer who just returned it" do
+    assert_equal [ designer_profiles(:maya) ], reviews(:returned).reassignment_candidates.to_a
+  end
+
+  test "a designer who already refused this review is not offered again" do
+    review = reviews(:returned)
+    review.update!(refused_designer_profile_ids: [ designer_profiles(:maya).id ])
+
+    assert_empty review.reassignment_candidates
+  end
+
   test "an administrator cancels from any state that is still open" do
     %i[ queued in_progress delivered returned ].each do |fixture|
       review = reviews(fixture)

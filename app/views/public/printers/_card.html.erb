@@ -1,6 +1,9 @@
 <%# One shop in the directory list. A row with a hairline rule rather than a
-    floating card: the list reads as a register, which is what it is. %>
-<li class="py-6">
+    floating card: the list reads as a register, which is what it is — except
+    for a prominent Atelier+, singled out with a thin gold frame rather than
+    folded into the same rule as everyone else. %>
+<% prominent = printer.prominent?(near: local_assigns[:near]) %>
+<li class="<%= prominent ? "frame-featured -mx-4 px-4 py-5 sm:-mx-5 sm:px-5" : "py-6" %>">
   <article class="flex flex-wrap items-start gap-x-6 gap-y-4">
     <% if printer.logo.attached? %>
       <%= image_tag printer.logo.variant(resize_to_fill: [ 96, 96 ]),
@@ -17,8 +20,8 @@
         <h2 class="font-display text-xl font-bold uppercase">
           <%= link_to printer.name, printer_path(printer), class: "hover:text-emulsion" %>
         </h2>
-        <% if printer.prominent?(near: local_assigns[:near]) %>
-          <span class="pill pill-success"><%= t("printers.featured") %></span>
+        <% if prominent %>
+          <span class="pill pill-featured"><%= t("printers.featured") %></span>
         <% end %>
       </div>
 

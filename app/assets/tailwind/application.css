@@ -62,6 +62,13 @@
   --color-warning: #6b4200;
   --color-warning-bg: #fff3dc;
 
+  /* Atelier+ prominence only. --color-gold-frame is decorative (the card's
+     border) and carries no contrast requirement of its own; --color-gold
+     stays paired with --color-gold-bg like the other status tokens. */
+  --color-gold: #8a6a1f;
+  --color-gold-bg: #fbf1d6;
+  --color-gold-frame: #c9a227;
+
   /* Darker emulsion for hover, kept accessible on paper. */
   --color-emulsion-deep: #174a60;
 
@@ -265,6 +272,21 @@
   .pill-warning {
     background-color: var(--color-warning-bg);
     color: var(--color-warning);
+  }
+
+  .pill-featured {
+    border: 1px solid var(--color-gold-frame);
+    background-color: var(--color-gold-bg);
+    color: var(--color-gold);
+  }
+
+  /* The thin gold frame itself, around a featured row or card — not a pill,
+     a border. Kept separate so a prominent printer reads as "singled out",
+     never as a bigger version of the same register row. */
+  .frame-featured {
+    border: 1px solid var(--color-gold-frame);
+    border-radius: var(--radius-xs);
+    background-color: color-mix(in srgb, var(--color-gold-bg) 55%, transparent);
   }
 
   /* An attached file, in the order email and on the print request screens.

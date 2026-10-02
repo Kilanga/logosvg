@@ -30,12 +30,15 @@ export default class extends Controller {
       attribution: this.element.dataset.attribution
     }).addTo(this.map)
 
+    // A prominent Atelier+ gets its own gold marker, not just a more opaque
+    // version of everyone else's — the directory list makes the same
+    // distinction with a frame rather than a brighter row.
     const markers = this.pointsValue.map((point) =>
       circleMarker([point.latitude, point.longitude], {
-        radius: 7,
+        radius: point.featured ? 8 : 7,
         weight: 2,
-        color: "#1F5F7A",
-        fillColor: "#1F5F7A",
+        color: point.featured ? "#C9A227" : "#1F5F7A",
+        fillColor: point.featured ? "#C9A227" : "#1F5F7A",
         fillOpacity: point.featured ? 0.9 : 0.45
       })
         .bindPopup(this.popup(point))

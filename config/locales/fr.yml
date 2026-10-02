@@ -581,6 +581,9 @@ fr:
       message_required: "Un message est obligatoire."
       already_returned: "Cette vérification a déjà été renvoyée une fois."
       proposal_required: "Indiquez le niveau ou le prix que vous proposez."
+      designer_required: "Choisissez un graphiste."
+      already_refused: "Ce graphiste a déjà renvoyé cette vérification."
+      reassignment_closed: "Vous avez déjà changé de graphiste pour cette vérification."
       not_configured: "Les paiements ne sont pas encore configurés. Réessayez plus tard."
       unavailable: "Le service de paiement n'est pas joignable. Réessayez dans quelques minutes."
       nothing_to_pay: "Il n'y a rien à payer."
@@ -1027,6 +1030,14 @@ fr:
         accept_and_refund: "Accepter, la différence vous est remboursée"
         decline: "Refuser et être remboursé"
         decline_confirm: "Refuser cette proposition et être remboursé ?"
+        pick_another: "Ou essayer un autre graphiste"
+        pick_another_hint: >-
+          Vous gardez le niveau et le prix déjà payés ; un nouveau graphiste,
+          choisi par vous, reprend la demande. Possible une seule fois par
+          vérification.
+        pick_another_empty: >-
+          Aucun autre graphiste n'accepte ce niveau pour l'instant. Il vous
+          reste à accepter la proposition ou à être remboursé.
         rework_design: "Modifier ou régénérer mon design"
         designer_silent: "Votre graphiste n'a pas répondu"
         designer_silent_body: >-
@@ -1046,6 +1057,8 @@ fr:
         accepted: "Proposition acceptée. Votre demande repart en file."
       decline_proposal:
         declined: "Proposition refusée. Vous allez être remboursé."
+      pick_designer:
+        picked: "Votre demande repart vers un nouveau graphiste."
       reopen:
         reopened: "Votre demande est ouverte à tous les graphistes."
       rate:
@@ -1671,7 +1684,7 @@ fr:
       hosting:
         title: "Hébergement"
         body:
-          - "L'hébergeur du site et l'adresse de ses serveurs restent à renseigner. Les fichiers générés sont stockés chez ce même hébergeur."
+          - "Le site est hébergé par OVH SAS, 2 rue Kellermann, 59100 Roubaix, France. Les fichiers générés sont stockés chez ce même hébergeur."
           - "Le moteur de génération d'images s'exécute sur une machine distincte, dont l'emplacement est précisé dans la politique de confidentialité."
       contact:
         title: "Nous écrire"
@@ -1769,7 +1782,7 @@ fr:
         title: "Qui reçoit quoi"
         body:
           - "L'atelier que vous choisissez reçoit votre demande, vos coordonnées et le fichier d'impression — uniquement après que vous ayez explicitement accepté cette transmission."
-          - "Le moteur de génération reçoit votre description et un identifiant pseudonymisé calculé à partir de votre compte. Il n'apprend jamais qui vous êtes."
+          - "Le moteur de génération reçoit votre description et un identifiant pseudonymisé calculé à partir de votre compte. Il n'apprend jamais qui vous êtes. Il s'exécute en France, sur une machine dédiée à la génération d'images, distincte du serveur qui héberge le site."
           - "Stripe traite les paiements et reçoit les informations nécessaires à ce titre."
       retention:
         title: "Combien de temps"
@@ -2186,9 +2199,11 @@ fr:
         headline_lead: "Ils décrivent leur idée."
         headline_accent: "Vous recevez un fichier imprimable."
         subhead: >-
-          L'IA génère un visuel en aplats, borné aux couleurs que votre atelier
-          sait imprimer. Le service le vectorise. Vous recevez une demande
-          complète, prête à chiffrer.
+          L'IA génère un visuel borné aux couleurs que votre atelier sait
+          imprimer, puis le service le prépare pour votre technique :
+          vectorisé pour la sérigraphie, la découpe ou la broderie, en haute
+          définition pour le DTF, le DTG ou la sublimation. Vous recevez une
+          demande complète, prête à chiffrer.
         cta_primary: "Référencer mon atelier"
         cta_secondary: "Voir comment ça marche"
 
@@ -2199,14 +2214,18 @@ fr:
               body: >-
                 Depuis votre lien ou votre QR code, il écrit son idée en une
                 phrase et choisit un nombre de couleurs.
-            - title: "L'IA génère en aplats"
+            - title: "L'IA génère le visuel"
               body: >-
-                Le visuel est produit directement en couleurs pleines, sans
-                dégradé, dans la limite de votre sérigraphie.
-            - title: "Le service vectorise"
+                Couleurs pleines et sans dégradé pour la sérigraphie, la
+                découpe ou la broderie ; libre de cette limite pour le DTF, le
+                DTG ou la sublimation. Toujours dans le nombre de couleurs que
+                votre atelier accepte.
+            - title: "Le service prépare le fichier"
               body: >-
-                Le résultat devient un SVG contrôlé, avec sa palette d'encres
-                et le nombre d'écrans à insoler.
+                Pour la sérigraphie, la découpe ou la broderie : un SVG
+                contrôlé, avec sa palette d'encres et le nombre d'écrans à
+                insoler. Pour le DTF, le DTG ou la sublimation : un fichier
+                raster à la résolution d'impression.
             - title: "Vous chiffrez"
               body: >-
                 La demande arrive par email avec les fichiers. Vous répondez
@@ -2263,16 +2282,15 @@ fr:
             - name: "Atelier+"
               summary: "Tout le Référencement, plus la visibilité et les chiffres."
               features:
-                - "Étiquette « Mis en avant » dans l'annuaire"
+                - "Mis en avant dans l'annuaire et sur la carte, dans un rayon de 50 km autour de votre atelier"
                 - "Votre couleur de marque sur l'écran de création"
                 - "Statistiques de votre lien client"
-                - "Priorité d'affichage à compatibilité égale"
 
         designers:
           title: "Vous êtes graphiste ?"
           body: >-
             Avant d'envoyer son design à l'atelier, un client peut payer une
-            vérification : simple contrôle, retouche ou création sur mesure.
-            Vous choisissez les niveaux que vous acceptez, et vous êtes payé à
-            la validation.
+            vérification : une retouche légère, ou une création sur mesure
+            chiffrée au cas par cas. Vous choisissez les niveaux que vous
+            acceptez, et vous êtes payé à la validation.
           cta: "Rejoindre les graphistes"

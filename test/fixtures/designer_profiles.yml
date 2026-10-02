@@ -69,3 +69,22 @@ suspendu:
   status: suspended
   payouts_enabled: true
   accepting_work: true
+
+<%# Deuxième graphiste pleinement disponible, pour les tests de changement de
+    graphiste après un renvoi. %>
+maya:
+  user: designer_maya
+  display_name: Maya Costa
+  bio: Retouche et création sur mesure, pour la sérigraphie comme pour le DTF.
+  city: Nantes
+  latitude: 47.218400
+  longitude: -1.553600
+  remote: true
+  specialties: [ retouche, illustration ]
+  languages: [ fr ]
+  status: active
+  payouts_enabled: true
+  accepting_work: true
+  stripe_account_id: acct_test_maya
+  rating_avg: 4.60
+  ratings_count: 11

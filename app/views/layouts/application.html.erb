@@ -58,6 +58,11 @@
               <span class="font-display text-lg font-bold uppercase tracking-[0.06em]"><%= platform_name %></span>
             </p>
             <p class="mt-2 max-w-sm text-sm text-paper/70"><%= t("platform.tagline") %></p>
+            <%# The legal "Nous écrire" page promises this address lives here —
+                it must actually be here for that to be true. %>
+            <p class="mt-3 text-sm">
+              <%= mail_to Rails.application.config.tshirt.support_email, class: "text-paper/70 underline-offset-4 hover:text-paper hover:underline" %>
+            </p>
           </div>
 
           <nav aria-label="<%= t("legal.other_pages") %>">

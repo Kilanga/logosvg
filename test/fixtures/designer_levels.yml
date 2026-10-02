@@ -24,3 +24,11 @@ nour_retouch:
 leo_check:
   designer_profile: leo
   review_level: check
+
+maya_check:
+  designer_profile: maya
+  review_level: check
+
+maya_retouch:
+  designer_profile: maya
+  review_level: retouch
