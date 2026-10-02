@@ -14,7 +14,7 @@ shared:
   # c'est ce rapprochement qui fait le nom, et « tirer » est le mot du métier
   # pour lancer une série. Nom de domaine : pretatirer.fr.
   platform_name: "Prêt-à-tirer"
-  support_email: "contact@example.invalid"
+  support_email: "contact@pretatirer.fr"
 
   # --- Génération de designs ----------------------------------------------
   generation:

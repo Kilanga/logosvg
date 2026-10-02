@@ -35,13 +35,7 @@
       <% end %>
     </ul>
   <% else %>
-    <div class="panel mt-6 flex flex-col items-center gap-3 p-12 text-center">
-      <span class="flex gap-3 text-line" aria-hidden="true">
-        <%= registration_mark %><%= registration_mark %><%= registration_mark %>
-      </span>
-      <p class="label-rule"><%= t(".empty") %></p>
-      <p class="max-w-md text-sm text-muted"><%= t(".empty_body") %></p>
-      <%= link_to t(".browse_designs"), client_designs_path, class: "btn btn-secondary mt-2" %>
-    </div>
+    <%= render "shared/empty_state", title: t(".empty"), body: t(".empty_body"),
+          cta: link_to(t(".browse_designs"), client_designs_path, class: "btn btn-secondary mt-2") %>
   <% end %>
 </div>

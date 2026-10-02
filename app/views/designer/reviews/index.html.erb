@@ -13,13 +13,8 @@
         <% @mine.each { |review| %><li><%= render "row", review: review, claimable: false %></li><% } %>
       </ul>
     <% else %>
-      <div class="panel mt-4 flex flex-col items-center gap-3 p-10 text-center">
-        <span class="flex gap-3 text-line" aria-hidden="true">
-          <%= registration_mark %><%= registration_mark %><%= registration_mark %>
-        </span>
-        <p class="label-rule"><%= t(".nothing_mine") %></p>
-        <p class="max-w-sm text-sm text-muted"><%= t(".nothing_mine_body") %></p>
-      </div>
+      <%= render "shared/empty_state", title: t(".nothing_mine"), body: t(".nothing_mine_body"),
+            margin: "mt-4", padding: "p-10" %>
     <% end %>
   </section>
 
@@ -31,24 +26,17 @@
       <ul class="mt-4 space-y-3">
         <% @available.each { |review| %><li><%= render "row", review: review, claimable: true %></li><% } %>
       </ul>
+    <% elsif current_designer_profile&.can_take_work? %>
+      <%= render "shared/empty_state", title: t(".nothing_available"), body: t(".nothing_available_body"),
+            margin: "mt-4", padding: "p-10" %>
     <% else %>
       <%# Drawn, and it says why: an empty queue and an unavailable designer
           are two different silences. %>
-      <div class="panel mt-4 flex flex-col items-center gap-3 p-10 text-center">
-        <span class="flex gap-3 text-line" aria-hidden="true">
-          <%= registration_mark %><%= registration_mark %><%= registration_mark %>
-        </span>
-        <% if current_designer_profile&.can_take_work? %>
-          <p class="label-rule"><%= t(".nothing_available") %></p>
-          <p class="max-w-sm text-sm text-muted"><%= t(".nothing_available_body") %></p>
-        <% else %>
-          <p class="label-rule text-warning">
-            <%= t("designers.unavailable.#{current_designer_profile&.unavailable_reason || 'pending_review'}") %>
-          </p>
-          <p class="max-w-sm text-sm text-muted"><%= t(".unavailable_body") %></p>
-          <%= link_to t(".fix_it"), designer_dashboard_path, class: "btn btn-secondary mt-1 text-sm" %>
-        <% end %>
-      </div>
+      <%= render "shared/empty_state",
+            title: t("designers.unavailable.#{current_designer_profile&.unavailable_reason || 'pending_review'}"),
+            title_class: "text-warning", body: t(".unavailable_body"),
+            cta: link_to(t(".fix_it"), designer_dashboard_path, class: "btn btn-secondary mt-1 text-sm"),
+            margin: "mt-4", padding: "p-10" %>
     <% end %>
   </section>
 

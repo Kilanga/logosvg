@@ -254,17 +254,6 @@ fr:
     rate_limited: "Trop de tentatives. Patientez quelques minutes avant de réessayer."
     turnstile_failed: "La vérification anti-robot n'a pas abouti. Réessayez."
 
-  states:
-    empty:
-      title: "Rien à afficher pour l'instant"
-      body: "Les éléments apparaîtront ici dès qu'il y en aura."
-    error:
-      title: "Quelque chose s'est mal passé"
-      body: "Réessayez dans un instant. Si le problème persiste, écrivez-nous."
-    loading: "Chargement en cours"
-    coming:
-      label: "Bientôt disponible"
-
   activerecord:
     errors:
       messages:
@@ -1695,6 +1684,8 @@ fr:
       fonctionnement de la plateforme, mais il ne doit pas être considéré comme
       définitif.
     other_pages: "Autres documents"
+    contact:
+      title: "Contact"
 
     legal_notice:
       title: "Mentions légales"
@@ -2096,6 +2087,25 @@ fr:
       unusable_file: "Le fichier produit n'a pas passé nos contrôles. Votre essai ne vous a pas été décompté."
 
   public:
+    contact:
+      show:
+        eyebrow: "Nous écrire"
+        title: "Contact"
+        intro: >-
+          Une question sur le fonctionnement du service, un désaccord avec un
+          atelier ou un graphiste, un signalement : une seule adresse, lue
+          par une personne.
+        email_label: "Écrivez-nous"
+        question_title: "Une question"
+        question_body: >-
+          Sur votre compte, une demande en cours, un abonnement ou le
+          fonctionnement du service en général.
+        complaint_title: "Une réclamation"
+        complaint_body: >-
+          Un désaccord avec un atelier ou un graphiste, un problème non
+          résolu avec une commande : décrivez la situation, nous revenons
+          vers vous.
+
     workshop_links:
       show:
         unknown: "Cet atelier n'est plus référencé. Choisissez-en un autre."

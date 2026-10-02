@@ -1,0 +1,29 @@
+<% content_for :title, t(".title") %>
+
+<div class="mx-auto w-full max-w-2xl px-5 py-12">
+  <p class="label-rule text-emulsion"><%= t(".eyebrow") %></p>
+  <h1 class="mt-2 font-display text-4xl font-bold uppercase leading-tight"><%= t(".title") %></h1>
+  <p class="mt-4 max-w-lg text-muted"><%= t(".intro") %></p>
+
+  <div class="mt-10 panel p-6">
+    <p class="label-rule"><%= t(".email_label") %></p>
+    <%= mail_to Rails.application.config.tshirt.support_email,
+          class: "mt-2 block font-display text-2xl font-bold text-emulsion underline-offset-4 hover:underline" %>
+  </div>
+
+  <div class="mt-8 grid gap-6 sm:grid-cols-2">
+    <div class="border-t border-line pt-5">
+      <p class="label-rule flex items-center gap-2.5 text-emulsion">
+        <%= registration_mark %><%= t(".question_title") %>
+      </p>
+      <p class="mt-2 text-sm text-muted"><%= t(".question_body") %></p>
+    </div>
+
+    <div class="border-t border-line pt-5">
+      <p class="label-rule flex items-center gap-2.5 text-warning">
+        <%= registration_mark %><%= t(".complaint_title") %>
+      </p>
+      <p class="mt-2 text-sm text-muted"><%= t(".complaint_body") %></p>
+    </div>
+  </div>
+</div>

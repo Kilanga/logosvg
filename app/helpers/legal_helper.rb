@@ -11,7 +11,8 @@ module LegalHelper
       "designer_terms" => designer_terms_path,
       "privacy" => privacy_path,
       "cookies" => cookies_path,
-      "ranking" => ranking_path
+      "ranking" => ranking_path,
+      "contact" => contact_path
     }
   end
 

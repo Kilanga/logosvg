@@ -166,6 +166,10 @@ Rails.application.routes.draw do
   get "classement-annuaire",     to: "public/legal#show", page: "ranking",        as: :ranking
   get "cookies",                 to: "public/legal#show", page: "cookies",        as: :cookies
 
+  # Pas un document légal : pas de bandeau "document de travail", juste
+  # comment nous écrire, pour une question comme pour une réclamation.
+  get "contact", to: "public/contact#show", as: :contact
+
   # Le choix du visiteur sur le cookie qui retient l'atelier qui l'a envoyé.
   post "cookies", to: "public/cookie_consents#create", as: :cookie_consent
 

@@ -54,13 +54,7 @@
       <% end %>
     </ul>
   <% else %>
-    <%# Drawn, not left to the browser. %>
-    <div class="panel mt-6 flex flex-col items-center gap-3 p-12 text-center">
-      <span class="flex gap-3 text-line" aria-hidden="true">
-        <%= registration_mark %><%= registration_mark %><%= registration_mark %>
-      </span>
-      <p class="label-rule"><%= t(".empty.#{@filter == 'open' ? 'open' : 'other'}") %></p>
-      <p class="max-w-sm text-sm text-muted"><%= t(".empty_body") %></p>
-    </div>
+    <%= render "shared/empty_state", title: t(".empty.#{@filter == 'open' ? 'open' : 'other'}"),
+          body: t(".empty_body") %>
   <% end %>
 </div>
