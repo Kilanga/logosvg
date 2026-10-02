@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_173802) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_02_162337) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -327,6 +327,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_173802) do
     t.string "stripe_transfer_id"
     t.string "token", null: false
     t.datetime "updated_at", null: false
+    t.integer "designer_refusals_count", default: 0, null: false
+    t.bigint "refused_designer_profile_ids", default: [], null: false, array: true
     t.index ["client_id", "created_at"], name: "index_reviews_on_client_id_and_created_at"
     t.index ["client_id"], name: "index_reviews_on_client_id"
     t.index ["design_id"], name: "index_reviews_on_design_id"

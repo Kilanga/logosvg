@@ -3,6 +3,12 @@ class Review < ApplicationRecord
 
   ASSIGNMENT_MODES = %w[ chosen first_available ].freeze
 
+  # How many designers in a row may hand the review back at a proposed level
+  # before the client is left with only the proposal or a refund. See
+  # "pick_new_designer" below and docs/SPEC.md, "Renvoi au client par le
+  # graphiste".
+  MAX_DESIGNER_REFUSALS = 2
+
   # Why a designer hands the job back. The first two carry a proposal; the last
   # three do not — the review is cancelled and refunded outright.
   RETURN_REASONS = %w[ level_too_low level_too_high unusable_design forbidden_content other ].freeze
@@ -87,6 +93,14 @@ class Review < ApplicationRecord
       transitions from: :returned_to_client, to: :queued, guard: :proposal_open?
     end
 
+    # The client did not want to pay the proposed difference, but is not ready
+    # to give up either: a new designer, picked by the client exactly as the
+    # first one was, takes it at the level and price already paid. Capped at
+    # MAX_DESIGNER_REFUSALS — past that, only the proposal or a refund remain.
+    event :pick_new_designer do
+      transitions from: :returned_to_client, to: :queued, guard: :reassignable?
+    end
+
     # Refused, or simply never answered.
     event :decline_proposal do
       transitions from: :returned_to_client, to: :canceled
@@ -137,6 +151,13 @@ class Review < ApplicationRecord
 
   def proposal? = PROPOSING_REASONS.include?(return_reason_code)
 
+  # Who the client could pick next: still listed, still payable, still takes
+  # this level, and not someone who has already handed this very review back.
+  def reassignment_candidates
+    DesignerProfile.listed.accepting.offering(review_level).by_reputation
+                   .where.not(id: excluded_from_reassignment)
+  end
+
   # What the client pays or is refunded when they take a proposal. Positive
   # means they owe the difference; negative means it comes back to them.
   def proposal_difference_cents
@@ -178,6 +199,10 @@ class Review < ApplicationRecord
     def settings = Rails.application.config.tshirt.reviews
 
     def claimable? = claimable_by?(designer_profile)
+
+    def reassignable? = proposal? && designer_refusals_count < MAX_DESIGNER_REFUSALS
+
+    def excluded_from_reassignment = refused_designer_profile_ids + [ designer_profile_id ].compact
 
     def chosen_designer_takes_this_level
       return if designer_profile.accepts?(review_level)

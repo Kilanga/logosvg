@@ -54,6 +54,8 @@ Rails.application.routes.draw do
        as: :accept_review_proposal
   post "verifications/:token/proposition/refuser",  to: "client/reviews#decline_proposal",
        as: :decline_review_proposal
+  post "verifications/:token/proposition/graphiste", to: "client/reviews#pick_designer",
+       as: :pick_review_designer
   post "verifications/:token/relancer",  to: "client/reviews#reopen", as: :reopen_review
   post "verifications/:token/note",      to: "client/reviews#rate",   as: :rate_review
   post "verifications/:token/messages",  to: "client/reviews#message", as: :review_messages

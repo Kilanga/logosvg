@@ -37,12 +37,12 @@ class PrintersDirectoryTest < ActionDispatch::IntegrationTest
   test "the featured label follows the search centre, not the subscription alone" do
     get printers_path
 
-    assert_select "span.pill-success", text: I18n.t("printers.featured"), count: 1
+    assert_select "span.pill-featured", text: I18n.t("printers.featured"), count: 1
 
     get printers_path, params: { latitude: "48.1173", longitude: "-1.6778", radius: 200 }
 
     assert_select "body", text: /#{Regexp.escape(printers(:lyon).name)}/, count: 1
-    assert_select "span.pill-success", text: I18n.t("printers.featured"), count: 0
+    assert_select "span.pill-featured", text: I18n.t("printers.featured"), count: 0
   end
 
   test "a published shop page is open to everyone" do

@@ -95,6 +95,21 @@ class ReviewsTest < ApplicationSystemTestCase
     assert_button I18n.t("client.reviews.show.accept_and_pay")
   end
 
+  # Not paying the difference does not have to mean giving up.
+  test "the client tries a different designer instead of paying more" do
+    sign_in users(:client)
+    visit review_path(reviews(:returned))
+
+    assert_text displayed("client.reviews.show.pick_another")
+    click_on designer_profiles(:maya).display_name
+
+    assert_text displayed("client.reviews.pick_designer.picked")
+
+    review = reviews(:returned).reload
+    assert_predicate review, :queued?
+    assert_equal designer_profiles(:maya), review.designer_profile
+  end
+
   # A cheaper level is applied at once: there is nothing to pay.
   test "a cheaper proposal is accepted without a payment screen" do
     reviews(:returned).update!(review_level: review_levels(:retouch), price_cents: 4900,

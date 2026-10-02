@@ -20,7 +20,7 @@
       <h1 class="mt-2 text-3xl font-bold uppercase lg:text-4xl"><%= @printer.name %></h1>
 
       <ul class="mt-4 flex flex-wrap gap-2">
-        <% if @printer.featured? %><li class="pill pill-success"><%= t("printers.featured") %></li><% end %>
+        <% if @printer.featured? %><li class="pill pill-featured"><%= t("printers.featured") %></li><% end %>
         <% unless @printer.label_none? %>
           <li class="pill pill-success"><%= t("enums.printer.textile_label.#{@printer.textile_label}") %></li>
         <% end %>

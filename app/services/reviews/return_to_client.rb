@@ -37,6 +37,13 @@ module Reviews
         proposal_expires_at: (expiry if proposing?)
       )
 
+      # Only a proposing reason can repeat with a different designer, so only
+      # those count toward the cap — see Review::MAX_DESIGNER_REFUSALS.
+      if proposing? && @review.designer_profile_id.present?
+        @review.designer_refusals_count += 1
+        @review.refused_designer_profile_ids += [ @review.designer_profile_id ]
+      end
+
       @review.return_to_client!
       @review.save!
 

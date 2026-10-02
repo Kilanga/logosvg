@@ -21,6 +21,8 @@ class ReviewPolicy < ApplicationPolicy
 
   def decline_proposal? = client? && record.may_decline_proposal?
 
+  def pick_designer? = client? && record.may_pick_new_designer?
+
   # Only offered once the chosen designer has gone quiet.
   def reopen? = client? && record.chosen_designer_silent?
 

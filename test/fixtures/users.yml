@@ -110,6 +110,18 @@ designer_blank:
   role: designer
   terms_accepted_at: <%= 2.days.ago.to_fs(:db) %>
 
+<%# Un second graphiste pleinement disponible, pour les tests de changement de
+    graphiste après un renvoi : Inès seule ne suffit pas à vérifier qu'un
+    client peut en choisir un autre. %>
+designer_maya:
+  email_address: maya@example.invalid
+  password_digest: <%= digest %>
+  first_name: Maya
+  last_name: Costa
+  city: Nantes
+  role: designer
+  terms_accepted_at: <%= 2.months.ago.to_fs(:db) %>
+
 admin:
   email_address: admin@example.invalid
   password_digest: <%= digest %>
