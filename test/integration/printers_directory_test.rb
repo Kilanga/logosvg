@@ -89,4 +89,25 @@ class PrintersDirectoryTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "OpenStreetMap"
     assert_includes response.body, "data-map-points-value"
   end
+
+  # See docs/SPEC.md, "Annuaire" — compatible stays, incompatible stays too,
+  # dimmed and with its reason.
+  test "arriving with a design, compatibility is checked by default and nobody is dropped" do
+    get printers_path, params: { design_token: designs(:fox_screen).token }
+
+    assert_select "#filter_compatible[checked]"
+    assert_includes response.body, printers(:rennes).name
+    assert_includes response.body, printers(:lyon).name
+    assert_includes response.body, I18n.t("public.printers.card.compatible")
+    assert_includes response.body,
+                     I18n.t("printers.compatibility.technique_not_practised",
+                            technique: PrintTechniques.label_for("screen_printing"))
+  end
+
+  test "turning the lens off drops the compatibility wording" do
+    get printers_path, params: { design_token: designs(:fox_screen).token, compatible: "0" }
+
+    assert_select "#filter_compatible[checked]", count: 0
+    assert_not_includes response.body, I18n.t("public.printers.card.compatible")
+  end
 end

@@ -80,15 +80,7 @@
       <% end %>
     </ul>
   <% else %>
-    <%# Drawn, not left to the browser: three registration marks on a screen
-        tint, the way an unexposed frame looks. %>
-    <div class="panel mt-6 flex flex-col items-center gap-3 p-12 text-center">
-      <span class="flex gap-3 text-line" aria-hidden="true">
-        <%= registration_mark %><%= registration_mark %><%= registration_mark %>
-      </span>
-      <p class="label-rule"><%= t(".empty") %></p>
-      <p class="max-w-sm text-sm text-muted"><%= t(".empty_body") %></p>
-      <%= link_to t("nav.create"), new_design_path, class: "btn btn-primary mt-2" %>
-    </div>
+    <%= render "shared/empty_state", title: t(".empty"), body: t(".empty_body"),
+          cta: link_to(t("nav.create"), new_design_path, class: "btn btn-primary mt-2") %>
   <% end %>
 </div>

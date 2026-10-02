@@ -254,17 +254,6 @@ fr:
     rate_limited: "Trop de tentatives. Patientez quelques minutes avant de réessayer."
     turnstile_failed: "La vérification anti-robot n'a pas abouti. Réessayez."
 
-  states:
-    empty:
-      title: "Rien à afficher pour l'instant"
-      body: "Les éléments apparaîtront ici dès qu'il y en aura."
-    error:
-      title: "Quelque chose s'est mal passé"
-      body: "Réessayez dans un instant. Si le problème persiste, écrivez-nous."
-    loading: "Chargement en cours"
-    coming:
-      label: "Bientôt disponible"
-
   activerecord:
     errors:
       messages:
@@ -496,9 +485,9 @@ fr:
       return_hint:
         level_too_low: "Proposez le niveau qui convient ; le client paiera la différence."
         level_too_high: "Proposez le niveau qui convient ; la différence lui sera remboursée."
-        unusable_design: "La revue est annulée et remboursée. Le client est invité à régénérer son design."
-        forbidden_content: "La revue est annulée et remboursée immédiatement."
-        other: "La revue est annulée et remboursée. Expliquez pourquoi."
+        unusable_design: "La vérification est annulée et remboursée. Le client est invité à régénérer son design."
+        forbidden_content: "La vérification est annulée et remboursée immédiatement."
+        other: "La vérification est annulée et remboursée. Expliquez pourquoi."
     designer_profile:
       status:
         pending_review: "En attente de validation"
@@ -918,6 +907,14 @@ fr:
             label: "Atelier sans réponse"
             hint: "L'atelier n'a pas encore confirmé la réception."
             cta: "Voir"
+          review_delivered:
+            label: "Version à valider"
+            hint: "Votre graphiste a déposé une version. À vous de la valider ou de demander un retour."
+            cta: "Voir"
+          review_proposal:
+            label: "Proposition du graphiste"
+            hint: "À répondre avant le %{date}, sans quoi la vérification est annulée et remboursée."
+            cta: "Répondre"
         recent_designs: "Derniers designs"
         recent_requests: "Dernières demandes"
         see_all: "Tout voir"
@@ -1133,7 +1130,7 @@ fr:
         who_can_print: "Qui peut l'imprimer"
         workshop_unavailable: "Cet atelier n'est plus référencé."
         send_to: "Envoyer"
-        see_directory: "Voir tous les ateliers compatibles"
+        see_directory: "Voir dans l'annuaire"
         no_compatible_printer: "Aucun atelier référencé ne pratique cette technique pour l'instant."
       design:
         working: "Génération en cours"
@@ -1142,6 +1139,20 @@ fr:
         try_again: "Réessayer"
         print_file: "Fichier d'impression"
         download: "Télécharger l'aperçu"
+        garment_alt: "Gabarit de t-shirt, pour juger le rendu sur le tissu"
+        garment_color: "Couleur du tissu"
+        garment_colors:
+          white: "Blanc"
+          black: "Noir"
+          heather: "Gris chiné"
+          navy: "Marine"
+          red: "Rouge"
+        background_light: "Fond clair"
+        background_dark: "Fond sombre"
+        version_final: "Rendu final"
+        version_original: "Image d'origine"
+        zoom: "Zoomer sur le design"
+        zoom_close: "Fermer"
         variants: "Proposez-moi d'autres versions"
         refine_title: "Que voulez-vous changer ?"
         refine_hint: >-
@@ -1506,9 +1517,8 @@ fr:
             body: "Notre équipe relit votre profil avant de le publier. Vous serez prévenu par email."
         ready: "Tout est en place : vous pouvez recevoir des demandes."
         queue: "Vos vérifications"
-        queue_body: >-
-          La file des demandes à prendre en charge, les dépôts de version et
-          les échanges avec les clients arrivent prochainement.
+        queue_body: "Les demandes à prendre en charge, vos dépôts de version et les échanges avec les clients sont dans votre file."
+        queue_action: "Voir la file"
 
     profiles:
       edit:
@@ -1578,7 +1588,8 @@ fr:
           zero: "Rien à faire"
           one: "%{count} à faire"
           other: "%{count} à faire"
-        nothing_mine: "Vous n'avez aucune vérification en cours."
+        nothing_mine: "Rien en cours"
+        nothing_mine_body: "Une vérification que vous prenez dans la file ci-dessous apparaît ici."
         available:
           zero: "Aucune à prendre"
           one: "%{count} à prendre"
@@ -1673,6 +1684,8 @@ fr:
       fonctionnement de la plateforme, mais il ne doit pas être considéré comme
       définitif.
     other_pages: "Autres documents"
+    contact:
+      title: "Contact"
 
     legal_notice:
       title: "Mentions légales"
@@ -1994,6 +2007,11 @@ fr:
       index:
         title: "Graphistes"
         heading: "Profils de graphistes"
+        search_label: "Chercher un graphiste"
+        search_placeholder: "Nom ou ville…"
+        search_submit: "Chercher"
+        search_clear: "Effacer"
+        no_match: "Aucun graphiste ne correspond à « %{query} »."
         waiting:
           zero: "Aucun profil en attente"
           one: "%{count} profil en attente"
@@ -2022,6 +2040,11 @@ fr:
       index:
         title: "Imprimeurs"
         heading: "Fiches des imprimeurs"
+        search_label: "Chercher un atelier"
+        search_placeholder: "Nom ou ville…"
+        search_submit: "Chercher"
+        search_clear: "Effacer"
+        no_match: "Aucun atelier ne correspond à « %{query} »."
         waiting:
           zero: "Aucune fiche en attente"
           one: "1 fiche en attente"
@@ -2048,8 +2071,8 @@ fr:
   designs:
     watermark: "Créé avec %{name}"
     family_hint:
-      vector: "Aplats, encres comptées. Fichier vectoriel."
-      raster: "Dégradés et photo. Fichier image en 300 dpi."
+      vector: "Couleurs pleines, comptées une à une : chaque couleur est un écran, une découpe ou un fil."
+      raster: "Dégradés et photo possibles, imprimés directement en une passe."
     facts:
       size: "Taille"
       definition: "Définition"
@@ -2064,6 +2087,25 @@ fr:
       unusable_file: "Le fichier produit n'a pas passé nos contrôles. Votre essai ne vous a pas été décompté."
 
   public:
+    contact:
+      show:
+        eyebrow: "Nous écrire"
+        title: "Contact"
+        intro: >-
+          Une question sur le fonctionnement du service, un désaccord avec un
+          atelier ou un graphiste, un signalement : une seule adresse, lue
+          par une personne.
+        email_label: "Écrivez-nous"
+        question_title: "Une question"
+        question_body: >-
+          Sur votre compte, une demande en cours, un abonnement ou le
+          fonctionnement du service en général.
+        complaint_title: "Une réclamation"
+        complaint_body: >-
+          Un désaccord avec un atelier ou un graphiste, un problème non
+          résolu avec une commande : décrivez la situation, nous revenons
+          vers vous.
+
     workshop_links:
       show:
         unknown: "Cet atelier n'est plus référencé. Choisissez-en un autre."
@@ -2139,12 +2181,20 @@ fr:
         map_note: "Seuls les ateliers dont l'adresse a été localisée apparaissent sur la carte."
         osm_attribution: "© Contributeurs OpenStreetMap"
         within: "dans un rayon de %{radius} km"
+        empty_title: "Aucun atelier ici"
         empty: "Aucun atelier ne correspond à ces critères. Élargissez le rayon ou retirez un filtre."
         count:
           zero: "Aucun atelier"
           one: "1 atelier"
           other: "%{count} ateliers"
+        compatibility_context: "Compatibilité affichée pour votre design — %{technique}"
+        clear_design: "Voir sans mon design"
+      card:
+        compatible: "Compatible avec votre design"
+        send_to: "Envoyer à cet atelier"
+        recreate_for: "Recréer pour cet atelier"
       filters:
+        compatible_with_design: "Compatibles avec mon design"
         search: "Rechercher"
         search_placeholder: "Nom ou ville"
         area: "Secteur"

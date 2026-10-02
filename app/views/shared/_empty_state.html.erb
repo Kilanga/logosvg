@@ -1,0 +1,19 @@
+<%# The app's one drawn empty state — three registration marks, the way an
+    unexposed screen looks. See CLAUDE.md §7: loading, empty and error states
+    are drawn, never left to the browser's default.
+    Locals: title (required), body (optional), cta (optional, pre-rendered
+    link/button), margin (optional, defaults to "mt-6"), padding (optional,
+    defaults to "p-12"), title_class (optional, e.g. "text-warning" when the
+    empty state itself is a warning rather than a plain silence). %>
+<div class="panel <%= local_assigns.fetch(:margin, "mt-6") %> flex flex-col items-center gap-3 <%= local_assigns.fetch(:padding, "p-12") %> text-center">
+  <span class="flex gap-3 text-line" aria-hidden="true">
+    <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+  </span>
+  <p class="label-rule <%= local_assigns[:title_class] %>"><%= title %></p>
+  <% if local_assigns[:body].present? %>
+    <p class="max-w-sm text-sm text-muted"><%= body %></p>
+  <% end %>
+  <% if local_assigns[:cta].present? %>
+    <%= cta %>
+  <% end %>
+</div>

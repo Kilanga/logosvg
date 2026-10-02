@@ -4,7 +4,7 @@ module Client
   # The technique is the first field, because it shapes the prompt and not only
   # the output file — see docs/SPEC.md, "Techniques d'impression".
   class DesignsController < BaseController
-    before_action :set_design, only: %i[ show image variants refine destroy ]
+    before_action :set_design, only: %i[ show image original_image variants refine destroy ]
 
     rate_limit to: 10, within: 1.minute, only: %i[ create variants refine ],
                with: -> { redirect_to new_design_path, alert: t("flash.rate_limited") }
@@ -67,6 +67,18 @@ module Client
                 filename: "#{@design.token}.png"
     end
 
+    # For comparison only — the "rendu final / image d'origine" selector. Also
+    # watermarked, and never the deciding rendering: see DesignPreview.
+    def original_image
+      authorize @design, :image?
+
+      preview = DesignPreview.call(@design, variant: :source_png)
+      return head :not_found if preview.nil?
+
+      send_data preview, type: "image/png", disposition: "attachment",
+                filename: "#{@design.token}-original.png"
+    end
+
     def variants
       authorize @design
       take_it_further { GeneratorClient.new.variants(@design.generator_job_id, user_id: Current.user.id) }
@@ -91,7 +103,7 @@ module Client
 
     private
       def set_design
-        @design = policy_scope(Design).with_attached_print_file
+        @design = policy_scope(Design).with_attached_print_file.with_attached_source_png
                                       .includes(printer: :subscription)
                                       .find_by!(token: params[:token])
       end

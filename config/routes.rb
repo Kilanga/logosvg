@@ -23,6 +23,9 @@ Rails.application.routes.draw do
   get  "designs/:token",  to: "client/designs#show",   as: :design
   # Le rendu filigrané : jamais le fichier d'impression lui-même.
   get  "designs/:token/apercu", to: "client/designs#image", as: :design_image
+  # Pour comparer : l'image d'origine, elle aussi filigranée, jamais envoyée
+  # telle quelle. Voir docs/SPEC.md, "Détails d'interface à respecter" → "Aperçu".
+  get  "designs/:token/original", to: "client/designs#original_image", as: :design_original_image
   post "designs/:token/variantes", to: "client/designs#variants", as: :design_variants
   post "designs/:token/retouche",  to: "client/designs#refine",   as: :design_refine
 
@@ -162,6 +165,10 @@ Rails.application.routes.draw do
   get "confidentialite",         to: "public/legal#show", page: "privacy",        as: :privacy
   get "classement-annuaire",     to: "public/legal#show", page: "ranking",        as: :ranking
   get "cookies",                 to: "public/legal#show", page: "cookies",        as: :cookies
+
+  # Pas un document légal : pas de bandeau "document de travail", juste
+  # comment nous écrire, pour une question comme pour une réclamation.
+  get "contact", to: "public/contact#show", as: :contact
 
   # Le choix du visiteur sur le cookie qui retient l'atelier qui l'a envoyé.
   post "cookies", to: "public/cookie_consents#create", as: :cookie_consent

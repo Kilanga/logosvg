@@ -10,10 +10,14 @@ class PrinterDirectory
 
   BOOLEAN_FILTERS = %w[ express_available pickup ships provides_textile accepts_client_textile ].freeze
 
-  Result = Data.define(:printers, :filters, :center, :radius_km) do
+  Result = Data.define(:printers, :filters, :center, :radius_km, :design, :compatibilities) do
     def located = printers.select(&:located?)
     def any? = printers.any?
     def near? = center.present?
+    # Whether to compute and show the "Compatibles avec mon design" lens at
+    # all — on by default once a design is in context, never without one.
+    def compatibility_lens? = design.present? && filters[:compatible] != "0"
+    def compatibility_for(printer) = compatibilities[printer.id]
   end
 
   def self.call(scope:, filters:) = new(scope: scope, filters: filters).call
@@ -32,11 +36,15 @@ class PrinterDirectory
     relation = apply_booleans(relation)
     relation = apply_label(relation)
 
+    printers = relation.by_prominence(near: center).limit(LIMIT).to_a
+
     Result.new(
-      printers: relation.by_prominence(near: center).limit(LIMIT).to_a,
+      printers: printers,
       filters: @filters,
       center: center,
-      radius_km: radius_km
+      radius_km: radius_km,
+      design: design,
+      compatibilities: compatibilities(printers)
     )
   end
 
@@ -90,6 +98,25 @@ class PrinterDirectory
 
         { latitude: latitude, longitude: longitude } if latitude && longitude
       end
+    end
+
+    # Looked up by token alone, like the other public, unguessable-id screens:
+    # this only reads a technique, an ink count and a width, never anything a
+    # visitor should not see.
+    def design
+      return @design if defined?(@design)
+
+      @design = @filters[:design_token].present? ? Design.active.find_by(token: @filters[:design_token], status: "ready") : nil
+    end
+
+    # Judged once for the whole page, not once per card: see
+    # `PrinterCompatibility.for_each`.
+    def compatibilities(printers)
+      return {} if design.nil? || @filters[:compatible] == "0"
+
+      PrinterCompatibility.for_each(printers, technique: design.technique,
+                                    inks_count: design.inks_count, print_width_cm: design.print_width_cm)
+                          .transform_keys(&:id)
     end
 
     def radius_km

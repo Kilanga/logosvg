@@ -19,8 +19,61 @@
     </div>
 
   <% else %>
-    <div class="screen-tint p-4">
-      <%= image_tag design_image_path(design), alt: design.prompt, class: "mx-auto w-full max-w-lg" %>
+    <%# The aperçu: the print file on a garment, comparable against light and
+        dark, against the original image, and zoomable. See docs/SPEC.md,
+        "Détails d'interface à respecter" → "Aperçu". %>
+    <div data-controller="design-preview"
+         data-design-preview-print-src-value="<%= design_image_path(design) %>"
+         data-design-preview-original-src-value="<%= design.source_png.attached? ? design_original_image_path(design) : "" %>">
+      <div data-design-preview-target="stage" class="screen-tint flex items-center justify-center p-6">
+        <div class="relative w-full max-w-64">
+          <%= render "client/designs/garment" %>
+          <button type="button" data-action="design-preview#zoom"
+                  class="absolute inset-0 flex items-center justify-center"
+                  aria-label="<%= t("client.designs.design.zoom") %>">
+            <%= image_tag design_image_path(design), alt: "",
+                  data: { design_preview_target: "image" },
+                  class: "pointer-events-none absolute left-1/2 top-[36%] w-[34%] -translate-x-1/2 object-contain" %>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-4 border-t border-line p-4 text-sm">
+        <div class="flex items-center gap-2">
+          <span class="label-rule text-muted"><%= t("client.designs.design.garment_color") %></span>
+          <% garment_swatches.each_with_index do |(key, hex), index| %>
+            <button type="button" data-design-preview-target="swatch" data-action="design-preview#tint"
+                    data-design-preview-color-param="<%= hex %>"
+                    aria-pressed="<%= index.zero? %>"
+                    aria-label="<%= t("client.designs.design.garment_colors.#{key}") %>"
+                    class="size-7 flex-none rounded-full border border-line"
+                    style="background-color: <%= hex %>"></button>
+          <% end %>
+        </div>
+
+        <div class="flex items-center gap-1 rounded-xs border border-line p-0.5">
+          <button type="button" data-design-preview-target="lightButton" data-action="design-preview#lightBackground"
+                  aria-pressed="true" class="btn-segment"><%= t("client.designs.design.background_light") %></button>
+          <button type="button" data-design-preview-target="darkButton" data-action="design-preview#darkBackground"
+                  aria-pressed="false" class="btn-segment"><%= t("client.designs.design.background_dark") %></button>
+        </div>
+
+        <% if design.source_png.attached? %>
+          <div class="flex items-center gap-1 rounded-xs border border-line p-0.5">
+            <button type="button" data-design-preview-target="finalButton" data-action="design-preview#showFinal"
+                    aria-pressed="true" class="btn-segment"><%= t("client.designs.design.version_final") %></button>
+            <button type="button" data-design-preview-target="originalButton" data-action="design-preview#showOriginal"
+                    aria-pressed="false" class="btn-segment"><%= t("client.designs.design.version_original") %></button>
+          </div>
+        <% end %>
+      </div>
+
+      <dialog data-design-preview-target="zoomDialog" class="zoom-dialog">
+        <button type="button" data-action="design-preview#closeZoom" class="btn btn-secondary text-sm">
+          <%= t("client.designs.design.zoom_close") %>
+        </button>
+        <img alt="<%= design.prompt %>" data-design-preview-target="zoomImage" class="zoom-dialog-image">
+      </dialog>
     </div>
 
     <div class="border-t border-line p-4">

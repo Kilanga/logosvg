@@ -3,7 +3,11 @@
     for a prominent Atelier+, singled out with a thin gold frame rather than
     folded into the same rule as everyone else. %>
 <% prominent = printer.prominent?(near: local_assigns[:near]) %>
-<li class="<%= prominent ? "frame-featured -mx-4 px-4 py-5 sm:-mx-5 sm:px-5" : "py-6" %>">
+<% design = local_assigns[:design] %>
+<% compatibility = local_assigns[:compatibility] %>
+<% incompatible = compatibility.present? && !compatibility.compatible? %>
+<li class="<%= [ (prominent ? "frame-featured -mx-4 px-4 py-5 sm:-mx-5 sm:px-5" : "py-6"),
+                 ("opacity-60" if incompatible) ].compact.join(" ") %>">
   <article class="flex flex-wrap items-start gap-x-6 gap-y-4">
     <% if printer.logo.attached? %>
       <%= image_tag printer.logo.variant(resize_to_fill: [ 96, 96 ]),
@@ -46,4 +50,23 @@
       <% if printer.express_available? %><li class="chip-file"><%= t("printers.express") %></li><% end %>
     </ul>
   </article>
+
+  <%# With a design in context: say whether it fits here, and offer the one
+      action that follows from the answer — never both buttons at once. %>
+  <% if design.present? %>
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-sm">
+      <% if incompatible %>
+        <p class="max-w-md text-warning"><%= compatibility.message %></p>
+        <%= link_to t("public.printers.card.recreate_for"), workshop_link_path(slug: printer.slug),
+              class: "flex-none font-medium text-emulsion underline underline-offset-4" %>
+      <% else %>
+        <span class="flex items-center gap-2 text-success">
+          <%= registration_mark css_class: "flex-none" %><%= t("public.printers.card.compatible") %>
+        </span>
+        <%= link_to t("public.printers.card.send_to"),
+              new_design_print_request_path(design, atelier: printer.slug),
+              class: "flex-none font-medium text-emulsion underline underline-offset-4" %>
+      <% end %>
+    </div>
+  <% end %>
 </li>

@@ -2,8 +2,8 @@
 # has been happening.
 #
 # Gathered here rather than in the controller because "waiting on the client" is
-# a business rule that will grow — designer proposals and versions to approve
-# join it at step 8 — and because every list has to be loaded without an N+1.
+# a business rule that keeps growing, and because every list has to be loaded
+# without an N+1.
 class ClientDashboard
   # One pending action, whatever kind it is. `kind` names the sentence to show;
   # where acting on it happens is the view's business, not this object's — a
@@ -22,7 +22,8 @@ class ClientDashboard
 
   private
     def actions
-      (failed_designs + unsent_designs + silent_print_requests).sort_by(&:on).reverse
+      (failed_designs + unsent_designs + silent_print_requests +
+       delivered_reviews + review_proposals).sort_by(&:on).reverse
     end
 
     # A generation that failed cost nothing: trying again is one click.
@@ -65,6 +66,23 @@ class ClientDashboard
       Rails.application.config.tshirt.print_requests[:reminder_after_hours].hours.ago
     end
 
+    # Paid for and done: validating it is the one step left.
+    def delivered_reviews
+      reviews.where(status: "delivered").includes(:design).map do |review|
+        Action.new(kind: :review_delivered, record: review, on: review.delivered_at)
+      end
+    end
+
+    # The one pending action with its own deadline: past it, the sweep answers
+    # for the client. `proposal_open?` is the model's own rule, not re-derived
+    # here — see docs/SPEC.md, "Espace client".
+    def review_proposals
+      reviews.where(status: "returned_to_client").includes(:design)
+             .select(&:proposal_open?).map do |review|
+        Action.new(kind: :review_proposal, record: review, on: review.returned_at)
+      end
+    end
+
     def recent_designs
       designs.newest_first.limit(RECENT_LIMIT).includes(:printer).with_attached_print_file
     end
@@ -76,4 +94,6 @@ class ClientDashboard
     def designs = @client.designs.active
 
     def print_requests = @client.print_requests
+
+    def reviews = @client.reviews
 end

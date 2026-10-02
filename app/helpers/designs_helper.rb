@@ -10,6 +10,15 @@ module DesignsHelper
     t("designs.family_hint.#{entry.family}")
   end
 
+  # A handful of common fabric colours to preview against — not the colour of
+  # any particular order, which is only chosen later, at the print request.
+  # See docs/SPEC.md, "Aperçu" → "aperçu sur t-shirt avec couleurs de tissu".
+  GARMENT_SWATCHES = {
+    white: "#FFFFFF", black: "#1A1A1A", heather: "#9CA3AF", navy: "#1E2A4A", red: "#B3261E"
+  }.freeze
+
+  def garment_swatches = GARMENT_SWATCHES
+
   def design_status_pill(design)
     style = case design.status
     when "ready"  then "pill-success"
@@ -26,6 +35,7 @@ module DesignsHelper
     case action.record
     when Design then action.record.prompt.truncate(60)
     when PrintRequest then action.record.printer.name
+    when Review then action.record.design.prompt.truncate(60)
     end
   end
 
@@ -36,6 +46,17 @@ module DesignsHelper
     when :design_failed then new_design_path
     when :design_unsent then new_design_print_request_path(action.record)
     when :print_request_silent then print_request_path(action.record)
+    when :review_delivered, :review_proposal then review_path(action.record)
+    end
+  end
+
+  # The one hint that carries its own deadline rather than a fixed sentence.
+  def dashboard_action_hint(action)
+    if action.kind == :review_proposal
+      t("client.dashboards.show.action.review_proposal.hint",
+        date: l(action.record.proposal_expires_at, format: :long))
+    else
+      t("client.dashboards.show.action.#{action.kind}.hint")
     end
   end
 

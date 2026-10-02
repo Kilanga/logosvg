@@ -16,6 +16,7 @@ module Public
     private
       def filters
         params.permit(:q, :department, :latitude, :longitude, :radius, :textile_label,
+                      :design_token, :compatible,
                       *PrinterDirectory::BOOLEAN_FILTERS, techniques: [])
               .to_h.symbolize_keys
       end
