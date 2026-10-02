@@ -336,6 +336,7 @@ fr:
         client_brief: "Ce que vous attendez"
         review_level: "Niveau"
         designer_profile: "Graphiste"
+        client: "Client"
       blocked_term:
         term: "Terme"
         reason: "Motif"
@@ -1613,6 +1614,8 @@ fr:
         return_action: "Renvoyer au client"
         return_confirm: "Renvoyer cette demande au client ? Vous ne pourrez pas revenir en arrière."
         the_design: "Le design"
+        contact: "Contact"
+        no_phone: "Aucun numéro renseigné"
         what_you_earn: "Ce que vous touchez"
         earn_hint: "Prix payé %{price}, commission plateforme %{fee}."
         generator_warnings: "Alertes du générateur"
@@ -1804,12 +1807,14 @@ fr:
       how_listed:
         title: "Comment l'annuaire est ordonné"
         body:
-          - "Les ateliers mis en avant apparaissent en tête, puis les autres par ordre alphabétique. Aucun autre critère n'intervient dans l'ordre d'affichage."
+          - "Les ateliers mis en avant dans votre zone apparaissent en tête (voir plus bas), puis les autres par ordre alphabétique. Aucun autre critère n'intervient dans l'ordre d'affichage."
           - "Les filtres que vous appliquez — technique, secteur, services — réduisent la liste mais n'en changent pas l'ordre."
       featured:
         title: "La mise en avant est payante"
         body:
           - "La mise en avant est un service de l'abonnement Atelier+. Elle est toujours signalée par une étiquette « Mis en avant » visible sur chaque fiche concernée."
+          - "Dans l'annuaire, elle ne joue que dans un rayon de 50 km autour de l'atelier : un atelier mis en avant n'apparaît en tête que pour les clients assez proches pour s'y rendre, jamais pour l'ensemble du pays."
+          - "Sur sa propre fiche, l'étiquette reste visible quelle que soit votre position : c'est une mention de son abonnement, pas un classement."
           - "Elle ne modifie ni les caractéristiques affichées, ni la compatibilité avec votre design."
       compatibility:
         title: "La compatibilité n'est pas un classement"

@@ -83,9 +83,14 @@ class ReviewPolicy < ApplicationPolicy
   private
     def client? = user.present? && record.client_id == user.id
 
-    def designer_user? = user&.designer? && user.designer_profile.present?
+    # Même raison que `Scope#designer_scope`, qui fait déjà sa propre requête :
+    # `user.designer_profile` sauterait depuis `Current.user`, jamais préchargé
+    # avant que Pundit ne lise cette policy, dès le premier accès authentifié.
+    def designer_profile = @designer_profile ||= DesignerProfile.find_by(user_id: user&.id)
 
-    def designer? = designer_user? && record.designer_profile_id == user.designer_profile.id
+    def designer_user? = user&.designer? && designer_profile.present?
+
+    def designer? = designer_user? && record.designer_profile_id == designer_profile.id
 
     def owns_design? = record.design&.user_id == user&.id
 end

@@ -9,8 +9,19 @@ class PrinterDirectoryTest < ActiveSupport::TestCase
     assert_not_includes directory({}).printers, printers(:attente)
   end
 
-  test "featured listings lead" do
+  test "featured listings lead when no search centre is known" do
     assert_equal printers(:lyon), directory({}).printers.first
+  end
+
+  # Lyon is featured but 700 km from Rennes: a search centred there must not
+  # put Lyon first just because it pays for Atelier+.
+  test "a featured listing leads only within reach of the search centre" do
+    printers(:rennes).update!(featured: true)
+
+    result = directory(RENNES.merge(radius: 200)).printers
+
+    assert_equal printers(:rennes), result.first
+    assert_not_equal printers(:lyon), result.first
   end
 
   # The rule that shapes the whole directory: filtering by area must not hide

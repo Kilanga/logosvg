@@ -1,7 +1,7 @@
 module PrintersHelper
   # What the map controller needs, and nothing more. Built here rather than in
   # the view so the payload stays small and its shape is obvious.
-  def map_points(printers)
+  def map_points(printers, near: nil)
     printers.map do |printer|
       {
         name: printer.name,
@@ -9,7 +9,7 @@ module PrintersHelper
         url: printer_path(printer),
         latitude: printer.latitude.to_f,
         longitude: printer.longitude.to_f,
-        featured: printer.featured?
+        featured: printer.prominent?(near: near)
       }
     end
   end
