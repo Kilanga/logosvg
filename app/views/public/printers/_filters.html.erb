@@ -4,6 +4,20 @@
 <aside data-controller="directory">
   <%= form_with url: printers_path, method: :get, data: { directory_target: "form" },
         class: "space-y-6" do |form| %>
+    <% if directory.design.present? %>
+      <%= form.hidden_field :design_token, value: directory.design.token %>
+      <div class="border-b border-line pb-6">
+        <label class="flex items-center gap-2.5 text-sm">
+          <%= form.check_box :compatible, {
+                checked: directory.compatibility_lens?,
+                id: "filter_compatible",
+                class: "size-4 rounded-xs border-line text-emulsion",
+                data: { action: "directory#submit" }
+              }, "1", "0" %>
+          <%= t(".compatible_with_design") %>
+        </label>
+      </div>
+    <% end %>
 
     <%# Technique first: it is the only filter that decides whether a shop can
         print the design at all. Everything below merely narrows. Several

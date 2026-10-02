@@ -54,6 +54,33 @@ class ClientDashboardTest < ActiveSupport::TestCase
     assert_not_includes silent, print_requests(:forgotten)
   end
 
+  # Paid for and done: validating it is the one step left. See docs/SPEC.md,
+  # "Espace client".
+  test "a delivered review is offered for validation" do
+    delivered = actions.select { |a| a.kind == :review_delivered }.map(&:record)
+
+    assert_includes delivered, reviews(:delivered)
+  end
+
+  test "a review still in progress is not offered for validation" do
+    delivered = actions.select { |a| a.kind == :review_delivered }.map(&:record)
+
+    assert_not_includes delivered, reviews(:in_progress)
+  end
+
+  test "a returned review with an open proposal is brought forward" do
+    proposals = actions.select { |a| a.kind == :review_proposal }.map(&:record)
+
+    assert_includes proposals, reviews(:returned)
+  end
+
+  test "a returned review whose proposal has expired is not brought forward" do
+    reviews(:returned).update!(proposal_expires_at: 1.hour.ago)
+    proposals = actions.select { |a| a.kind == :review_proposal }.map(&:record)
+
+    assert_not_includes proposals, reviews(:returned)
+  end
+
   test "the most recent thing to act on comes first" do
     dates = actions.map(&:on)
 

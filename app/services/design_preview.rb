@@ -1,28 +1,35 @@
-# The only rendering of a design a client ever receives.
+# The only renderings of a design a client ever receives.
 #
-# It is a raster of the *print file* — not of the image the model drew. The two
-# differ on purpose: white has become unprinted textile, near colours have been
-# merged to fit the ink count. Showing the client the original would be asking
-# them to approve something other than what gets printed.
+# The default variant is a raster of the *print file* — not of the image the
+# model drew. The two differ on purpose: white has become unprinted textile,
+# near colours have been merged to fit the ink count. Approving the design
+# means approving this file, which is why it is the one shown by default.
 #
-# Watermarked, capped in width, and produced server-side: the print file itself
-# never leaves for the client. See docs/SPEC.md, "Fichiers".
+# The `:source_png` variant exists only so the client can *compare* — the
+# "rendu final / image d'origine" selector in docs/SPEC.md, "Détails
+# d'interface à respecter". It never replaces the print file as what gets
+# approved or sent to a workshop.
+#
+# Both are watermarked, capped in width, and produced server-side: neither
+# file itself ever leaves for the client. See docs/SPEC.md, "Fichiers".
 class DesignPreview
   WIDTH_PX = 1200
   CACHE_TTL = 1.day
+  VARIANTS = %i[ print_file source_png ].freeze
 
-  def self.call(design) = new(design).call
+  def self.call(design, variant: :print_file) = new(design, variant: variant).call
 
-  def initialize(design)
+  def initialize(design, variant: :print_file)
     @design = design
+    @variant = VARIANTS.include?(variant) ? variant : :print_file
   end
 
   def call
     # Said out loud: every way this returns nil ends with a caller quietly
     # showing no preview, and "there was no file" and "the file was refused"
     # are very different faults to chase.
-    unless @design.print_file.attached?
-      Rails.logger.info("[preview] no print file attached to #{@design.token}")
+    unless attachment.attached?
+      Rails.logger.info("[preview] no #{@variant} attached to #{@design.token}")
       return nil
     end
 
@@ -31,9 +38,11 @@ class DesignPreview
   end
 
   private
-    def cache_key = "design_preview/#{@design.token}/#{@design.print_file.blob.checksum}/#{WIDTH_PX}"
+    def attachment = @variant == :source_png ? @design.source_png : @design.print_file
 
-    def svg? = @design.print_file.blob.content_type == "image/svg+xml"
+    def cache_key = "design_preview/#{@design.token}/#{@variant}/#{attachment.blob.checksum}/#{WIDTH_PX}"
+
+    def svg? = attachment.blob.content_type == "image/svg+xml"
 
     # Inspected again, here, on the bytes actually about to be rendered. The
     # file was already checked when it was stored, but librsvg is what this
@@ -53,14 +62,14 @@ class DesignPreview
       # stored perfectly well mean the read came back short, not that the
       # designer sent something bad.
       Rails.logger.error(
-        "[preview] refused the stored SVG for #{@design.token}: " \
+        "[preview] refused the stored #{@variant} for #{@design.token}: " \
         "#{result.reason} (#{bytes.to_s.bytesize} octets lus)"
       )
       false
     end
 
     def render
-      @design.print_file.blob.open do |file|
+      attachment.blob.open do |file|
         next nil unless safe?(file)
 
         image = Vips::Image.thumbnail(file.path, WIDTH_PX)

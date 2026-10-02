@@ -43,6 +43,11 @@ class DesignerProfile < ApplicationRecord
   scope :by_reputation, -> { order(Arel.sql("rating_avg DESC NULLS LAST, ratings_count DESC, display_name ASC")) }
   scope :accepting, -> { where(accepting_work: true, payouts_enabled: true) }
   scope :offering, ->(level) { joins(:designer_levels).where(designer_levels: { review_level: level }) }
+  # ILIKE, not unaccent: same reasoning as Printer.matching.
+  scope :matching, ->(term) {
+    pattern = "%#{sanitize_sql_like(term.to_s.strip)}%"
+    where("display_name ILIKE :q OR city ILIKE :q", q: pattern)
+  }
 
   # The rule the whole step exists for: nothing is ever assigned to a designer
   # who has not been vetted, cannot be paid, or has stepped away.

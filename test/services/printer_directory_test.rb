@@ -96,6 +96,46 @@ class PrinterDirectoryTest < ActiveSupport::TestCase
     assert located.all?(&:located?)
   end
 
+  # See docs/SPEC.md, "Annuaire" — the compatibility lens, on by default once a
+  # design is in context.
+  test "a design in context turns the lens on, and judges every shop at once" do
+    result = directory(design_token: designs(:fox_screen).token)
+
+    assert_equal designs(:fox_screen), result.design
+    assert_predicate result, :compatibility_lens?
+    assert_predicate result.compatibility_for(printers(:rennes)), :compatible?
+    assert_not result.compatibility_for(printers(:lyon)).compatible?
+  end
+
+  # Incompatible shops stay in the list — a filter would hide exactly the shop
+  # a client might want to recreate their design for.
+  test "an incompatible shop is not dropped from the results" do
+    result = directory(design_token: designs(:fox_screen).token)
+
+    assert_includes result.printers, printers(:lyon)
+  end
+
+  test "without a design, the lens stays off even if requested" do
+    result = directory(compatible: "1")
+
+    assert_not result.compatibility_lens?
+    assert_nil result.compatibility_for(printers(:rennes))
+  end
+
+  test "the client can turn the lens off explicitly" do
+    result = directory(design_token: designs(:fox_screen).token, compatible: "0")
+
+    assert_not result.compatibility_lens?
+    assert_nil result.compatibility_for(printers(:lyon))
+  end
+
+  test "an unknown design token is ignored rather than fatal" do
+    result = directory(design_token: "introuvable")
+
+    assert_nil result.design
+    assert_not result.compatibility_lens?
+  end
+
   private
     def directory(filters)
       PrinterDirectory.call(scope: Printer.listed, filters: filters)

@@ -4,32 +4,48 @@
 <% waiting, decided = @printers.partition(&:pending_review?) %>
 
 <div class="max-w-5xl space-y-12">
-  <section>
-    <h2 class="label-rule border-b border-line pb-3 text-emulsion">
-      <%= t(".waiting", count: waiting.size) %>
-    </h2>
-
-    <% if waiting.any? %>
-      <ul class="divide-y divide-line">
-        <% waiting.each do |printer| %>
-          <%= render "row", printer: printer, decidable: true %>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="py-8 text-muted"><%= t(".nothing_waiting") %></p>
+  <%= form_with url: admin_printers_path, method: :get, class: "flex flex-wrap items-end gap-3" do %>
+    <div class="min-w-0 flex-1 sm:max-w-xs">
+      <%= label_tag :q, t(".search_label"), class: "label-rule block" %>
+      <%= search_field_tag :q, @query, placeholder: t(".search_placeholder"),
+            class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+    </div>
+    <button type="submit" class="btn btn-secondary text-sm"><%= t(".search_submit") %></button>
+    <% if @query.present? %>
+      <%= link_to t(".search_clear"), admin_printers_path, class: "text-sm text-muted underline underline-offset-4" %>
     <% end %>
-  </section>
+  <% end %>
 
-  <section>
-    <h2 class="label-rule border-b border-line pb-3"><%= t(".all", count: decided.size) %></h2>
-    <% if decided.any? %>
-      <ul class="divide-y divide-line">
-        <% decided.each do |printer| %>
-          <%= render "row", printer: printer, decidable: false %>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="py-8 text-muted"><%= t(".all", count: 0) %></p>
-    <% end %>
-  </section>
+  <% if @query.present? && (waiting + decided).empty? %>
+    <p class="text-muted"><%= t(".no_match", query: @query) %></p>
+  <% else %>
+    <section>
+      <h2 class="label-rule border-b border-line pb-3 text-emulsion">
+        <%= t(".waiting", count: waiting.size) %>
+      </h2>
+
+      <% if waiting.any? %>
+        <ul class="divide-y divide-line">
+          <% waiting.each do |printer| %>
+            <%= render "row", printer: printer, decidable: true %>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="py-8 text-muted"><%= t(".nothing_waiting") %></p>
+      <% end %>
+    </section>
+
+    <section>
+      <h2 class="label-rule border-b border-line pb-3"><%= t(".all", count: decided.size) %></h2>
+      <% if decided.any? %>
+        <ul class="divide-y divide-line">
+          <% decided.each do |printer| %>
+            <%= render "row", printer: printer, decidable: false %>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="py-8 text-muted"><%= t(".all", count: 0) %></p>
+      <% end %>
+    </section>
+  <% end %>
 </div>

@@ -169,6 +169,33 @@ class DesignsTest < ApplicationSystemTestCase
     assert_selector "[role='status']"
   end
 
+  # The comparison tools the spec asks for: the original image, a dark
+  # background, a fabric colour, and a closer look. See docs/SPEC.md,
+  # "Détails d'interface à respecter" → "Aperçu".
+  test "the client compares the print file against the original, and previews fabric colours" do
+    design = designs(:fox_screen)
+    design.print_file.attach(io: StringIO.new(svg), filename: "design.svg", content_type: "image/svg+xml")
+    design.source_png.attach(io: StringIO.new(png), filename: "source.png", content_type: "image/png")
+
+    sign_in users(:client)
+    visit design_path(design)
+
+    assert_selector "[data-design-preview-target='image'][src='#{design_image_path(design)}']"
+
+    click_on I18n.t("client.designs.design.version_original")
+    assert_selector "[data-design-preview-target='image'][src='#{design_original_image_path(design)}']"
+
+    click_on I18n.t("client.designs.design.background_dark")
+    assert_selector "[data-design-preview-target='stage'].bg-ink"
+
+    black = find("[data-design-preview-target='swatch'][aria-label='#{I18n.t("client.designs.design.garment_colors.black")}']")
+    black.click
+    assert_equal "true", black["aria-pressed"]
+
+    find("button[aria-label='#{I18n.t("client.designs.design.zoom")}']").click
+    assert_selector "dialog[open]"
+  end
+
   private
     def sign_in(user)
       visit new_session_path

@@ -63,10 +63,12 @@
               </li>
             <% end %>
           </ul>
-          <%= link_to t(".see_directory"), printers_path(techniques: [ @design.technique ]),
+          <%= link_to t(".see_directory"), printers_path(design_token: @design.token),
                 class: "btn btn-secondary mt-5 w-full text-sm" %>
         <% else %>
           <p class="mt-4 text-sm text-muted"><%= t(".no_compatible_printer") %></p>
+          <%= link_to t(".see_directory"), printers_path(design_token: @design.token),
+                class: "btn btn-secondary mt-4 w-full text-sm" %>
         <% end %>
       </div>
     <% end %>

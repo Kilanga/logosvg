@@ -2,11 +2,13 @@ module Admin
   # Designer profiles waiting for a decision, and the decision itself.
   class DesignersController < BaseController
     def index
+      @query = params[:q].to_s.strip
       @designers = policy_scope(DesignerProfile, policy_scope_class: DesignerProfilePolicy::AdminScope)
                      .includes(:user, :review_levels)
                      .with_attached_avatar
                      .order(Arel.sql("CASE status WHEN 'pending_review' THEN 0 ELSE 1 END"),
                             updated_at: :desc)
+      @designers = @designers.matching(@query) if @query.present?
     end
 
     def update

@@ -27,7 +27,7 @@
     <div class="panel justify-self-center p-6">
       <%# The QR code is drawn, not fetched: it encodes nothing but the URL. %>
       <%# It carries `?s=qr`, so a scan and a click on the link are told apart. %>
-      <div class="flex justify-center"><%= raw WorkshopQrCode.svg(workshop_link_url(slug: @printer.slug, s: WorkshopLinkVisit::QR)) %></div>
+      <div class="flex justify-center" aria-hidden="true"><%= raw WorkshopQrCode.svg(workshop_link_url(slug: @printer.slug, s: WorkshopLinkVisit::QR)) %></div>
       <p class="label-rule mt-4 text-center"><%= t(".qr") %></p>
     </div>
 

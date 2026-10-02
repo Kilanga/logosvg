@@ -58,6 +58,30 @@ class DesignPreviewTest < ActiveSupport::TestCase
     assert_nil DesignPreview.call(@design)
   end
 
+  # The comparison selector's other half — see docs/SPEC.md, "Aperçu".
+  test "the source variant has no preview when nothing was kept" do
+    assert_nil DesignPreview.call(@design, variant: :source_png)
+  end
+
+  test "the source variant rasterises the raw image, watermarked like the other" do
+    @design.source_png.attach(io: StringIO.new(png), filename: "source.png", content_type: "image/png")
+
+    preview = DesignPreview.call(@design, variant: :source_png)
+
+    assert_not_nil preview
+    assert_equal "\x89PNG".b, preview.byteslice(0, 4)
+  end
+
+  test "the two variants are cached separately" do
+    attach(svg, "design.svg", "image/svg+xml")
+    @design.source_png.attach(io: StringIO.new(png), filename: "source.png", content_type: "image/png")
+
+    printed = DesignPreview.call(@design)
+    original = DesignPreview.call(@design, variant: :source_png)
+
+    assert_not_equal printed, original
+  end
+
   private
     def attach(bytes, name, type)
       @design.print_file.attach(io: StringIO.new(bytes), filename: name, content_type: type)

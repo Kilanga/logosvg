@@ -18,19 +18,31 @@
         <% end %>
       </p>
 
+      <% if @directory.compatibility_lens? %>
+        <p class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+          <%= t(".compatibility_context", technique: @directory.design.technique_label) %>
+          <%= link_to t(".clear_design"), printers_path, class: "underline underline-offset-4" %>
+        </p>
+      <% end %>
+
       <% if @directory.any? %>
         <ul class="divide-y divide-line">
           <% @directory.printers.each do |printer| %>
-            <%= render "card", printer: printer, near: @directory.center %>
+            <%= render "card", printer: printer, near: @directory.center,
+                  design: (@directory.design if @directory.compatibility_lens?),
+                  compatibility: @directory.compatibility_for(printer) %>
           <% end %>
         </ul>
       <% else %>
-        <div class="panel mt-6 p-8 text-center">
-          <p class="label-rule flex items-center justify-center gap-2.5 text-emulsion">
-            <%= registration_mark %>
-            <%= t("states.empty.title") %>
-          </p>
-          <p class="mt-4 text-muted"><%= t(".empty") %></p>
+        <%# Drawn, not left to the browser: three registration marks on a screen
+            tint, the way an unexposed frame looks — same motif as the rest of
+            the app's empty states. %>
+        <div class="panel mt-6 flex flex-col items-center gap-3 p-12 text-center">
+          <span class="flex gap-3 text-line" aria-hidden="true">
+            <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+          </span>
+          <p class="label-rule"><%= t(".empty_title") %></p>
+          <p class="max-w-sm text-sm text-muted"><%= t(".empty") %></p>
         </div>
       <% end %>
     </section>

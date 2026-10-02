@@ -194,6 +194,39 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # The comparison selector's other half — also watermarked, also never the
+  # deciding rendering. See docs/SPEC.md, "Aperçu".
+  test "the original image is also a watermarked png, when one was kept" do
+    design = attached_design
+    design.source_png.attach(io: StringIO.new(png), filename: "source.png", content_type: "image/png")
+    sign_in_as users(:client)
+
+    get design_original_image_path(design)
+
+    assert_response :success
+    assert_equal "image/png", response.media_type
+    assert_equal "\x89PNG".b, response.body.byteslice(0, 4)
+  end
+
+  test "a design with no original image kept has nothing to compare against" do
+    design = attached_design
+    sign_in_as users(:client)
+
+    get design_original_image_path(design)
+
+    assert_response :not_found
+  end
+
+  test "another client cannot reach the original image either" do
+    design = designs(:other_client_design)
+    design.source_png.attach(io: StringIO.new(png), filename: "source.png", content_type: "image/png")
+    sign_in_as users(:client)
+
+    get design_original_image_path(design)
+
+    assert_response :not_found
+  end
+
   # The client is offered the watermarked preview and nothing else: no link on
   # the page reaches the stored print file.
   test "the design page never hands out the print file" do
@@ -275,5 +308,11 @@ class DesignsTest < ActionDispatch::IntegrationTest
     def svg
       %(<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10">) +
         %(<path d="M0 0h10v10H0z" fill="#1F5F7A"/></svg>)
+    end
+
+    def png
+      Base64.decode64(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+      )
     end
 end
