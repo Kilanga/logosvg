@@ -55,8 +55,7 @@ module PrintersHelper
   def printer_characteristics(printer)
     {
       printing: [
-        [ t("activerecord.attributes.printer.placements"),
-          printer.placements.map { |p| t("enums.printer.placements.#{p}") }.to_sentence ],
+        [ t("activerecord.attributes.printer.placements"), placements_sentence(printer) ],
         [ t("public.printers.characteristics.max_size"), print_area(printer) ],
         [ t("activerecord.attributes.printer.min_order_qty"), quantity(printer.min_order_qty) ],
         [ t("activerecord.attributes.printer.price_note"), printer.price_note ]
@@ -90,6 +89,16 @@ module PrintersHelper
   end
 
   private
+    # Each label reads fine alone, capitalised, as a chip — "Poitrine, centré".
+    # Joined into one line by `to_sentence`, only the first keeps its capital:
+    # the others sat mid-sentence looking like a typo ("… et Dos, grand
+    # format").
+    def placements_sentence(printer)
+      labels = printer.placements.map { |p| t("enums.printer.placements.#{p}") }
+      labels = [ labels.first, *labels.drop(1).map(&:downcase) ]
+      labels.to_sentence
+    end
+
     def print_area(printer)
       width = printer.max_print_width_cm
       height = printer.max_print_height_cm
