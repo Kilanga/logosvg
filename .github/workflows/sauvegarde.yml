@@ -43,6 +43,13 @@ jobs:
           hote=$(ruby -ryaml -e 'puts YAML.safe_load_file("config/deploy.yml")["servers"]["web"].first')
           echo "hote=$hote" >> "$GITHUB_ENV"
 
+          # L'utilisateur vient de la même source que l'adresse. Kamal le lit
+          # dans `ssh: user:` ; ssh, lui, ne connaît pas deploy.yml et prendrait
+          # celui du runner (`runner`), que le VPS refuse : la sauvegarde a
+          # échoué ainsi chaque nuit du 30/09 au 03/10, en code 255, pendant que
+          # le déploiement passait très bien.
+          utilisateur=$(ruby -ryaml -e 'puts YAML.safe_load_file("config/deploy.yml").dig("ssh", "user") || "root"')
+
           ssh-keyscan -T 10 "$hote" > ~/.ssh/known_hosts_pretatirer
           if [ ! -s ~/.ssh/known_hosts_pretatirer ]; then
             echo "Aucune clé d'hôte relevée sur $hote : sauvegarde interrompue." >&2
@@ -51,6 +58,7 @@ jobs:
 
           {
             echo "Host $hote"
+            echo "  User $utilisateur"
             echo "  UserKnownHostsFile ~/.ssh/known_hosts_pretatirer"
             echo "  GlobalKnownHostsFile /dev/null"
             echo "  IdentityFile ~/.ssh/id_ed25519"
@@ -68,7 +76,7 @@ jobs:
       - name: Sauvegarder sur le serveur
         run: |
           set -euo pipefail
-          dossier=$(ssh -F ~/.ssh/config "$hote" 'bash -s' < bin/backup)
+          dossier=$(ssh -F ~/.ssh/config -o BatchMode=yes "$hote" 'bash -s' < bin/backup)
           echo "dossier=$dossier" >> "$GITHUB_ENV"
 
       # Le rapatriement : tant que les deux fichiers ne sont nulle part
