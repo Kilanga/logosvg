@@ -1,4 +1,18 @@
 Rails.application.routes.draw do
+  # www.pretatirer.fr est servi (certificat et config.hosts) pour ne jamais
+  # échouer, mais une seule adresse fait foi : redirection permanente vers le
+  # nom nu, chemin et paramètres conservés. En premier, avant toute autre route.
+  # Ne joue qu'en production, où config.x.canonical_host est posé : les tests
+  # d'intégration tournent par défaut sur www.example.com.
+  constraints(lambda { |request|
+    canonical = Rails.application.config.x.canonical_host
+    canonical.present? && request.host == "www.#{canonical}"
+  }) do
+    match "(*path)", via: :all, format: false, to: redirect(status: 301) { |_params, request|
+      "#{request.protocol}#{Rails.application.config.x.canonical_host}#{request.port_string}#{request.fullpath}"
+    }
+  end
+
   # Public paths are in French; controllers, models and columns stay in English.
   # See docs/SPEC.md, "Écrans et routes".
 

@@ -25,9 +25,14 @@ servers:
     cmd: bin/jobs
 
 # Certificat Let's Encrypt automatique, renouvelé par le proxy.
+# Les deux noms : le DNS envoie www ici aussi, et sans certificat pour lui le
+# navigateur bute sur une erreur TLS que HSTS (includeSubDomains) interdit de
+# contourner. Rails renvoie ensuite www vers le nom nu (config/routes.rb).
 proxy:
   ssl: true
-  host: pretatirer.fr
+  hosts:
+    - pretatirer.fr
+    - www.pretatirer.fr
   app_port: 80
 
 registry:

@@ -97,5 +97,7 @@ Rails.application.configure do
   # servies. Le contrôle de santé, lui, arrive par l'IP de la machine et n'a
   # aucun nom à présenter.
   config.hosts = [ app_host, "www.#{app_host}" ]
+  # www est accepté puis renvoyé vers le nom nu (voir config/routes.rb).
+  config.x.canonical_host = app_host
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end
