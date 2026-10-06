@@ -60,9 +60,6 @@ shared:
     prices_set_by: platform
     # Décidé le 06/10/2026 : 15 % de commission sur les vérifications.
     platform_fee_rate: 0.15
-    # Décidé le 06/10/2026 : une création sur mesure se chiffre sur devis, à
-    # partir de 89 € et sans plafond.
-    custom_min_price_cents: 8900
     # Délais décidés le 06/10/2026. Le graphiste choisi a 24 h, et non 12 :
     # une nuit ne doit pas suffire à lui faire perdre une mission.
     auto_accept_days: 7
@@ -94,11 +91,18 @@ shared:
   subscriptions:
     # Les identifiants de prix Stripe viennent de l'environnement
     # (STRIPE_PRICE_LISTING, STRIPE_PRICE_ATELIER_PLUS) : jamais ici.
-    # Décidé le 06/10/2026 : 19 € HT par mois pour le Référencement, 39 € HT
-    # pour Atelier+, qui l'inclut (39 € en tout, pas 19 + 39). Les montants
-    # facturés sont ceux des prix Stripe ; ceux-ci ne servent qu'à l'affichage.
-    price_listing_cents: 1900
-    price_atelier_plus_cents: 3900
+    # Décidé le 06/10/2026 : 29 € HT par mois pour le Référencement, 59 € HT
+    # pour Atelier+, qui l'inclut (59 € en tout, pas 29 + 59). Les montants
+    # facturés sont ceux des prix Stripe, TVA ajoutée par le taux
+    # STRIPE_TAX_RATE ; ceux-ci ne servent qu'à l'affichage.
+    price_listing_cents: 2900
+    price_atelier_plus_cents: 5900
+    # Générations par mois et par atelier, comptées sur les designs qui le
+    # portent. null = illimité. Le quota par client (generation.quota_per_day)
+    # s'applique en plus, quelle que soit la formule.
+    monthly_generations:
+      listing: 100
+      atelier_plus: null
     # 30 jours d'essai gratuit à l'inscription.
     trial_period_days: 30
     # Une fiche en past_due reste visible 7 jours, puis elle est masquée.

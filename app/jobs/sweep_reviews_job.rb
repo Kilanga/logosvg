@@ -62,6 +62,7 @@ class SweepReviewsJob < ApplicationJob
         review.accept!
         review.save!
         Payments::SettleReview.call(review: review)
+        CreateReviewedDesign.call(review: review)
         ReviewMailer.auto_accepted(review).deliver_later
       end
     end

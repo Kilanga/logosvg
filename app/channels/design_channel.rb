@@ -19,7 +19,8 @@ class DesignChannel
       stream_name(design),
       target: "design_#{design.token}",
       partial: "client/designs/design",
-      locals: { design: Design.with_attached_print_file.with_attached_source_png.find(design.id) }
+      locals: { design: Design.with_attached_print_file.with_attached_source_png
+                                .with_attached_reference_image.find(design.id) }
     )
   end
 end

@@ -1,0 +1,6 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.finished_off_platform.eyebrow"),
+      heading: t("mailers.review.finished_off_platform.heading", designer: @review.designer_profile.display_name),
+      body: t("mailers.review.finished_off_platform.body"),
+      url: client_designs_url,
+      action: t("mailers.review.finished_off_platform.action") %>

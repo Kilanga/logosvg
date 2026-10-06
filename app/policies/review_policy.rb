@@ -37,6 +37,9 @@ class ReviewPolicy < ApplicationPolicy
 
   def return_to_client? = designer? && record.may_return_to_client?
 
+  # Only a custom job closes without the client accepting a file here.
+  def finish? = designer? && record.may_finish_off_platform?
+
   # Both sides write; an administrator reads.
   def message? = (client? || designer?) && record.open?
 

@@ -56,6 +56,9 @@ class Job:
     # design restauré par Rails (voir /jobs/restore) apporte son compte avec lui,
     # sinon un redémarrage du service rendrait des reprises au client.
     prior_refinements: int = 0
+    # L'image de départ du client, déjà ramenée au carré de travail (init_image.py).
+    # Une variante la reprend de son parent : elle redessine la même image.
+    init_png: Optional[bytes] = None
     subject: Optional[str] = None  # description anglaise réellement envoyée au modèle
     status: str = "queued"  # queued | running | done | error
     error: Optional[str] = None
@@ -142,6 +145,7 @@ class JobManager:
         job.result = {
             "technique": job.technique,
             "mode": "restored",
+            "from_image": job.init_png is not None,
             "subject": job.subject,
             "seed": job.seed,
             "colors": job.colors,
@@ -262,6 +266,12 @@ class JobManager:
                 positive, negative, job.seed, colors,
                 self._init_image(job), settings.refine_denoise,
             )
+        elif job.init_png:
+            # Une création (ou une variante) qui part de l'image du client : la
+            # même voie que la retouche, avec un écart plus grand.
+            png = await self.generator.refine(
+                positive, negative, job.seed, colors, job.init_png, settings.upload_denoise,
+            )
         else:
             png = await self.generator.generate(positive, negative, job.seed, colors)
 
@@ -318,6 +328,8 @@ class JobManager:
             "mode": job.mode,
             "parent_id": job.parent_id,
             "seed": job.seed,
+            # Parti d'une image du client : le dessin en dérive.
+            "from_image": job.init_png is not None,
         }
 
     async def cleanup_loop(self) -> None:
@@ -349,6 +361,8 @@ def child_job(parent: Job, mode: str, instruction: Optional[str] = None,
         print_width_cm=parent.print_width_cm,
         mode=mode,
         batch_id=batch_id,
+        # Une variante redessine l'image de départ du client, s'il y en avait une.
+        init_png=parent.init_png if mode == VARIANT else None,
         parent_id=parent.id,
         root_id=parent.root_id or parent.id,
         instruction=instruction,

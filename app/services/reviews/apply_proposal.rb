@@ -37,7 +37,10 @@ module Reviews
     end
 
     private
+      # Nothing is taken on a custom job: no money passes through here.
       def fee_for(level, amount)
+        return 0 if (level || @review.review_level).quoted?
+
         (level || @review.review_level).platform_fee_cents(amount)
       end
   end

@@ -245,6 +245,7 @@ git ; `.env.example` documente les clés sans valeur.
 | `STRIPE_WEBHOOK_SECRET`     | vérification de signature                   |
 | `STRIPE_PRICE_LISTING`      | prix abonnement Référencement               |
 | `STRIPE_PRICE_ATELIER_PLUS` | prix abonnement Atelier+                    |
+| `STRIPE_TAX_RATE`           | taux de TVA ajouté aux abonnements (HT)     |
 | `TURNSTILE_SITE_KEY`        | widget anti-robot                           |
 | `TURNSTILE_SECRET_KEY`      | vérification serveur                        |
 | `DATABASE_URL`              | PostgreSQL                                  |
@@ -268,9 +269,9 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 | `return_rate_alert_threshold`      | `0.25`            | **seuil d'alerte à fixer**             |
 | `design_retention_days`            | `180`             | **durée de conservation à fixer**      |
 | `print_request_anonymize_days`     | `365`             | **durée de conservation à fixer**      |
-| `price_listing_cents` / `price_atelier_plus_cents` | `1900` / `3900` | **décidé** — Atelier+ inclut le Référencement |
+| `price_listing_cents` / `price_atelier_plus_cents` | `2900` / `5900` HT | **décidé** — Atelier+ inclut le Référencement |
+| `monthly_generations`              | `listing: 100`, `atelier_plus: null` | **décidé** — par atelier et par mois |
 | `trial_period_days`                | `30`              | **décidé** (06/10/2026)                |
-| `custom_min_price_cents`           | `8900`            | **décidé** — sur devis, sans plafond   |
 | `consent_text_version`             | `2026-09-v1`      | version du texte de consentement       |
 
 Décisions déjà tranchées par le cahier des charges : le client télécharge
@@ -286,7 +287,7 @@ Base : `services/generator/microservice` (FastAPI, port 5000, `127.0.0.1`).
 
 | Appel                              | Entrée                                                                   | Sortie                                                       |
 | ---------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ |
-| `POST /generate`                   | `prompt` (3–300), `style`, `colors` (1–6), `remove_background`, `user_id`, `seed?` | `202` : `job_id`, `status`, `position`, `refinements_left` |
+| `POST /generate`                   | `prompt` (3–300), `style`, `colors` (1–6), `remove_background`, `user_id`, `seed?`, `init_image?` (base64) | `202` : `job_id`, `status`, `position`, `refinements_left` |
 | `POST /jobs/:id/refine`            | `instruction` (3–200), `user_id`                                          | `202` : `job_id`, `status`, `position`, `refinements_left`   |
 | `POST /jobs/:id/variants`          | `user_id`, `count`                                                        | `202` : `job_ids`, `job_id`, `status`, `position`, `refinements_left` |
 | `GET /jobs/:id?user_id=`           | —                                                                        | `status`, `position`, `error`, `mode`, `parent_id`, `root_id`, `refinements_left`, `result` |

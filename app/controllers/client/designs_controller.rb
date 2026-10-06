@@ -4,7 +4,7 @@ module Client
   # The technique is the first field, because it shapes the prompt and not only
   # the output file — see docs/SPEC.md, "Techniques d'impression".
   class DesignsController < BaseController
-    before_action :set_design, only: %i[ show image original_image garment_image variants refine destroy ]
+    before_action :set_design, only: %i[ show image original_image garment_image reference_image variants refine destroy ]
 
     rate_limit to: 10, within: 1.minute, only: %i[ create variants refine ],
                with: -> { redirect_to new_design_path, alert: t("flash.rate_limited") }
@@ -29,8 +29,25 @@ module Client
       @design = Design.new(design_params.merge(user: Current.user, printer: context_printer))
       authorize @design
 
+      # The client's image, when there is one, is re-encoded before anything
+      # else: what is stored and sent is never the uploaded file itself.
+      if (upload = params.dig(:design, :reference_image)).present?
+        image = ReferenceImage.call(upload)
+        unless image.success?
+          flash.now[:alert] = image.error
+          return render :new, status: :unprocessable_entity
+        end
+        @design.reference_image.attach(image.attachable)
+      end
+
       unless robot_check_passed?
         flash.now[:alert] = t("flash.turnstile_failed")
+        return render :new, status: :unprocessable_entity
+      end
+
+      # The workshop's monthly generations, when its plan has a ceiling.
+      unless PrinterGenerationQuota.for(context_printer).allows?
+        flash.now[:alert] = t("client.designs.workshop_quota_reached", printer: context_printer.name)
         return render :new, status: :unprocessable_entity
       end
 
@@ -43,6 +60,7 @@ module Client
 
       if @design.save
         GenerateDesignJob.perform_later(@design)
+        PrinterGenerationQuota.for(context_printer).notify_if_reached!
         redirect_to design_path(@design)
       else
         GenerationQuota.for(Current.user).refund!
@@ -92,6 +110,16 @@ module Client
                 filename: "#{@design.token}-textile.png"
     end
 
+    # The client's own image, back to the client only. Already re-encoded on
+    # the way in: no EXIF, no GPS.
+    def reference_image
+      authorize @design, :image?
+      return head :not_found unless @design.reference_image.attached?
+
+      send_data @design.reference_image.download, type: "image/png", disposition: "inline",
+                filename: "#{@design.token}-image-de-depart.png"
+    end
+
     def variants
       authorize @design
       take_it_further { GeneratorClient.new.variants(@design.generator_job_id, user_id: Current.user.id) }
@@ -117,6 +145,7 @@ module Client
     private
       def set_design
         @design = policy_scope(Design).with_attached_print_file.with_attached_source_png
+                                      .with_attached_reference_image
                                       .includes(printer: :subscription)
                                       .find_by!(token: params[:token])
       end
@@ -132,6 +161,12 @@ module Client
           return redirect_to design_path(@design), alert: t(".budget_exhausted")
         end
 
+        workshop_quota = PrinterGenerationQuota.for(@design.printer)
+        unless workshop_quota.allows?
+          return redirect_to design_path(@design),
+                             alert: t("client.designs.workshop_quota_reached", printer: @design.printer.name)
+        end
+
         unless GenerationQuota.for(Current.user).consume!
           return redirect_to design_path(@design),
                              alert: t("client.designs.create.quota_exceeded", count: GenerationQuota.per_day)
@@ -143,6 +178,7 @@ module Client
           ReviveDesign.call(@design)
           yield
         end
+        workshop_quota.notify_if_reached!
         redirect_to design_path(children.first)
       rescue ReviveDesign::Unrecoverable
         GenerationQuota.for(Current.user).refund!
@@ -187,7 +223,8 @@ module Client
 
       def design_params
         permitted = params.expect(design: [ :prompt, :style, :technique, :colors_requested,
-                                            :print_width_cm, :remove_background ])
+                                            :print_width_cm, :remove_background,
+                                            :reference_rights_confirmed ])
         BoundedGenerationRequest.call(attributes: permitted, printer: context_printer)
       end
 

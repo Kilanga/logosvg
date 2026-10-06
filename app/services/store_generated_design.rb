@@ -39,6 +39,12 @@ class StoreGeneratedDesign
   private
     def client = @client ||= GeneratorClient.new
 
+    # Drawn from the client's own image: the model reworked existing content,
+    # which IPTC calls a composite rather than a pure generation.
+    def provenance
+      @result["from_image"] ? AiProvenance::EDITED : AiProvenance::GENERATED
+    end
+
     # Only SVG is inspected for content: a PNG cannot carry a script, and its
     # type is checked by Active Storage on attachment.
     def inspect!(format, bytes)
@@ -55,12 +61,12 @@ class StoreGeneratedDesign
     def attach(file_name, bytes, format)
       content_type = CONTENT_TYPES.fetch(format, "application/octet-stream")
       @design.print_file.attach(
-        io: StringIO.new(AiProvenance.mark(bytes, content_type: content_type)),
+        io: StringIO.new(AiProvenance.mark(bytes, content_type: content_type, kind: provenance)),
         filename: file_name, content_type: content_type
       )
 
       source = client.download(@design.generator_job_id, "source.png", user_id: @design.user_id)
-      @design.source_png.attach(io: StringIO.new(AiProvenance.mark(source, content_type: "image/png")),
+      @design.source_png.attach(io: StringIO.new(AiProvenance.mark(source, content_type: "image/png", kind: provenance)),
                                 filename: "source.png", content_type: "image/png")
     rescue GeneratorClient::NotFound
       # The original image is a nicety for comparison, not the deliverable.

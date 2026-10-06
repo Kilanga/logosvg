@@ -12,6 +12,7 @@ module Workshop
     def show
       authorize @printer, :update?
       @subscription = @printer.subscription
+      @generation_quota = PrinterGenerationQuota.for(@printer)
     end
 
     def create

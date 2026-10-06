@@ -45,9 +45,20 @@ module Payments
 
     # Every call carries an idempotency key: Stripe retries on its own, and so
     # do we, and neither must bill a shop twice.
+    # The VAT rate applied on top of the plan's price, which is set excluding
+    # tax: a Stripe Tax Rate id (20 %, exclusive), kept with the other ids.
+    # Absent, the subscription is billed without VAT — fine in test mode,
+    # wrong in production for a VAT-registered seller.
+    def self.tax_rate
+      ENV["STRIPE_TAX_RATE"].presence || Rails.application.credentials.dig(:stripe, :tax_rate)
+    end
+
     def create_checkout_session(customer:, customer_email:, price:, success_url:, cancel_url:,
                                 client_reference_id:, trial_days: nil, idempotency_key:)
-      subscription_data = { trial_period_days: trial_days } if trial_days.to_i.positive?
+      subscription_data = {
+        trial_period_days: (trial_days if trial_days.to_i.positive?),
+        default_tax_rates: ([ self.class.tax_rate ] if self.class.tax_rate.present?)
+      }.compact.presence
 
       request(idempotency_key) do
         @stripe.v1.checkout.sessions.create({
@@ -59,6 +70,8 @@ module Payments
           # brand-new subscription arrives with a customer we have never seen.
           client_reference_id: client_reference_id,
           subscription_data: subscription_data,
+          # Workshops are businesses: their VAT number goes on the invoice.
+          tax_id_collection: { enabled: true },
           success_url: success_url,
           cancel_url: cancel_url
         }.compact, { idempotency_key: idempotency_key })

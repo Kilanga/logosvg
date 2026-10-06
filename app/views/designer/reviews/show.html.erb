@@ -103,12 +103,7 @@
                     include_blank: true,
                     class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
             </div>
-            <div class="max-w-48">
-              <%= label_tag :proposed_price, t(".proposed_price"), class: "label-rule block" %>
-              <%= number_field_tag :proposed_price, nil, min: Rails.application.config.tshirt.reviews[:custom_min_price_cents] / 100, step: 1,
-                    class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
-              <p class="mt-1.5 text-sm text-muted"><%= t(".proposed_price_hint", minimum: number_to_currency(Rails.application.config.tshirt.reviews[:custom_min_price_cents] / 100.0, precision: 0)) %></p>
-            </div>
+            <p class="text-sm text-muted"><%= t(".proposed_custom_hint") %></p>
           </div>
 
           <div>
@@ -123,6 +118,18 @@
             <%= t(".return_action") %>
           </button>
         <% end %>
+      </section>
+    <% end %>
+
+    <%# A custom job ends when the two of them say so, file or not. A file
+        handed back here becomes a design the client can send to a workshop. %>
+    <% if @review.off_platform? && @review.may_finish_off_platform? && @review.designer_profile_id == current_designer_profile&.id %>
+      <section class="panel p-5">
+        <p class="label-rule"><%= t(".finish_title") %></p>
+        <p class="mt-2 text-sm text-muted"><%= t(".finish_hint") %></p>
+        <%= button_to t(".finish"), finish_designer_review_path(@review),
+              class: "btn btn-secondary mt-4 text-sm",
+              data: { turbo_confirm: t(".finish_confirm") } %>
       </section>
     <% end %>
 
@@ -173,6 +180,15 @@
             <dt class="text-muted"><%= t("activerecord.attributes.review.client") %></dt>
             <dd class="font-medium"><%= @review.client.full_name %></dd>
           </div>
+          <% if @review.off_platform? %>
+            <%# A custom job is arranged directly: the email too, not only the phone. %>
+            <div>
+              <dt class="text-muted"><%= t("activerecord.attributes.user.email_address") %></dt>
+              <dd class="font-medium">
+                <%= mail_to @review.client.email_address, class: "underline underline-offset-4" %>
+              </dd>
+            </div>
+          <% end %>
           <div>
             <dt class="text-muted"><%= t("activerecord.attributes.user.phone") %></dt>
             <dd class="font-medium">
@@ -189,12 +205,17 @@
 
     <div class="panel p-5">
       <p class="label-rule"><%= t(".what_you_earn") %></p>
-      <p class="mt-2 font-display text-3xl font-bold text-emulsion">
-        <%= money(@review.designer_share_cents) %>
-      </p>
-      <p class="mt-2 text-sm text-muted">
-        <%= t(".earn_hint", price: money(@review.price_cents), fee: money(@review.platform_fee_cents)) %>
-      </p>
+      <% if @review.off_platform? %>
+        <p class="mt-2 font-display text-2xl font-bold text-emulsion"><%= t("designers.levels.quoted") %></p>
+        <p class="mt-2 text-sm text-muted"><%= t(".off_platform_earn_hint") %></p>
+      <% else %>
+        <p class="mt-2 font-display text-3xl font-bold text-emulsion">
+          <%= money(@review.designer_share_cents) %>
+        </p>
+        <p class="mt-2 text-sm text-muted">
+          <%= t(".earn_hint", price: money(@review.price_cents), fee: money(@review.platform_fee_cents)) %>
+        </p>
+      <% end %>
     </div>
 
     <% if @review.design.warnings.any? %>

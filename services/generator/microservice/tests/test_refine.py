@@ -239,3 +239,66 @@ def test_une_image_qui_n_est_pas_un_png_est_refusee(client):
 def test_la_restauration_exige_la_cle(client):
     r = client.post("/jobs/restore", json={"user_id": "x"})
     assert r.status_code == 401
+
+
+# ------------------------------------------------------------- image de départ
+# Le client peut partir d'une image à lui (croquis, ancien logo, photo) : le
+# dessin en dérive, transformé selon sa description. Facultatif.
+
+def _image_client(fmt="PNG", size=(300, 200)):
+    import base64
+    import io
+
+    from PIL import Image, ImageDraw
+    img = Image.new("RGB", size, "white")
+    ImageDraw.Draw(img).rectangle([40, 40, 160, 160], fill=(30, 90, 120))
+    buf = io.BytesIO()
+    img.save(buf, format=fmt)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def test_une_creation_peut_partir_d_une_image_du_client(client):
+    r = client.post("/generate", headers=HEADERS, json={
+        "prompt": "transforme ce croquis en logo", "style": "logo", "colors": 2,
+        "user_id": "img1", "seed": 7, "init_image": _image_client("JPEG"),
+    })
+    assert r.status_code == 202, r.text
+    data = wait_for(client, r.json()["job_id"], "img1")
+    assert data["status"] == "done", data
+    assert data["result"]["from_image"] is True
+
+    # Une variante redessine la même image de départ.
+    v = client.post(f"/jobs/{r.json()['job_id']}/variants", headers=HEADERS, json={"user_id": "img1", "count": 1})
+    assert v.status_code == 202, v.text
+    assert wait_for(client, v.json()["job_id"], "img1")["result"]["from_image"] is True
+
+
+def test_sans_image_rien_ne_change(client):
+    job = create_design(client, "img2")
+    data = client.get(f"/jobs/{job}", params={"user_id": "img2"}, headers=HEADERS).json()
+    assert data["result"]["from_image"] is False
+
+
+def test_une_image_illisible_ou_d_un_autre_format_est_refusee_en_francais(client):
+    import base64
+    for payload in ("pas du base64 !", base64.b64encode(b"GIF89a....").decode(), _image_client("BMP")):
+        r = client.post("/generate", headers=HEADERS, json={
+            "prompt": "un logo", "user_id": "img3", "init_image": payload,
+        })
+        assert r.status_code == 422, payload[:20]
+        assert "image de départ" in r.json()["detail"]
+
+
+def test_l_image_est_ramenee_au_carre_de_travail_sans_ses_metadonnees():
+    import base64
+    import io
+
+    from PIL import Image
+
+    from app.init_image import decode
+
+    png = decode(_image_client("PNG", size=(800, 400)), 512)
+    img = Image.open(io.BytesIO(png))
+    assert img.size == (512, 512)
+    assert img.getpixel((5, 5)) == (255, 255, 255)  # bandes blanches, pas de déformation
+    assert not img.info.get("exif")

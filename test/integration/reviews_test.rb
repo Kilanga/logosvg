@@ -176,6 +176,32 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_predicate reviews(:delivered).reload, :accepted?
   end
 
+  # The reworked file used to stay on the review page; it now becomes a design
+  # the client sends to a workshop like any other.
+  test "accepting the work turns the last version into a design ready to send" do
+    review = reviews(:delivered)
+    review.versions.create!(message: "Tracés nettoyés.", inks_count: 1, checks: { "fills" => [ "#1f5f7a" ] },
+                            file: { io: StringIO.new(svg), filename: "version.svg", content_type: "image/svg+xml" })
+    sign_in_as users(:client)
+
+    post accept_review_path(review)
+
+    design = Design.find_by!(source_review: review)
+    assert_redirected_to design_path(design)
+    assert_predicate design, :reviewed?
+    assert_equal [ { "hex" => "#1f5f7a" } ], design.palette
+    assert_equal review.design, design.parent
+
+    follow_redirect!
+    assert_includes response.body, ERB::Util.html_escape(
+      I18n.t("client.designs.design.reviewed_by", designer: designer_profiles(:ines).display_name)
+    )
+    assert_select "form[action=?]", design_refine_path(design), count: 0
+
+    # Twice is still once.
+    assert_equal design, CreateReviewedDesign.call(review: review)
+  end
+
   test "a client asks for a revision, with a message" do
     sign_in_as users(:client)
 
@@ -331,15 +357,63 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_equal review_levels(:retouch), review.proposed_level
   end
 
-  test "a price in euros reaches the database in cents" do
+  # --- Custom work, arranged outside the platform (decided 06/10/2026) -----
+
+  test "a custom request costs nothing here and goes straight to the designers" do
+    sign_in_as users(:client)
+
+    assert_enqueued_email_with ReviewMailer, :notify_designers, args: ->(args) { args.first.is_a?(Review) } do
+      post design_reviews_path(designs(:fox_screen)), params: { review: {
+        review_level_id: review_levels(:custom).id, client_brief: "Un logo complet pour mon club."
+      } }
+    end
+
+    review = Review.order(:created_at).last
+
+    assert_predicate review, :queued?
+    assert_equal 0, review.price_cents
+    assert_equal 0, review.platform_fee_cents
+    assert_nil review.paid_at
+    assert_redirected_to review_path(review)
+  end
+
+  test "the designer who takes a custom request receives the client's details" do
+    review = custom_review(status: "queued")
     sign_in_as users(:designer)
 
-    post return_designer_review_path(reviews(:in_progress)), params: {
-      reason: "level_too_low", message: "Sur mesure.",
-      proposed_level_id: review_levels(:custom).id, proposed_price: "120"
-    }
+    assert_enqueued_email_with ReviewMailer, :client_contact, args: [ review ] do
+      post claim_designer_review_path(review)
+    end
 
-    assert_equal 12_000, reviews(:in_progress).reload.proposed_price_cents
+    mail = ReviewMailer.client_contact(review.reload)
+    assert_equal [ users(:designer).email_address ], mail.to
+    assert_equal [ review.client.email_address ], mail.reply_to
+    assert_includes mail.text_part.body.decoded, review.client.email_address
+  end
+
+  test "the designer closes a custom job, and a delivered file becomes a design to send" do
+    review = custom_review(status: "in_progress", designer_profile: designer_profiles(:ines))
+    version = review.versions.create!(message: "Le logo final.", inks_count: 1, checks: { "fills" => [ "#1f5f7a" ] },
+                                      file: { io: StringIO.new(svg), filename: "logo.svg", content_type: "image/svg+xml" })
+    sign_in_as users(:designer)
+
+    assert_difference -> { Design.where(mode: "reviewed").count }, 1 do
+      post finish_designer_review_path(review)
+    end
+
+    assert_predicate review.reload, :accepted?
+    design = Design.find_by!(source_review: review)
+    assert_predicate design, :ready?
+    assert_equal version.file.download, design.print_file.download
+    assert_nil design.refinements_left
+  end
+
+  test "a paid review cannot be closed off the platform" do
+    sign_in_as users(:designer)
+
+    post finish_designer_review_path(reviews(:in_progress))
+
+    assert_predicate reviews(:in_progress).reload, :in_progress?
   end
 
   # --- The conversation -----------------------------------------------------
@@ -408,5 +482,12 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     def uploaded_svg
       Rack::Test::UploadedFile.new(StringIO.new(svg), "image/svg+xml",
                                    original_filename: "version.svg")
+    end
+
+    def custom_review(status:, designer_profile: nil)
+      Review.create!(design: designs(:fox_screen), client: users(:client), review_level: review_levels(:custom),
+                     designer_profile: designer_profile, assignment_mode: "first_available",
+                     client_brief: "Un logo complet.", price_cents: 0, platform_fee_cents: 0,
+                     revisions_included: 3, status: status)
     end
 end

@@ -28,8 +28,6 @@ module Reviews
       return failure(:message_required) if @message.blank?
       return failure(:already_returned) unless @review.returnable?
       return failure(:proposal_required) if proposing? && proposed_amount.nil?
-      return below_minimum if proposing? && @proposed_price_cents.present? &&
-                              @proposed_price_cents < minimum_cents
 
       @review.assign_attributes(
         return_reason_code: @reason,
@@ -61,15 +59,10 @@ module Reviews
 
       def proposing? = Review::PROPOSING_REASONS.include?(@reason)
 
-      # A custom job is quoted by the designer, with a floor and no ceiling.
-      def minimum_cents = Rails.application.config.tshirt.reviews[:custom_min_price_cents]
-
-      def below_minimum
-        minimum = ActiveSupport::NumberHelper.number_to_currency(minimum_cents / 100.0, precision: 0)
-        Result.new(review: @review, error: I18n.t("reviews.errors.proposal_below_minimum", minimum: minimum))
-      end
-
+      # Proposing the custom level is a proposal too: it costs nothing here.
       def proposed_amount
+        return 0 if @proposed_level&.quoted?
+
         @proposed_price_cents.presence || @proposed_level&.price_cents
       end
 

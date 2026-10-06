@@ -32,6 +32,8 @@ module Client
         return render :new, status: :unprocessable_entity
       end
 
+      return introduce if @review.off_platform?
+
       checkout
     end
 
@@ -39,6 +41,7 @@ module Client
       authorize @review
       @versions = @review.versions.with_attached_file
       @messages = @review.messages.includes(:author)
+      @reviewed_design = policy_scope(Design).find_by(source_review_id: @review.id)
       mark_designer_messages_read
     end
 
@@ -48,8 +51,10 @@ module Client
       @review.accept!
       @review.save!
       Payments::SettleReview.call(review: @review)
+      design = CreateReviewedDesign.call(review: @review)
 
-      redirect_to review_path(@review), notice: t(".accepted")
+      # Straight to the design: sending it to a workshop is the next step.
+      redirect_to(design ? design_path(design) : review_path(@review), notice: t(".accepted"))
     end
 
     def revision
@@ -169,6 +174,16 @@ module Client
         return nil if id.blank?
 
         DesignerProfile.listed.accepting.find_by(id: id)
+      end
+
+      # A custom job: no payment, straight to the designers, who quote it with
+      # the client directly once one of them takes it.
+      def introduce
+        @review.open_without_payment!
+        @review.save!
+        ReviewMailer.notify_designers(@review).deliver_later
+
+        redirect_to review_path(@review), notice: t(".introduced")
       end
 
       def checkout

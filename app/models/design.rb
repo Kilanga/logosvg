@@ -2,13 +2,16 @@ class Design < ApplicationRecord
   include AASM
 
   STYLES = %w[ illustration logo mascotte badge ].freeze
-  MODES = %w[ create variant refine ].freeze
+  # `reviewed`: a designer's accepted delivery, made a design of its own so it
+  # can be sent to a workshop. See CreateReviewedDesign.
+  MODES = %w[ create variant refine reviewed ].freeze
   PRINT_FORMATS = %w[ svg png ].freeze
 
   belongs_to :user
   belongs_to :printer, optional: true
   belongs_to :parent, class_name: "Design", optional: true
   belongs_to :root, class_name: "Design", optional: true
+  belongs_to :source_review, class_name: "Review", optional: true
 
   has_many :children, class_name: "Design", foreign_key: :parent_id,
            dependent: :nullify, inverse_of: :parent
@@ -25,6 +28,14 @@ class Design < ApplicationRecord
   has_one_attached :print_file
   # The raw image the model drew, kept for comparison and for the workshop.
   has_one_attached :source_png
+  # The client's own image the generation started from, when there was one —
+  # already re-encoded by ReferenceImage. Optional.
+  has_one_attached :reference_image
+
+  # Ticked on the form: the client may use the image, and it shows nobody
+  # identifiable without their consent. Asked only when an image is sent.
+  attribute :reference_rights_confirmed, :boolean, default: false
+  validate :reference_image_rights_confirmed, on: :create
 
   has_secure_token :token
 
@@ -79,6 +90,8 @@ class Design < ApplicationRecord
   # Public URLs carry the token, never the sequential id.
   def to_param = token
 
+  def reviewed? = mode == "reviewed"
+
   # Reprises already spent on this lineage, counted by the application.
   #
   # The service counts them too, but in memory: every time its machine is
@@ -130,6 +143,13 @@ class Design < ApplicationRecord
   end
 
   private
+    def reference_image_rights_confirmed
+      return unless reference_image.attached?
+      return if reference_rights_confirmed
+
+      errors.add(:reference_rights_confirmed, :accepted)
+    end
+
     # Variants made before batch tokens existed: those of one click share a
     # parent and were saved in the same transaction, so the same minute.
     def legacy_variant_clicks(children)

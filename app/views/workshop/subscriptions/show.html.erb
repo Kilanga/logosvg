@@ -27,6 +27,17 @@
           <dt class="text-muted"><%= t(".listing_visibility") %></dt>
           <dd class="font-medium"><%= t(".visible") %></dd>
         </div>
+        <%# What the clients arriving by this shop's link have used this month. %>
+        <div class="flex justify-between gap-6">
+          <dt class="text-muted"><%= t(".generations_this_month") %></dt>
+          <dd class="font-medium <%= "text-warning" if @generation_quota.exceeded? %>">
+            <% if @generation_quota.limited? %>
+              <%= t(".generations_used", used: @generation_quota.used, limit: @generation_quota.limit) %>
+            <% else %>
+              <%= t(".generations_unlimited", used: @generation_quota.used) %>
+            <% end %>
+          </dd>
+        </div>
       </dl>
 
       <% if @subscription.past_due? %>
@@ -64,7 +75,7 @@
           <p class="mt-3 text-sm text-muted"><%= t(".plan_pitch.#{plan}") %></p>
 
           <ul class="mt-4 flex-1 space-y-2 text-sm">
-            <% t(".plan_features.#{plan}").each do |feature| %>
+            <% t(".plan_features.#{plan}", generations: listing_generations, deep_interpolation: true).each do |feature| %>
               <li class="flex gap-2.5">
                 <%= registration_mark css_class: "mt-1 flex-none text-emulsion" %><%= feature %>
               </li>

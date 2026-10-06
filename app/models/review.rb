@@ -51,6 +51,13 @@ class Review < ApplicationRecord
     state :accepted
     state :canceled
 
+    # A custom job is quoted by the designer and settled between the designer
+    # and the client, outside the platform (decided on 06/10/2026): nothing to
+    # pay here, so it goes straight to the designers.
+    event :open_without_payment do
+      transitions from: :awaiting_payment, to: :queued, guard: :off_platform?
+    end
+
     # Stripe's webhook, never a button.
     event :pay do
       transitions from: :awaiting_payment, to: :queued
@@ -107,6 +114,13 @@ class Review < ApplicationRecord
       after { self.canceled_at = Time.current }
     end
 
+    # A custom job the designer and the client finished between themselves,
+    # with or without a file handed back here.
+    event :finish_off_platform do
+      transitions from: [ :in_progress, :delivered ], to: :accepted, guard: :off_platform?
+      after { self.accepted_at = Time.current }
+    end
+
     # Abandoned before payment, or settled by an administrator.
     event :cancel do
       transitions from: [ :awaiting_payment, :queued, :in_progress, :delivered,
@@ -118,6 +132,10 @@ class Review < ApplicationRecord
   def to_param = token
 
   def chosen? = assignment_mode == "chosen"
+
+  # Quoted, arranged and paid between the designer and the client: the
+  # platform only introduces them and keeps track.
+  def off_platform? = review_level&.quoted? || false
 
   def first_available? = assignment_mode == "first_available"
 
@@ -166,7 +184,10 @@ class Review < ApplicationRecord
     proposed_amount_cents - price_cents
   end
 
+  # A proposal to go custom costs nothing here: the whole price paid comes
+  # back, and the job is quoted outside the platform.
   def proposed_amount_cents
+    return 0 if proposed_level&.quoted?
     return proposed_price_cents if proposed_price_cents.present?
 
     proposed_level&.price_cents
@@ -178,9 +199,12 @@ class Review < ApplicationRecord
   # what happens next — see docs/SPEC.md, "Graphiste choisi indisponible".
   def chosen_designer_silent?
     return false unless queued? && chosen? && designer_profile_id.present?
-    return false if paid_at.nil?
 
-    paid_at <= settings[:designer_claim_timeout_hours].hours.ago
+    # A custom job is never paid here: its clock starts when it was asked for.
+    since = paid_at || (created_at if off_platform?)
+    return false if since.nil?
+
+    since <= settings[:designer_claim_timeout_hours].hours.ago
   end
 
   def auto_accept_due?

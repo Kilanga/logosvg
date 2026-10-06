@@ -68,7 +68,8 @@ class GeneratorClient
       print_width_cm: design.print_width_cm,
       remove_background: design.remove_background,
       user_id: pseudonym(design.user_id),
-      seed: design.seed
+      seed: design.seed,
+      init_image: reference_image(design)
     }.compact)
   end
 
@@ -96,7 +97,8 @@ class GeneratorClient
       remove_background: design.remove_background,
       seed: design.seed,
       used_refinements: used_refinements,
-      source_png: Base64.strict_encode64(design.source_png.download)
+      source_png: Base64.strict_encode64(design.source_png.download),
+      init_image: reference_image(design)
     }.compact)
   end
 
@@ -111,6 +113,20 @@ class GeneratorClient
   end
 
   private
+    # The client's own starting image, already re-encoded by ReferenceImage.
+    # A child design has none of its own: the root's is the one it came from.
+    #
+    # Read by query rather than through the design's associations: the design
+    # reaches here from a background job, loaded bare (strict_loading).
+    def reference_image(design)
+      ids = [ design.id, design.lineage_root_id ].compact.uniq
+      holders = Design.with_attached_reference_image.where(id: ids).index_by(&:id)
+      holder = ids.map { |id| holders[id] }.compact.find { |d| d.reference_image.attached? }
+      return nil if holder.nil?
+
+      Base64.strict_encode64(holder.reference_image.download)
+    end
+
     # The service never learns who the client is: it receives an HMAC of the
     # account id, truncated to what its own pattern accepts. See docs/SPEC.md,
     # "RGPD".

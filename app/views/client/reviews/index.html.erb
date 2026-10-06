@@ -22,7 +22,7 @@
               <p class="mt-0.5 truncate font-medium"><%= review.design.prompt.truncate(60) %></p>
               <p class="mt-0.5 text-sm text-muted">
                 <%= review.designer_profile&.display_name || t(".unassigned") %>
-                · <%= money(review.price_cents) %>
+                · <%= t("reviews.price_ttc", amount: money(review.price_cents)) %>
               </p>
             </div>
 

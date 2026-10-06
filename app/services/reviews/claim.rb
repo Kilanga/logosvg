@@ -31,6 +31,8 @@ module Reviews
       end
 
       ReviewMailer.claimed(@review).deliver_later
+      # Off the platform, the designer needs a way to reach the client.
+      ReviewMailer.client_contact(@review).deliver_later if @review.off_platform?
       Result.new(review: @review, error: nil)
     end
 

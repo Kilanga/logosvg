@@ -64,6 +64,15 @@ Délai réseau côté Rails : **20 s par appel**.
   Ne pas supposer qu'il est là.
 - `print_width_cm` est toujours envoyé, même en vectoriel où il ne sert pas au
   fichier : il sert à la compatibilité atelier côté Rails.
+- `init_image` (facultatif, depuis le 06/10/2026) : l'image du client dont le
+  dessin part — croquis, ancien logo, photo —, en base64. Rails l'a déjà
+  réencodée en PNG d'au plus 1 536 px (`ReferenceImage`, métadonnées retirées) ;
+  le service accepte PNG, JPEG et WebP, la ramène au carré de travail sur fond
+  blanc (`app/init_image.py`) et dessine en img2img avec `UPLOAD_DENOISE`
+  (0,7). Une variante reprend l'image de son parent. `result.from_image` le
+  dit, et Rails marque alors les fichiers `compositeWithTrainedAlgorithmicMedia`.
+  Une image illisible ou d'un autre format renvoie un `422` en français, sans
+  compter la demande.
 - Réponse attendue : `job_id`, `status`, `position`, `refinements_left`.
 
 ### `GET /jobs/:id?user_id=…`
@@ -127,7 +136,8 @@ Recrée un parent prêt, sans calcul GPU, à partir de ce que Rails a gardé :
   "remove_background": true,
   "seed": 123456,
   "used_refinements": 1,
-  "source_png": "<base64>"
+  "source_png": "<base64>",
+  "init_image": "<base64, facultatif>"
 }
 ```
 

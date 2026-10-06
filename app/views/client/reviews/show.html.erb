@@ -127,6 +127,15 @@
         </div>
       <% end %>
 
+      <%# The reworked file, made a design: the way to the workshop. %>
+      <% if @reviewed_design %>
+        <div class="panel mt-4 border-l-2 border-l-success p-5">
+          <p class="label-rule text-success"><%= t(".reviewed_design") %></p>
+          <p class="mt-2 text-sm text-muted"><%= t(".reviewed_design_hint") %></p>
+          <%= link_to t(".reviewed_design_action"), design_path(@reviewed_design), class: "btn btn-primary mt-4 text-sm" %>
+        </div>
+      <% end %>
+
       <%# Rated once, after it is settled. %>
       <% if @review.accepted? && @review.rating.nil? %>
         <div class="panel mt-4 p-5">
@@ -170,7 +179,7 @@
           </div>
           <div class="flex justify-between gap-4">
             <dt class="text-muted"><%= t(".paid") %></dt>
-            <dd class="font-medium"><%= money(@review.price_cents) %></dd>
+            <dd class="font-medium"><%= t("reviews.price_ttc", amount: money(@review.price_cents)) %></dd>
           </div>
           <% if @review.refunded_cents.positive? %>
             <div class="flex justify-between gap-4">

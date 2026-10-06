@@ -61,6 +61,23 @@
           <p class="mt-1.5 text-sm text-muted"><%= t(".prompt_hint") %></p>
         </div>
 
+        <%# Optional: the client's own sketch, old logo or photo to start from.
+            The rights question is asked only for an image actually sent. %>
+        <div class="rounded-xs border border-dashed border-line p-4">
+          <%= form.label :reference_image, t(".reference_image"), class: "label-rule block" %>
+          <p class="mt-1.5 text-sm text-muted"><%= t(".reference_image_hint") %></p>
+          <%= form.file_field :reference_image, accept: ReferenceImage::ACCEPTED.join(","),
+                class: "mt-3 block w-full text-sm file:mr-3 file:rounded-xs file:border file:border-line
+                       file:bg-surface file:px-3 file:py-2" %>
+          <label class="mt-3 flex items-start gap-2.5 text-sm">
+            <%= form.check_box :reference_rights_confirmed, class: "mt-0.5 size-4 flex-none border-line text-emulsion" %>
+            <span><%= t(".reference_rights") %></span>
+          </label>
+          <% if @design.errors[:reference_rights_confirmed].any? %>
+            <p class="mt-1.5 text-sm text-warning"><%= @design.errors.full_messages_for(:reference_rights_confirmed).first %></p>
+          <% end %>
+        </div>
+
         <div>
           <%= form.label :style, t("activerecord.attributes.design.style"), class: "label-rule block" %>
           <div class="mt-2 flex flex-wrap gap-2">

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_182358) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_191523) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -114,6 +114,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_182358) do
     t.boolean "remove_background", default: true, null: false
     t.bigint "root_id"
     t.bigint "seed"
+    t.bigint "source_review_id"
     t.jsonb "stats", default: {}, null: false
     t.string "status", default: "pending", null: false
     t.string "style", default: "illustration", null: false
@@ -128,6 +129,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_182358) do
     t.index ["parent_id"], name: "index_designs_on_parent_id"
     t.index ["printer_id"], name: "index_designs_on_printer_id"
     t.index ["root_id"], name: "index_designs_on_root_id"
+    t.index ["source_review_id"], name: "index_designs_on_source_review_id", unique: true
     t.index ["status"], name: "index_designs_on_status"
     t.index ["technique"], name: "index_designs_on_technique"
     t.index ["token"], name: "index_designs_on_token", unique: true
@@ -214,6 +216,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_182358) do
     t.boolean "express_available", default: false, null: false
     t.integer "express_lead_hours"
     t.boolean "featured", default: false, null: false
+    t.date "generation_quota_notified_on"
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
     t.integer "max_print_height_cm"
@@ -429,6 +432,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_182358) do
   add_foreign_key "designs", "designs", column: "parent_id"
   add_foreign_key "designs", "designs", column: "root_id"
   add_foreign_key "designs", "printers"
+  add_foreign_key "designs", "reviews", column: "source_review_id"
   add_foreign_key "designs", "users"
   add_foreign_key "generation_counters", "users"
   add_foreign_key "print_requests", "designs"

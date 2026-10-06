@@ -119,6 +119,23 @@
       <% end %>
     </div>
 
+    <%# Where it started from, when the client sent an image of their own. %>
+    <% if design.reference_image.attached? %>
+      <div class="flex items-center gap-3 border-t border-line px-4 py-3 text-sm text-muted">
+        <%= image_tag design_reference_image_path(design), alt: "", class: "size-12 flex-none rounded-xs border border-line object-contain bg-surface" %>
+        <span><%= t("client.designs.design.from_reference") %></span>
+      </div>
+    <% end %>
+
+    <% if design.reviewed? %>
+      <%# Reworked by a person: no AI reprise is offered on it, and the screen
+          says who finished it. %>
+      <p class="flex items-center gap-2.5 border-t border-line bg-success-bg px-4 py-3 text-sm text-success">
+        <%= registration_mark css_class: "flex-none" %>
+        <%= t("client.designs.design.reviewed_by", designer: reviewing_designer_name(design)) %>
+      </p>
+    <% end %>
+
     <div class="flex flex-wrap gap-3 border-t border-line p-4">
       <%# The print file never leaves for the client: this is a watermarked
           rendering of it. %>

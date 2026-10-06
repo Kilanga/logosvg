@@ -45,8 +45,15 @@ class ReviewsTest < ApplicationSystemTestCase
 
     click_on I18n.t("client.reviews.show.accept")
 
-    assert_text displayed("enums.review.status.accepted")
+    # Accepted, and the reworked file is now a design of its own, ready to go
+    # to the workshop: that is where the client lands.
+    assert_text shown(I18n.t("client.designs.design.reviewed_by", designer: designer_profiles(:ines).display_name))
     assert_predicate reviews(:queued).reload, :accepted?
+    assert_predicate Design.find_by!(source_review: reviews(:queued)), :reviewed?
+
+    visit review_path(reviews(:queued))
+    assert_text displayed("enums.review.status.accepted")
+    assert_link I18n.t("client.reviews.show.reviewed_design_action")
   end
 
   # What was paid for is what is included.

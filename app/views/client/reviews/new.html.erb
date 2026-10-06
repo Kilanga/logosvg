@@ -31,7 +31,7 @@
                 <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
                   <%= level.name %>
                 </span>
-                <span class="font-display font-bold text-emulsion"><%= level_price(level) %></span>
+                <span class="font-display font-bold text-emulsion"><%= level_price(level, ttc: true) %></span>
               </span>
               <span class="mt-1 block text-sm text-muted"><%= level.description %></span>
               <span class="label-rule mt-1.5 block text-muted"><%= level_terms(level) %></span>

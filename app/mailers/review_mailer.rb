@@ -21,6 +21,21 @@ class ReviewMailer < ApplicationMailer
          subject: t("mailers.review.claimed.subject", designer: review.designer_profile.display_name)
   end
 
+  # A custom job, just taken: the designer gets the client's details to quote
+  # and arrange it directly. Only now, and only to the designer who took it.
+  def client_contact(review)
+    @review = Review.includes(:client, :design, designer_profile: :user).find(review.id)
+    @client = @review.client
+    mail to: @review.designer_profile.user.email_address,
+         reply_to: @client.email_address,
+         subject: t("mailers.review.client_contact.subject", client: @client.full_name)
+  end
+
+  def finished_off_platform(review)
+    @review = Review.includes(:client, designer_profile: :user).find(review.id)
+    mail to: @review.client.email_address, subject: t("mailers.review.finished_off_platform.subject")
+  end
+
   def version_delivered(review, version)
     @review = review
     @version = version
