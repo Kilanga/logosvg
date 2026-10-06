@@ -20,7 +20,13 @@ Conventions de travail et environnement : [CLAUDE.md](CLAUDE.md).
 | Étape | Contenu | État |
 | --- | --- | --- |
 | 0 | Socle | terminée |
-| 1 → 10 | Comptes, imprimeurs, designs, demandes, espaces, abonnements, graphistes, revues, administration, finitions | à faire |
+| 1 → 10 | Comptes, imprimeurs, designs, demandes, espaces, abonnements, graphistes, revues, administration, finitions | terminées |
+| Pilote | En ligne sur <https://pretatirer.fr> depuis le 27/09/2026, déploiement continu, sauvegarde nocturne | en cours |
+
+Reste avant une ouverture commerciale : les décisions ouvertes de
+[docs/SPEC.md](docs/SPEC.md#décisions-ouvertes) (prix, commission, délais,
+conservation, validation juridique), l'ouverture des comptes Stripe et
+Turnstile, et un stockage hors-site pour les sauvegardes.
 
 ## Stack
 

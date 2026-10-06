@@ -19,12 +19,24 @@ peut changer entièrement.
 | Télécharger le fichier nommé par `result.print_file` | Deviner une extension |
 | Contrôler tout SVG et tout PNG reçu | Faire confiance au service |
 | Afficher les avertissements du service tels quels | Les réécrire |
-| Compter le quota journalier du client | Compter le budget de reprises |
+| Compter le quota journalier du client | Faire confiance au seul compte de reprises du service |
+| Remettre sur la machine un design qu'elle a oublié | Régénérer pour retrouver un parent |
 
-**Le budget de reprises est au service.** `refinements_left` fait foi à chaque
-réponse ; Rails le recopie et ne le recalcule jamais. Si le service redémarre
-et perd ses compteurs, les clients récupèrent des reprises — c'est une décision
-ouverte assumée (voir `docs/SPEC.md`).
+**Le budget de reprises est compté des deux côtés, et le plus bas l'emporte.**
+Le service compte en mémoire, et la machine à GPU s'éteint désormais à la main
+chaque soir : son compte repartait à zéro et rendait des reprises. Rails tient
+donc le sien (`Design#refinements_used`, sur la lignée, une reprise par
+retouche et une par clic de variantes grâce à `batch_token`), refuse lui-même
+une lignée épuisée sans appeler le service, et enregistre
+`min(refinements_left du service, son propre reste)`. Le plafond vit dans
+`config/settings.yml` (`generation.max_refinements`) et doit valoir
+`MAX_REFINEMENTS` du service.
+
+**Un design oublié est restauré, pas régénéré.** Le service ne garde un travail
+qu'une heure, et rien après un redémarrage. Quand une reprise reçoit un `404`,
+Rails appelle `POST /jobs/restore` avec l'image de départ (`source_png`), la
+description anglaise, le tirage et le nombre de reprises déjà faites, enregistre
+le nouveau `job_id` sur le design, et relance la reprise une fois.
 
 ---
 
@@ -98,6 +110,30 @@ l'écran — mais un champ faux se retrouve sur un t-shirt.
 Créent des enfants de la même lignée (`root_id`). Rails crée une ligne par
 `job_id` renvoyé. `variants` renvoie `job_ids` (un tableau) **et** `job_id`
 (le premier) ; l'un ou l'autre suffit.
+
+### `POST /jobs/restore` → `201`
+
+Recrée un parent prêt, sans calcul GPU, à partir de ce que Rails a gardé :
+
+```json
+{
+  "user_id": "a1b2c3…",
+  "prompt": "un renard qui fait du skate",
+  "subject": "a fox on a skateboard",
+  "style": "mascotte",
+  "technique": "screen_printing",
+  "colors": 3,
+  "print_width_cm": 25,
+  "remove_background": true,
+  "seed": 123456,
+  "used_refinements": 1,
+  "source_png": "<base64>"
+}
+```
+
+Réponse : `job_id`, `status` (`done`), `refinements_left`. Le travail restauré
+est la racine d'une nouvelle lignée côté service, qui part de
+`used_refinements` reprises déjà consommées. `422` si l'image n'est pas un PNG.
 
 ### `GET /health`
 
@@ -245,6 +281,46 @@ n'est pas concerné — un tracé n'a pas de résolution.
 
 `source_dpi`, `net_width_cm` et `upscale` disent la vérité dans les deux cas : `dpi` est
 celui du fichier, `source_dpi` celui du dessin. C'est le second qui dit si le rendu sera net.
+
+### Jusqu'à 300 dpi réels : l'agrandissement par modèle (octobre 2026)
+
+156 dpi passent le seuil d'alerte, pas la résolution de la technique. Quand
+`UPSCALE_MODEL` nomme un fichier de `ComfyUI/models/upscale_models`, le moteur
+ajoute une troisième étape, toujours pour la famille matricielle seule : un
+modèle d'agrandissement (ESRGAN) redessine l'image jusqu'à la largeur
+d'impression à 300 dpi — 2 953 px pour 25 cm. Pas de diffusion : rien n'est
+réinventé, les bords et les textures sont reconstruits au lieu d'être étalés.
+
+Le détourage reste fait à la taille du dessin (il parcourt les pixels en Python,
+des minutes sur 6 000 px de côté) ; seul son masque est agrandi et posé sur
+l'image agrandie. `stats.model_upscale` donne le facteur (1,0 sans modèle), et
+`source_dpi` est alors celui de l'image agrandie.
+
+| Réglage | Résolution réelle à 25 cm | Temps ajouté (RTX 4070 Ti) |
+| --- | --- | --- |
+| `UPSCALE_MODEL` vide (défaut) | 156 dpi | — |
+| `RealESRGAN_x4plus_anime_6B.pth` | **300 dpi** | quelques secondes |
+
+Licence : `RealESRGAN_x4plus` et `_anime_6B` sont sous BSD, usage commercial
+permis. **Pas `4x-UltraSharp`**, sous licence non commerciale. Comme la passe
+haute définition, l'étape n'est jamais bloquante : en cas d'échec, le fichier
+part interpolé, avec un avertissement.
+
+### Le modèle d'image : SDXL ou FLUX.2 [klein] 4B
+
+`IMAGE_MODEL` choisit le graphe envoyé à ComfyUI ; le contrat HTTP ne change
+pas. `sdxl` (défaut) garde les workflows `sdxl_*.json`. `flux2_klein` envoie
+`flux2_klein.json` et `flux2_klein_img2img.json`, repris du modèle de workflow
+officiel de ComfyUI (UNETLoader, CLIPLoader `flux2`, EmptyFlux2LatentImage,
+Flux2Scheduler, CFGGuider, SamplerCustomAdvanced) ; la retouche et la passe
+haute définition y sont de l'img2img par `SplitSigmasDenoise`.
+
+FLUX.2 [klein] 4B est sous **Apache 2.0** dans ses deux versions — la 9B, elle,
+ne l'est pas. La version *base* suit le prompt négatif (20 pas, CFG 5) ; la
+*distillée* va cinq fois plus vite (4 pas, CFG 1) mais l'ignore, alors que toutes
+les interdictions du moteur y vivent. `scripts/compare_models.py` génère les
+mêmes demandes avec les trois et produit une planche HTML : le choix se fait sur
+pièces, pas sur la réputation.
 
 ## 8. Attentes de performance
 

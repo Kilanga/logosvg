@@ -4,7 +4,7 @@ module Client
   # The technique is the first field, because it shapes the prompt and not only
   # the output file — see docs/SPEC.md, "Techniques d'impression".
   class DesignsController < BaseController
-    before_action :set_design, only: %i[ show image original_image variants refine destroy ]
+    before_action :set_design, only: %i[ show image original_image garment_image variants refine destroy ]
 
     rate_limit to: 10, within: 1.minute, only: %i[ create variants refine ],
                with: -> { redirect_to new_design_path, alert: t("flash.rate_limited") }
@@ -79,6 +79,19 @@ module Client
                 filename: "#{@design.token}-original.png"
     end
 
+    # The print file kept transparent, for the garment silhouette only: on a
+    # dark fabric the unprinted areas must show the fabric, not a white square.
+    # Watermarked like every other rendering, and shown inline, not downloaded.
+    def garment_image
+      authorize @design, :image?
+
+      preview = DesignPreview.call(@design, variant: :garment)
+      return head :not_found if preview.nil?
+
+      send_data preview, type: "image/png", disposition: "inline",
+                filename: "#{@design.token}-textile.png"
+    end
+
     def variants
       authorize @design
       take_it_further { GeneratorClient.new.variants(@design.generator_job_id, user_id: Current.user.id) }
@@ -110,14 +123,30 @@ module Client
 
       # Both a variant and a refinement produce children of the same lineage,
       # fail the same way, and cost the same allowance — so they share a path.
+      #
+      # The budget is checked here first, on the application's own count: the
+      # service's resets whenever its machine is switched off. And a design the
+      # machine has forgotten is put back on it once, then asked again.
       def take_it_further
+        if @design.refinements_remaining.zero?
+          return redirect_to design_path(@design), alert: t(".budget_exhausted")
+        end
+
         unless GenerationQuota.for(Current.user).consume!
           return redirect_to design_path(@design),
                              alert: t("client.designs.create.quota_exceeded", count: GenerationQuota.per_day)
         end
 
-        children = CreateDesignChildren.call(parent: @design, instruction: @instruction) { yield }
+        children = CreateDesignChildren.call(parent: @design, instruction: @instruction) do
+          yield
+        rescue GeneratorClient::NotFound
+          ReviveDesign.call(@design)
+          yield
+        end
         redirect_to design_path(children.first)
+      rescue ReviveDesign::Unrecoverable
+        GenerationQuota.for(Current.user).refund!
+        redirect_to design_path(@design), alert: t("client.designs.take_it_further.too_old")
       rescue GeneratorClient::BudgetExhausted
         GenerationQuota.for(Current.user).refund!
         redirect_to design_path(@design), alert: t(".budget_exhausted")

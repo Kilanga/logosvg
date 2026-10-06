@@ -5,6 +5,7 @@ sont ses enfants. Le budget de reprises (settings.max_refinements) se compte sur
 pas sur l'utilisateur : passé ce budget, le site propose un graphiste.
 """
 import asyncio
+import io
 import logging
 import random
 import shutil
@@ -14,11 +15,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from PIL import Image
+
 from .config import settings
 from .generator import GenerationError, get_generator
 from .prompt_builder import build_prompts
 from .prompt_filter import PromptFilter
-from .raster import rasterize
+from .raster import rasterize, target_pixels
 from .refine import apply_instruction
 from .techniques import DEFAULT_PRINT_WIDTH_CM, DEFAULT_TECHNIQUE, resolve
 from .translate import to_english
@@ -49,6 +52,10 @@ class Job:
     parent_id: Optional[str] = None
     root_id: Optional[str] = None
     instruction: Optional[str] = None
+    # Reprises déjà consommées avant que cette lignée n'arrive sur la machine : un
+    # design restauré par Rails (voir /jobs/restore) apporte son compte avec lui,
+    # sinon un redémarrage du service rendrait des reprises au client.
+    prior_refinements: int = 0
     subject: Optional[str] = None  # description anglaise réellement envoyée au modèle
     status: str = "queued"  # queued | running | done | error
     error: Optional[str] = None
@@ -114,7 +121,34 @@ class JobManager:
         # Une variante sans lot ne peut venir que d'une version antérieure du
         # service : on la compte seule, faute de mieux.
         orphelines = sum(1 for j in enfants if j.mode == VARIANT and not j.batch_id)
-        return retouches + len(lots) + orphelines
+        racine = self.get(root_id)
+        anterieures = racine.prior_refinements if racine else 0
+        return anterieures + retouches + len(lots) + orphelines
+
+    def restore(self, job: Job, source_png: bytes) -> Job:
+        """Remet sur la machine un design que Rails a gardé, sans le régénérer.
+
+        Les travaux vivent en mémoire et leurs fichiers une heure : passé ce
+        délai, ou après un redémarrage — c'est-à-dire chaque fois que la machine
+        à GPU est éteinte —, une reprise n'avait plus de parent et échouait.
+        Rails, lui, a gardé l'image de départ et la description : il les
+        renvoie ici, et le design redevient un parent prêt, à la racine d'une
+        nouvelle lignée qui hérite du compte de reprises.
+        """
+        job.root_id = job.id
+        job.status = "done"
+        job.directory.mkdir(parents=True, exist_ok=True)
+        (job.directory / "source.png").write_bytes(source_png)
+        job.result = {
+            "technique": job.technique,
+            "mode": "restored",
+            "subject": job.subject,
+            "seed": job.seed,
+            "colors": job.colors,
+            "restored": True,
+        }
+        self.jobs[job.id] = job
+        return job
 
     def refinements_left(self, root_id: str) -> int:
         return max(settings.max_refinements - self.used_refinements(root_id), 0)
@@ -182,6 +216,26 @@ class JobManager:
                 "mais les détails fins seront plus doux à grande taille."
             )
 
+    async def _upscale(self, png: bytes, profile, print_width_cm: float) -> tuple:
+        """Porte l'image à la résolution de la technique par un modèle d'agrandissement.
+
+        Seulement si un modèle est configuré (UPSCALE_MODEL) et si l'image est plus
+        petite que le fichier visé. Jamais bloquant, comme la passe haute définition.
+        """
+        wanted = target_pixels(print_width_cm, profile.dpi)
+        with Image.open(io.BytesIO(png)) as img:
+            width = img.width
+        if not settings.upscale_model or wanted <= width * 1.05:
+            return None, None
+        try:
+            return await self.generator.upscale(png, wanted), None
+        except GenerationError as exc:
+            log.warning("Agrandissement par modèle abandonné : %s", exc)
+            return None, (
+                "L'agrandissement n'a pas abouti : le fichier reste imprimable, "
+                "mais il est interpolé au-delà de la définition du dessin."
+            )
+
     async def _run(self, job: Job) -> None:
         subject = await self._subject_for(job)
         # Les marques survivent à la traduction comme à la réécriture : on refiltre le texte.
@@ -228,12 +282,14 @@ class JobManager:
             )
             (job.directory / "design.svg").write_text(out["svg"], encoding="utf-8")
         else:
+            upscaled, upscale_warning = await self._upscale(png, profile, job.print_width_cm)
             out = await asyncio.to_thread(
-                rasterize, png, profile, job.remove_background, job.print_width_cm
+                rasterize, png, profile, job.remove_background, job.print_width_cm, upscaled
             )
             (job.directory / "print.png").write_bytes(out["png"])
-            if hires_warning:
-                out["warnings"].append(hires_warning)
+            for warning in (hires_warning, upscale_warning):
+                if warning:
+                    out["warnings"].append(warning)
 
 
         if traduction_manquee:

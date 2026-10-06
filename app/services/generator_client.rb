@@ -80,6 +80,26 @@ class GeneratorClient
     post("/jobs/#{job_id}/variants", { user_id: pseudonym(user_id), count: count })
   end
 
+  # Puts back on the machine a design it has forgotten — after a restart, or
+  # past the hour its files live there — from what the application kept: the
+  # image the model drew, its English description, and the reprises already
+  # spent. No GPU work: the answer is a ready job id to take further.
+  def restore(design, used_refinements:)
+    post("/jobs/restore", {
+      user_id: pseudonym(design.user_id),
+      prompt: design.prompt,
+      subject: design.subject,
+      style: design.style,
+      technique: design.technique,
+      colors: design.colors_requested,
+      print_width_cm: design.print_width_cm,
+      remove_background: design.remove_background,
+      seed: design.seed,
+      used_refinements: used_refinements,
+      source_png: Base64.strict_encode64(design.source_png.download)
+    }.compact)
+  end
+
   def job(job_id, user_id:)
     get("/jobs/#{job_id}", user_id: pseudonym(user_id))
   end

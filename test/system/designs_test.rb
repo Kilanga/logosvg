@@ -50,7 +50,9 @@ class DesignsTest < ApplicationSystemTestCase
     # Vector output is counted in screens, and each ink is one.
     assert_text displayed("client.designs.design.screens", count: 2)
     assert_text "#1F5F7A"
-    assert_selector "img[src='#{design_image_path(design)}']"
+    # On the garment, the transparent rendering — still a watermarked preview.
+    assert_selector "img[src='#{design_garment_image_path(design)}']"
+    assert_text displayed("designs.ai_label")
 
     # Compatibility is the answer the client came for.
     assert_text displayed("client.designs.show.who_can_print")
@@ -180,10 +182,13 @@ class DesignsTest < ApplicationSystemTestCase
     sign_in users(:client)
     visit design_path(design)
 
-    assert_selector "[data-design-preview-target='image'][src='#{design_image_path(design)}']"
+    assert_selector "[data-design-preview-target='image'][src='#{design_garment_image_path(design)}']"
 
     click_on I18n.t("client.designs.design.version_original")
     assert_selector "[data-design-preview-target='image'][src='#{design_original_image_path(design)}']"
+
+    click_on I18n.t("client.designs.design.version_final")
+    assert_selector "[data-design-preview-target='image'][src='#{design_garment_image_path(design)}']"
 
     click_on I18n.t("client.designs.design.background_dark")
     assert_selector "[data-design-preview-target='stage'].bg-ink"

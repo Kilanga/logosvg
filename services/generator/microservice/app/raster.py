@@ -164,10 +164,32 @@ def prepare_raster(png_bytes: bytes, profile: Technique, remove_bg: bool) -> tup
     return rgba, dropped_white
 
 
+def _onto_upscaled(prepared: Image.Image, upscaled_bytes: bytes) -> Image.Image:
+    """Pose la transparence calculée sur l'image agrandie par le modèle.
+
+    Le détourage parcourt l'image pixel par pixel en Python : sur 6 000 px de côté il
+    prendrait des minutes. Il se fait donc à la taille du dessin, et seul son masque
+    est agrandi — un masque lisse supporte très bien l'interpolation, contrairement
+    aux couleurs, que le modèle a redessinées.
+    """
+    upscaled = Image.open(io.BytesIO(upscaled_bytes)).convert("RGB").convert("RGBA")
+    alpha = prepared.getchannel("A").resize(upscaled.size, Image.LANCZOS)
+    upscaled.putalpha(alpha)
+    return upscaled
+
+
 def rasterize(png_bytes: bytes, profile: Technique, remove_bg: bool,
-              print_width_cm: float) -> dict:
-    """Produit le PNG d'impression, à la taille et à la résolution de la technique."""
+              print_width_cm: float, upscaled_bytes: bytes = None) -> dict:
+    """Produit le PNG d'impression, à la taille et à la résolution de la technique.
+
+    `upscaled_bytes` : la même image, agrandie par un modèle (voir jobs._upscale).
+    Elle remplace alors le dessin comme source des pixels, et la résolution réelle
+    annoncée est la sienne.
+    """
     prepared, dropped_white = prepare_raster(png_bytes, profile, remove_bg)
+    drawn_width = prepared.width
+    if upscaled_bytes:
+        prepared = _onto_upscaled(prepared, upscaled_bytes)
 
     wanted = target_pixels(print_width_cm, profile.dpi)
     factor = wanted / float(prepared.width)
@@ -225,6 +247,9 @@ def rasterize(png_bytes: bytes, profile: Technique, remove_bg: bool,
             "white_share": round(dropped_white, 3),
             "png_bytes": len(buf.getvalue()),
             "opaque_share": share,
+            # Facteur de l'agrandissement par modèle, 1.0 sans lui : dit à l'atelier
+            # d'où vient la définition annoncée.
+            "model_upscale": round(prepared.width / drawn_width, 2),
         },
         "warnings": warnings,
     }

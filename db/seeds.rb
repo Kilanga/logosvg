@@ -176,8 +176,8 @@ ActiveRecord::Base.transaction do
   )
 
   # --- Niveaux de vérification ------------------------------------------------
-  # ⚠ DÉCISION OUVERTE : les prix restent à fixer. Ceux-ci ne servent qu'à la
-  # démonstration.
+  # Prix décidés le 06/10/2026 : Retouche à 49 €, création sur mesure sur devis
+  # à partir de 89 € (reviews.custom_min_price_cents), sans plafond.
   # Deux niveaux, pas trois : la formule intermédiaire a été retirée au profit
   # de deux offres nettes — un ajustement à prix fixe, une création sur devis.
   # « check » reste en base, désactivé, pour les vérifications déjà vendues
@@ -190,7 +190,7 @@ ActiveRecord::Base.transaction do
                            description: "Adaptation du visuel au format de l'atelier, ou léger ajout : deux allers-retours avec le graphiste inclus.")
   review_level!("custom", name: "Création sur mesure", price_cents: nil, turnaround_hours: 96,
                           revisions_included: 3, position: 3,
-                          description: "Modification complète ou création à partir de votre idée. Le prix est proposé par le graphiste, sur devis.")
+                          description: "Modification complète ou création à partir de votre idée. Le prix est proposé par le graphiste, sur devis, à partir de 89 €.")
 
   # --- Graphistes -------------------------------------------------------------
   # L'un peut travailler, l'autre non : c'est la règle de l'étape 7 rendue

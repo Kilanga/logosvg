@@ -109,9 +109,12 @@
 
         <p class="mt-2 text-muted"><%= plan[:summary] %></p>
 
-        <%# ⚠ DÉCISION OUVERTE : le prix des deux abonnements n'est pas arrêté.
-            Rien n'est affiché plutôt qu'un montant inventé. %>
-        <p class="mt-6 font-display text-xl font-bold text-muted"><%= t(".plans.price_pending") %></p>
+        <% plan_key = Subscription::PLANS.fetch(index) %>
+        <p class="mt-6 font-display text-3xl font-bold"><%= plan_price(plan_key) %></p>
+        <p class="mt-1 text-sm text-muted">
+          <%= [ (t(".plans.includes_listing") if plan_key == "atelier_plus"),
+                (t("subscriptions.trial", count: trial_days) if trial_days.positive?) ].compact.join(" · ") %>
+        </p>
 
         <ul class="mt-6 space-y-2.5 border-t border-line pt-6 text-sm">
           <% plan[:features].each do |feature| %>

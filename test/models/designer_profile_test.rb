@@ -153,13 +153,13 @@ class ReviewLevelTest < ActiveSupport::TestCase
     level = review_levels(:check)
     level.update!(price_cents: 1999)
 
-    assert_equal 399, level.platform_fee_cents, "20% of 1999 is 399.8"
-    assert_equal 1600, level.designer_share_cents
+    assert_equal 299, level.platform_fee_cents, "15% of 1999 is 299.85"
+    assert_equal 1700, level.designer_share_cents
     assert_equal 1999, level.platform_fee_cents + level.designer_share_cents
   end
 
   test "a quoted level has no share to compute until a price is agreed" do
     assert_equal 0, review_levels(:custom).platform_fee_cents
-    assert_equal 780, review_levels(:custom).platform_fee_cents(3900)
+    assert_equal 585, review_levels(:custom).platform_fee_cents(3900)
   end
 end

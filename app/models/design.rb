@@ -79,6 +79,26 @@ class Design < ApplicationRecord
   # Public URLs carry the token, never the sequential id.
   def to_param = token
 
+  # Reprises already spent on this lineage, counted by the application.
+  #
+  # The service counts them too, but in memory: every time its machine is
+  # switched off, the count went back to zero and the client got three more
+  # goes. A reprise is a client's action, not an image — a refinement is one,
+  # and a click on "other versions" is one whatever number of variants it made
+  # (they share a batch token). Failed attempts cost nothing; deleted ones
+  # still count.
+  def refinements_used
+    children = Design.where(root_id: lineage_root_id).where.not(status: "failed")
+    refinements = children.where.not(mode: "variant").count
+    batches = children.where(mode: "variant").where.not(batch_token: nil).distinct.count(:batch_token)
+
+    refinements + batches + legacy_variant_clicks(children)
+  end
+
+  def refinements_remaining
+    [ Rails.application.config.tshirt.generation[:max_refinements] - refinements_used, 0 ].max
+  end
+
   def catalogue = PrintTechniques.fetch(technique)
 
   def technique_label = PrintTechniques.label_for(technique)
@@ -110,6 +130,15 @@ class Design < ApplicationRecord
   end
 
   private
+    # Variants made before batch tokens existed: those of one click share a
+    # parent and were saved in the same transaction, so the same minute.
+    def legacy_variant_clicks(children)
+      children.where(mode: "variant", batch_token: nil)
+              .pluck(:parent_id, :created_at)
+              .map { |parent_id, created_at| [ parent_id, created_at.change(sec: 0) ] }
+              .uniq.size
+    end
+
     def technique_is_frozen
       errors.add(:technique, :frozen_after_creation) if technique_changed?
     end

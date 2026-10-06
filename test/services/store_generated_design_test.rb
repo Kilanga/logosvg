@@ -33,6 +33,19 @@ class StoreGeneratedDesignTest < ActiveSupport::TestCase
     assert_equal 12, @design.paths_count
   end
 
+  # Article 50(2): stored marked, so every later copy — the workshop's
+  # included — carries the mark without anyone having to remember it.
+  test "both stored files are marked as AI-generated" do
+    stub_file("design.svg", svg)
+    stub_file("source.png", png)
+
+    StoreGeneratedDesign.call(design: @design, answer: vector_answer)
+    @design.reload
+
+    assert AiProvenance.marked?(@design.print_file.download)
+    assert AiProvenance.marked?(@design.source_png.download)
+  end
+
   # The file name comes from the service; the application never guesses an
   # extension from the technique.
   test "a raster result is fetched under the name the service gave" do

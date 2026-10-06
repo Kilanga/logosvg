@@ -37,8 +37,13 @@
   <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;margin:24px 0 8px;">
     <%= t("mailers.print_request.to_printer.files_title") %>
   </h2>
-  <p style="margin:0 0 24px;line-height:1.5;color:#505A67;">
+  <p style="margin:0 0 12px;line-height:1.5;color:#505A67;">
     <%= t("mailers.print_request.to_printer.files_body") %>
+  </p>
+  <%# Said in the email because the print file says it only in its metadata:
+      nothing visible is printed. %>
+  <p style="margin:0 0 24px;line-height:1.5;color:#505A67;">
+    <%= t("mailers.print_request.to_printer.ai_notice") %>
   </p>
 
   <p style="margin:0;padding-top:16px;border-top:1px solid #C8D0D4;line-height:1.5;color:#505A67;">

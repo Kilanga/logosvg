@@ -1,5 +1,7 @@
 """API du service de génération, de retouche et de vectorisation."""
 import asyncio
+import base64
+import binascii
 import logging
 import re
 import uuid
@@ -25,6 +27,8 @@ FILES = {
     "source.png": "image/png",
 }
 USER_ID = r"^[A-Za-z0-9_-]+$"
+# 12 Mo d'image une fois décodée : une image de départ SDXL en pèse deux.
+MAX_RESTORE_B64 = 16 * 1024 * 1024
 
 prompt_filter = PromptFilter(settings.blocklist_file)
 rate_limiter = RateLimiter(settings.rate_limit_count, settings.rate_limit_window)
@@ -65,6 +69,25 @@ class GenerateRequest(BaseModel):
 class RefineRequest(BaseModel):
     instruction: str = Field(min_length=3, max_length=200)
     user_id: str = Field(min_length=1, max_length=64, pattern=USER_ID)
+
+
+class RestoreRequest(BaseModel):
+    """Un design que Rails a gardé et que la machine a oublié."""
+    user_id: str = Field(min_length=1, max_length=64, pattern=USER_ID)
+    prompt: str = Field(min_length=3, max_length=300)
+    # La description anglaise du parent : sans elle, une variante repartirait du
+    # français et une retouche réécrirait autre chose que ce que le client voit.
+    subject: Optional[str] = Field(default=None, max_length=600)
+    style: Literal["logo", "illustration", "mascotte", "badge"] = "illustration"
+    technique: Literal[KEYS] = DEFAULT_TECHNIQUE
+    colors: Optional[int] = Field(default=None, ge=1, le=8)
+    print_width_cm: float = Field(default=DEFAULT_PRINT_WIDTH_CM, ge=3, le=60)
+    remove_background: bool = True
+    seed: Optional[int] = Field(default=None, ge=0, le=2**32 - 1)
+    # Le compte tenu par Rails : il borne la lignée restaurée.
+    used_refinements: int = Field(default=0, ge=0, le=20)
+    # L'image de départ (source.png), en base64.
+    source_png: str = Field(min_length=8, max_length=MAX_RESTORE_B64)
 
 
 class VariantsRequest(BaseModel):
@@ -221,6 +244,33 @@ def variants(job_id: str, req: VariantsRequest):
                      "refinements_left": manager.refinements_left(parent.root_id)},
         )
     return _submitted(created)
+
+
+@app.post("/jobs/restore", status_code=201, dependencies=[Depends(require_api_key)])
+def restore(req: RestoreRequest):
+    """Recrée un parent prêt à partir de ce que Rails a gardé. Aucun calcul GPU."""
+    try:
+        png = base64.b64decode(req.source_png, validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(status_code=422, detail="Image de départ illisible.")
+    if not png.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise HTTPException(status_code=422, detail="L'image de départ doit être un PNG.")
+
+    profile = resolve(req.technique)
+    job = manager.restore(Job(
+        user_id=req.user_id,
+        prompt=clean_prompt(req.prompt),
+        style=req.style,
+        colors=profile.clamp_colors(req.colors),
+        remove_background=req.remove_background,
+        technique=profile.key,
+        print_width_cm=req.print_width_cm,
+        seed=req.seed if req.seed is not None else new_seed(),
+        subject=req.subject,
+        prior_refinements=min(req.used_refinements, settings.max_refinements),
+    ), png)
+    return {"job_id": job.id, "status": job.status,
+            "refinements_left": manager.refinements_left(job.root_id)}
 
 
 @app.get("/jobs/{job_id}", dependencies=[Depends(require_api_key)])

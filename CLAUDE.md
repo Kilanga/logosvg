@@ -20,7 +20,9 @@ ne les remplace pas.
    clairement marquée (§8) — jamais une constante enfouie dans le code.
 5. **Ne pas réécrire le microservice** de `services/generator/`. On consomme son
    API telle quelle : mock en développement, WebMock en test. Il n'évolue que
-   par des correctifs fournis par l'utilisateur, jamais à notre initiative.
+   par des correctifs demandés par l'utilisateur, jamais à notre initiative —
+   dans un commit à part, avec ses propres tests (`pytest`), et en mettant
+   docs/GENERATION.md à jour.
 6. **Branche puis pull request, jamais de push sur `main`.** Commits atomiques,
    messages en français.
 7. **Interface en français** (fichiers de locale). **Code, tables, modèles,
@@ -259,19 +261,21 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 | `generation_quota_per_day`         | `5`               | confirmé par le cahier des charges     |
 | `review_auto_accept_days`          | `7`               | validation automatique                 |
 | `proposal_expiry_hours`            | `72`              | réponse à une proposition              |
-| `designer_claim_timeout_hours`     | `12`              | graphiste choisi silencieux            |
+| `designer_claim_timeout_hours`     | `24`              | **décidé** (06/10/2026)                |
 | `print_request_reminder_hours`     | `48`              | relance atelier                        |
-| `print_request_expiry_days`        | `5`               | expiration d'une demande               |
-| `platform_fee_rate`                | `0.20`            | **taux de commission à fixer**         |
+| `print_request_expiry_days`        | `7`               | **décidé** (06/10/2026)                |
+| `platform_fee_rate`                | `0.15`            | **décidé** (06/10/2026)                |
 | `return_rate_alert_threshold`      | `0.25`            | **seuil d'alerte à fixer**             |
 | `design_retention_days`            | `180`             | **durée de conservation à fixer**      |
 | `print_request_anonymize_days`     | `365`             | **durée de conservation à fixer**      |
-| `subscription_price_*`             | —                 | **prix des abonnements à fixer**       |
+| `price_listing_cents` / `price_atelier_plus_cents` | `1900` / `3900` | **décidé** — Atelier+ inclut le Référencement |
+| `trial_period_days`                | `30`              | **décidé** (06/10/2026)                |
+| `custom_min_price_cents`           | `8900`            | **décidé** — sur devis, sans plafond   |
 | `consent_text_version`             | `2026-09-v1`      | version du texte de consentement       |
 
 Décisions déjà tranchées par le cahier des charges : le client télécharge
 **le PNG filigrané, jamais le SVG** ; les prix des niveaux de revue sont fixés
-par la plateforme (hypothèse à confirmer).
+par la plateforme (confirmé le 06/10/2026).
 
 ---
 
@@ -288,6 +292,7 @@ Base : `services/generator/microservice` (FastAPI, port 5000, `127.0.0.1`).
 | `GET /jobs/:id?user_id=`           | —                                                                        | `status`, `position`, `error`, `mode`, `parent_id`, `root_id`, `refinements_left`, `result` |
 | `GET /jobs/:id/design.svg?user_id=`| —                                                                        | le SVG                                                       |
 | `GET /jobs/:id/source.png?user_id=`| —                                                                        | l'image brute                                                |
+| `POST /jobs/restore`               | `user_id`, `prompt`, `subject`, technique…, `used_refinements`, `source_png` (base64) | `201` : `job_id`, `status`, `refinements_left` |
 | `GET /health`                      | — (sans clé)                                                             | `{"status":"ok"}`                                            |
 
 `result` contient `palette`, `inks`, `stats` (dont `paths` et `opaque_share`),
@@ -306,8 +311,12 @@ de la réponse, pas seulement le code HTTP.
 
 **Reprises.** Un design `ready` ne se modifie pas : une retouche ou une variante
 crée un enfant de la même lignée (`root_id`). Budget de trois reprises par
-lignée, compté par le service ; `refinements_left` fait foi et n'est jamais
-recalculé par Rails.
+lignée, compté **des deux côtés** depuis octobre 2026 : le service compte en
+mémoire et oublie tout quand la machine à GPU s'éteint, Rails compte sur la
+lignée (`Design#refinements_used`, `batch_token` pour les variantes d'un même
+clic) et le plus bas l'emporte. Un design que le service a oublié (`404`) est
+remis sur la machine par `POST /jobs/restore` (`ReviveDesign`), puis la reprise
+est relancée une fois. Voir docs/GENERATION.md.
 
 Règles côté Rails :
 

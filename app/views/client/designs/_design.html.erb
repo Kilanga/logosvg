@@ -23,17 +23,24 @@
         dark, against the original image, and zoomable. See docs/SPEC.md,
         "Détails d'interface à respecter" → "Aperçu". %>
     <div data-controller="design-preview"
-         data-design-preview-print-src-value="<%= design_image_path(design) %>"
+         data-design-preview-print-src-value="<%= design_garment_image_path(design) %>"
          data-design-preview-original-src-value="<%= design.source_png.attached? ? design_original_image_path(design) : "" %>">
-      <div data-design-preview-target="stage" class="screen-tint flex items-center justify-center p-6">
+      <div data-design-preview-target="stage" class="screen-tint relative flex items-center justify-center p-6">
+        <%# Said on screen as well as in the pixels: the client must know the
+            picture was drawn by an AI before approving it. %>
+        <p class="pill absolute left-3 top-3 border border-line bg-surface text-muted"
+           title="<%= t("designs.ai_label_hint") %>"><%= t("designs.ai_label") %></p>
         <div class="relative w-full max-w-64">
           <%= render "client/designs/garment" %>
           <button type="button" data-action="design-preview#zoom"
                   class="absolute inset-0 flex items-center justify-center"
                   aria-label="<%= t("client.designs.design.zoom") %>">
-            <%= image_tag design_image_path(design), alt: "",
+            <%# Sized to the print: the silhouette's chest is about as many
+                percent wide as a medium t-shirt is centimetres wide. %>
+            <%= image_tag design_garment_image_path(design), alt: "",
                   data: { design_preview_target: "image" },
-                  class: "pointer-events-none absolute left-1/2 top-[36%] w-[34%] -translate-x-1/2 object-contain" %>
+                  style: "width: #{garment_print_share(design)}%",
+                  class: "pointer-events-none absolute left-1/2 top-[30%] -translate-x-1/2 object-contain" %>
           </button>
         </div>
       </div>

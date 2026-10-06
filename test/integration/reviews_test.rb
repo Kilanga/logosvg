@@ -64,7 +64,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     review = Review.order(:created_at).last
 
     assert_equal 4900, review.price_cents
-    assert_equal 980, review.platform_fee_cents
+    assert_equal 735, review.platform_fee_cents # 15 % de 49 €
     assert_equal 2, review.revisions_included
     assert_predicate review, :awaiting_payment?
   end
