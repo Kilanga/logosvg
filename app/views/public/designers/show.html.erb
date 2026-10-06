@@ -73,7 +73,7 @@
               <li class="border-b border-line pb-3 last:border-0 last:pb-0">
                 <p class="flex items-baseline justify-between gap-3">
                   <span class="font-medium"><%= level.name %></span>
-                  <span class="font-display font-bold text-emulsion"><%= level_price(level) %></span>
+                  <span class="font-display font-bold text-emulsion"><%= level_price(level, ttc: true) %></span>
                 </p>
                 <p class="label-rule mt-1 text-muted"><%= level_terms(level) %></p>
               </li>

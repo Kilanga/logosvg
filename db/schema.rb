@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_182358) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_190908) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -214,6 +214,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_182358) do
     t.boolean "express_available", default: false, null: false
     t.integer "express_lead_hours"
     t.boolean "featured", default: false, null: false
+    t.date "generation_quota_notified_on"
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
     t.integer "max_print_height_cm"

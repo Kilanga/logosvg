@@ -98,7 +98,7 @@
   </header>
 
   <div class="mt-10 grid gap-6 lg:grid-cols-2">
-    <% t(".plans.items").each_with_index do |plan, index| %>
+    <% t(".plans.items", generations: listing_generations, deep_interpolation: true).each_with_index do |plan, index| %>
       <article class="panel flex flex-col p-6 <%= "border-emulsion border-2" if index == 1 %>">
         <div class="flex items-start justify-between gap-4">
           <h3 class="text-2xl font-bold uppercase"><%= plan[:name] %></h3>

@@ -170,7 +170,7 @@
           </div>
           <div class="flex justify-between gap-4">
             <dt class="text-muted"><%= t(".paid") %></dt>
-            <dd class="font-medium"><%= money(@review.price_cents) %></dd>
+            <dd class="font-medium"><%= t("reviews.price_ttc", amount: money(@review.price_cents)) %></dd>
           </div>
           <% if @review.refunded_cents.positive? %>
             <div class="flex justify-between gap-4">

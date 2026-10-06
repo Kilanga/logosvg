@@ -1,0 +1,26 @@
+<div style="font-family:Helvetica,Arial,sans-serif;color:#1D2433;max-width:600px;">
+  <p style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#6B4200;margin:0 0 8px;">
+    <%= t("mailers.subscription.generation_quota_reached.eyebrow") %>
+  </p>
+
+  <h1 style="font-size:24px;margin:0 0 16px;">
+    <%= t("mailers.subscription.generation_quota_reached.heading") %>
+  </h1>
+
+  <p style="margin:0 0 24px;line-height:1.5;">
+    <%= t("mailers.subscription.generation_quota_reached.body",
+          printer: @printer.name, count: @limit, date: l(@reset_on, format: :long)) %>
+  </p>
+
+  <p style="margin:0 0 24px;line-height:1.5;border-left:2px solid #1F5F7A;background:#F2F4F3;padding:12px 16px;">
+    <%= t("mailers.subscription.generation_quota_reached.upgrade") %>
+  </p>
+
+  <p style="margin:0;">
+    <a href="<%= workshop_subscription_url %>"
+       style="display:inline-block;background:#1F5F7A;color:#FFFFFF;padding:14px 24px;
+              text-decoration:none;font-weight:600;border-radius:2px;">
+      <%= t("mailers.subscription.generation_quota_reached.action") %>
+    </a>
+  </p>
+</div>

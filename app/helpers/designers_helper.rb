@@ -10,10 +10,15 @@ module DesignersHelper
   end
 
   # A level with no price is quoted case by case; saying "0 €" would be a lie.
-  def level_price(level)
+  #
+  # `ttc: true` on the screens a client reads: a private buyer is always shown
+  # the price including VAT (decided on 06/10/2026, the seller being
+  # VAT-registered).
+  def level_price(level, ttc: false)
     return t("designers.levels.quoted") if level.quoted?
 
-    number_to_currency(level.price_euros, unit: "€", format: "%n %u", precision: 0)
+    amount = number_to_currency(level.price_euros, unit: "€", format: "%n %u", precision: 0)
+    ttc ? t("reviews.price_ttc", amount: amount) : amount
   end
 
   # "48 h, 1 retour inclus" — the two things that decide whether a designer

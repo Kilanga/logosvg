@@ -34,6 +34,12 @@ module Client
         return render :new, status: :unprocessable_entity
       end
 
+      # The workshop's monthly generations, when its plan has a ceiling.
+      unless PrinterGenerationQuota.for(context_printer).allows?
+        flash.now[:alert] = t("client.designs.workshop_quota_reached", printer: context_printer.name)
+        return render :new, status: :unprocessable_entity
+      end
+
       # The allowance is taken before the job is queued, not after: two
       # submissions in the same instant must not both get through.
       unless GenerationQuota.for(Current.user).consume!
@@ -43,6 +49,7 @@ module Client
 
       if @design.save
         GenerateDesignJob.perform_later(@design)
+        PrinterGenerationQuota.for(context_printer).notify_if_reached!
         redirect_to design_path(@design)
       else
         GenerationQuota.for(Current.user).refund!
@@ -132,6 +139,12 @@ module Client
           return redirect_to design_path(@design), alert: t(".budget_exhausted")
         end
 
+        workshop_quota = PrinterGenerationQuota.for(@design.printer)
+        unless workshop_quota.allows?
+          return redirect_to design_path(@design),
+                             alert: t("client.designs.workshop_quota_reached", printer: @design.printer.name)
+        end
+
         unless GenerationQuota.for(Current.user).consume!
           return redirect_to design_path(@design),
                              alert: t("client.designs.create.quota_exceeded", count: GenerationQuota.per_day)
@@ -143,6 +156,7 @@ module Client
           ReviveDesign.call(@design)
           yield
         end
+        workshop_quota.notify_if_reached!
         redirect_to design_path(children.first)
       rescue ReviveDesign::Unrecoverable
         GenerationQuota.for(Current.user).refund!

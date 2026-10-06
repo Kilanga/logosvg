@@ -8,6 +8,8 @@ module SubscriptionsHelper
 
   def trial_days = Rails.application.config.tshirt.subscriptions[:trial_period_days].to_i
 
+  def listing_generations = Rails.application.config.tshirt.subscriptions.dig(:monthly_generations, :listing)
+
   def subscription_status_pill(subscription)
     style = case subscription.status
     when "active", "trialing" then "pill-success"

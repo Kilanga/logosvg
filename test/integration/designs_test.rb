@@ -102,6 +102,45 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_equal printers(:rennes), design.printer
   end
 
+  # The Référencement plan's monthly ceiling, counted on the workshop.
+  test "a workshop that used its month's generations stops new ones, and the client is told why" do
+    sign_in_as users(:client)
+    get workshop_link_path(slug: printers(:rennes).slug)
+    quota = PrinterGenerationQuota.for(printers(:rennes))
+    rows = Array.new(quota.limit - quota.used) do
+      { user_id: users(:deleted_client).id, printer_id: printers(:rennes).id, prompt: "un renard",
+        technique: "screen_printing", print_width_cm: 25, status: "ready",
+        token: SecureRandom.base58(24), created_at: Time.current, updated_at: Time.current }
+    end
+    Design.insert_all!(rows)
+
+    assert_no_difference "Design.count" do
+      post designs_path, params: { design: valid_design }
+    end
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, ERB::Util.html_escape(
+      I18n.t("client.designs.workshop_quota_reached", printer: printers(:rennes).name)
+    ).split(",").first
+    assert_equal 0, GenerationQuota.for(users(:client)).used, "the client's own allowance is untouched"
+  end
+
+  test "the last generation of the month tells the workshop" do
+    sign_in_as users(:client)
+    get workshop_link_path(slug: printers(:rennes).slug)
+    quota = PrinterGenerationQuota.for(printers(:rennes))
+    rows = Array.new(quota.limit - quota.used - 1) do
+      { user_id: users(:deleted_client).id, printer_id: printers(:rennes).id, prompt: "un renard",
+        technique: "screen_printing", print_width_cm: 25, status: "ready",
+        token: SecureRandom.base58(24), created_at: Time.current, updated_at: Time.current }
+    end
+    Design.insert_all!(rows) if rows.any?
+
+    assert_enqueued_email_with SubscriptionMailer, :generation_quota_reached, args: [ printers(:rennes) ] do
+      post designs_path, params: { design: valid_design }
+    end
+  end
+
   test "a shop's link is remembered for the whole session" do
     sign_in_as users(:client)
 

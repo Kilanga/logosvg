@@ -530,6 +530,7 @@ fr:
 
   # --- Vérifications, textes partagés --------------------------------------
   reviews:
+    price_ttc: "%{amount} TTC"
     version: "Version %{number}"
     no_version: "Aucune version déposée pour l'instant."
     conversation: "Échanges"
@@ -893,6 +894,19 @@ fr:
         requests_kept: >-
           Vos demandes d'impression en cours ne sont pas affectées : vous
           gardez l'accès à votre espace et aux fichiers déjà reçus.
+      generation_quota_reached:
+        subject: "Vos clients ont utilisé les %{count} générations du mois"
+        eyebrow: "Abonnement"
+        heading: "Les générations du mois sont épuisées"
+        body: >-
+          Les clients arrivés par le lien de %{printer} ont utilisé les
+          %{count} générations comprises dans le Référencement ce mois-ci.
+          Jusqu'au %{date}, ils voient un message qui leur demande de revenir
+          plus tard.
+        upgrade: >-
+          Atelier+ n'a pas de plafond de générations, et ajoute la mise en
+          avant et les statistiques de votre lien.
+        action: "Voir les formules"
 
   # Un seul bloc `client:` — deux clés de même niveau en YAML, et la seconde
   # écrase silencieusement la première.
@@ -1190,6 +1204,10 @@ fr:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
       refine:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
+      workshop_quota_reached: >-
+        Ce mois-ci, %{printer} a utilisé toutes les générations de sa formule.
+        L'atelier en est prévenu ; vous pourrez créer votre design dès le mois
+        prochain, ou le lui demander directement.
       take_it_further:
         too_old: >-
           Ce design est trop ancien pour être repris : son image d'origine n'a
@@ -1316,6 +1334,9 @@ fr:
           Sans abonnement actif, votre atelier n'apparaît ni dans l'annuaire,
           ni sur la carte, ni parmi les ateliers compatibles avec un design.
         includes_listing: "Référencement inclus"
+        generations_this_month: "Générations ce mois-ci"
+        generations_used: "%{used} sur %{limit}"
+        generations_unlimited: "%{used}, sans plafond"
         plan_pitch:
           listing: "Votre atelier dans l'annuaire, avec ses techniques et ses limites."
           atelier_plus: "Le référencement, plus la mise en avant et les statistiques."
@@ -1325,8 +1346,10 @@ fr:
             - "Filtre par technique d'impression"
             - "Lien client, QR code et affiche comptoir"
             - "Demandes d'impression par email"
+            - "%{generations} générations par mois pour vos clients"
           atelier_plus:
             - "Tout le Référencement"
+            - "Générations illimitées pour vos clients"
             - "Mise en avant en tête d'annuaire"
             - "Votre couleur de marque sur l'écran de création"
             - "Statistiques du lien sur 30 jours"
@@ -1752,7 +1775,7 @@ fr:
         body:
           - "Référencement donne à un atelier sa fiche publique, sa place dans l'annuaire et sur la carte, son lien client et la réception des demandes d'impression."
           - "Atelier+ y ajoute la mise en avant en tête d'annuaire, la couleur de marque sur l'écran de création et les statistiques du lien."
-          - "Prix : Référencement %{listing} HT par mois ; Atelier+ %{atelier_plus} HT par mois, Référencement compris."
+          - "Prix : Référencement %{listing} HT par mois, avec %{generations} générations par mois pour les clients arrivés par l'atelier ; Atelier+ %{atelier_plus} HT par mois, Référencement compris et générations illimitées. La TVA au taux en vigueur s'ajoute à ces montants. Chaque client reste limité à quelques générations par jour, quelle que soit la formule."
       billing:
         title: "Facturation"
         body:
@@ -2355,9 +2378,11 @@ fr:
                 - "Affiche comptoir imprimable"
                 - "Demandes d'impression par email, fichiers joints"
                 - "Suivi des statuts dans votre espace"
+                - "%{generations} générations par mois pour vos clients"
             - name: "Atelier+"
-              summary: "Tout le Référencement, plus la visibilité et les chiffres."
+              summary: "Tout le Référencement, sans plafond, plus la visibilité et les chiffres."
               features:
+                - "Générations illimitées pour vos clients"
                 - "Mis en avant dans l'annuaire et sur la carte, dans un rayon de 50 km autour de votre atelier"
                 - "Votre couleur de marque sur l'écran de création"
                 - "Statistiques de votre lien client"
