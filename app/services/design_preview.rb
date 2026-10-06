@@ -15,7 +15,9 @@
 class DesignPreview
   WIDTH_PX = 1200
   CACHE_TTL = 1.day
-  VARIANTS = %i[ print_file source_png ].freeze
+  # `:garment` is the print file again, but keeping its transparency: it sits on
+  # the t-shirt silhouette, where unprinted areas must show the fabric colour.
+  VARIANTS = %i[ print_file source_png garment ].freeze
 
   def self.call(design, variant: :print_file) = new(design, variant: variant).call
 
@@ -39,6 +41,8 @@ class DesignPreview
 
   private
     def attachment = @variant == :source_png ? @design.source_png : @design.print_file
+
+    def transparent? = @variant == :garment
 
     def cache_key = "design_preview/#{@design.token}/#{@variant}/#{attachment.blob.checksum}/#{WIDTH_PX}"
 
@@ -74,24 +78,27 @@ class DesignPreview
 
         image = Vips::Image.thumbnail(file.path, WIDTH_PX)
         # An SVG renders with transparency, and so does a cut-out PNG: the paper
-        # behind it is what the workshop will not print, so it is shown white.
-        image = image.flatten(background: [ 255, 255, 255 ]) if image.has_alpha?
+        # behind it is what the workshop will not print, so it is shown white —
+        # except on the garment, where the fabric itself shows through.
+        image = image.flatten(background: [ 255, 255, 255 ]) if image.has_alpha? && !transparent?
 
         band = watermark(image.width)
         stamped = image.composite2(band, :over, x: 0, y: image.height - band.height)
 
         # Flattened again on the way out: compositing a semi-transparent band
         # puts an alpha channel back on, and the preview has no use for one.
-        stamped = stamped.flatten(background: [ 255, 255, 255 ]) if stamped.has_alpha?
-        stamped.write_to_buffer(".png")
+        stamped = stamped.flatten(background: [ 255, 255, 255 ]) if stamped.has_alpha? && !transparent?
+        AiProvenance.mark(stamped.write_to_buffer(".png"), content_type: "image/png")
       end
     end
 
     # Burnt into the pixels rather than laid over them in CSS: a watermark a
-    # browser draws is a watermark a screenshot removes.
+    # browser draws is a watermark a screenshot removes. Two lines — the
+    # workshop's credit, then the AI mention the client must be able to see.
     def watermark(width)
       @watermark ||= begin
-        text = Vips::Image.text(credit, width: width - 40, dpi: 72)
+        lines = "#{ERB::Util.html_escape(credit)}\n#{ERB::Util.html_escape(I18n.t("designs.watermark_ai"))}"
+        text = Vips::Image.text(lines, width: width - 40, dpi: 72)
         band = text.embed(20, 12, width, text.height + 24)
         band.new_from_image([ 0, 0, 0 ]).bandjoin(band * 0.55).copy(interpretation: :srgb)
       end

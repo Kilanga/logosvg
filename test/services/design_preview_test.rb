@@ -82,7 +82,29 @@ class DesignPreviewTest < ActiveSupport::TestCase
     assert_not_equal printed, original
   end
 
+  # The client must see it, not only machines: the second line of the band.
+  test "every preview carries the AI mark in its metadata" do
+    attach(svg, "design.svg", "image/svg+xml")
+
+    assert AiProvenance.marked?(DesignPreview.call(@design))
+  end
+
+  # On a dark fabric, the unprinted areas must show the fabric.
+  test "the garment variant keeps its transparency" do
+    attach(svg_with_room, "design.svg", "image/svg+xml")
+
+    image = Vips::Image.new_from_buffer(DesignPreview.call(@design, variant: :garment), "")
+
+    assert image.has_alpha?
+    assert_equal 0, image.extract_band(3).getpoint(5, 5).first, "the empty corner should stay transparent"
+  end
+
   private
+    def svg_with_room
+      %(<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10">) +
+        %(<path d="M4 4h2v2H4z" fill="#1F5F7A"/></svg>)
+    end
+
     def attach(bytes, name, type)
       @design.print_file.attach(io: StringIO.new(bytes), filename: name, content_type: type)
     end

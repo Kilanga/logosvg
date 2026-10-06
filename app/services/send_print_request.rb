@@ -56,12 +56,14 @@ class SendPrintRequest
       )
     end
 
+    # Marked on the way: a design stored before files carried the AI mark
+    # still leaves with it. Marking is idempotent, so a marked file is copied
+    # as it is.
     def attach_copy(source, to:)
       return unless source.attached?
 
-      source.blob.open do |file|
-        to.attach(io: File.open(file.path), filename: source.filename.to_s,
-                  content_type: source.content_type)
-      end
+      bytes = AiProvenance.mark(source.download, content_type: source.content_type)
+      to.attach(io: StringIO.new(bytes), filename: source.filename.to_s,
+                content_type: source.content_type)
     end
 end

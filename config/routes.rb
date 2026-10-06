@@ -40,6 +40,9 @@ Rails.application.routes.draw do
   # Pour comparer : l'image d'origine, elle aussi filigranée, jamais envoyée
   # telle quelle. Voir docs/SPEC.md, "Détails d'interface à respecter" → "Aperçu".
   get  "designs/:token/original", to: "client/designs#original_image", as: :design_original_image
+  # Le fichier d'impression avec sa transparence, pour la silhouette de t-shirt :
+  # le blanc non imprimé doit laisser voir la couleur du tissu.
+  get  "designs/:token/sur-textile", to: "client/designs#garment_image", as: :design_garment_image
   post "designs/:token/variantes", to: "client/designs#variants", as: :design_variants
   post "designs/:token/retouche",  to: "client/designs#refine",   as: :design_refine
 

@@ -60,13 +60,25 @@ module Reviews
         result
       end
 
+      # A designer's file is still the model's drawing, reworked by a person:
+      # marked as such (IPTC "composite"), never left unmarked.
       def store(inspection)
         @review.versions.create!(
           message: @message,
-          file: @file,
+          file: marked_file,
           inks_count: (inspection.inks if design.vector?),
           checks: checks_from(inspection)
         )
+      end
+
+      def marked_file
+        bytes = @file.read
+        @file.rewind if @file.respond_to?(:rewind)
+        content_type = design.vector? ? "image/svg+xml" : "image/png"
+
+        { io: StringIO.new(AiProvenance.mark(bytes, content_type: content_type, kind: AiProvenance::EDITED)),
+          filename: @file.respond_to?(:original_filename) ? @file.original_filename : "version.#{design.vector? ? "svg" : "png"}",
+          content_type: content_type }
       end
 
       def checks_from(inspection)

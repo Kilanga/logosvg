@@ -227,6 +227,27 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "the garment rendering is a transparent, watermarked png for the owner only" do
+    design = attached_design
+    sign_in_as users(:client)
+
+    get design_garment_image_path(design)
+
+    assert_response :success
+    assert_equal "image/png", response.media_type
+    assert Vips::Image.new_from_buffer(response.body, "").has_alpha?
+    assert AiProvenance.marked?(response.body)
+  end
+
+  test "the page says the picture was drawn by an AI" do
+    design = attached_design
+    sign_in_as users(:client)
+
+    get design_path(design)
+
+    assert_includes response.body, I18n.t("designs.ai_label")
+  end
+
   # The client is offered the watermarked preview and nothing else: no link on
   # the page reaches the stored print file.
   test "the design page never hands out the print file" do
@@ -237,7 +258,9 @@ class DesignsTest < ActionDispatch::IntegrationTest
 
     assert_select "a[href=?]", design_image_path(design)
     assert_select "a[href*=?]", "/rails/active_storage", count: 0
-    assert_select "img[src=?]", design_image_path(design)
+    # The silhouette shows the transparent rendering — still a watermarked
+    # preview, never the stored file.
+    assert_select "img[src=?]", design_garment_image_path(design)
     assert_no_match(/#{Regexp.escape(design.print_file.filename.to_s)}/, response.body)
   end
 

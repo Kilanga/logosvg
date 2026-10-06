@@ -11,6 +11,15 @@ module Reviews
       assert_predicate reviews(:in_progress_vector).reload, :delivered?
     end
 
+    test "the delivered file is marked as an AI drawing reworked by a person" do
+      result = deliver(reviews(:in_progress_vector), svg_file)
+      stored = result.version.file.download
+
+      assert_includes stored, AiProvenance::EDITED
+      assert_equal "version.svg", result.version.file.filename.to_s
+      assert SvgInspector.call(stored).valid?
+    end
+
     test "the inks the inspector counted are kept on the version" do
       result = deliver(reviews(:in_progress_vector), two_colour_svg)
 

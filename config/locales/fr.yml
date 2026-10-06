@@ -721,6 +721,10 @@ fr:
         files_body: >-
           Le fichier d'impression et un aperçu filigrané. Le client, lui, n'a
           jamais reçu le fichier d'impression.
+        ai_notice: >-
+          Ce visuel a été généré par une intelligence artificielle. Le fichier
+          d'impression ne porte aucune mention visible ; il le signale seulement
+          dans ses métadonnées, qui ne s'impriment pas.
         reply_to: "Répondez directement à cet email pour joindre le client (%{email})."
       to_client:
         subject: "Votre demande est partie chez %{printer}"
@@ -2067,9 +2071,21 @@ fr:
         suspended: "La fiche de %{name} est suspendue."
         failed: "La fiche de %{name} n'a pas pu être modifiée."
 
+  # Texte écrit dans les métadonnées des fichiers (XMP), lu par les logiciels
+  # et non par le client. Voir AiProvenance.
+  ai_provenance:
+    description: "Image générée par intelligence artificielle avec %{platform}."
+
   # Libellés partagés par l'écran de création, le suivi et les jobs.
   designs:
+    # Deux lignes : le crédit de l'atelier, puis la mention IA. Brûlées dans
+    # les pixels de chaque aperçu — un client n'en reçoit jamais d'autre.
     watermark: "Créé avec %{name}"
+    watermark_ai: "Image générée par IA"
+    ai_label: "Généré par IA"
+    ai_label_hint: >-
+      Ce visuel a été dessiné par une intelligence artificielle. Les fichiers
+      transmis à l'atelier le signalent dans leurs métadonnées.
     family_hint:
       vector: "Couleurs pleines, comptées une à une : chaque couleur est un écran, une découpe ou un fil."
       raster: "Dégradés et photo possibles, imprimés directement en une passe."

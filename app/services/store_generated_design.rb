@@ -50,14 +50,18 @@ class StoreGeneratedDesign
       @inspected = result
     end
 
+    # Both files are marked as AI-generated before they are stored: every copy
+    # made later — the workshop's included — inherits the mark. See AiProvenance.
     def attach(file_name, bytes, format)
+      content_type = CONTENT_TYPES.fetch(format, "application/octet-stream")
       @design.print_file.attach(
-        io: StringIO.new(bytes), filename: file_name,
-        content_type: CONTENT_TYPES.fetch(format, "application/octet-stream")
+        io: StringIO.new(AiProvenance.mark(bytes, content_type: content_type)),
+        filename: file_name, content_type: content_type
       )
 
       source = client.download(@design.generator_job_id, "source.png", user_id: @design.user_id)
-      @design.source_png.attach(io: StringIO.new(source), filename: "source.png", content_type: "image/png")
+      @design.source_png.attach(io: StringIO.new(AiProvenance.mark(source, content_type: "image/png")),
+                                filename: "source.png", content_type: "image/png")
     rescue GeneratorClient::NotFound
       # The original image is a nicety for comparison, not the deliverable.
       Rails.logger.info("[generator] no source image for #{@design.token}")

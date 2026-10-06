@@ -19,6 +19,17 @@ module DesignsHelper
 
   def garment_swatches = GARMENT_SWATCHES
 
+  # The silhouette's body spans 52 % of its width, and a medium t-shirt is
+  # about 52 cm across: one centimetre of print is one percent of the drawing.
+  # Bounded so a tiny logo stays visible and a full back never overflows.
+  GARMENT_SHARE_RANGE = (8..46)
+
+  def garment_print_share(design)
+    width = design.print_width_cm.presence ||
+            Rails.application.config.tshirt.generation[:default_print_width_cm]
+    width.to_i.clamp(GARMENT_SHARE_RANGE)
+  end
+
   def design_status_pill(design)
     style = case design.status
     when "ready"  then "pill-success"

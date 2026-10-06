@@ -4,7 +4,7 @@ module Client
   # The technique is the first field, because it shapes the prompt and not only
   # the output file — see docs/SPEC.md, "Techniques d'impression".
   class DesignsController < BaseController
-    before_action :set_design, only: %i[ show image original_image variants refine destroy ]
+    before_action :set_design, only: %i[ show image original_image garment_image variants refine destroy ]
 
     rate_limit to: 10, within: 1.minute, only: %i[ create variants refine ],
                with: -> { redirect_to new_design_path, alert: t("flash.rate_limited") }
@@ -77,6 +77,19 @@ module Client
 
       send_data preview, type: "image/png", disposition: "attachment",
                 filename: "#{@design.token}-original.png"
+    end
+
+    # The print file kept transparent, for the garment silhouette only: on a
+    # dark fabric the unprinted areas must show the fabric, not a white square.
+    # Watermarked like every other rendering, and shown inline, not downloaded.
+    def garment_image
+      authorize @design, :image?
+
+      preview = DesignPreview.call(@design, variant: :garment)
+      return head :not_found if preview.nil?
+
+      send_data preview, type: "image/png", disposition: "inline",
+                filename: "#{@design.token}-textile.png"
     end
 
     def variants
