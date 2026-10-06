@@ -287,7 +287,7 @@ Base : `services/generator/microservice` (FastAPI, port 5000, `127.0.0.1`).
 
 | Appel                              | Entrée                                                                   | Sortie                                                       |
 | ---------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ |
-| `POST /generate`                   | `prompt` (3–300), `style`, `colors` (1–6), `remove_background`, `user_id`, `seed?` | `202` : `job_id`, `status`, `position`, `refinements_left` |
+| `POST /generate`                   | `prompt` (3–300), `style`, `colors` (1–6), `remove_background`, `user_id`, `seed?`, `init_image?` (base64) | `202` : `job_id`, `status`, `position`, `refinements_left` |
 | `POST /jobs/:id/refine`            | `instruction` (3–200), `user_id`                                          | `202` : `job_id`, `status`, `position`, `refinements_left`   |
 | `POST /jobs/:id/variants`          | `user_id`, `count`                                                        | `202` : `job_ids`, `job_id`, `status`, `position`, `refinements_left` |
 | `GET /jobs/:id?user_id=`           | —                                                                        | `status`, `position`, `error`, `mode`, `parent_id`, `root_id`, `refinements_left`, `result` |

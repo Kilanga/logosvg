@@ -43,6 +43,8 @@ Rails.application.routes.draw do
   # Le fichier d'impression avec sa transparence, pour la silhouette de t-shirt :
   # le blanc non imprimé doit laisser voir la couleur du tissu.
   get  "designs/:token/sur-textile", to: "client/designs#garment_image", as: :design_garment_image
+  # L'image du client dont le design est parti, telle qu'elle a été réencodée.
+  get  "designs/:token/image-de-depart", to: "client/designs#reference_image", as: :design_reference_image
   post "designs/:token/variantes", to: "client/designs#variants", as: :design_variants
   post "designs/:token/retouche",  to: "client/designs#refine",   as: :design_refine
 

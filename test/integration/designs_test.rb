@@ -88,6 +88,68 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
+  # --- Starting from the client's own image (decided 06/10/2026) ----------
+
+  test "a client may start from an image of their own, re-encoded before it is kept" do
+    sign_in_as users(:client)
+
+    post designs_path, params: { design: valid_design.merge(
+      reference_image: upload(jpeg_with_exif, "image/jpeg", "photo.jpg"), reference_rights_confirmed: "1"
+    ) }
+
+    design = Design.order(:created_at).last
+    assert_redirected_to design_path(design)
+    assert_predicate design.reference_image, :attached?
+    assert_equal "image/png", design.reference_image.content_type
+    stored = Vips::Image.new_from_buffer(design.reference_image.download, "")
+    assert_not_includes stored.get_fields, "exif-data", "the phone's metadata must not survive"
+
+    get design_reference_image_path(design)
+    assert_response :success
+  end
+
+  test "the image is sent to the generation service with the request" do
+    design = designs(:pending_design)
+    design.reference_image.attach(io: StringIO.new(png), filename: "image-de-depart.png", content_type: "image/png")
+    stub_request(:post, GENERATE).to_return(status: 202, body: { job_id: "j1", status: "queued" }.to_json)
+
+    GeneratorClient.new.generate(design)
+
+    assert_requested :post, GENERATE do |request|
+      Base64.strict_decode64(JSON.parse(request.body)["init_image"]) == design.reference_image.download
+    end
+  end
+
+  test "without the rights checkbox, an image is refused and nothing is generated" do
+    sign_in_as users(:client)
+
+    assert_no_difference "Design.count" do
+      post designs_path, params: { design: valid_design.merge(reference_image: upload(png, "image/png", "logo.png")) }
+    end
+
+    assert_response :unprocessable_entity
+    assert_equal 0, GenerationQuota.for(users(:client)).used
+  end
+
+  test "an image of another kind is refused with a sentence the client understands" do
+    sign_in_as users(:client)
+
+    post designs_path, params: { design: valid_design.merge(
+      reference_image: upload(svg, "image/png", "faux.png"), reference_rights_confirmed: "1"
+    ) }
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, ERB::Util.html_escape(I18n.t("client.designs.reference_image.errors.wrong_type"))
+  end
+
+  test "starting from an image stays optional" do
+    sign_in_as users(:client)
+
+    post designs_path, params: { design: valid_design }
+
+    assert_not_predicate Design.order(:created_at).last.reference_image, :attached?
+  end
+
   # The shop's press is the real ceiling, whatever the form was made to send.
   test "a request beyond the shop's press is brought back within it" do
     sign_in_as users(:client)
@@ -449,6 +511,18 @@ class DesignsTest < ActionDispatch::IntegrationTest
     def svg
       %(<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10">) +
         %(<path d="M0 0h10v10H0z" fill="#1F5F7A"/></svg>)
+    end
+
+    def upload(bytes, type, name)
+      Rack::Test::UploadedFile.new(StringIO.new(bytes), type, original_filename: name)
+    end
+
+    # A JPEG carrying EXIF, as a phone photo would.
+    def jpeg_with_exif
+      image = Vips::Image.black(40, 30).add(120).cast(:uchar).bandjoin([ 60, 30 ]).copy(interpretation: :srgb)
+      image = image.copy
+      image.set_type(GObject::GSTR_TYPE, "exif-ifd0-Make", "Telephone (Make, ASCII, 10 components, 10 bytes)")
+      image.write_to_buffer(".jpg")
     end
 
     def png

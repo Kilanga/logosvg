@@ -348,6 +348,8 @@ fr:
         review_levels: "Niveaux acceptés"
       design:
         prompt: "Votre idée"
+        reference_image: "Image de départ"
+        reference_rights_confirmed: "L'accord sur les droits de l'image"
         style: "Style"
         technique: "Technique d'impression"
         colors_requested: "Nombre de couleurs"
@@ -1155,6 +1157,14 @@ fr:
         idea_legend: "Votre idée"
         prompt_placeholder: "un renard qui fait du skate, style rétro"
         prompt_hint: "Une phrase suffit. Décrivez le sujet, pas la technique."
+        reference_image: "Partir d'une image (facultatif)"
+        reference_image_hint: >-
+          Un croquis, votre ancien logo, une photo : l'IA part de cette image et
+          la transforme selon votre description. PNG, JPEG ou WebP, 10 Mo au plus.
+        reference_rights: >-
+          Cette image m'appartient ou j'ai le droit de l'utiliser, elle ne
+          reprend pas la marque de quelqu'un d'autre, et elle ne montre
+          personne d'identifiable sans son accord.
         colors_hint: "Chaque couleur est un écran de plus à l'atelier."
         size_legend: "La taille imprimée"
         size_hint:
@@ -1230,6 +1240,7 @@ fr:
           one: "Il reste %{count} reprise pour ce design."
           other: "Il reste %{count} reprises pour ce design."
         reviewed_by: "Version finalisée par %{designer}. Prête à envoyer à votre atelier."
+        from_reference: "Parti de votre image."
         budget_spent: "Vous avez utilisé vos trois reprises"
         budget_spent_body: >-
           Pour aller plus loin, un graphiste professionnel peut reprendre ce
@@ -1240,6 +1251,11 @@ fr:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
       refine:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
+      reference_image:
+        errors:
+          too_large: "L'image de départ dépasse 10 Mo."
+          wrong_type: "L'image de départ doit être un PNG, un JPEG ou un WebP."
+          unreadable: "L'image de départ est illisible."
       workshop_quota_reached: >-
         Ce mois-ci, %{printer} a utilisé toutes les générations de sa formule.
         L'atelier en est prévenu ; vous pourrez créer votre design dès le mois
@@ -1872,6 +1888,7 @@ fr:
         body:
           - "Les informations de votre compte : nom, adresse email, et si vous les renseignez, téléphone et ville."
           - "Ce que vous créez : descriptions, visuels générés, demandes d'impression et échanges avec les graphistes."
+          - "Les images que vous envoyez comme point de départ d'un design. Elles sont réencodées dès leur arrivée : leurs métadonnées, dont la position GPS d'une photo de téléphone, ne sont pas conservées. Elles sont supprimées avec le design."
       purposes:
         title: "Pourquoi"
         body:
