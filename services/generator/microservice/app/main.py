@@ -13,6 +13,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from .config import settings
+from .init_image import InitImageError
+from .init_image import decode as decode_init_image
 from .jobs import CREATE, REFINE, VARIANT, Job, JobManager, child_job, new_seed
 from .prompt_filter import PromptFilter, clean_prompt
 from .security import RateLimiter, require_api_key
@@ -64,6 +66,9 @@ class GenerateRequest(BaseModel):
     remove_background: bool = True
     user_id: str = Field(min_length=1, max_length=64, pattern=USER_ID)
     seed: Optional[int] = Field(default=None, ge=0, le=2**32 - 1)
+    # Facultative : une image du client (PNG, JPEG ou WebP en base64) dont le
+    # dessin part, transformée selon le prompt.
+    init_image: Optional[str] = Field(default=None, max_length=MAX_RESTORE_B64)
 
 
 class RefineRequest(BaseModel):
@@ -88,6 +93,9 @@ class RestoreRequest(BaseModel):
     used_refinements: int = Field(default=0, ge=0, le=20)
     # L'image de départ (source.png), en base64.
     source_png: str = Field(min_length=8, max_length=MAX_RESTORE_B64)
+    # L'image du client dont le design est parti, s'il y en avait une : sans
+    # elle, une variante du design restauré repartirait de zéro.
+    init_image: Optional[str] = Field(default=None, max_length=MAX_RESTORE_B64)
 
 
 class VariantsRequest(BaseModel):
@@ -128,6 +136,16 @@ def _budget_refusal(root_id: str, requested: int):
     )
 
 
+def _init_png(data_b64: Optional[str]) -> Optional[bytes]:
+    """L'image du client ramenée au carré de travail, ou 422 avec un message lisible."""
+    if not data_b64:
+        return None
+    try:
+        return decode_init_image(data_b64, settings.image_size)
+    except InitImageError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
 def _submitted(jobs: list) -> dict:
     return {
         "job_ids": [j.id for j in jobs],
@@ -159,6 +177,8 @@ def generate(req: GenerateRequest):
             status_code=422,
             detail="Cette demande contient une marque ou un terme non autorisé. Reformulez votre idée.",
         )
+    # Lue avant de compter la demande : une image refusée ne coûte rien.
+    init_png = _init_png(req.init_image)
     if manager.is_full():
         raise HTTPException(status_code=503, detail="Beaucoup de demandes en cours. Réessayez dans quelques minutes.")
 
@@ -180,6 +200,7 @@ def generate(req: GenerateRequest):
         technique=profile.key,
         print_width_cm=req.print_width_cm,
         seed=req.seed if req.seed is not None else new_seed(),
+        init_png=init_png,
     ))
     return {"job_id": job.id, "status": job.status, "position": manager.position(job),
             "refinements_left": manager.refinements_left(job.root_id)}
@@ -268,6 +289,7 @@ def restore(req: RestoreRequest):
         seed=req.seed if req.seed is not None else new_seed(),
         subject=req.subject,
         prior_refinements=min(req.used_refinements, settings.max_refinements),
+        init_png=_init_png(req.init_image),
     ), png)
     return {"job_id": job.id, "status": job.status,
             "refinements_left": manager.refinements_left(job.root_id)}

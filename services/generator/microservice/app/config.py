@@ -63,6 +63,11 @@ class Settings:
     # permis ; 4x-UltraSharp ne l'est pas.
     upscale_model: str = os.getenv("UPSCALE_MODEL", "")
 
+    # Image de départ fournie par le client (croquis, ancien logo, photo) : à quel
+    # point le dessin s'en écarte. Plus haut qu'une retouche (0,55), parce qu'il
+    # faut souvent changer de style — d'une photo à des aplats imprimables.
+    upload_denoise: float = _float("UPLOAD_DENOISE", 0.7)
+
     max_refinements: int = _int("MAX_REFINEMENTS", 3)
     max_variants: int = _int("MAX_VARIANTS", 3)
     refine_denoise: float = _float("REFINE_DENOISE", 0.55)
