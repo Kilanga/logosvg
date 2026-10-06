@@ -3,6 +3,33 @@
 
 <%# The panel replaces itself as the generation advances. Broadcast from a job,
     which is why development runs Solid Cable and not the async adapter. %>
+<% if @proposals.any? %>
+  <%# Several proposals of one click: the client keeps one before going on.
+      Each card listens to its own design's stream. %>
+  <div class="max-w-6xl">
+    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
+      <div class="max-w-2xl">
+        <h2 class="font-display text-2xl font-semibold uppercase"><%= t(".proposals_title") %></h2>
+        <p class="mt-2 text-sm text-muted"><%= t(".proposals_hint") %></p>
+      </div>
+      <% if @design.parent_id %>
+        <%= link_to t(".back_to_parent"), design_path(Design.where(id: @design.parent_id).pick(:token)),
+              class: "text-sm underline underline-offset-4" %>
+      <% end %>
+    </div>
+
+    <ol class="mt-6 grid gap-4 md:grid-cols-3">
+      <% @proposals.each do |proposal| %>
+        <li>
+          <%= turbo_stream_from DesignChannel.stream_name(proposal) %>
+          <div id="design_<%= proposal.token %>" class="h-full">
+            <%= render "client/designs/design", design: proposal %>
+          </div>
+        </li>
+      <% end %>
+    </ol>
+  </div>
+<% else %>
 <%= turbo_stream_from DesignChannel.stream_name(@design) %>
 
 <div class="grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start">
@@ -74,3 +101,4 @@
     <% end %>
   </aside>
 </div>
+<% end %>

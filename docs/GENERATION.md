@@ -56,10 +56,15 @@ Délai réseau côté Rails : **20 s par appel**.
   "print_width_cm": 25,
   "remove_background": true,
   "user_id": "a1b2c3…",
-  "seed": 123456
+  "seed": 123456,
+  "count": 3
 }
 ```
 
+- `count` (facultatif, 1 par défaut, plafonné par `PROPOSALS`, 3) : nombre de
+  propositions dessinées pour ce clic. Chacune a son propre `job_id`, sa graine
+  et son **parti pris graphique** (`result.flavour` : 0 neutre, 1 rétro, 2
+  moderne), sur le même sujet. `seed` ne s'applique qu'à la première.
 - `colors` est **absent** pour les techniques qui n'ont pas de plafond d'encres.
   Ne pas supposer qu'il est là.
 - `print_width_cm` est toujours envoyé, même en vectoriel où il ne sert pas au
@@ -73,7 +78,8 @@ Délai réseau côté Rails : **20 s par appel**.
   dit, et Rails marque alors les fichiers `compositeWithTrainedAlgorithmicMedia`.
   Une image illisible ou d'un autre format renvoie un `422` en français, sans
   compter la demande.
-- Réponse attendue : `job_id`, `status`, `position`, `refinements_left`.
+- Réponse attendue : `job_ids` (un par proposition), `job_id` (la première),
+  `status`, `position`, `refinements_left`.
 
 ### `GET /jobs/:id?user_id=…`
 
@@ -95,7 +101,8 @@ traitée comme « encore en cours », et la demande expirera au bout de 5 minute
   "prompt_used": "screen print separation artwork, a fox…",
   "subject": "a fox on a skateboard",
   "instruction": "…",
-  "seed": 123456
+  "seed": 123456,
+  "flavour": 0
 }
 ```
 
@@ -116,9 +123,11 @@ l'écran — mais un champ faux se retrouve sur un t-shirt.
 
 ### `POST /jobs/:id/refine` et `POST /jobs/:id/variants`
 
-Créent des enfants de la même lignée (`root_id`). Rails crée une ligne par
-`job_id` renvoyé. `variants` renvoie `job_ids` (un tableau) **et** `job_id`
-(le premier) ; l'un ou l'autre suffit.
+Créent des enfants de la même lignée (`root_id`). Les deux acceptent `count`
+et renvoient `job_ids` (un tableau) **et** `job_id` (le premier) ; Rails crée
+une ligne par `job_id` renvoyé. Les propositions d'un même clic partagent un
+lot : elles ne coûtent **qu'une reprise** du budget, et une retouche ne
+traduit l'instruction qu'une fois pour tout le lot.
 
 ### `POST /jobs/restore` → `201`
 
@@ -266,7 +275,7 @@ Chaque entrée :
 
 ## 7. La définition du fichier matriciel — réglé
 
-> SDXL dessine en 1 024 px de côté. À 25 cm de large, cela ne fait que **104 dpi réels** :
+> Le modèle dessine en 1 024 px de côté. À 25 cm de large, cela ne fait que **104 dpi réels** :
 > le fichier partait bien en 300 dpi, mais interpolé, et l'avertissement « définition
 > faible » tombait sur presque chaque commande.
 
@@ -316,21 +325,32 @@ permis. **Pas `4x-UltraSharp`**, sous licence non commerciale. Comme la passe
 haute définition, l'étape n'est jamais bloquante : en cas d'échec, le fichier
 part interpolé, avec un avertissement.
 
-### Le modèle d'image : SDXL ou FLUX.2 [klein] 4B
+### Le modèle d'image : FLUX.2 [klein] 4B distillé (octobre 2026)
 
-`IMAGE_MODEL` choisit le graphe envoyé à ComfyUI ; le contrat HTTP ne change
-pas. `sdxl` (défaut) garde les workflows `sdxl_*.json`. `flux2_klein` envoie
-`flux2_klein.json` et `flux2_klein_img2img.json`, repris du modèle de workflow
-officiel de ComfyUI (UNETLoader, CLIPLoader `flux2`, EmptyFlux2LatentImage,
-Flux2Scheduler, CFGGuider, SamplerCustomAdvanced) ; la retouche et la passe
-haute définition y sont de l'img2img par `SplitSigmasDenoise`.
+Un seul modèle, un seul jeu de workflows : `flux2_klein.json`,
+`flux2_klein_img2img.json` (retouche, image du client, passe haute
+définition, par `SplitSigmasDenoise`) et `upscale_model.json`. SDXL et la
+version *base* de klein ont été retirés après comparaison sur pièces :
 
-FLUX.2 [klein] 4B est sous **Apache 2.0** dans ses deux versions — la 9B, elle,
-ne l'est pas. La version *base* suit le prompt négatif (20 pas, CFG 5) ; la
-*distillée* va cinq fois plus vite (4 pas, CFG 1) mais l'ignore, alors que toutes
-les interdictions du moteur y vivent. `scripts/compare_models.py` génère les
-mêmes demandes avec les trois et produit une planche HTML : le choix se fait sur
-pièces, pas sur la réputation.
+| Modèle | Temps par image | Sujet isolé | Tracés | Texte |
+| --- | --- | --- | --- | --- |
+| SDXL | 9 s | non, affiche avec décor | ~100 | illisible |
+| klein base | 21 s | oui | 5–30 | correct |
+| **klein distillé** | **4 s** | oui | 3–22 | le meilleur |
+
+Licence **Apache 2.0** (la 9B ne l'est pas). Le distillé dessine en 4 pas,
+CFG 1, et **ignore le prompt négatif** : il n'y en a plus. Toutes les consignes
+sont écrites en phrases positives dans un prompt unique
+(`app/prompt_builder.py`) : fond blanc sans décor, « ne pas dessiner le
+t-shirt, ni mannequin, ni maquette », N aplats exactement, et texte entre
+guillemets reproduit lettre pour lettre, sinon aucun texte.
+
+Le texte entre guillemets (« », "", “”) **n'est jamais traduit** :
+`translate.protect` le remplace par des marqueurs avant Ollama et
+`restore` le remet ensuite — « FÊTE » reste FÊTE.
+
+Avec 4 s par image, chaque clic dessine **trois propositions** de partis pris
+différents ; le client en choisit une pour continuer.
 
 ## 8. Attentes de performance
 

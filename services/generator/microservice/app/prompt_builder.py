@@ -1,113 +1,76 @@
-"""Transforme l'idée du client en prompt contraint par la technique d'impression.
+"""Transforme l'idée du client en un prompt pour FLUX.2 [klein], borné par la technique.
 
-Deux familles de contraintes, et non plus une seule :
+FLUX.2 lit le prompt avec un modèle de langage (Qwen3), pas avec CLIP : il comprend
+les phrases, les négations et les guillemets. Le prompt est donc écrit comme une
+consigne, en un seul texte — il n'y a plus de prompt négatif, que la version
+distillée ignore de toute façon.
 
-- **Sortie vectorielle** (sérigraphie, flex, broderie) : chaque couleur imprimée coûte une
-  encre, donc pas de dégradé, pas d'ombre, pas de fond ; et chaque texture (hachures,
-  trames, lignes de gravure) devient des centaines de formes dans le SVG, donc illisible à
-  l'impression et lourde à manipuler.
-- **Sortie matricielle** (DTF, DTG, sublimation) : la machine imprime en quadrichromie,
-  les dégradés et les ombres passent sans surcoût. Brider le modèle à quelques aplats
-  reviendrait à jeter la moitié de ce que l'atelier sait faire. Restent les contraintes
-  communes : un sujet isolé, sur fond blanc uni, détourable proprement.
+Trois choses y sont dites à chaque fois, parce que leur oubli a été constaté :
 
-Dans les deux cas le fond doit rester retirable : « isolated on a pure white background »
-n'est jamais négociable.
+- **le dessin seul**, pas le vêtement : « t-shirt pour la fête du village » faisait
+  dessiner un t-shirt, qui se serait retrouvé imprimé sur le t-shirt ;
+- **un sujet isolé sur fond blanc uni**, condition du détourage et de la
+  vectorisation ;
+- **le texte entre guillemets, à la lettre** : « FÊTE 2026 » était devenu
+  « FESTIVAL 2026 ».
+
+Deux familles de contraintes, selon la technique : aplats comptés en encres pour la
+sortie vectorielle (sérigraphie, flex, broderie), couleurs libres pour la sortie
+matricielle (DTF, DTG, sublimation).
 """
 from .techniques import Technique, resolve
 
-# Aucune négation ici, et c'est délibéré. L'encodeur de texte de SDXL n'a pas de
-# notion de négation : « no scenery » lui apporte surtout le mot « scenery ».
-# Ces mentions, censées interdire le décor, le demandaient. Deux séries d'essais
-# l'ont montré sur le même prompt — un phare livré deux fois sur deux en paysage
-# complet, avec ciel, mer, horizon et reflets, alors que le prompt disait
-# « no scenery, no landscape, no horizon ». La seconde fois le fond était bleu
-# nuit plutôt que blanc, et le vectoriseur en a fidèlement tiré 8 722 formes :
-# un fichier inimprimable, au bout de quatre minutes d'attente.
-#
-# Tout ce qu'on ne veut pas est désormais dans le prompt négatif, qui est le
-# seul endroit où le modèle sait le lire.
 STYLES = {
-    "logo": "minimalist vector logo emblem, single centered symbol, simple bold geometric shapes",
-    "illustration": "flat vector illustration, bold simple shapes, single subject",
-    "mascotte": "cartoon mascot character, flat vector style, thick outlines, full body character",
-    "badge": "vintage badge emblem, compact circular composition, flat vector style, bold outlines",
+    "logo": "A minimalist logo emblem built around one centered symbol with simple bold geometric shapes",
+    "illustration": "A flat illustration with bold simple shapes and a single subject",
+    "mascotte": "A full-body cartoon mascot character with thick outlines",
+    "badge": "A compact circular badge emblem with bold outlines",
 }
 
-# Styles réécrits pour les techniques qui savent rendre le détail et les dégradés.
 RICH_STYLES = {
-    "logo": "polished logo emblem, single centered symbol, clean shapes",
-    "illustration": "detailed illustration, single subject",
-    "mascotte": "cartoon mascot character, expressive full body character, clean outlines",
-    "badge": "vintage badge emblem, compact circular composition, clean outlines",
+    "logo": "A polished logo emblem built around one centered symbol",
+    "illustration": "A detailed illustration of a single subject",
+    "mascotte": "An expressive full-body cartoon mascot character with clean outlines",
+    "badge": "A compact circular badge emblem with clean outlines",
 }
 
-FLAT_TEMPLATE = (
-    "{style}, {subject}, {technique}, bold clean outlines, solid flat colors, "
-    "limited palette of exactly {colors} flat colors, "
-    "centered composition, single subject only, "
-    "isolated on a pure white background (#ffffff), plain empty white background, "
-    "screen print t-shirt design"
+# Les trois propositions d'une même demande : la première telle que demandée, les
+# deux autres dans un registre voisin, pour que le choix serve à quelque chose.
+FLAVOURS = {
+    "vector": ("", "Retro vintage screen print look.", "Bold modern graphic look with thick outlines."),
+    "raster": ("", "Vintage illustration look.", "Vibrant modern illustration look."),
+}
+
+ARTWORK_ONLY = (
+    "Only the artwork itself, as a print-ready graphic for a t-shirt: do not draw the "
+    "t-shirt, a model, a mockup, a poster or a frame."
+)
+ISOLATED = (
+    "One single subject, centered, isolated on a plain pure white background, "
+    "with no scenery, no landscape and no background shapes."
+)
+TEXT_RULE = (
+    "If the subject contains text in quotation marks, write that text exactly as given, "
+    "letter for letter; otherwise add no text at all."
 )
 
-RICH_TEMPLATE = (
-    "{style}, {subject}, {technique}, clean outlines, rich colors, "
-    "centered composition, single subject only, "
-    "isolated on a pure white background (#ffffff), plain empty white background, "
-    "t-shirt print design"
-)
 
-# Ce que personne ne veut, quelle que soit la machine : du texte, un cadre, un décor,
-# plusieurs sujets, un fond qui ne se détourera pas.
-COMMON_NEGATIVE = (
-    "photo, photorealistic, 3d render, blur, text, letters, "
-    "watermark, signature, frame, border, square frame, panel, poster layout, "
-    # Ce que les négations du prompt positif prétendaient interdire, à leur
-    # véritable place. « landscape scene » et « horizon » manquaient ici : le
-    # phare les a livrés deux fois.
-    "scenery, landscape, landscape scene, horizon, sky, clouds, sea, water, "
-    "ground, floor, terrain, buildings behind subject, "
-    "background scenery, background pattern, background shapes, "
-    "geometric shapes behind subject, diamond shape behind subject, grey background, "
-    "gray background, colored background, off-white background, beige background, "
-    "dark background, halo, glow, vignette, reflection, collage, multiple subjects, "
-    "busy composition"
-)
-
-# Ce qui coûte une encre ou des centaines de chemins : réservé aux sorties vectorielles.
-FLAT_NEGATIVE = (
-    "gradient, soft shadow, drop shadow, ground shadow, shading, "
-    "texture, noise, grain, watercolor, sketch lines, "
-    "halftone, hatching, cross-hatching, engraving lines, line texture, stippling, "
-    "dotted texture, speckles"
-)
-
-# Conservé pour compatibilité avec l'ancien appel : c'est le négatif de la sérigraphie.
-NEGATIVE_PROMPT = f"{FLAT_NEGATIVE}, {COMMON_NEGATIVE}"
+def flavour_count() -> int:
+    return len(FLAVOURS["vector"])
 
 
-def _join(*parts: str) -> str:
-    return ", ".join(p for p in parts if p)
-
-
-def build_prompts(subject: str, style: str, colors: int, technique: str = None) -> tuple:
-    """Construit le couple (positif, négatif) pour un sujet et une technique donnés."""
+def build_prompt(subject: str, style: str, colors: int, technique: str = None, flavour: int = 0) -> str:
+    """Le prompt complet d'un dessin. `flavour` choisit le registre (0, 1 ou 2)."""
     profile: Technique = resolve(technique)
+    flavours = FLAVOURS[profile.family]
+    look = flavours[flavour % len(flavours)]
 
     if profile.gradients:
-        style_text = RICH_STYLES.get(style, RICH_STYLES["illustration"])
-        positive = RICH_TEMPLATE.format(
-            style=style_text, subject=subject, technique=profile.prompt_hint
-        )
-        negative = _join(profile.negative_hint, COMMON_NEGATIVE)
+        opening = RICH_STYLES.get(style, RICH_STYLES["illustration"])
+        palette = ""
     else:
-        style_text = STYLES.get(style, STYLES["illustration"])
-        positive = FLAT_TEMPLATE.format(
-            style=style_text,
-            subject=subject,
-            technique=profile.prompt_hint,
-            colors=profile.clamp_colors(colors),
-        )
-        negative = _join(profile.negative_hint, FLAT_NEGATIVE, COMMON_NEGATIVE)
+        opening = STYLES.get(style, STYLES["illustration"])
+        palette = f"Use exactly {profile.clamp_colors(colors)} flat colors, plus the white of the background."
 
-    return positive, negative
+    parts = [f"{opening}: {subject}.", look, profile.prompt_hint, palette, ISOLATED, ARTWORK_ONLY, TEXT_RULE]
+    return " ".join(p for p in parts if p)

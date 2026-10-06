@@ -4,7 +4,7 @@ module Client
   # The technique is the first field, because it shapes the prompt and not only
   # the output file — see docs/SPEC.md, "Techniques d'impression".
   class DesignsController < BaseController
-    before_action :set_design, only: %i[ show image original_image garment_image reference_image variants refine destroy ]
+    before_action :set_design, only: %i[ show image original_image garment_image reference_image variants refine choose destroy ]
 
     rate_limit to: 10, within: 1.minute, only: %i[ create variants refine ],
                with: -> { redirect_to new_design_path, alert: t("flash.rate_limited") }
@@ -15,9 +15,12 @@ module Client
     def index
       authorize Design
 
+      # The proposals of a creation not yet chosen are one idea, not three:
+      # one card, which leads to the choice.
       @lineages = policy_scope(Design).roots.newest_first
                                       .includes(:printer, children: :print_file_attachment)
                                       .with_attached_print_file
+                                      .to_a.uniq { |design| design.batch_token || design.token }
     end
 
     def new
@@ -59,6 +62,8 @@ module Client
       end
 
       if @design.save
+        # The other proposals of the click, waiting for the same job.
+        SpawnProposals.call(@design)
         GenerateDesignJob.perform_later(@design)
         PrinterGenerationQuota.for(context_printer).notify_if_reached!
         redirect_to design_path(@design)
@@ -70,7 +75,16 @@ module Client
 
     def show
       authorize @design
+      @proposals = proposals_on_offer
       @compatible_printers = compatible_printers
+    end
+
+    # The client keeps this proposal; the others of its click are set aside.
+    def choose
+      authorize @design
+
+      ChooseProposal.call(@design)
+      redirect_to design_path(@design), notice: t(".chosen")
     end
 
     # The only rendering a client ever receives: a watermarked raster of the
@@ -233,10 +247,19 @@ module Client
                          .then { |result| result.success? || result.skipped? }
       end
 
+      # Every proposal of the click, while the client has not kept one. Loaded
+      # with what the panel shows: each is rendered with the same partial.
+      def proposals_on_offer
+        return [] unless @design.awaiting_choice?
+
+        @design.proposals.with_attached_print_file.with_attached_source_png
+               .with_attached_reference_image.to_a
+      end
+
       # Who could print this, for the panel under the preview. Techniques are
       # loaded in one go: this asks the question of every listed shop.
       def compatible_printers
-        return [] unless @design.ready?
+        return [] unless @design.ready? && !@design.awaiting_choice?
 
         Printer.listed.includes(:techniques).by_prominence.select do |printer|
           @design.compatibility_with(printer).compatible?

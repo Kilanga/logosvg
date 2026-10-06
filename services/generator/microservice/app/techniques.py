@@ -33,8 +33,10 @@ class Technique:
     white_is_ink: bool
     min_detail: int  # mouchetures ignorées à la vectorisation
     dpi: int
+    # Une phrase en anglais, lue par FLUX.2 : ce que la technique exige du dessin.
+    # FLUX lit les négations (son encodeur est un modèle de langage, pas CLIP) :
+    # les interdits y sont dits en clair, il n'y a plus de prompt négatif.
     prompt_hint: str
-    negative_hint: str
 
     @property
     def file_name(self) -> str:
@@ -64,8 +66,10 @@ CATALOG = {
             white_is_ink=False,
             min_detail=20,
             dpi=300,
-            prompt_hint="screen print separation artwork, solid spot colors, crisp clean edges",
-            negative_hint="",
+            prompt_hint=(
+                "Screen printing artwork: solid spot colors with crisp clean edges, "
+                "no gradients, no shading, no texture, no halftone."
+            ),
         ),
         Technique(
             key="flex",
@@ -80,10 +84,9 @@ CATALOG = {
             min_detail=64,
             dpi=300,
             prompt_hint=(
-                "cut vinyl sticker design, one bold solid silhouette, very thick shapes, "
-                "large connected areas, no small details, no thin lines"
+                "Cut vinyl design: one bold solid silhouette with very thick shapes and large "
+                "connected areas; no thin lines, no small details, no tiny ornaments."
             ),
-            negative_hint="thin lines, hairline strokes, small details, tiny shapes, fine ornaments",
         ),
         Technique(
             key="embroidery",
@@ -98,10 +101,9 @@ CATALOG = {
             min_detail=56,
             dpi=300,
             prompt_hint=(
-                "embroidered patch design, bold simple shapes, thick outlines, "
-                "large flat areas, no small details"
+                "Embroidery design: bold simple shapes, thick outlines and large flat areas; "
+                "no thin lines, no small details, no tiny text."
             ),
-            negative_hint="thin lines, small details, fine ornaments, tiny text, delicate strokes",
         ),
         Technique(
             key="dtf",
@@ -113,8 +115,7 @@ CATALOG = {
             white_is_ink=True,
             min_detail=0,
             dpi=300,
-            prompt_hint="detailed illustration, rich colors, smooth shading, crisp clean edges",
-            negative_hint="",
+            prompt_hint="Full-color illustration with rich colors, smooth shading and crisp clean edges.",
         ),
         Technique(
             key="dtg",
@@ -126,8 +127,7 @@ CATALOG = {
             white_is_ink=True,
             min_detail=0,
             dpi=300,
-            prompt_hint="detailed illustration, rich colors, smooth shading, crisp clean edges",
-            negative_hint="",
+            prompt_hint="Full-color illustration with rich colors, smooth shading and crisp clean edges.",
         ),
         Technique(
             key="sublimation",
@@ -140,8 +140,10 @@ CATALOG = {
             white_is_ink=False,
             min_detail=0,
             dpi=300,
-            prompt_hint="detailed illustration, rich colors, smooth shading, bright tones",
-            negative_hint="white ink, white outline",
+            prompt_hint=(
+                "Full-color illustration with rich colors and smooth shading, bright tones; "
+                "no white outline, as the fabric itself provides the white."
+            ),
         ),
     )
 }
@@ -160,7 +162,6 @@ def catalog_payload() -> list:
     for technique in CATALOG.values():
         entry = asdict(technique)
         entry.pop("prompt_hint", None)
-        entry.pop("negative_hint", None)
         entry["file_name"] = technique.file_name
         payload.append(entry)
     return payload

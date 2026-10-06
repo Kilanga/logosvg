@@ -1,5 +1,9 @@
 <%# The design panel, in whichever of its three states it is. Replaced whole
-    rather than patched: generating, ready and failed look nothing alike. %>
+    rather than patched: generating, ready and failed look nothing alike.
+    One of several proposals not yet kept is drawn as a card of the choice. %>
+<% if design.awaiting_choice? %>
+  <%= render "client/designs/proposal", design: design %>
+<% else %>
 <div class="panel overflow-hidden">
   <% if design.in_progress? %>
     <div class="screen-tint flex aspect-square w-full flex-col items-center justify-center gap-4 p-8 text-center">
@@ -190,3 +194,4 @@
     <% end %>
   <% end %>
 </div>
+<% end %>

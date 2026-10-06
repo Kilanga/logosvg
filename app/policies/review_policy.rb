@@ -8,7 +8,7 @@ class ReviewPolicy < ApplicationPolicy
   def index? = user&.client? || user&.designer? || user&.admin?
 
   # Only a client buys one, and only for a finished design of their own.
-  def create? = user&.client? && owns_design? && record.design&.ready?
+  def create? = user&.client? && owns_design? && record.design&.ready? && !record.design.awaiting_choice?
   def new? = create?
 
   # --- The client's own actions ---------------------------------------------

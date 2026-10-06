@@ -15,8 +15,13 @@ class DesignPolicy < ApplicationPolicy
   def image? = owner?
 
   # A ready design is immutable: a variant or a refinement makes a child.
-  def variants? = owner? && record.ready?
-  def refine? = owner? && record.ready?
+  # Nothing goes further from one of several proposals until the client has
+  # kept it.
+  def variants? = owner? && record.ready? && !record.awaiting_choice?
+  def refine? = variants?
+
+  # Keeping one of the proposals of a click: a ready one, still on offer.
+  def choose? = owner? && record.ready? && record.awaiting_choice?
 
   def destroy? = owner?
 

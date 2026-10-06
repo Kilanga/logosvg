@@ -1200,6 +1200,18 @@ fr:
         send_to: "Envoyer"
         see_directory: "Voir dans l'annuaire"
         no_compatible_printer: "Aucun atelier référencé ne pratique cette technique pour l'instant."
+        proposals_title: "Choisissez votre proposition"
+        proposals_hint: >-
+          L'IA a dessiné plusieurs versions de votre idée, chacune avec son
+          parti pris. Gardez celle qui vous plaît : c'est d'elle que partiront
+          vos retouches, et les autres seront écartées.
+        back_to_parent: "Revenir à la version précédente"
+      choose:
+        chosen: "Proposition retenue. Vous pouvez la retoucher ou l'envoyer à un atelier."
+      proposal:
+        label: "Proposition"
+        choose: "Garder celle-ci"
+        enlarge: "Voir en grand"
       design:
         working: "Génération en cours"
         working_hint: "Comptez une à deux minutes. La page se met à jour toute seule."
@@ -1230,8 +1242,9 @@ fr:
         refine_placeholder: "Par exemple : enlève le fond et mets-lui un casque"
         refine_submit: "Modifier ce design"
         refine_cost: >-
-          Chaque demande — une modification comme un jeu de variantes —
-          consomme une reprise sur les trois de ce design.
+          Chaque demande — une modification comme d'autres versions — dessine
+          trois propositions et consomme une reprise sur les trois de ce
+          design.
         screens:
           one: "%{count} écran"
           other: "%{count} écrans"

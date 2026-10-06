@@ -38,10 +38,22 @@ class PrinterGenerationQuotaTest < ActiveSupport::TestCase
     assert_enqueued_emails(0) { PrinterGenerationQuota.for(printers(:rennes)).notify_if_reached! }
   end
 
+  # Since October 2026 one click draws three proposals: it is still one
+  # generation for the workshop.
+  test "the proposals of one click count once" do
+    rennes = printers(:rennes)
+    before = PrinterGenerationQuota.for(rennes).used
+
+    3.times { design_for(rennes, batch_token: "click-1") }
+    design_for(rennes)
+
+    assert_equal before + 2, PrinterGenerationQuota.for(rennes).used
+  end
+
   private
-    def design_for(printer, status: "ready", created_at: Time.current)
+    def design_for(printer, status: "ready", created_at: Time.current, batch_token: nil)
       Design.insert!({ user_id: users(:client).id, printer_id: printer.id, prompt: "un renard",
-                       technique: "screen_printing", print_width_cm: 25, status: status,
+                       technique: "screen_printing", print_width_cm: 25, status: status, batch_token: batch_token,
                        token: SecureRandom.base58(24), created_at: created_at, updated_at: created_at })
     end
 end

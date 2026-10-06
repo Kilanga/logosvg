@@ -58,10 +58,11 @@ def test_serigraphie_produit_un_svg(client):
     assert data["status"] == "done", data
     assert data["result"]["output"] == "vector"
     assert data["result"]["print_file"] == "design.svg"
-    # Les interdictions vivent dans le prompt négatif, et nulle part ailleurs :
-    # l'encodeur de SDXL ne sait pas lire une négation dans le prompt positif.
-    assert "gradient" in data["result"]["negative_used"]
-    assert "no gradients" not in data["result"]["prompt_used"]
+    # Un seul prompt : FLUX.2 lit les négations, et la sérigraphie interdit les
+    # dégradés en toutes lettres. Le dessin seul, jamais le vêtement.
+    assert "negative_used" not in data["result"]
+    assert "no gradients" in data["result"]["prompt_used"]
+    assert "do not draw the t-shirt" in data["result"]["prompt_used"]
 
     svg = client.get(f"/jobs/{job_id}/design.svg", params={"user_id": "t1"}, headers=HEADERS)
     assert svg.status_code == 200 and "<svg" in svg.text
@@ -84,11 +85,11 @@ def test_dtf_produit_une_image_dimprimerie(client):
     result = data["result"]
     assert result["output"] == "raster"
     assert result["print_file"] == "print.png"
-    # Les dégradés sont l'intérêt de la machine : le négatif ne les interdit plus.
-    assert "gradient" not in result["negative_used"]
-    assert "shading" not in result["negative_used"]
+    # Les dégradés sont l'intérêt de la machine : rien ne les interdit ici.
+    assert "no gradients" not in result["prompt_used"]
+    assert "smooth shading" in result["prompt_used"]
     # Le décor, lui, reste interdit quelle que soit la technique.
-    assert "landscape" in result["negative_used"]
+    assert "no scenery" in result["prompt_used"]
 
     stats = result["stats"]
     assert stats["dpi"] == 300
@@ -275,12 +276,14 @@ def test_le_workflow_flux2_recoit_prompt_tirage_et_taille(monkeypatch):
 
     monkeypatch.setattr(generator, "settings", dataclasses.replace(
         generator.settings, image_size=1000, flux_steps=4, flux_cfg=1.0))
-    gen = generator.Flux2KleinGenerator()
+    gen = generator.ComfyUIGenerator()
 
-    wf = gen._workflow("a fox", "photo", 42)
+    wf = gen._workflow("a fox", 42)
     _liens_valides(wf)
     assert wf["4"]["inputs"]["text"] == "a fox"
-    assert wf["5"]["inputs"]["text"] == "photo"
+    # Distillé : pas de prompt négatif, le conditionnement négatif est mis à zéro.
+    assert wf["5"]["class_type"] == "ConditioningZeroOut"
+    assert wf["1"]["inputs"]["unet_name"] == "flux-2-klein-4b-fp8.safetensors"
     assert wf["8"]["inputs"]["noise_seed"] == 42
     assert wf["7"]["inputs"]["steps"] == 4 and wf["10"]["inputs"]["cfg"] == 1.0
     # 1 000 n'est pas un multiple de 16 : le latent serait refusé.
@@ -290,7 +293,7 @@ def test_le_workflow_flux2_recoit_prompt_tirage_et_taille(monkeypatch):
 def test_la_retouche_flux2_part_de_l_image_avec_un_bruit_partiel():
     import app.generator as generator
 
-    wf = generator.Flux2KleinGenerator()._workflow_refine("a fox", "", 7, "tsia_x.png", 0.35, size=1536)
+    wf = generator.ComfyUIGenerator()._workflow_refine("a fox", 7, "tsia_x.png", 0.35, size=1536)
     _liens_valides(wf)
     assert wf["14"]["inputs"]["image"] == "tsia_x.png"
     assert wf["17"]["inputs"]["denoise"] == 0.35
@@ -299,13 +302,46 @@ def test_la_retouche_flux2_part_de_l_image_avec_un_bruit_partiel():
     assert wf["15"]["inputs"]["width"] == 1536
 
 
-def test_le_modele_se_choisit_dans_l_environnement(monkeypatch):
+def test_seul_flux2_reste_et_le_mock_sert_aux_tests(monkeypatch):
     import dataclasses
+    from pathlib import Path
 
     import app.generator as generator
 
-    base = dataclasses.replace(generator.settings, generator_mode="comfyui")
-    monkeypatch.setattr(generator, "settings", dataclasses.replace(base, image_model="flux2_klein"))
-    assert isinstance(generator.get_generator(), generator.Flux2KleinGenerator)
-    monkeypatch.setattr(generator, "settings", dataclasses.replace(base, image_model="sdxl"))
+    monkeypatch.setattr(generator, "settings", dataclasses.replace(generator.settings, generator_mode="comfyui"))
     assert type(generator.get_generator()) is generator.ComfyUIGenerator
+    workflows = {p.name for p in (Path(generator.__file__).parent.parent / "workflows").glob("*.json")}
+    assert workflows == {"flux2_klein.json", "flux2_klein_img2img.json", "upscale_model.json"}
+
+
+# ------------------------------------------------------------------ prompts
+# Les deux défauts vus à la comparaison du 06/10 : le t-shirt dessiné, et le
+# texte traduit (« FÊTE 2026 » devenu « FESTIVAL 2026 »).
+
+def test_le_prompt_demande_le_dessin_seul_et_le_texte_a_la_lettre():
+    from app.prompt_builder import build_prompt
+
+    prompt = build_prompt('a village party with the text "FÊTE 2026"', "illustration", 3, "screen_printing")
+    assert '"FÊTE 2026"' in prompt
+    assert "letter for letter" in prompt
+    assert "do not draw the t-shirt" in prompt
+    assert "exactly 3 flat colors" in prompt
+
+
+def test_les_trois_propositions_ont_des_registres_differents():
+    from app.prompt_builder import build_prompt, flavour_count
+
+    prompts = {build_prompt("a fox", "mascotte", 3, "screen_printing", i) for i in range(flavour_count())}
+    assert len(prompts) == 3
+
+
+def test_le_texte_entre_guillemets_ne_passe_pas_par_le_traducteur():
+    from app.translate import protect, restore
+
+    protected, saved = protect("Fête du village avec « FÊTE 2026 » et \"Les Lions\"")
+    assert "FÊTE" not in protected and "Lions" not in protected
+    assert saved == ["FÊTE 2026", "Les Lions"]
+    # Le traducteur garde les repères : le texte revient à la lettre.
+    assert restore("Village party with [[T1]] and [[T2]]", saved) == 'Village party with "FÊTE 2026" and "Les Lions"'
+    # Il en perd un : le texte n'est pas perdu pour autant.
+    assert '"Les Lions"' in restore("Village party with [[T1]]", saved)

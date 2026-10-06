@@ -19,7 +19,7 @@ from PIL import Image
 
 from .config import settings
 from .generator import GenerationError, get_generator
-from .prompt_builder import build_prompts
+from .prompt_builder import build_prompt
 from .prompt_filter import PromptFilter
 from .raster import rasterize, target_pixels
 from .refine import apply_instruction
@@ -49,6 +49,8 @@ class Job:
     # Les trois variantes nées d'un même clic partagent ce jeton : elles comptent
     # alors pour UNE reprise, et non trois. Voir used_refinements.
     batch_id: Optional[str] = None
+    # Le registre de la proposition dans son lot (0, 1, 2) : voir prompt_builder.
+    flavour: int = 0
     parent_id: Optional[str] = None
     root_id: Optional[str] = None
     instruction: Optional[str] = None
@@ -77,6 +79,7 @@ class JobManager:
         self.queue: asyncio.Queue = asyncio.Queue()
         self.generator = get_generator()
         self.prompt_filter = prompt_filter
+        self.batch_subjects: dict = {}
 
     # ------------------------------------------------------------------ file d'attente
     def is_full(self) -> bool:
@@ -111,22 +114,18 @@ class JobManager:
     def used_refinements(self, root_id: str) -> int:
         """Nombre de reprises déjà demandées sur ce design (hors création initiale).
 
-        Une reprise est une **action du client**, pas une image. Un clic sur
-        « proposez-moi d'autres versions » produit trois tirages et ne coûte
-        qu'une reprise : compter les images consommait tout le budget d'un seul
-        geste, et le chat de retouche devenait inaccessible à qui avait demandé
-        des variantes en premier. Les trois tirages d'un même clic partagent un
-        `batch_id` et ne valent donc qu'un.
+        Une reprise est une **action du client**, pas une image. Chaque clic —
+        retouche ou « d'autres versions » — produit trois propositions et ne
+        coûte qu'une reprise : elles partagent un `batch_id` et ne valent qu'un.
+        Un enfant sans lot ne peut venir que d'une version antérieure du
+        service : il compte seul, faute de mieux.
         """
         enfants = [j for j in self.lineage(root_id) if j.id != root_id and j.status != "error"]
-        retouches = sum(1 for j in enfants if j.mode != VARIANT)
-        lots = {j.batch_id for j in enfants if j.mode == VARIANT and j.batch_id}
-        # Une variante sans lot ne peut venir que d'une version antérieure du
-        # service : on la compte seule, faute de mieux.
-        orphelines = sum(1 for j in enfants if j.mode == VARIANT and not j.batch_id)
+        lots = {j.batch_id for j in enfants if j.batch_id}
+        orphelins = sum(1 for j in enfants if not j.batch_id)
         racine = self.get(root_id)
         anterieures = racine.prior_refinements if racine else 0
-        return anterieures + retouches + len(lots) + orphelines
+        return anterieures + len(lots) + orphelins
 
     def restore(self, job: Job, source_png: bytes) -> Job:
         """Remet sur la machine un design que Rails a gardé, sans le régénérer.
@@ -179,6 +178,17 @@ class JobManager:
                 self.queue.task_done()
 
     async def _subject_for(self, job: Job) -> str:
+        """La description anglaise, calculée une fois par lot : les trois
+        propositions d'un clic décrivent la même chose, et chaque appel au
+        traducteur recharge son modèle à froid."""
+        if job.batch_id and job.batch_id in self.batch_subjects:
+            return self.batch_subjects[job.batch_id]
+        subject = await self._fresh_subject(job)
+        if job.batch_id:
+            self.batch_subjects[job.batch_id] = subject
+        return subject
+
+    async def _fresh_subject(self, job: Job) -> str:
         if job.mode == CREATE:
             return await to_english(job.prompt)
 
@@ -197,7 +207,7 @@ class JobManager:
             raise GenerationError("L'image de départ a expiré. Relancez la création.")
         return source.read_bytes()
 
-    async def _hires(self, png: bytes, positive: str, negative: str, seed: int) -> tuple:
+    async def _hires(self, png: bytes, prompt: str, seed: int) -> tuple:
         """Redessine l'image plus grande, pour les techniques matricielles.
 
         Une poitrine de t-shirt se demande à 25 cm : en 1 024 px, le fichier ne vaut que
@@ -211,7 +221,7 @@ class JobManager:
         target = int(settings.image_size * settings.hires_scale)
         try:
             return await self.generator.hires(
-                positive, negative, seed, png, settings.hires_denoise, target
+                prompt, seed, png, settings.hires_denoise, target
             ), None
         except GenerationError as exc:
             log.warning("Passe haute définition abandonnée : %s", exc)
@@ -259,21 +269,21 @@ class JobManager:
         profile = resolve(job.technique)
         colors = profile.clamp_colors(job.colors)
         job.colors = colors
-        positive, negative = build_prompts(subject, job.style, colors, profile.key)
+        prompt = build_prompt(subject, job.style, colors, profile.key, job.flavour)
 
         if job.mode == REFINE:
             png = await self.generator.refine(
-                positive, negative, job.seed, colors,
+                prompt, job.seed, colors,
                 self._init_image(job), settings.refine_denoise,
             )
         elif job.init_png:
             # Une création (ou une variante) qui part de l'image du client : la
             # même voie que la retouche, avec un écart plus grand.
             png = await self.generator.refine(
-                positive, negative, job.seed, colors, job.init_png, settings.upload_denoise,
+                prompt, job.seed, colors, job.init_png, settings.upload_denoise,
             )
         else:
-            png = await self.generator.generate(positive, negative, job.seed, colors)
+            png = await self.generator.generate(prompt, job.seed, colors)
 
         job.directory.mkdir(parents=True, exist_ok=True)
         # L'image de référence gardée pour le client et pour l'atelier est celle que le
@@ -282,7 +292,7 @@ class JobManager:
 
         hires_warning = None
         if profile.family == "raster" and settings.hires_scale > 1:
-            png, hires_warning = await self._hires(png, positive, negative, job.seed)
+            png, hires_warning = await self._hires(png, prompt, job.seed)
 
         # Préparation du fichier d'impression : du calcul CPU, sorti de la boucle asynchrone.
         if profile.family == "vector":
@@ -318,11 +328,8 @@ class JobManager:
             "inks": out["inks"],
             "stats": out["stats"],
             "warnings": out["warnings"],
-            "prompt_used": positive,
-            # Le négatif aussi : c'est là que vivent désormais toutes les
-            # interdictions, et un prompt qu'on ne peut pas relire est un prompt
-            # qu'on ne peut pas corriger.
-            "negative_used": negative,
+            "prompt_used": prompt,
+            "flavour": job.flavour,
             "subject": subject,
             "instruction": job.instruction,
             "mode": job.mode,
@@ -340,6 +347,10 @@ class JobManager:
                 if job.status in ("done", "error") and job.created_at < limit:
                     shutil.rmtree(job.directory, ignore_errors=True)
                     self.jobs.pop(job_id, None)
+            live = {j.batch_id for j in self.jobs.values() if j.batch_id}
+            for batch in list(self.batch_subjects):
+                if batch not in live:
+                    self.batch_subjects.pop(batch, None)
 
 
 def new_seed() -> int:
@@ -347,7 +358,7 @@ def new_seed() -> int:
 
 
 def child_job(parent: Job, mode: str, instruction: Optional[str] = None,
-              batch_id: Optional[str] = None) -> Job:
+              batch_id: Optional[str] = None, flavour: int = 0) -> Job:
     """Construit une variante ou une retouche à partir d'un design existant."""
     return Job(
         user_id=parent.user_id,
@@ -361,6 +372,7 @@ def child_job(parent: Job, mode: str, instruction: Optional[str] = None,
         print_width_cm=parent.print_width_cm,
         mode=mode,
         batch_id=batch_id,
+        flavour=flavour,
         # Une variante redessine l'image de départ du client, s'il y en avait une.
         init_png=parent.init_png if mode == VARIANT else None,
         parent_id=parent.id,

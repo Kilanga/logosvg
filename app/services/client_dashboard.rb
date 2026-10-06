@@ -26,9 +26,14 @@ class ClientDashboard
        delivered_reviews + review_proposals).sort_by(&:on).reverse
     end
 
-    # A generation that failed cost nothing: trying again is one click.
+    # A generation that failed cost nothing: trying again is one click. A
+    # failed proposal is not news while another of its click came through, and
+    # a click that failed whole is said once.
     def failed_designs
-      designs.where(status: "failed").map do |design|
+      came_through = designs.where.not(status: "failed").where.not(batch_token: nil).select(:batch_token)
+      failed = designs.where(status: "failed")
+      failed.where(batch_token: nil).or(failed.where.not(batch_token: came_through))
+            .to_a.uniq { |design| design.batch_token || design.token }.map do |design|
         Action.new(kind: :design_failed, record: design, on: design.updated_at)
       end
     end
@@ -36,7 +41,7 @@ class ClientDashboard
     # A finished design nobody has been asked to print is the whole point of
     # the platform left undone.
     def unsent_designs
-      designs.where(status: "ready")
+      designs.kept.where(status: "ready")
              .where.missing(:print_requests)
              .map do |design|
         Action.new(kind: :design_unsent, record: design, on: design.updated_at)

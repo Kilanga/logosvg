@@ -47,6 +47,8 @@ Rails.application.routes.draw do
   get  "designs/:token/image-de-depart", to: "client/designs#reference_image", as: :design_reference_image
   post "designs/:token/variantes", to: "client/designs#variants", as: :design_variants
   post "designs/:token/retouche",  to: "client/designs#refine",   as: :design_refine
+  # Garder une des propositions d'un clic ; les autres sont écartées.
+  post "designs/:token/choisir",   to: "client/designs#choose",   as: :design_choice
 
   # --- Demandes d'impression -------------------------------------------------
   get  "designs/:design_token/demande", to: "client/print_requests#new",

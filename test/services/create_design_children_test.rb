@@ -73,6 +73,26 @@ class CreateDesignChildrenTest < ActiveSupport::TestCase
     end
   end
 
+  # A retouche draws three proposals too: one click, one batch, one choice.
+  test "the proposals of a retouche share a batch and wait to be chosen" do
+    children = CreateDesignChildren.call(parent: @parent, instruction: "un casque rouge") do
+      { "job_ids" => %w[ job-r1 job-r2 job-r3 ], "job_id" => "job-r1", "refinements_left" => 2 }
+    end
+
+    assert_equal 1, children.map(&:batch_token).uniq.size
+    assert(children.all?(&:awaiting_choice?))
+    assert_equal [ "un casque rouge" ], children.map(&:instruction).uniq
+    assert_equal 1, @parent.refinements_used
+  end
+
+  test "a lone child has nothing to choose from" do
+    child = CreateDesignChildren.call(parent: @parent, instruction: "un casque rouge") do
+      { "job_id" => "job-d", "refinements_left" => 2 }
+    end.first
+
+    assert_not child.awaiting_choice?
+  end
+
   private
     def variants_answer
       { "job_ids" => %w[ job-a job-b job-c ], "job_id" => "job-a", "refinements_left" => 2 }

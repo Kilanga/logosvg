@@ -57,9 +57,13 @@ class GeneratorClient
     get("/techniques").fetch("techniques")
   end
 
+  # How many proposals one click draws. See config/settings.yml.
+  def self.proposals = Rails.application.config.tshirt.generation.fetch(:proposals_per_request, 1)
+
   # Starts a generation. `colors` is omitted for techniques that do not count
-  # inks — sending one would state a limit the machine has not got.
-  def generate(design)
+  # inks — sending one would state a limit the machine has not got. `count`
+  # proposals come back as `job_ids`, one per design of the batch.
+  def generate(design, count: 1)
     post("/generate", {
       prompt: design.prompt,
       style: design.style,
@@ -69,15 +73,16 @@ class GeneratorClient
       remove_background: design.remove_background,
       user_id: pseudonym(design.user_id),
       seed: design.seed,
-      init_image: reference_image(design)
+      init_image: reference_image(design),
+      count: count
     }.compact)
   end
 
-  def refine(job_id, instruction:, user_id:)
-    post("/jobs/#{job_id}/refine", { instruction: instruction, user_id: pseudonym(user_id) })
+  def refine(job_id, instruction:, user_id:, count: self.class.proposals)
+    post("/jobs/#{job_id}/refine", { instruction: instruction, user_id: pseudonym(user_id), count: count })
   end
 
-  def variants(job_id, user_id:, count: 3)
+  def variants(job_id, user_id:, count: self.class.proposals)
     post("/jobs/#{job_id}/variants", { user_id: pseudonym(user_id), count: count })
   end
 

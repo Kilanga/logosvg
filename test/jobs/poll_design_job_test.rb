@@ -135,6 +135,25 @@ class PollDesignJobTest < ActiveJob::TestCase
     assert_predicate @design.error_message, :present?
   end
 
+  # One click, one attempt: it comes back when the last proposal fails, not
+  # once per failure.
+  test "a failed proposal is refunded only when the whole click failed" do
+    siblings = SpawnProposals.call(@design, count: 3)
+    siblings.each_with_index do |sibling, index|
+      sibling.update!(generator_job_id: "job-s#{index}")
+      sibling.start!
+    end
+    stub_answer(status: "error", error: "Rien d'exploitable.")
+    stub_request(:get, %r{/jobs/job-s\d}).to_return(body: { status: "error", error: "Rien." }.to_json)
+
+    PollDesignJob.perform_now(@design)
+    PollDesignJob.perform_now(siblings.first)
+    assert_equal 1, GenerationQuota.for(@design.user).used
+
+    PollDesignJob.perform_now(siblings.last)
+    assert_equal 0, GenerationQuota.for(@design.user).used
+  end
+
   private
     def stub_answer(**answer)
       stub_request(:get, %r{/jobs/job-42\?}).to_return(body: answer.to_json)

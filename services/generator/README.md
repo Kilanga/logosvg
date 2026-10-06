@@ -11,10 +11,10 @@ l'application Rails, à la racine du dépôt.
 Navigateur ──> Application Rails (jobs de fond)
                   │  appel serveur à serveur, clé API
                   ▼
-              Tunnel Cloudflare
+              Tailscale (serve, port 5000)
                   ▼
               Microservice FastAPI (127.0.0.1:5000)   ← machine de génération
-                  ├── ComfyUI + SDXL (127.0.0.1:8188)  génération
+                  ├── ComfyUI + FLUX.2 [klein] 4B distillé (127.0.0.1:8188)
                   ├── Ollama (optionnel)               traduction FR → EN
                   └── vtracer                          vectorisation
 ```
@@ -27,7 +27,6 @@ depuis des tâches de fond uniquement. Le navigateur ne la voit jamais.
 | Dossier | Rôle |
 |---|---|
 | `microservice/` | API de génération + vectorisation, file d'attente, anti-abus, tests |
-| `infra/cloudflared/` | Configuration du tunnel |
 
 ## État d'avancement
 
@@ -35,8 +34,8 @@ depuis des tâches de fond uniquement. Le navigateur ne la voit jamais.
 |---|---|
 | Pipeline API → file d'attente → vectorisation → fichiers | Fonctionne et testé (mode simulation) |
 | Sécurité du service : clé API, limite de débit, filtre de prompts, isolation entre clients | Testé |
-| Génération réelle via ComfyUI | Écrite, **pas encore testée** (nécessite la machine avec GPU) |
-| Application Rails | En construction, voir `docs/SPEC.md` |
+| Génération réelle via ComfyUI (FLUX.2 klein distillé, 3 propositions par demande) | En service sur le PC de génération |
+| Application Rails | En ligne, voir `docs/SPEC.md` |
 
 ## 1. Tester le microservice (n'importe quel PC)
 
@@ -80,7 +79,9 @@ curl -s "http://127.0.0.1:5000/jobs/$JOB/design.svg?user_id=test" -H "X-API-Key:
 | Méthode | Route | Rôle |
 |---|---|---|
 | `GET` | `/health` | Vérifie que le service répond (sans clé) |
-| `POST` | `/generate` | Lance une création, renvoie `job_id` (202) |
+| `POST` | `/generate` | Lance une création ; `count` (1 à 3) propositions de styles différents, renvoie `job_ids` (202) |
+| `POST` | `/jobs/{id}/refine` | Retouche ; `count` propositions, une seule reprise décomptée |
+| `POST` | `/jobs/{id}/variants` | Variantes ; `count` propositions |
 | `GET` | `/jobs/{id}?user_id=` | État : `queued`, `running`, `done`, `error` + palette, nombre d'encres, alertes |
 | `GET` | `/jobs/{id}/design.svg?user_id=` | Le design vectorisé |
 | `GET` | `/jobs/{id}/source.png?user_id=` | L'image brute générée, pour la comparaison |
@@ -91,22 +92,20 @@ Le contrat complet, côté Rails, est décrit dans `docs/SPEC.md`, section
 ## 2. Sur la machine de génération (RTX 4070 Ti)
 
 1. **ComfyUI** : version portable Windows depuis le dépôt GitHub officiel.
-2. **Modèle** : `sd_xl_base_1.0.safetensors` dans `ComfyUI/models/checkpoints/`.
-   SDXL tient confortablement dans 12 Go de VRAM.
-3. Dans ComfyUI, charger `microservice/workflows/sdxl_flat.json` pour vérifier
+2. **Modèles** : lancer `INSTALLER-MODELES.bat`. Il installe dans ComfyUI
+   `flux-2-klein-4b-fp8.safetensors` (diffusion_models), `qwen_3_4b.safetensors`
+   (text_encoders), `flux2-vae.safetensors` (vae) et le modèle d'agrandissement
+   ESRGAN. Le modèle distillé dessine en 4 étapes, environ 4 s par image.
+3. Dans ComfyUI, charger `microservice/workflows/flux2_klein.json` pour vérifier
    qu'il s'exécute (menu *Workflow > Open*, format API).
-4. Dans `.env` : `GENERATOR_MODE=comfyui`.
+4. Dans `.env` : `GENERATOR_MODE=comfyui`, `PROPOSALS=3`.
 5. **Optionnel, traduction** : `OLLAMA_URL=http://127.0.0.1:11434` et
-   `ollama pull qwen2.5:3b`. Le modèle est déchargé après chaque traduction pour
-   libérer la VRAM. Un modèle 7B ou 14B chargé en même temps que SDXL
-   dépasserait les 12 Go.
-6. **Tunnel** :
-   - Sans domaine : `infra/cloudflared/quick-tunnel.ps1`. L'adresse change à
-     chaque lancement, il faut la recopier dans `GENERATOR_URL` côté Rails.
-   - Avec un domaine sur Cloudflare : `infra/cloudflared/config.example.yml`,
-     adresse fixe.
+   `ollama pull qwen2.5:7b`. Le texte entre guillemets n'est jamais traduit :
+   il est imprimé lettre pour lettre.
+6. **Accès** : `tailscale serve` publie le port 5000 vers le serveur Rails.
+   L'IA se lance à la main avec `ALLUMER-IA.bat` et s'arrête avec `ETEINDRE-IA.bat`.
 
-Ordre de démarrage : ComfyUI → (Ollama) → le service → le tunnel.
+Ordre de démarrage : ComfyUI → (Ollama) → le service. `ALLUMER-IA.bat` s'en charge.
 
 ## Réglages du service (`.env`)
 
@@ -120,7 +119,7 @@ Ordre de démarrage : ComfyUI → (Ollama) → le service → le tunnel.
 
 ## Sécurité en place
 
-- Le service n'écoute que sur `127.0.0.1` : il n'est joignable que par le tunnel.
+- Le service n'écoute que sur `127.0.0.1` : il n'est joignable que par Tailscale.
 - Le navigateur ne voit jamais la clé API : Rails relaie les appels, depuis des
   tâches de fond.
 - Double limite de débit : quota journalier dans Rails, limite horaire dans le
@@ -138,5 +137,5 @@ Ordre de démarrage : ComfyUI → (Ollama) → le service → le tunnel.
   démonstration ; à déplacer côté Rails si cela devient un enjeu commercial.
 - **Filtre de prompts** : une liste de mots est contournable. Pour la production,
   ajouter une modération par modèle.
-- **Qualité d'impression** : valider sur de vrais designs SDXL et ajuster
+- **Qualité d'impression** : valider sur de vrais designs et ajuster
   `filter_speckle` et le flou médian dans `app/vectorizer.py`.

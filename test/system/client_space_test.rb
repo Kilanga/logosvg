@@ -48,11 +48,14 @@ class ClientSpaceTest < ApplicationSystemTestCase
       variant.succeed!
       variant.save!
     end
+    # Since October 2026 the versions of a click are proposals: the strip
+    # shows the one the client kept, not those set aside.
+    ChooseProposal.call(Design.find_by!(generator_job_id: "v1"))
 
     sign_in users(:client)
     visit client_designs_path
 
-    assert_text displayed("client.designs.index.variants", count: 2)
+    assert_text displayed("client.designs.index.variants", count: 1)
     assert_selector "li.panel", count: Design.active.roots.where(user: users(:client)).count
   end
 

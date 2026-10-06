@@ -48,7 +48,7 @@
               <p class="mt-0.5 text-sm text-muted"><%= design.printer.name %></p>
             <% end %>
 
-            <% variants = design.children.select(&:ready?) %>
+            <% variants = design.children.select { |child| child.ready? && child.active? && !child.awaiting_choice? } %>
             <% if variants.any? %>
               <div class="mt-3">
                 <p class="label-rule"><%= t(".variants", count: variants.size) %></p>
@@ -67,7 +67,7 @@
             <% end %>
 
             <div class="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-3 text-sm">
-              <% if design.ready? %>
+              <% if design.ready? && !design.awaiting_choice? %>
                 <%= link_to t(".send_to_workshop"), new_design_print_request_path(design),
                       class: "font-medium text-emulsion underline underline-offset-4" %>
               <% end %>

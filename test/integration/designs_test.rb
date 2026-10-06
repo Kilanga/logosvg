@@ -22,11 +22,30 @@ class DesignsTest < ActionDispatch::IntegrationTest
       post designs_path, params: { design: valid_design }
     end
 
-    design = Design.order(:created_at).last
+    design = first_of_last_click
 
     assert_redirected_to design_path(design)
     assert_predicate design, :pending?
     assert_equal users(:client), design.user
+  end
+
+  # Decided in October 2026: every click draws three proposals, each with its
+  # own take, and counts as one generation.
+  test "a creation makes three proposals of one click, counted once" do
+    sign_in_as users(:client)
+
+    assert_difference "Design.count", 3 do
+      assert_enqueued_jobs 1, only: GenerateDesignJob do
+        post designs_path, params: { design: valid_design }
+      end
+    end
+
+    proposals = first_of_last_click.proposals.to_a
+    assert_equal 3, proposals.size
+    assert proposals.all?(&:awaiting_choice?)
+    assert proposals.all?(&:pending?)
+    assert_equal [ valid_design[:prompt] ], proposals.map(&:prompt).uniq
+    assert_equal 1, GenerationQuota.for(users(:client)).used
   end
 
   # Appels réseau uniquement depuis des jobs de fond.
@@ -97,9 +116,11 @@ class DesignsTest < ActionDispatch::IntegrationTest
       reference_image: upload(jpeg_with_exif, "image/jpeg", "photo.jpg"), reference_rights_confirmed: "1"
     ) }
 
-    design = Design.order(:created_at).last
+    design = first_of_last_click
     assert_redirected_to design_path(design)
     assert_predicate design.reference_image, :attached?
+    assert design.proposals.all? { |proposal| proposal.reference_image.attached? },
+           "every proposal is a root, and keeps the image its children start from"
     assert_equal "image/png", design.reference_image.content_type
     stored = Vips::Image.new_from_buffer(design.reference_image.download, "")
     assert_not_includes stored.get_fields, "exif-data", "the phone's metadata must not survive"
@@ -486,7 +507,87 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # --- Choosing among the proposals --------------------------------------
+
+  test "the proposals of a click are shown together, each with a way to keep it" do
+    sign_in_as users(:client)
+    proposals = ready_proposals
+
+    get design_path(proposals.first)
+
+    assert_response :success
+    proposals.each { |proposal| assert_select "#design_#{proposal.token}" }
+    assert_select "form[action=?]", design_choice_path(proposals.second)
+    assert_select "form[action=?]", design_refine_path(proposals.first), count: 0
+  end
+
+  test "keeping a proposal sets the others aside" do
+    sign_in_as users(:client)
+    proposals = ready_proposals
+
+    post design_choice_path(proposals.second)
+
+    assert_redirected_to design_path(proposals.second)
+    assert_not proposals.second.reload.awaiting_choice?
+    assert proposals.values_at(0, 2).map(&:reload).none?(&:active?)
+    follow_redirect!
+    assert_select "form[action=?]", design_refine_path(proposals.second)
+  end
+
+  test "nothing goes further from a proposal before it is kept" do
+    sign_in_as users(:client)
+    proposal = ready_proposals.first
+
+    post design_refine_path(proposal), params: { instruction: "un casque rouge" }
+    assert_not_requested :post, %r{/refine}
+
+    get new_design_print_request_path(proposal)
+    assert_response :redirect
+  end
+
+  test "a design already kept cannot be chosen again" do
+    sign_in_as users(:client)
+
+    post design_choice_path(designs(:fox_screen))
+
+    assert_response :redirect
+    assert_not_equal design_path(designs(:fox_screen)), response.location.sub("http://www.example.com", "")
+  end
+
+  test "a retouche draws three proposals to choose from, for one reprise" do
+    sign_in_as users(:client)
+    designs(:fox_screen).update!(generator_job_id: "job-42")
+    stub_request(:post, %r{/jobs/job-42/refine})
+      .with { |request| JSON.parse(request.body)["count"] == 3 }
+      .to_return(status: 202, body: { job_ids: %w[ r1 r2 r3 ], job_id: "r1", refinements_left: 2 }.to_json)
+
+    assert_difference "Design.count", 3 do
+      post design_refine_path(designs(:fox_screen)), params: { instruction: "un casque rouge" }
+    end
+
+    assert Design.where(parent: designs(:fox_screen)).all?(&:awaiting_choice?)
+    assert_equal 1, designs(:fox_screen).refinements_used
+    assert_equal 1, GenerationQuota.for(users(:client)).used
+  end
+
   private
+    def ready_proposals
+      design = designs(:fox_screen)
+      design.update!(batch_token: "click-1", chosen_at: nil, refinements_left: 3)
+      siblings = Array.new(2) do |index|
+        design.dup.tap do |copy|
+          copy.token = SecureRandom.base58(24)
+          copy.generator_job_id = "sibling-#{index}"
+          copy.save!
+        end
+      end
+      [ design, *siblings ]
+    end
+
+    def first_of_last_click
+      Design.where(batch_token: Design.order(:id).last.batch_token).order(:id).first
+    end
+
     def spend_a_reprise(design, job_id)
       Design.create!(user: design.user, printer: design.printer, parent: design, root: design,
                      mode: "refine", instruction: "une retouche", prompt: design.prompt,

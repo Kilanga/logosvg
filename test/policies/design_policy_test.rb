@@ -57,4 +57,21 @@ class DesignPolicyTest < ActiveSupport::TestCase
   test "a visitor's scope is empty, not everyone's designs" do
     assert_empty DesignPolicy::Scope.new(nil, Design).resolve
   end
+
+  # One of several proposals goes nowhere until the client has kept it.
+  test "a proposal is kept before anything else, and kept only once" do
+    proposal = designs(:fox_screen)
+    proposal.batch_token = "click-1"
+
+    assert DesignPolicy.new(users(:client), proposal).choose?
+    assert_not DesignPolicy.new(users(:client), proposal).refine?
+    assert_not DesignPolicy.new(users(:client), proposal).variants?
+    assert_not DesignPolicy.new(users(:printer), proposal).choose?
+    assert_not PrintRequestPolicy.new(users(:client), PrintRequest.new(design: proposal)).create?
+    assert_not ReviewPolicy.new(users(:client), Review.new(design: proposal)).create?
+
+    proposal.chosen_at = Time.current
+    assert_not DesignPolicy.new(users(:client), proposal).choose?
+    assert DesignPolicy.new(users(:client), proposal).refine?
+  end
 end
