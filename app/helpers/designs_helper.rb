@@ -19,6 +19,16 @@ module DesignsHelper
 
   def garment_swatches = GARMENT_SWATCHES
 
+  # Who finished a reviewed design. A plucked name rather than a walk through
+  # the associations: this partial is rendered by broadcasts and lists that
+  # preload nothing of the kind.
+  def reviewing_designer_name(design)
+    return nil if design.source_review_id.nil?
+
+    Review.where(id: design.source_review_id).joins(:designer_profile)
+          .pick("designer_profiles.display_name")
+  end
+
   # The silhouette's body spans 52 % of its width, and a medium t-shirt is
   # about 52 cm across: one centimetre of print is one percent of the drawing.
   # Bounded so a tiny logo stays visible and a full back never overflows.

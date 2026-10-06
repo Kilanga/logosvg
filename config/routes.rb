@@ -146,6 +146,7 @@ Rails.application.routes.draw do
   post "studio/revues/:token/renvoyer",  to: "designer/reviews#return_to_client",
        as: :return_designer_review
   post "studio/revues/:token/messages",  to: "designer/reviews#message", as: :designer_review_messages
+  post "studio/revues/:token/terminer",  to: "designer/reviews#finish",   as: :finish_designer_review
 
   get  "studio/paiements",            to: "designer/payouts#show",   as: :designer_payouts
   post "studio/paiements/inscription", to: "designer/payouts#onboard", as: :designer_payouts_onboarding

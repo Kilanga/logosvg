@@ -119,6 +119,15 @@
       <% end %>
     </div>
 
+    <% if design.reviewed? %>
+      <%# Reworked by a person: no AI reprise is offered on it, and the screen
+          says who finished it. %>
+      <p class="flex items-center gap-2.5 border-t border-line bg-success-bg px-4 py-3 text-sm text-success">
+        <%= registration_mark css_class: "flex-none" %>
+        <%= t("client.designs.design.reviewed_by", designer: reviewing_designer_name(design)) %>
+      </p>
+    <% end %>
+
     <div class="flex flex-wrap gap-3 border-t border-line p-4">
       <%# The print file never leaves for the client: this is a watermarked
           rendering of it. %>

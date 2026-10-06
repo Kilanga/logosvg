@@ -62,8 +62,7 @@ module Designer
         review: @review,
         reason: params[:reason],
         message: params[:message],
-        proposed_level: ReviewLevel.offered.find_by(id: params[:proposed_level_id]),
-        proposed_price_cents: proposed_price_cents
+        proposed_level: ReviewLevel.offered.find_by(id: params[:proposed_level_id])
       )
 
       if result.success?
@@ -71,6 +70,18 @@ module Designer
       else
         redirect_to designer_review_path(@review), alert: result.error
       end
+    end
+
+    # A custom job the designer and the client settled between themselves.
+    def finish
+      authorize @review
+
+      @review.finish_off_platform!
+      @review.save!
+      CreateReviewedDesign.call(review: @review) if @review.delivered_any?
+      ReviewMailer.finished_off_platform(@review).deliver_later
+
+      redirect_to designer_reviews_path, notice: t(".finished")
     end
 
     def message
@@ -91,14 +102,6 @@ module Designer
       def set_review
         @review = policy_scope(Review).includes(:client, :review_level, design: :print_file_attachment)
                                       .find_by!(token: params[:token])
-      end
-
-      # Euros on the form, cents in the database — never a float for money.
-      def proposed_price_cents
-        euros = params[:proposed_price]
-        return nil if euros.blank?
-
-        (euros.to_s.tr(",", ".").to_d * 100).to_i
       end
 
       def mark_client_messages_read

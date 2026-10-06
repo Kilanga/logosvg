@@ -46,26 +46,15 @@ module Reviews
       assert_equal(-3000, review.reload.proposal_difference_cents)
     end
 
-    # A custom job is quoted, so the designer names the price.
-    test "a custom proposal carries the price the designer named" do
-      call(reason: "level_too_low", proposed_level: review_levels(:custom),
-           proposed_price_cents: 12_000)
+    # Decided on 06/10/2026: a custom job is arranged outside the platform.
+    # Proposing it means the whole price paid here comes back to the client.
+    test "proposing the custom level refunds everything that was paid" do
+      review = reviews(:in_progress)
+      result = call(reason: "level_too_low", proposed_level: review_levels(:custom))
 
-      assert_equal 12_000, reviews(:in_progress).reload.proposed_amount_cents
-    end
-
-    # Quoted with a floor and no ceiling (decided on 06/10/2026).
-    test "a custom price under the floor is refused, and a high one is not capped" do
-      low = call(reason: "level_too_low", proposed_level: review_levels(:custom), proposed_price_cents: 5_000)
-
-      assert_not_predicate low, :success?
-      assert_equal I18n.t("reviews.errors.proposal_below_minimum", minimum: "89 €"), low.error
-      assert_predicate reviews(:in_progress).reload, :in_progress?
-
-      high = call(reason: "level_too_low", proposed_level: review_levels(:custom), proposed_price_cents: 250_000)
-
-      assert_predicate high, :success?
-      assert_equal 250_000, reviews(:in_progress).reload.proposed_amount_cents
+      assert_predicate result, :success?
+      assert_equal 0, review.reload.proposed_amount_cents
+      assert_equal(-review.price_cents, review.proposal_difference_cents)
     end
 
     test "a proposal with neither level nor price is refused" do

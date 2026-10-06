@@ -575,7 +575,6 @@ fr:
       message_required: "Un message est obligatoire."
       already_returned: "Cette vérification a déjà été renvoyée une fois."
       proposal_required: "Indiquez le niveau ou le prix que vous proposez."
-      proposal_below_minimum: "Une création sur mesure se chiffre à partir de %{minimum}."
       designer_required: "Choisissez un graphiste."
       already_refused: "Ce graphiste a déjà renvoyé cette vérification."
       reassignment_closed: "Vous avez déjà changé de graphiste pour cette vérification."
@@ -776,11 +775,35 @@ fr:
         no_brief: "aucune précision particulière."
         action: "Voir la demande"
         footer: "Votre part si vous la prenez et qu'elle est validée : %{amount}."
+        footer_off_platform: "Création sur mesure : vous la chiffrez et la réglez directement avec le client, sans commission."
+      client_contact:
+        subject: "Création sur mesure : contactez %{client}"
+        eyebrow: "Création sur mesure"
+        heading: "À vous de contacter %{client}"
+        body: >-
+          Vous avez pris cette création sur mesure. Elle se chiffre et se règle
+          directement entre vous et le client, en dehors du site : écrivez-lui
+          ou appelez-le. Ce qu'il demande : %{brief}
+        email: "Email : %{email}"
+        phone: "Téléphone : %{phone}"
+        no_phone: "Pas de téléphone renseigné : répondez à cet email pour lui écrire."
+        action: "Voir la demande et le design"
+      finished_off_platform:
+        subject: "Votre création sur mesure est clôturée"
+        eyebrow: "Création sur mesure"
+        heading: "%{designer} a clôturé la demande"
+        body: >-
+          Le travail est terminé. Si un fichier a été déposé, il est dans vos
+          designs, prêt à être envoyé à votre atelier.
+        action: "Voir mes designs"
       claimed:
         subject: "%{designer} prend votre vérification en charge"
         eyebrow: "Prise en charge"
         heading: "%{designer} s'occupe de votre design"
         body: "Première version attendue pour le %{due}."
+        body_off_platform: >-
+          Il va vous contacter pour chiffrer votre création sur mesure. Le prix
+          et le paiement se règlent directement avec lui.
         action: "Suivre ma vérification"
       version_delivered:
         subject: "Une version vous attend"
@@ -1010,8 +1033,12 @@ fr:
         brief: "Vos attentes"
         brief_placeholder: "Ce qui vous gêne, ce que vous aimeriez voir changer…"
         brief_hint: "Facultatif, mais c'est ce qui évite un aller-retour."
-        submit: "Payer et envoyer"
-        payment_hint: "Le paiement passe par Stripe. Le graphiste n'est réglé qu'une fois que vous avez validé son travail."
+        submit: "Envoyer la demande"
+        payment_hint: >-
+          Retouche : le paiement passe par Stripe, et le graphiste n'est réglé
+          qu'une fois que vous avez validé son travail. Création sur mesure :
+          rien à payer ici, le graphiste qui la prend vous contacte pour la
+          chiffrer et vous réglez directement avec lui.
         the_design: "Le design à vérifier"
         what_you_get: "Ce que vous recevez"
         what_you_get_body: >-
@@ -1019,7 +1046,15 @@ fr:
           que votre atelier attend. Vous validez, ou vous demandez un retour.
       create:
         started: "Votre demande est enregistrée."
+        introduced: >-
+          Votre demande est transmise aux graphistes. Celui qui la prend vous
+          contacte pour la chiffrer.
       show:
+        reviewed_design: "Votre design finalisé"
+        reviewed_design_hint: >-
+          La dernière version du graphiste est devenue un design à part entière :
+          envoyez-la à votre atelier comme n'importe quel autre.
+        reviewed_design_action: "Voir et envoyer à un atelier"
         title: "Vérification"
         heading: "Vérification — %{level}"
         versions: "Versions"
@@ -1194,6 +1229,7 @@ fr:
           zero: "Plus de reprise disponible pour ce design."
           one: "Il reste %{count} reprise pour ce design."
           other: "Il reste %{count} reprises pour ce design."
+        reviewed_by: "Version finalisée par %{designer}. Prête à envoyer à votre atelier."
         budget_spent: "Vous avez utilisé vos trois reprises"
         budget_spent_body: >-
           Pour aller plus loin, un graphiste professionnel peut reprendre ce
@@ -1667,8 +1703,9 @@ fr:
           facturée.
         reason: "Motif"
         proposed_level: "Niveau proposé"
-        proposed_price: "Prix proposé (€)"
-        proposed_price_hint: "Pour une création sur mesure uniquement, à partir de %{minimum}, sans plafond."
+        proposed_custom_hint: >-
+          Proposer la création sur mesure rembourse le client : vous la
+          chiffrez ensuite avec lui, directement, en dehors du site.
         return_message: "Message au client"
         return_message_placeholder: "Expliquez ce qui bloque et ce que vous proposez."
         return_action: "Renvoyer au client"
@@ -1678,7 +1715,19 @@ fr:
         no_phone: "Aucun numéro renseigné"
         what_you_earn: "Ce que vous touchez"
         earn_hint: "Prix payé %{price}, commission plateforme %{fee}."
+        off_platform_earn_hint: >-
+          Vous chiffrez et encaissez directement avec le client : rien ne passe
+          par le site, qui ne prend aucune commission sur le sur-mesure.
+        finish_title: "Travail terminé ?"
+        finish_hint: >-
+          Quand le client et vous avez fini, clôturez la demande. Si vous avez
+          déposé un fichier ici, il devient un design que le client peut
+          envoyer à son atelier.
+        finish: "Clôturer la demande"
+        finish_confirm: "Clôturer cette création sur mesure ?"
         generator_warnings: "Alertes du générateur"
+      finish:
+        finished: "Création sur mesure clôturée."
       claim:
         claimed: "Vérification prise en charge. À vous de jouer."
       deliver:

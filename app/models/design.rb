@@ -2,13 +2,16 @@ class Design < ApplicationRecord
   include AASM
 
   STYLES = %w[ illustration logo mascotte badge ].freeze
-  MODES = %w[ create variant refine ].freeze
+  # `reviewed`: a designer's accepted delivery, made a design of its own so it
+  # can be sent to a workshop. See CreateReviewedDesign.
+  MODES = %w[ create variant refine reviewed ].freeze
   PRINT_FORMATS = %w[ svg png ].freeze
 
   belongs_to :user
   belongs_to :printer, optional: true
   belongs_to :parent, class_name: "Design", optional: true
   belongs_to :root, class_name: "Design", optional: true
+  belongs_to :source_review, class_name: "Review", optional: true
 
   has_many :children, class_name: "Design", foreign_key: :parent_id,
            dependent: :nullify, inverse_of: :parent
@@ -78,6 +81,8 @@ class Design < ApplicationRecord
 
   # Public URLs carry the token, never the sequential id.
   def to_param = token
+
+  def reviewed? = mode == "reviewed"
 
   # Reprises already spent on this lineage, counted by the application.
   #

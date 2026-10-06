@@ -4,4 +4,5 @@
       body: t("mailers.review.notify_designers.body", brief: @review.client_brief.presence || t("mailers.review.notify_designers.no_brief")),
       url: designer_review_url(@review),
       action: t("mailers.review.notify_designers.action"),
-      footer: t("mailers.review.notify_designers.footer", amount: number_to_currency(@review.designer_share_cents / 100.0, unit: "€", format: "%n %u")) %>
+      footer: (@review.off_platform? ? t("mailers.review.notify_designers.footer_off_platform") :
+               t("mailers.review.notify_designers.footer", amount: number_to_currency(@review.designer_share_cents / 100.0, unit: "€", format: "%n %u"))) %>

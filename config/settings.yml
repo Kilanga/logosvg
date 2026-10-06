@@ -60,9 +60,6 @@ shared:
     prices_set_by: platform
     # Décidé le 06/10/2026 : 15 % de commission sur les vérifications.
     platform_fee_rate: 0.15
-    # Décidé le 06/10/2026 : une création sur mesure se chiffre sur devis, à
-    # partir de 89 € et sans plafond.
-    custom_min_price_cents: 8900
     # Délais décidés le 06/10/2026. Le graphiste choisi a 24 h, et non 12 :
     # une nuit ne doit pas suffire à lui faire perdre une mission.
     auto_accept_days: 7
