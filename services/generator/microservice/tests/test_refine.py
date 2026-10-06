@@ -177,3 +177,65 @@ def test_retouche_refusee_si_parent_pas_pret(client):
                     json={"instruction": "ajoute un bateau", "user_id": "r7"})
     assert r.status_code == 409
     wait_for(client, parent, "r7")
+
+
+# --------------------------------------------------------------------------- restauration
+# La machine à GPU s'éteint désormais à la main : chaque redémarrage vide la
+# mémoire du service, et les fichiers n'y vivent qu'une heure. Rails garde l'image
+# de départ et la description, et les renvoie pour reprendre un design oublié.
+
+def _source_png(client, user_id):
+    parent = create_design(client, user_id)
+    png = client.get(f"/jobs/{parent}/source.png", params={"user_id": user_id}, headers=HEADERS).content
+    subject = client.get(f"/jobs/{parent}", params={"user_id": user_id},
+                         headers=HEADERS).json()["result"]["subject"]
+    return png, subject
+
+
+def _restore(client, user_id, png, subject, used=0, **extra):
+    import base64
+    body = {"user_id": user_id, "prompt": "un renard qui fait du skate", "subject": subject,
+            "style": "mascotte", "technique": "screen_printing", "colors": 3,
+            "used_refinements": used, "seed": 11,
+            "source_png": base64.b64encode(png).decode()}
+    body.update(extra)
+    return client.post("/jobs/restore", headers=HEADERS, json=body)
+
+
+def test_un_design_restaure_se_reprend_comme_un_autre(client):
+    png, subject = _source_png(client, "rs1")
+    r = _restore(client, "rs1", png, subject, used=1)
+    assert r.status_code == 201, r.text
+    restored = r.json()["job_id"]
+    assert r.json()["refinements_left"] == 2
+
+    status = client.get(f"/jobs/{restored}", params={"user_id": "rs1"}, headers=HEADERS).json()
+    assert status["status"] == "done"
+    assert status["result"]["subject"] == subject
+
+    child = client.post(f"/jobs/{restored}/refine", headers=HEADERS,
+                        json={"instruction": "ajoute un soleil", "user_id": "rs1"})
+    assert child.status_code == 202, child.text
+    assert child.json()["refinements_left"] == 1
+    data = wait_for(client, child.json()["job_id"], "rs1")
+    assert data["status"] == "done", data
+    assert data["root_id"] == restored
+
+
+def test_le_compte_apporte_par_rails_borne_la_lignee(client):
+    png, subject = _source_png(client, "rs2")
+    restored = _restore(client, "rs2", png, subject, used=3).json()["job_id"]
+
+    r = client.post(f"/jobs/{restored}/variants", headers=HEADERS, json={"user_id": "rs2"})
+    assert r.status_code == 429
+    assert r.json()["reason"] == "refine_budget"
+
+
+def test_une_image_qui_n_est_pas_un_png_est_refusee(client):
+    r = _restore(client, "rs3", b"GIF89a pas un png", "a fox")
+    assert r.status_code == 422
+
+
+def test_la_restauration_exige_la_cle(client):
+    r = client.post("/jobs/restore", json={"user_id": "x"})
+    assert r.status_code == 401

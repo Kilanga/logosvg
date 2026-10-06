@@ -49,6 +49,10 @@ class Job:
     parent_id: Optional[str] = None
     root_id: Optional[str] = None
     instruction: Optional[str] = None
+    # Reprises déjà consommées avant que cette lignée n'arrive sur la machine : un
+    # design restauré par Rails (voir /jobs/restore) apporte son compte avec lui,
+    # sinon un redémarrage du service rendrait des reprises au client.
+    prior_refinements: int = 0
     subject: Optional[str] = None  # description anglaise réellement envoyée au modèle
     status: str = "queued"  # queued | running | done | error
     error: Optional[str] = None
@@ -114,7 +118,34 @@ class JobManager:
         # Une variante sans lot ne peut venir que d'une version antérieure du
         # service : on la compte seule, faute de mieux.
         orphelines = sum(1 for j in enfants if j.mode == VARIANT and not j.batch_id)
-        return retouches + len(lots) + orphelines
+        racine = self.get(root_id)
+        anterieures = racine.prior_refinements if racine else 0
+        return anterieures + retouches + len(lots) + orphelines
+
+    def restore(self, job: Job, source_png: bytes) -> Job:
+        """Remet sur la machine un design que Rails a gardé, sans le régénérer.
+
+        Les travaux vivent en mémoire et leurs fichiers une heure : passé ce
+        délai, ou après un redémarrage — c'est-à-dire chaque fois que la machine
+        à GPU est éteinte —, une reprise n'avait plus de parent et échouait.
+        Rails, lui, a gardé l'image de départ et la description : il les
+        renvoie ici, et le design redevient un parent prêt, à la racine d'une
+        nouvelle lignée qui hérite du compte de reprises.
+        """
+        job.root_id = job.id
+        job.status = "done"
+        job.directory.mkdir(parents=True, exist_ok=True)
+        (job.directory / "source.png").write_bytes(source_png)
+        job.result = {
+            "technique": job.technique,
+            "mode": "restored",
+            "subject": job.subject,
+            "seed": job.seed,
+            "colors": job.colors,
+            "restored": True,
+        }
+        self.jobs[job.id] = job
+        return job
 
     def refinements_left(self, root_id: str) -> int:
         return max(settings.max_refinements - self.used_refinements(root_id), 0)
