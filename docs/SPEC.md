@@ -561,6 +561,6 @@ Ces points bloquent la mise en production, pas la construction : Claude Code uti
 - [ ] Faut-il facturer la sublimation et le DTF comme la sérigraphie côté abonnement, sachant que ces ateliers n'ont pas le problème de vectorisation qui fait l'argument de vente
 - [ ] Seuil d'alerte du taux de renvoi des graphistes
 - [ ] Durées de conservation des designs et des demandes
-- [ ] Fournisseur d'emails et hébergement de production
+- [x] Fournisseur d'emails et hébergement de production (décidé le 27/09/2026 : **VPS OVH** déployé par Kamal 2, emails par **Brevo**. Voir docs/EXPLOITATION.md)
 - [ ] Facturation des graphistes : auto-facturation par la plateforme ou factures déposées par les graphistes
 - [ ] Validation juridique : CGV, conditions graphistes, DAC7, transparence du classement

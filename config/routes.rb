@@ -198,6 +198,11 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # Ce que les moteurs de recherche et les navigateurs demandent d'office.
+  get "robots.txt",  to: "public/discovery#robots",  as: :robots, format: false
+  get "sitemap.xml", to: "public/discovery#sitemap", as: :sitemap, format: false
+  get "favicon.ico", to: "public/discovery#favicon", format: false
+
   # Outgoing mail is previewed rather than delivered in development.
   if Rails.env.development?
     mount LetterOpenerWeb::Engine, at: "/letter_opener"
