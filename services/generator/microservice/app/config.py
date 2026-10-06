@@ -26,6 +26,20 @@ class Settings:
     comfyui_timeout: int = _int("COMFYUI_TIMEOUT", 180)
     image_size: int = _int("IMAGE_SIZE", 1024)
 
+    # Le modèle d'image. `sdxl` (défaut) : workflows sdxl_*.json, un seul fichier
+    # checkpoint. `flux2_klein` : FLUX.2 [klein] 4B (Apache 2.0, usage commercial
+    # permis), en trois fichiers — modèle, encodeur de texte, VAE — et ses propres
+    # workflows flux2_klein*.json. Voir scripts/comparer-modeles.py.
+    image_model: str = os.getenv("IMAGE_MODEL", "sdxl")
+    flux_unet: str = os.getenv("FLUX_UNET", "flux-2-klein-base-4b-fp8.safetensors")
+    flux_text_encoder: str = os.getenv("FLUX_TEXT_ENCODER", "qwen_3_4b.safetensors")
+    flux_vae: str = os.getenv("FLUX_VAE", "flux2-vae.safetensors")
+    # Le modèle « base » suit le négatif avec un CFG autour de 5, en ~20 pas. La
+    # version distillée (flux-2-klein-4b-fp8) va cinq fois plus vite — 4 pas — mais
+    # ignore le négatif : FLUX_STEPS=4 et FLUX_CFG=1 avec elle.
+    flux_steps: int = _int("FLUX_STEPS", 20)
+    flux_cfg: float = _float("FLUX_CFG", 5.0)
+
     ollama_url: str = os.getenv("OLLAMA_URL", "")
     ollama_model: str = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 

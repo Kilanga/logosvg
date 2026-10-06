@@ -225,7 +225,69 @@ class ComfyUIGenerator:
         return await self._run(self._workflow_refine(positive, negative, seed, name, denoise))
 
 
+FLUX_TEXT2IMG = WORKFLOWS / "flux2_klein.json"
+FLUX_IMG2IMG = WORKFLOWS / "flux2_klein_img2img.json"
+
+
+def _multiple_of_16(value: int) -> int:
+    """Le latent de FLUX.2 se découpe en carreaux de 16 px : une taille qui n'en est
+    pas un multiple est refusée par ComfyUI. Arrondi vers le haut : on ne perd
+    jamais de définition."""
+    return max(16, math.ceil(value / 16.0) * 16)
+
+
+class Flux2KleinGenerator(ComfyUIGenerator):
+    """FLUX.2 [klein] 4B dans ComfyUI : même contrat que SDXL, autre graphe.
+
+    Le modèle se charge en trois fichiers (modèle, encodeur Qwen3, VAE) et
+    s'échantillonne par SamplerCustomAdvanced, comme dans le modèle de workflow
+    officiel de ComfyUI. Une retouche et la passe haute définition sont de
+    l'img2img classique : l'image encodée sert de latent de départ, et
+    SplitSigmasDenoise ne garde que la fin du planning de bruit.
+    """
+
+    def __init__(self):
+        self.text2img = json.loads(FLUX_TEXT2IMG.read_text(encoding="utf-8"))
+        self.img2img = json.loads(FLUX_IMG2IMG.read_text(encoding="utf-8"))
+
+    def _common(self, wf: dict, positive: str, negative: str, seed: int) -> dict:
+        wf["1"]["inputs"]["unet_name"] = settings.flux_unet
+        wf["2"]["inputs"]["clip_name"] = settings.flux_text_encoder
+        wf["3"]["inputs"]["vae_name"] = settings.flux_vae
+        wf["4"]["inputs"]["text"] = positive
+        wf["5"]["inputs"]["text"] = negative
+        wf["7"]["inputs"]["steps"] = settings.flux_steps
+        wf["8"]["inputs"]["noise_seed"] = seed
+        wf["10"]["inputs"]["cfg"] = settings.flux_cfg
+        return wf
+
+    def _sized(self, wf: dict, size: int) -> dict:
+        size = _multiple_of_16(size)
+        wf["7"]["inputs"]["width"] = size
+        wf["7"]["inputs"]["height"] = size
+        if "6" in wf:
+            wf["6"]["inputs"]["width"] = size
+            wf["6"]["inputs"]["height"] = size
+        if "15" in wf:
+            wf["15"]["inputs"]["width"] = size
+            wf["15"]["inputs"]["height"] = size
+        return wf
+
+    def _workflow(self, positive: str, negative: str, seed: int) -> dict:
+        wf = self._common(json.loads(json.dumps(self.text2img)), positive, negative, seed)
+        return self._sized(wf, settings.image_size)
+
+    def _workflow_refine(self, positive: str, negative: str, seed: int,
+                         image_name: str, denoise: float, size: int = None) -> dict:
+        wf = self._common(json.loads(json.dumps(self.img2img)), positive, negative, seed)
+        wf["14"]["inputs"]["image"] = image_name
+        wf["17"]["inputs"]["denoise"] = denoise
+        return self._sized(wf, size or settings.image_size)
+
+
 def get_generator():
-    if settings.generator_mode == "comfyui":
-        return ComfyUIGenerator()
-    return MockGenerator()
+    if settings.generator_mode != "comfyui":
+        return MockGenerator()
+    if settings.image_model == "flux2_klein":
+        return Flux2KleinGenerator()
+    return ComfyUIGenerator()

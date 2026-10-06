@@ -255,3 +255,57 @@ def test_l_agrandissement_n_a_lieu_que_si_un_modele_est_configure(monkeypatch):
 
     from PIL import Image
     assert Image.open(BytesIO(agrandie)).width == 2953  # 25 cm à 300 dpi
+
+
+# ------------------------------------------------------------------ FLUX.2 klein
+# Le graphe n'est pas exécuté ici (pas de GPU) : on vérifie qu'il est cohérent —
+# chaque lien pointe vers un nœud qui existe, et les réglages arrivent au bon endroit.
+
+def _liens_valides(wf):
+    for nid, node in wf.items():
+        for value in node["inputs"].values():
+            if isinstance(value, list) and len(value) == 2 and isinstance(value[1], int):
+                assert value[0] in wf, f"le nœud {nid} pointe vers {value[0]}, absent"
+
+
+def test_le_workflow_flux2_recoit_prompt_tirage_et_taille(monkeypatch):
+    import dataclasses
+
+    import app.generator as generator
+
+    monkeypatch.setattr(generator, "settings", dataclasses.replace(
+        generator.settings, image_size=1000, flux_steps=4, flux_cfg=1.0))
+    gen = generator.Flux2KleinGenerator()
+
+    wf = gen._workflow("a fox", "photo", 42)
+    _liens_valides(wf)
+    assert wf["4"]["inputs"]["text"] == "a fox"
+    assert wf["5"]["inputs"]["text"] == "photo"
+    assert wf["8"]["inputs"]["noise_seed"] == 42
+    assert wf["7"]["inputs"]["steps"] == 4 and wf["10"]["inputs"]["cfg"] == 1.0
+    # 1 000 n'est pas un multiple de 16 : le latent serait refusé.
+    assert wf["6"]["inputs"]["width"] == 1008 and wf["7"]["inputs"]["width"] == 1008
+
+
+def test_la_retouche_flux2_part_de_l_image_avec_un_bruit_partiel():
+    import app.generator as generator
+
+    wf = generator.Flux2KleinGenerator()._workflow_refine("a fox", "", 7, "tsia_x.png", 0.35, size=1536)
+    _liens_valides(wf)
+    assert wf["14"]["inputs"]["image"] == "tsia_x.png"
+    assert wf["17"]["inputs"]["denoise"] == 0.35
+    assert wf["11"]["inputs"]["sigmas"] == ["17", 1]  # la fin du planning seulement
+    assert wf["11"]["inputs"]["latent_image"] == ["16", 0]  # l'image encodée
+    assert wf["15"]["inputs"]["width"] == 1536
+
+
+def test_le_modele_se_choisit_dans_l_environnement(monkeypatch):
+    import dataclasses
+
+    import app.generator as generator
+
+    base = dataclasses.replace(generator.settings, generator_mode="comfyui")
+    monkeypatch.setattr(generator, "settings", dataclasses.replace(base, image_model="flux2_klein"))
+    assert isinstance(generator.get_generator(), generator.Flux2KleinGenerator)
+    monkeypatch.setattr(generator, "settings", dataclasses.replace(base, image_model="sdxl"))
+    assert type(generator.get_generator()) is generator.ComfyUIGenerator

@@ -306,6 +306,22 @@ permis. **Pas `4x-UltraSharp`**, sous licence non commerciale. Comme la passe
 haute définition, l'étape n'est jamais bloquante : en cas d'échec, le fichier
 part interpolé, avec un avertissement.
 
+### Le modèle d'image : SDXL ou FLUX.2 [klein] 4B
+
+`IMAGE_MODEL` choisit le graphe envoyé à ComfyUI ; le contrat HTTP ne change
+pas. `sdxl` (défaut) garde les workflows `sdxl_*.json`. `flux2_klein` envoie
+`flux2_klein.json` et `flux2_klein_img2img.json`, repris du modèle de workflow
+officiel de ComfyUI (UNETLoader, CLIPLoader `flux2`, EmptyFlux2LatentImage,
+Flux2Scheduler, CFGGuider, SamplerCustomAdvanced) ; la retouche et la passe
+haute définition y sont de l'img2img par `SplitSigmasDenoise`.
+
+FLUX.2 [klein] 4B est sous **Apache 2.0** dans ses deux versions — la 9B, elle,
+ne l'est pas. La version *base* suit le prompt négatif (20 pas, CFG 5) ; la
+*distillée* va cinq fois plus vite (4 pas, CFG 1) mais l'ignore, alors que toutes
+les interdictions du moteur y vivent. `scripts/compare_models.py` génère les
+mêmes demandes avec les trois et produit une planche HTML : le choix se fait sur
+pièces, pas sur la réputation.
+
 ## 8. Attentes de performance
 
 - **5 minutes** entre la demande et `done`, au-delà l'essai est rendu.
