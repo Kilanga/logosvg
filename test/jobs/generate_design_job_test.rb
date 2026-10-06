@@ -84,4 +84,43 @@ class GenerateDesignJobTest < ActiveJob::TestCase
 
     assert_not_requested :post, GENERATE
   end
+  # --- Three proposals per click (October 2026) ---------------------------
+
+  test "one call asks for every proposal of the click, and each gets its job" do
+    siblings = SpawnProposals.call(@design, count: 3)
+    stub_request(:post, GENERATE)
+      .with { |request| JSON.parse(request.body)["count"] == 3 }
+      .to_return(body: { job_ids: %w[ j1 j2 j3 ], job_id: "j1", status: "queued", refinements_left: 3 }.to_json)
+
+    assert_enqueued_jobs 3, only: PollDesignJob do
+      GenerateDesignJob.perform_now(@design)
+    end
+
+    proposals = [ @design, *siblings ].map(&:reload)
+    assert_equal %w[ j1 j2 j3 ], proposals.map(&:generator_job_id)
+    assert(proposals.all?(&:generating?))
+    assert(proposals.all?(&:awaiting_choice?))
+  end
+
+  test "a slot the service did not draw says so rather than spinning" do
+    siblings = SpawnProposals.call(@design, count: 3)
+    stub_request(:post, GENERATE).to_return(body: { job_ids: %w[ j1 j2 ], job_id: "j1", status: "queued" }.to_json)
+
+    GenerateDesignJob.perform_now(@design)
+
+    assert_predicate siblings.last.reload, :failed?
+    assert_predicate siblings.first.reload, :generating?
+    assert_equal 1, GenerationQuota.for(@design.user).used, "the click went through"
+  end
+
+  test "a refused click fails every proposal, and is refunded once" do
+    siblings = SpawnProposals.call(@design, count: 3)
+    GenerationQuota.for(@design.user).consume!
+    stub_request(:post, GENERATE).to_return(status: 503, body: { detail: "File pleine." }.to_json)
+
+    GenerateDesignJob.perform_now(@design)
+
+    assert([ @design, *siblings ].map(&:reload).all?(&:failed?))
+    assert_equal 1, GenerationQuota.for(@design.user).used
+  end
 end

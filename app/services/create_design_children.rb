@@ -19,8 +19,10 @@ class CreateDesignChildren
     answer = yield
     job_ids = Array(answer["job_ids"].presence || answer["job_id"])
 
-    # One click, one token: the variants it made cost a single reprise.
-    @batch_token = SecureRandom.hex(8) unless @instruction
+    # One click, one token: the proposals it drew cost a single reprise, and
+    # the client keeps one of them. A lone child has nothing to choose from.
+    @batch_token = SecureRandom.hex(8)
+    @chosen_at = Time.current if job_ids.one?
     children = job_ids.map { |job_id| build_child(job_id, answer) }
     Design.transaction { children.each(&:save!) }
 
@@ -46,6 +48,7 @@ class CreateDesignChildren
         mode: @instruction ? "refine" : "variant",
         instruction: @instruction,
         batch_token: @batch_token,
+        chosen_at: @chosen_at,
         # Inherited wholesale: a child of a screen-printing design is a
         # screen-printing design, whatever else changes.
         prompt: @parent.prompt,

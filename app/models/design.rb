@@ -64,6 +64,8 @@ class Design < ApplicationRecord
   scope :active, -> { where(deleted_at: nil) }
   scope :newest_first, -> { order(created_at: :desc) }
   scope :roots, -> { where(parent_id: nil) }
+  # Not one of several proposals still on offer: a design the client has.
+  scope :kept, -> { where(batch_token: nil).or(where.not(chosen_at: nil)) }
 
   # `pending` → `generating` → `ready` or `failed`. A failed design may be
   # started again and has consumed no quota; a ready one never changes.
@@ -100,12 +102,26 @@ class Design < ApplicationRecord
   # and a click on "other versions" is one whatever number of variants it made
   # (they share a batch token). Failed attempts cost nothing; deleted ones
   # still count.
+  #
+  # Since October 2026 every click draws several proposals, refinements
+  # included: whatever its mode, a batch is one reprise.
   def refinements_used
     children = Design.where(root_id: lineage_root_id).where.not(status: "failed")
-    refinements = children.where.not(mode: "variant").count
-    batches = children.where(mode: "variant").where.not(batch_token: nil).distinct.count(:batch_token)
+    batches = children.where.not(batch_token: nil).distinct.count(:batch_token)
+    single = children.where(batch_token: nil).where.not(mode: "variant").count
 
-    refinements + batches + legacy_variant_clicks(children)
+    batches + single + legacy_variant_clicks(children)
+  end
+
+  # One of the proposals of a click, before the client has kept one. Nothing
+  # goes further from it — no reprise, no workshop, no designer — until then.
+  def awaiting_choice? = batch_token.present? && chosen_at.nil?
+
+  # The proposals drawn by the same click, this one included, oldest first.
+  def proposals
+    return Design.where(id: id) if batch_token.blank?
+
+    Design.active.where(batch_token: batch_token).order(:id)
   end
 
   def refinements_remaining

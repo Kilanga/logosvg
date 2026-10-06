@@ -1,9 +1,10 @@
 # How many generations a workshop's clients may run this month, through it.
 #
 # Decided on 06/10/2026: the Référencement plan includes 100 generations a
-# month, Atelier+ is unlimited. A generation is counted on the design that
-# carries the workshop — every variant and retouch is a design too, and each
-# occupies the GPU just the same. Failed ones are not counted. The per-client
+# month, Atelier+ is unlimited. A generation is a client's click on a design
+# carrying the workshop — a creation, a retouch, a request for other versions —
+# however many proposals it drew: they share a batch token. Failed ones are not
+# counted. The per-client
 # daily allowance (GenerationQuota) applies on top, whatever the plan.
 #
 # The limit is a plan setting in config/settings.yml; nil means unlimited.
@@ -30,12 +31,13 @@ class PrinterGenerationQuota
     return 0 if @printer.nil?
 
     Design.where(printer_id: @printer.id, created_at: month)
-          .where.not(status: "failed").count
+          .where.not(status: "failed")
+          .distinct.count(Arel.sql("COALESCE(designs.batch_token, designs.token)"))
   end
 
   def remaining = limited? ? [ limit - used, 0 ].max : nil
 
-  # Room for `count` more designs: a click of variants makes several at once.
+  # Room for `count` more clicks.
   def allows?(count = 1) = !limited? || used + count <= limit
 
   def exceeded? = !allows?

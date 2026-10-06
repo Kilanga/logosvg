@@ -39,13 +39,18 @@ class DesignsTest < ApplicationSystemTestCase
       assert_selector "h1", text: shown("un renard qui fait du skate")
     end
 
-    design = Design.order(:created_at).last
+    design = first_proposal
 
     assert_equal 25, design.print_width_cm
     assert_equal printers(:rennes), design.printer
     assert_predicate design.reload, :ready?
 
+    # Three proposals of the same idea; the client keeps one.
     visit design_path(design)
+    assert_text displayed("client.designs.show.proposals_title")
+    assert_selector "button", text: I18n.t("client.designs.proposal.choose"), count: 3
+    within("#design_#{design.token}") { click_on I18n.t("client.designs.proposal.choose") }
+    assert_text I18n.t("client.designs.choose.chosen")
 
     # Vector output is counted in screens, and each ink is one.
     assert_text displayed("client.designs.design.screens", count: 2)
@@ -80,12 +85,13 @@ class DesignsTest < ApplicationSystemTestCase
       assert_selector "h1", text: shown("une montagne au lever du soleil")
     end
 
-    design = Design.order(:created_at).last
+    design = first_proposal
 
     assert_predicate design.reload, :ready?
     assert_equal "png", design.print_format
 
     visit design_path(design)
+    within("#design_#{design.token}") { click_on I18n.t("client.designs.proposal.choose") }
 
     assert_text displayed("client.designs.design.print_file")
     assert_text displayed("designs.facts.resolution")
@@ -202,6 +208,10 @@ class DesignsTest < ApplicationSystemTestCase
   end
 
   private
+    def first_proposal
+      Design.where(batch_token: Design.order(:id).last.batch_token).order(:id).first
+    end
+
     def sign_in(user)
       visit new_session_path
       fill_in I18n.t("activerecord.attributes.user.email_address"), with: user.email_address
@@ -217,16 +227,17 @@ class DesignsTest < ApplicationSystemTestCase
     # back — the whole exchange PollDesignJob walks through.
     def stub_generation(print_file:, bytes:, result:)
       stub_request(:post, "http://generator.test/generate").to_return(
-        body: { job_id: "job-sys", status: "queued", refinements_left: 3 }.to_json
+        body: { job_ids: %w[ job-sys job-sys2 job-sys3 ], job_id: "job-sys", status: "queued",
+                refinements_left: 3 }.to_json
       )
-      stub_request(:get, %r{/jobs/job-sys\?}).to_return(
+      stub_request(:get, %r{/jobs/job-sys\d?\?}).to_return(
         body: {
           status: "done", refinements_left: 3,
           result: result.merge("print_file" => print_file, "prompt_used" => "…", "seed" => 1)
         }.to_json
       )
-      stub_request(:get, %r{/jobs/job-sys/#{Regexp.escape(print_file)}}).to_return(body: bytes)
-      stub_request(:get, %r{/jobs/job-sys/source\.png}).to_return(status: 404, body: "{}")
+      stub_request(:get, %r{/jobs/job-sys\d?/#{Regexp.escape(print_file)}}).to_return(body: bytes)
+      stub_request(:get, %r{/jobs/job-sys\d?/source\.png}).to_return(status: 404, body: "{}")
     end
 
     def svg

@@ -24,6 +24,10 @@ shared:
     # valoir MAX_REFINEMENTS du service : Rails tient désormais son propre
     # compte, parce que celui du service s'efface à chaque arrêt de la machine.
     max_refinements: 3
+    # Propositions dessinées à chaque clic — création, retouche ou variantes —,
+    # chacune avec son parti pris ; le client en garde une. Un clic compte pour
+    # une génération et une reprise. Plafonné par PROPOSALS côté service.
+    proposals_per_request: 3
     # Bornes imposées par le microservice FastAPI.
     prompt_min_length: 3
     prompt_max_length: 300

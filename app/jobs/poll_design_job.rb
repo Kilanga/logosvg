@@ -71,14 +71,24 @@ class PollDesignJob < ApplicationJob
     # fait échouer. `fail!` bute alors sur les mêmes validations, l'erreur est
     # avalée par le filet, et le design reste bloqué en « génération en cours »
     # — exactement ce qu'on voulait éviter.
+    #
+    # A click is counted once, however many proposals it drew: it is handed
+    # back only when the last of them fails, never once per failure.
     def give_up(design, message)
-      GenerationQuota.for_user_id(design.user_id).refund!
-
       fresh = Design.find(design.id)
+      GenerationQuota.for_user_id(fresh.user_id).refund! if whole_click_failed?(fresh)
+
       return unless fresh.may_fail?
 
       fresh.fail!(message)
       fresh.save!
       DesignChannel.broadcast(fresh)
+    end
+
+    def whole_click_failed?(design)
+      return true if design.batch_token.blank?
+
+      Design.where(batch_token: design.batch_token).where.not(id: design.id)
+            .where.not(status: "failed").none?
     end
 end

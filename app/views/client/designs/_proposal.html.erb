@@ -1,0 +1,46 @@
+<%# One of the proposals of a click, before the client has kept one: the
+    image, its inks, and the one thing to do with it. Rendered inside
+    _design, so the broadcast that announces it ready draws this card. %>
+<div class="panel flex h-full flex-col overflow-hidden">
+  <% if design.in_progress? %>
+    <div class="screen-tint flex aspect-square w-full flex-col items-center justify-center gap-3 p-6 text-center">
+      <span class="flex gap-3 text-emulsion" aria-hidden="true">
+        <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+      </span>
+      <p class="label-rule text-emulsion" role="status"><%= t("client.designs.design.working") %></p>
+    </div>
+
+  <% elsif design.failed? %>
+    <div class="flex aspect-square w-full flex-col items-center justify-center gap-3 bg-warning-bg p-6 text-center">
+      <p class="label-rule text-warning"><%= t("client.designs.design.failed") %></p>
+      <p class="text-sm text-warning"><%= design.error_message %></p>
+      <%= link_to t("client.designs.design.try_again"), new_design_path,
+            class: "text-sm font-medium underline underline-offset-4" %>
+    </div>
+
+  <% else %>
+    <div class="screen-tint relative aspect-square w-full p-4">
+      <p class="pill absolute left-3 top-3 border border-line bg-surface text-muted"
+         title="<%= t("designs.ai_label_hint") %>"><%= t("designs.ai_label") %></p>
+      <%= link_to design_image_path(design), target: "_blank", rel: "noopener",
+            aria: { label: t("client.designs.proposal.enlarge") } do %>
+        <%= image_tag design_image_path(design), alt: design.prompt, class: "size-full object-contain" %>
+      <% end %>
+    </div>
+
+    <div class="flex flex-1 flex-col gap-4 border-t border-line p-4">
+      <% if design.vector? && design.inks_count %>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="label-rule"><%= t("client.designs.design.screens", count: design.inks_count) %></span>
+          <% design.palette.each do |ink| %>
+            <span class="size-5 rounded-xs border border-ink/15" style="background-color: <%= ink["hex"] %>"
+                  title="<%= ink["hex"] %>"></span>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= button_to t("client.designs.proposal.choose"), design_choice_path(design),
+            class: "btn btn-primary mt-auto w-full text-sm" %>
+    </div>
+  <% end %>
+</div>

@@ -1,6 +1,10 @@
 # Hands a design to the generation service and hands the waiting over to
 # PollDesignJob.
 #
+# One click draws several proposals (SpawnProposals): the design this job was
+# given asks for all of them in a single call, and each sibling still waiting
+# receives one of the job ids that come back, in order.
+#
 # Everything that can go wrong here is something the client must be told about
 # in their own words, so each failure ends with the design in `failed` and a
 # sentence to read — never with a job silently retrying out of sight.
@@ -12,15 +16,20 @@ class GenerateDesignJob < ApplicationJob
   def perform(design)
     return unless design.may_start?
 
-    response = GeneratorClient.new.generate(design)
+    designs = [ design, *waiting_siblings(design) ]
+    response = GeneratorClient.new.generate(design, count: designs.size)
+    job_ids = Array(response["job_ids"].presence || response.fetch("job_id"))
 
-    design.update!(
-      generator_job_id: response.fetch("job_id"),
-      refinements_left: response["refinements_left"]
-    )
-    design.start!
-
-    PollDesignJob.set(wait: poll_interval).perform_later(design)
+    designs.each_with_index do |proposal, index|
+      if job_ids[index]
+        launch(proposal, job_ids[index], response["refinements_left"])
+      else
+        # The service drew fewer than asked — its own ceiling is lower. The
+        # empty slot says so rather than spinning; the click is not refunded,
+        # since the others went through.
+        abandon(proposal, I18n.t("designs.errors.unavailable"))
+      end
+    end
   rescue GeneratorClient::Rejected => e
     # A blocked term or an unusable prompt: the service's own sentence is the
     # most useful thing the client can read.
@@ -58,14 +67,35 @@ class GenerateDesignJob < ApplicationJob
 
     def poll_interval = Rails.application.config.tshirt.generation[:poll_interval_seconds].seconds
 
+    # The other proposals of the click, still without a job of their own.
+    def waiting_siblings(design)
+      return [] if design.batch_token.blank?
+
+      Design.where(batch_token: design.batch_token, status: "pending")
+            .where.not(id: design.id).order(:id).to_a
+    end
+
+    def launch(design, job_id, refinements_left)
+      design.update!(generator_job_id: job_id, refinements_left: refinements_left)
+      design.start!
+      PollDesignJob.set(wait: poll_interval).perform_later(design)
+    end
+
     # A generation that never started consumed nothing: the attempt goes back.
     #
     # Le design est rechargé pour la même raison que dans PollDesignJob : un
     # objet resté invalide en mémoire empêcherait de l'enregistrer comme
     # échoué, et l'écran du client tournerait sans fin.
+    #
+    # The whole click is refused at once — its waiting siblings with it — and
+    # refunded once, since it was counted once.
     def refuse(design, message, refund:)
       GenerationQuota.for_user_id(design.user_id).refund! if refund
 
+      [ design, *waiting_siblings(design) ].each { |proposal| abandon(proposal, message) }
+    end
+
+    def abandon(design, message)
       fresh = Design.find(design.id)
       return unless fresh.may_fail?
 
