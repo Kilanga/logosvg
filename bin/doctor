@@ -122,9 +122,9 @@ if DEPLOY
     ok ? "#{compte}@#{hote}" : nil
   end
 
-  %w[ SECRET_KEY_BASE KAMAL_REGISTRY_PASSWORD TSHIRT_IA_DATABASE_PASSWORD
-      POSTGRES_PASSWORD GENERATOR_API_KEY GENERATOR_USER_KEY
-      SMTP_USER_NAME SMTP_PASSWORD ].each do |nom|
+  # La liste vient de .kamal/secrets lui-même : un secret ajouté là ne peut pas
+  # être oublié ici.
+  File.readlines(".kamal/secrets", encoding: "UTF-8").filter_map { |ligne| ligne[/\A([A-Z0-9_]+)=/, 1] }.each do |nom|
     verifie(nom, "source ton fichier de secrets — voir docs/EXPLOITATION.md") do
       ENV[nom].to_s.empty? ? nil : "posé"
     end

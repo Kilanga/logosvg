@@ -188,6 +188,14 @@ jobs:
       GENERATOR_USER_KEY: ${{ secrets.GENERATOR_USER_KEY }}
       SMTP_USER_NAME: ${{ secrets.SMTP_USER_NAME }}
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      STRIPE_PRICE_LISTING: ${{ secrets.STRIPE_PRICE_LISTING }}
+      STRIPE_PRICE_ATELIER_PLUS: ${{ secrets.STRIPE_PRICE_ATELIER_PLUS }}
+      STRIPE_TAX_RATE: ${{ secrets.STRIPE_TAX_RATE }}
+      TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
 
     steps:
       - name: Checkout code
