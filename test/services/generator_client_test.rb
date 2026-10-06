@@ -24,6 +24,26 @@ class GeneratorClientTest < ActiveSupport::TestCase
     end
   end
 
+  # A forgotten design goes back with its original image and its count — and,
+  # like every other call, under a pseudonym only.
+  test "a restoration sends the original image, the description and the reprises spent" do
+    design = designs(:fox_screen)
+    design.source_png.attach(io: StringIO.new("\x89PNG\r\n\x1a\nfaux".b), filename: "source.png",
+                             content_type: "image/png")
+    stub_request(:post, "http://generator.test/jobs/restore")
+      .to_return(status: 201, body: { job_id: "r1", refinements_left: 1 }.to_json)
+
+    answer = GeneratorClient.new.restore(design, used_refinements: 2)
+
+    assert_equal "r1", answer["job_id"]
+    assert_requested :post, "http://generator.test/jobs/restore" do |request|
+      body = JSON.parse(request.body)
+      body["used_refinements"] == 2 && body["subject"] == design.subject &&
+        Base64.strict_decode64(body["source_png"]).start_with?("\x89PNG".b) &&
+        body["user_id"] != design.user_id.to_s && !request.body.include?(design.user.email_address)
+    end
+  end
+
   # The service never learns who the client is.
   test "the client is identified by an HMAC, never by their account id" do
     stub_request(:post, GENERATE).to_return(body: "{}")

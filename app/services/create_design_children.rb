@@ -19,8 +19,16 @@ class CreateDesignChildren
     answer = yield
     job_ids = Array(answer["job_ids"].presence || answer["job_id"])
 
+    # One click, one token: the variants it made cost a single reprise.
+    @batch_token = SecureRandom.hex(8) unless @instruction
     children = job_ids.map { |job_id| build_child(job_id, answer) }
     Design.transaction { children.each(&:save!) }
+
+    # The lower of the two counts: the service's forgets when its machine
+    # stops, the application's does not.
+    remaining = [ answer["refinements_left"], @parent.refinements_remaining ].compact.min
+    Design.where(id: children.map(&:id)).update_all(refinements_left: remaining)
+    children.each { |child| child.refinements_left = remaining }
 
     children.each { |child| PollDesignJob.perform_later(child) }
     children
@@ -37,6 +45,7 @@ class CreateDesignChildren
         root_id: @parent.lineage_root_id,
         mode: @instruction ? "refine" : "variant",
         instruction: @instruction,
+        batch_token: @batch_token,
         # Inherited wholesale: a child of a screen-printing design is a
         # screen-printing design, whatever else changes.
         prompt: @parent.prompt,

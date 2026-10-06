@@ -123,14 +123,30 @@ module Client
 
       # Both a variant and a refinement produce children of the same lineage,
       # fail the same way, and cost the same allowance — so they share a path.
+      #
+      # The budget is checked here first, on the application's own count: the
+      # service's resets whenever its machine is switched off. And a design the
+      # machine has forgotten is put back on it once, then asked again.
       def take_it_further
+        if @design.refinements_remaining.zero?
+          return redirect_to design_path(@design), alert: t(".budget_exhausted")
+        end
+
         unless GenerationQuota.for(Current.user).consume!
           return redirect_to design_path(@design),
                              alert: t("client.designs.create.quota_exceeded", count: GenerationQuota.per_day)
         end
 
-        children = CreateDesignChildren.call(parent: @design, instruction: @instruction) { yield }
+        children = CreateDesignChildren.call(parent: @design, instruction: @instruction) do
+          yield
+        rescue GeneratorClient::NotFound
+          ReviveDesign.call(@design)
+          yield
+        end
         redirect_to design_path(children.first)
+      rescue ReviveDesign::Unrecoverable
+        GenerationQuota.for(Current.user).refund!
+        redirect_to design_path(@design), alert: t("client.designs.take_it_further.too_old")
       rescue GeneratorClient::BudgetExhausted
         GenerationQuota.for(Current.user).refund!
         redirect_to design_path(@design), alert: t(".budget_exhausted")

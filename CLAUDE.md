@@ -20,7 +20,9 @@ ne les remplace pas.
    clairement marquée (§8) — jamais une constante enfouie dans le code.
 5. **Ne pas réécrire le microservice** de `services/generator/`. On consomme son
    API telle quelle : mock en développement, WebMock en test. Il n'évolue que
-   par des correctifs fournis par l'utilisateur, jamais à notre initiative.
+   par des correctifs demandés par l'utilisateur, jamais à notre initiative —
+   dans un commit à part, avec ses propres tests (`pytest`), et en mettant
+   docs/GENERATION.md à jour.
 6. **Branche puis pull request, jamais de push sur `main`.** Commits atomiques,
    messages en français.
 7. **Interface en français** (fichiers de locale). **Code, tables, modèles,
@@ -288,6 +290,7 @@ Base : `services/generator/microservice` (FastAPI, port 5000, `127.0.0.1`).
 | `GET /jobs/:id?user_id=`           | —                                                                        | `status`, `position`, `error`, `mode`, `parent_id`, `root_id`, `refinements_left`, `result` |
 | `GET /jobs/:id/design.svg?user_id=`| —                                                                        | le SVG                                                       |
 | `GET /jobs/:id/source.png?user_id=`| —                                                                        | l'image brute                                                |
+| `POST /jobs/restore`               | `user_id`, `prompt`, `subject`, technique…, `used_refinements`, `source_png` (base64) | `201` : `job_id`, `status`, `refinements_left` |
 | `GET /health`                      | — (sans clé)                                                             | `{"status":"ok"}`                                            |
 
 `result` contient `palette`, `inks`, `stats` (dont `paths` et `opaque_share`),
@@ -306,8 +309,12 @@ de la réponse, pas seulement le code HTTP.
 
 **Reprises.** Un design `ready` ne se modifie pas : une retouche ou une variante
 crée un enfant de la même lignée (`root_id`). Budget de trois reprises par
-lignée, compté par le service ; `refinements_left` fait foi et n'est jamais
-recalculé par Rails.
+lignée, compté **des deux côtés** depuis octobre 2026 : le service compte en
+mémoire et oublie tout quand la machine à GPU s'éteint, Rails compte sur la
+lignée (`Design#refinements_used`, `batch_token` pour les variantes d'un même
+clic) et le plus bas l'emporte. Un design que le service a oublié (`404`) est
+remis sur la machine par `POST /jobs/restore` (`ReviveDesign`), puis la reprise
+est relancée une fois. Voir docs/GENERATION.md.
 
 Règles côté Rails :
 

@@ -81,7 +81,7 @@ class StoreGeneratedDesign
         prompt_used: @result["prompt_used"],
         subject: @result["subject"],
         seed: @result["seed"],
-        refinements_left: @answer["refinements_left"],
+        refinements_left: [ @answer["refinements_left"], @design.refinements_remaining ].compact.min,
         colors_requested: recorded_colors,
         inks_count: (@inspected&.inks || @result["inks"] if format == "svg"),
         paths_count: (stats["paths"] if format == "svg")

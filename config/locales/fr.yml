@@ -1185,6 +1185,10 @@ fr:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
       refine:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
+      take_it_further:
+        too_old: >-
+          Ce design est trop ancien pour être repris : son image d'origine n'a
+          pas été conservée. Créez-en un nouveau à partir de la même idée.
 
     print_requests:
       index:

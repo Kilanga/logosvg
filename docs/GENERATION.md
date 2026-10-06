@@ -19,12 +19,24 @@ peut changer entièrement.
 | Télécharger le fichier nommé par `result.print_file` | Deviner une extension |
 | Contrôler tout SVG et tout PNG reçu | Faire confiance au service |
 | Afficher les avertissements du service tels quels | Les réécrire |
-| Compter le quota journalier du client | Compter le budget de reprises |
+| Compter le quota journalier du client | Faire confiance au seul compte de reprises du service |
+| Remettre sur la machine un design qu'elle a oublié | Régénérer pour retrouver un parent |
 
-**Le budget de reprises est au service.** `refinements_left` fait foi à chaque
-réponse ; Rails le recopie et ne le recalcule jamais. Si le service redémarre
-et perd ses compteurs, les clients récupèrent des reprises — c'est une décision
-ouverte assumée (voir `docs/SPEC.md`).
+**Le budget de reprises est compté des deux côtés, et le plus bas l'emporte.**
+Le service compte en mémoire, et la machine à GPU s'éteint désormais à la main
+chaque soir : son compte repartait à zéro et rendait des reprises. Rails tient
+donc le sien (`Design#refinements_used`, sur la lignée, une reprise par
+retouche et une par clic de variantes grâce à `batch_token`), refuse lui-même
+une lignée épuisée sans appeler le service, et enregistre
+`min(refinements_left du service, son propre reste)`. Le plafond vit dans
+`config/settings.yml` (`generation.max_refinements`) et doit valoir
+`MAX_REFINEMENTS` du service.
+
+**Un design oublié est restauré, pas régénéré.** Le service ne garde un travail
+qu'une heure, et rien après un redémarrage. Quand une reprise reçoit un `404`,
+Rails appelle `POST /jobs/restore` avec l'image de départ (`source_png`), la
+description anglaise, le tirage et le nombre de reprises déjà faites, enregistre
+le nouveau `job_id` sur le design, et relance la reprise une fois.
 
 ---
 
@@ -98,6 +110,30 @@ l'écran — mais un champ faux se retrouve sur un t-shirt.
 Créent des enfants de la même lignée (`root_id`). Rails crée une ligne par
 `job_id` renvoyé. `variants` renvoie `job_ids` (un tableau) **et** `job_id`
 (le premier) ; l'un ou l'autre suffit.
+
+### `POST /jobs/restore` → `201`
+
+Recrée un parent prêt, sans calcul GPU, à partir de ce que Rails a gardé :
+
+```json
+{
+  "user_id": "a1b2c3…",
+  "prompt": "un renard qui fait du skate",
+  "subject": "a fox on a skateboard",
+  "style": "mascotte",
+  "technique": "screen_printing",
+  "colors": 3,
+  "print_width_cm": 25,
+  "remove_background": true,
+  "seed": 123456,
+  "used_refinements": 1,
+  "source_png": "<base64>"
+}
+```
+
+Réponse : `job_id`, `status` (`done`), `refinements_left`. Le travail restauré
+est la racine d'une nouvelle lignée côté service, qui part de
+`used_refinements` reprises déjà consommées. `422` si l'image n'est pas un PNG.
 
 ### `GET /health`
 

@@ -214,4 +214,47 @@ class DesignTest < ActiveSupport::TestCase
         print_width_cm: 25
       }.merge(attributes))
     end
+
+  # --- The lineage's reprises, counted here ---------------------------------
+
+  test "a refinement is one reprise, a click of variants is one, a failure is none" do
+    root = designs(:fox_screen)
+    child(root, mode: "refine", instruction: "un casque")
+    2.times { child(root, mode: "variant", batch_token: "lot-a") }
+    child(root, mode: "refine", instruction: "raté", status: "failed")
+
+    assert_equal 2, root.refinements_used
+    assert_equal 1, root.refinements_remaining
+  end
+
+  test "a child counts for its whole lineage, wherever it is asked from" do
+    root = designs(:fox_screen)
+    first = child(root, mode: "refine", instruction: "un casque")
+    child(first, mode: "variant", batch_token: "lot-b", root: root)
+
+    assert_equal 2, first.refinements_used
+    assert_equal root.refinements_used, first.refinements_used
+  end
+
+  test "variants made before batch tokens existed count once per click" do
+    root = designs(:fox_screen)
+    3.times { child(root, mode: "variant") }
+
+    assert_equal 1, root.refinements_used
+  end
+
+  test "the remaining count never goes below zero" do
+    root = designs(:fox_screen)
+    4.times { |i| child(root, mode: "refine", instruction: "retouche #{i}") }
+
+    assert_equal 0, root.refinements_remaining
+  end
+
+  private
+    def child(parent, root: parent, status: "ready", **attributes)
+      Design.create!(user: parent.user, printer: parent.printer, parent: parent, root: root,
+                     prompt: parent.prompt, style: parent.style, technique: parent.technique,
+                     colors_requested: parent.colors_requested, print_width_cm: parent.print_width_cm,
+                     status: status, **attributes)
+    end
 end

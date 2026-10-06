@@ -297,6 +297,77 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_equal 0, GenerationQuota.for(users(:client)).used
   end
 
+  test "the variants of one click share a batch token, and count as one reprise" do
+    sign_in_as users(:client)
+    designs(:fox_screen).update!(generator_job_id: "job-42")
+    stub_request(:post, %r{/jobs/job-42/variants}).to_return(
+      body: { job_ids: %w[ v1 v2 v3 ], job_id: "v1", refinements_left: 2 }.to_json
+    )
+
+    post design_variants_path(designs(:fox_screen))
+
+    children = Design.where(parent: designs(:fox_screen))
+    assert_equal 1, children.distinct.count(:batch_token)
+    assert_equal 1, designs(:fox_screen).refinements_used
+  end
+
+  # The service forgets its count whenever its machine is switched off: the
+  # application's own count is the one that closes the lineage.
+  test "a lineage that spent its reprises is closed without asking the service" do
+    sign_in_as users(:client)
+    designs(:fox_screen).update!(generator_job_id: "job-42")
+    3.times { |i| spend_a_reprise(designs(:fox_screen), "r#{i}") }
+
+    assert_no_difference "Design.count" do
+      post design_refine_path(designs(:fox_screen)), params: { instruction: "un casque rouge" }
+    end
+
+    assert_redirected_to design_path(designs(:fox_screen))
+    assert_not_requested :post, %r{/refine}
+    assert_equal 0, GenerationQuota.for(users(:client)).used
+  end
+
+  # The machine is switched off every evening: tomorrow it knows nothing of
+  # today's designs. The application hands the design back, then asks again.
+  test "a design the machine forgot is restored, then taken further" do
+    sign_in_as users(:client)
+    design = designs(:fox_screen)
+    design.update!(generator_job_id: "job-42")
+    design.source_png.attach(io: StringIO.new(png), filename: "source.png", content_type: "image/png")
+    spend_a_reprise(design, "earlier")
+
+    stub_request(:post, %r{/jobs/job-42/refine}).to_return(
+      status: 404, body: { detail: "Design introuvable ou expiré." }.to_json
+    )
+    restore = stub_request(:post, %r{/jobs/restore})
+      .with { |request| JSON.parse(request.body).values_at("used_refinements", "subject") == [ 1, design.subject ] }
+      .to_return(status: 201, body: { job_id: "restored-1", status: "done", refinements_left: 2 }.to_json)
+    stub_request(:post, %r{/jobs/restored-1/refine}).to_return(
+      status: 202, body: { job_id: "child-1", status: "queued", refinements_left: 1 }.to_json
+    )
+
+    assert_difference "Design.count", 1 do
+      post design_refine_path(design), params: { instruction: "un casque rouge" }
+    end
+
+    assert_requested restore
+    assert_equal "restored-1", design.reload.generator_job_id
+    assert_equal "child-1", Design.order(:created_at).last.generator_job_id
+  end
+
+  test "a forgotten design with no original image is said to be too old" do
+    sign_in_as users(:client)
+    designs(:fox_screen).update!(generator_job_id: "job-42")
+    stub_request(:post, %r{/jobs/job-42/variants}).to_return(status: 404, body: "{}")
+
+    assert_no_difference "Design.count" do
+      post design_variants_path(designs(:fox_screen))
+    end
+
+    assert_equal I18n.t("client.designs.take_it_further.too_old"), flash[:alert]
+    assert_equal 0, GenerationQuota.for(users(:client)).used
+  end
+
   test "a design still generating cannot be taken further" do
     sign_in_as users(:client)
 
@@ -315,6 +386,14 @@ class DesignsTest < ActionDispatch::IntegrationTest
   end
 
   private
+    def spend_a_reprise(design, job_id)
+      Design.create!(user: design.user, printer: design.printer, parent: design, root: design,
+                     mode: "refine", instruction: "une retouche", prompt: design.prompt,
+                     style: design.style, technique: design.technique,
+                     colors_requested: design.colors_requested, print_width_cm: design.print_width_cm,
+                     generator_job_id: job_id, status: "ready")
+    end
+
     def valid_design
       { prompt: "un renard qui fait du skate", style: "mascotte",
         technique: "screen_printing", colors_requested: 3, print_width_cm: 25 }
