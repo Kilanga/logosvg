@@ -261,19 +261,21 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 | `generation_quota_per_day`         | `5`               | confirmé par le cahier des charges     |
 | `review_auto_accept_days`          | `7`               | validation automatique                 |
 | `proposal_expiry_hours`            | `72`              | réponse à une proposition              |
-| `designer_claim_timeout_hours`     | `12`              | graphiste choisi silencieux            |
+| `designer_claim_timeout_hours`     | `24`              | **décidé** (06/10/2026)                |
 | `print_request_reminder_hours`     | `48`              | relance atelier                        |
-| `print_request_expiry_days`        | `5`               | expiration d'une demande               |
-| `platform_fee_rate`                | `0.20`            | **taux de commission à fixer**         |
+| `print_request_expiry_days`        | `7`               | **décidé** (06/10/2026)                |
+| `platform_fee_rate`                | `0.15`            | **décidé** (06/10/2026)                |
 | `return_rate_alert_threshold`      | `0.25`            | **seuil d'alerte à fixer**             |
 | `design_retention_days`            | `180`             | **durée de conservation à fixer**      |
 | `print_request_anonymize_days`     | `365`             | **durée de conservation à fixer**      |
-| `subscription_price_*`             | —                 | **prix des abonnements à fixer**       |
+| `price_listing_cents` / `price_atelier_plus_cents` | `1900` / `3900` | **décidé** — Atelier+ inclut le Référencement |
+| `trial_period_days`                | `30`              | **décidé** (06/10/2026)                |
+| `custom_min_price_cents`           | `8900`            | **décidé** — sur devis, sans plafond   |
 | `consent_text_version`             | `2026-09-v1`      | version du texte de consentement       |
 
 Décisions déjà tranchées par le cahier des charges : le client télécharge
 **le PNG filigrané, jamais le SVG** ; les prix des niveaux de revue sont fixés
-par la plateforme (hypothèse à confirmer).
+par la plateforme (confirmé le 06/10/2026).
 
 ---
 

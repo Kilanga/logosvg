@@ -549,12 +549,12 @@ Onze étapes, chacune livrable et testée seule ; Claude Code s'arrête après c
 Ces points bloquent la mise en production, pas la construction : Claude Code utilise une valeur de configuration en attendant.
 
 - [x] Nom de la plateforme et nom de domaine (décidé le 21/09/2026 : **Prêt-à-tirer**, domaine `pretatirer.fr`. Le nom joue sur « prêt-à-porter » et sur « tirer » — lancer une série. Il évite « IA », qui date vite et désigne le moyen plutôt que la promesse, et « t-shirt », que le catalogue dépasse déjà avec la broderie, le flex et la sublimation. Réserve : le nom est descriptif, donc faible comme marque déposée)
-- [ ] Prix des deux abonnements et période d'essai éventuelle
-- [ ] Prix des niveaux de revue : fixés par la plateforme (hypothèse actuelle) ou par chaque graphiste
-- [ ] Taux de commission sur les revues
+- [x] Prix des deux abonnements et période d'essai (décidé le 06/10/2026 : **Référencement 19 € HT/mois, Atelier+ 39 € HT/mois Référencement compris, 30 jours d'essai**)
+- [x] Prix des niveaux de revue (décidé le 06/10/2026 : fixés par la plateforme — **Retouche 49 €** ; **création sur mesure sur devis du graphiste, à partir de 89 €, sans plafond**)
+- [x] Taux de commission sur les revues (décidé le 06/10/2026 : **15 %**)
 - [x] Le client peut-il télécharger son SVG, ou seulement l'envoyer à un atelier ? (décidé : le fichier SVG, non — il ne part qu'à l'atelier et au graphiste. Le client voit et télécharge un rendu matriciel de ce SVG, fidèle au fichier d'impression et filigrané « Créé avec \[nom de l'atelier\] », nom de la plateforme si aucun atelier)
 - [x] La lignée et le budget de reprises vivaient en mémoire dans le microservice (décidé le 06/10/2026 : **Rails compte aussi**, le plus bas l'emporte, et un design oublié par la machine est restauré par `POST /jobs/restore` au lieu d'échouer. Rendu nécessaire par l'allumage manuel de la machine à GPU)
-- [ ] Délais : validation automatique (7 jours), réponse à une proposition (72 h), graphiste choisi silencieux (12 h), expiration d'une demande (5 jours)
+- [x] Délais (décidé le 06/10/2026 : validation automatique 7 jours, réponse à une proposition 72 h, graphiste choisi silencieux **24 h**, expiration d'une demande **7 jours**)
 - [x] Le fichier d'impression est-il toujours un SVG ? (décidé : non — la technique décide. Sérigraphie, flex et broderie donnent un SVG ; DTF, DTG et sublimation donnent un PNG détouré en 300 dpi à la taille d'impression. La technique est choisie avant la génération et façonne le prompt, pas seulement la sortie)
 - [x] Agrandissement avant livraison des fichiers matriciels (décidé : passe haute définition à 1,5 — 156 dpi réels à 25 cm —, puis, depuis le 06/10/2026, agrandissement par modèle ESRGAN jusqu'à 300 dpi quand `UPSCALE_MODEL` est renseigné. Voir docs/GENERATION.md §7)
 - [ ] Ajouter l'impression papier (offset et numérique, fichier CMJN avec fonds perdus) au catalogue, ou rester sur le textile en V1
@@ -562,5 +562,5 @@ Ces points bloquent la mise en production, pas la construction : Claude Code uti
 - [ ] Seuil d'alerte du taux de renvoi des graphistes
 - [ ] Durées de conservation des designs et des demandes
 - [x] Fournisseur d'emails et hébergement de production (décidé le 27/09/2026 : **VPS OVH** déployé par Kamal 2, emails par **Brevo**. Voir docs/EXPLOITATION.md)
-- [ ] Facturation des graphistes : auto-facturation par la plateforme ou factures déposées par les graphistes
+- [x] Facturation des graphistes (décidé le 06/10/2026 : **auto-facturation par la plateforme**, sous mandat du graphiste)
 - [ ] Validation juridique : CGV, conditions graphistes, DAC7, transparence du classement

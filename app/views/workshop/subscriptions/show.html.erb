@@ -56,7 +56,11 @@
       <% Subscription::PLANS.each do |plan| %>
         <div class="panel flex flex-col p-6">
           <p class="label-rule text-emulsion"><%= t("enums.subscription.plan.#{plan}") %></p>
-          <p class="mt-2 font-display text-3xl font-bold"><%= t(".price_tbd") %></p>
+          <p class="mt-2 font-display text-3xl font-bold"><%= plan_price(plan) %></p>
+          <p class="mt-1 text-sm text-muted">
+            <%= [ (t(".includes_listing") if plan == "atelier_plus"),
+                  (t("subscriptions.trial", count: trial_days) if trial_days.positive?) ].compact.join(" · ") %>
+          </p>
           <p class="mt-3 text-sm text-muted"><%= t(".plan_pitch.#{plan}") %></p>
 
           <ul class="mt-4 flex-1 space-y-2 text-sm">

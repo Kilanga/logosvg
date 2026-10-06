@@ -58,25 +58,29 @@ shared:
     # ⚠ DÉCISION OUVERTE : les prix des niveaux sont-ils fixés par la
     #   plateforme (hypothèse retenue) ou par chaque graphiste ?
     prices_set_by: platform
-    # ⚠ DÉCISION OUVERTE : taux de commission de la plateforme sur les revues.
-    platform_fee_rate: 0.20
-    # ⚠ DÉCISION OUVERTE : délais. Valeurs issues du cahier des charges, à
-    #   confirmer.
+    # Décidé le 06/10/2026 : 15 % de commission sur les vérifications.
+    platform_fee_rate: 0.15
+    # Décidé le 06/10/2026 : une création sur mesure se chiffre sur devis, à
+    # partir de 89 € et sans plafond.
+    custom_min_price_cents: 8900
+    # Délais décidés le 06/10/2026. Le graphiste choisi a 24 h, et non 12 :
+    # une nuit ne doit pas suffire à lui faire perdre une mission.
     auto_accept_days: 7
     proposal_expiry_hours: 72
     proposal_reminder_hours: 24
-    designer_claim_timeout_hours: 12
+    designer_claim_timeout_hours: 24
     # ⚠ DÉCISION OUVERTE : seuil d'alerte du taux de renvoi sur 30 jours.
     return_rate_alert_threshold: 0.25
-    # ⚠ DÉCISION OUVERTE : auto-facturation par la plateforme, ou factures
-    #   déposées par les graphistes ?
+    # Décidé le 06/10/2026 : auto-facturation par la plateforme, sous mandat
+    # du graphiste — le plus simple pour un micro-entrepreneur.
     self_billing: true
 
   # --- Demandes d'impression ----------------------------------------------
   print_requests:
-    # ⚠ DÉCISION OUVERTE : délais de relance et d'expiration.
+    # Décidé le 06/10/2026 : relance à 48 h, expiration à 7 jours — un
+    # week-end compris.
     reminder_after_hours: 48
-    expire_after_days: 5
+    expire_after_days: 7
     confirmation_token_valid_days: 30
     # ⚠ DÉCISION OUVERTE : gamme de tailles proposée. Celle-ci couvre le
     #   t-shirt adulte courant ; l'enfant et les coupes ajustées restent à
@@ -90,8 +94,13 @@ shared:
   subscriptions:
     # Les identifiants de prix Stripe viennent de l'environnement
     # (STRIPE_PRICE_LISTING, STRIPE_PRICE_ATELIER_PLUS) : jamais ici.
-    # ⚠ DÉCISION OUVERTE : montants affichés et période d'essai éventuelle.
-    trial_period_days: 0
+    # Décidé le 06/10/2026 : 19 € HT par mois pour le Référencement, 39 € HT
+    # pour Atelier+, qui l'inclut (39 € en tout, pas 19 + 39). Les montants
+    # facturés sont ceux des prix Stripe ; ceux-ci ne servent qu'à l'affichage.
+    price_listing_cents: 1900
+    price_atelier_plus_cents: 3900
+    # 30 jours d'essai gratuit à l'inscription.
+    trial_period_days: 30
     # Une fiche en past_due reste visible 7 jours, puis elle est masquée.
     past_due_grace_days: 7
 

@@ -519,6 +519,10 @@ fr:
 
   # --- Abonnements, textes partagés ----------------------------------------
   subscriptions:
+    price_per_month: "%{amount} HT / mois"
+    trial:
+      one: "%{count} jour d'essai gratuit"
+      other: "%{count} jours d'essai gratuit"
     errors:
       not_configured: "Les paiements ne sont pas encore configurés. Réessayez plus tard."
       unavailable: "Le service de paiement n'est pas joignable. Réessayez dans quelques minutes."
@@ -570,6 +574,7 @@ fr:
       message_required: "Un message est obligatoire."
       already_returned: "Cette vérification a déjà été renvoyée une fois."
       proposal_required: "Indiquez le niveau ou le prix que vous proposez."
+      proposal_below_minimum: "Une création sur mesure se chiffre à partir de %{minimum}."
       designer_required: "Choisissez un graphiste."
       already_refused: "Ce graphiste a déjà renvoyé cette vérification."
       reassignment_closed: "Vous avez déjà changé de graphiste pour cette vérification."
@@ -1310,7 +1315,7 @@ fr:
         not_visible_body: >-
           Sans abonnement actif, votre atelier n'apparaît ni dans l'annuaire,
           ni sur la carte, ni parmi les ateliers compatibles avec un design.
-        price_tbd: "Prix à venir"
+        includes_listing: "Référencement inclus"
         plan_pitch:
           listing: "Votre atelier dans l'annuaire, avec ses techniques et ses limites."
           atelier_plus: "Le référencement, plus la mise en avant et les statistiques."
@@ -1640,7 +1645,7 @@ fr:
         reason: "Motif"
         proposed_level: "Niveau proposé"
         proposed_price: "Prix proposé (€)"
-        proposed_price_hint: "Pour une création sur mesure uniquement."
+        proposed_price_hint: "Pour une création sur mesure uniquement, à partir de %{minimum}, sans plafond."
         return_message: "Message au client"
         return_message_placeholder: "Expliquez ce qui bloque et ce que vous proposez."
         return_action: "Renvoyer au client"
@@ -1747,10 +1752,12 @@ fr:
         body:
           - "Référencement donne à un atelier sa fiche publique, sa place dans l'annuaire et sur la carte, son lien client et la réception des demandes d'impression."
           - "Atelier+ y ajoute la mise en avant en tête d'annuaire, la couleur de marque sur l'écran de création et les statistiques du lien."
+          - "Prix : Référencement %{listing} HT par mois ; Atelier+ %{atelier_plus} HT par mois, Référencement compris."
       billing:
         title: "Facturation"
         body:
           - "L'abonnement est mensuel, sans engagement, et facturé par Stripe. Aucune donnée bancaire ne transite par la plateforme."
+          - "Les %{trial_days} premiers jours sont gratuits. Sans résiliation avant leur terme, le premier mois est facturé le lendemain."
           - "Les factures, le changement de formule et le moyen de paiement se gèrent depuis le portail client Stripe, accessible depuis l'espace atelier."
       visibility:
         title: "Visibilité de la fiche"
@@ -2337,9 +2344,8 @@ fr:
         plans:
           title: "Abonnements"
           highlighted: "Mis en avant"
-          # ⚠ DÉCISION OUVERTE : prix des deux abonnements et période d'essai.
-          # Aucun montant n'est affiché tant qu'il n'est pas arrêté.
-          price_pending: "Tarif à définir"
+          # Prix décidés le 06/10/2026, lus dans config/settings.yml.
+          includes_listing: "Référencement inclus"
           items:
             - name: "Référencement"
               summary: "Votre fiche dans l'annuaire, votre lien client et votre QR code."

@@ -105,9 +105,9 @@
             </div>
             <div class="max-w-48">
               <%= label_tag :proposed_price, t(".proposed_price"), class: "label-rule block" %>
-              <%= number_field_tag :proposed_price, nil, min: 1, step: 1,
+              <%= number_field_tag :proposed_price, nil, min: Rails.application.config.tshirt.reviews[:custom_min_price_cents] / 100, step: 1,
                     class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
-              <p class="mt-1.5 text-sm text-muted"><%= t(".proposed_price_hint") %></p>
+              <p class="mt-1.5 text-sm text-muted"><%= t(".proposed_price_hint", minimum: number_to_currency(Rails.application.config.tshirt.reviews[:custom_min_price_cents] / 100.0, precision: 0)) %></p>
             </div>
           </div>
 

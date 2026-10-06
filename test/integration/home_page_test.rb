@@ -33,10 +33,24 @@ class HomePageTest < ActionDispatch::IntegrationTest
     assert_includes policy, "frame-ancestors 'none'"
   end
 
-  test "no subscription price is shown while the pricing is an open decision" do
+  # Decided on 06/10/2026, read from config/settings.yml: Atelier+ includes
+  # the listing, and both start with a free trial.
+  test "the two plans show their monthly price and the free trial" do
     get root_path
 
-    assert_includes response.body, I18n.t("public.home.show.plans.price_pending")
+    assert_includes response.body, "19 € HT / mois"
+    assert_includes response.body, "39 € HT / mois"
+    assert_includes response.body, I18n.t("public.home.show.plans.includes_listing")
+    assert_includes response.body, ERB::Util.html_escape(I18n.t("subscriptions.trial", count: 30))
+  end
+
+  test "the subscription terms state the same prices and trial as the home page" do
+    get subscription_terms_path
+
+    assert_response :success
+    assert_includes response.body, "19 € HT par mois"
+    assert_includes response.body, "39 € HT par mois, Référencement compris"
+    assert_includes response.body, "Les 30 premiers jours sont gratuits"
   end
 
   test "the skip link is the first focusable element" do
