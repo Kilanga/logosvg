@@ -202,3 +202,56 @@ def test_les_encres_annoncees_sont_celles_que_l_atelier_comptera(client):
     assert fills == palette, f"le SVG contient {len(fills)} encres, la palette en annonce {len(palette)}"
     assert data["result"]["inks"] == len(fills)
     assert len(fills) <= 3
+
+
+# ------------------------------------------------------------------ agrandissement
+# Le DTF visé à 300 dpi : un modèle d'agrandissement dessine les pixels qui
+# manquent. Le détourage, lui, reste fait à la taille du dessin.
+
+def test_l_image_agrandie_porte_la_transparence_du_dessin():
+    from io import BytesIO
+
+    from PIL import Image
+
+    from app.raster import rasterize
+    from app.techniques import resolve
+
+    png = _png_avec_blanc_interieur()
+    agrandie = BytesIO()
+    Image.open(BytesIO(png)).convert("RGB").resize((2048, 2048)).save(agrandie, format="PNG")
+
+    sans = rasterize(png, resolve("dtf"), True, 20)
+    avec = rasterize(png, resolve("dtf"), True, 20, agrandie.getvalue())
+
+    assert sans["stats"]["model_upscale"] == 1.0
+    assert avec["stats"]["model_upscale"] == 4.0
+    # 2 048 px dessinés sur 20 cm : au-delà de 150 dpi, plus d'alerte de définition.
+    assert avec["stats"]["source_dpi"] > sans["stats"]["source_dpi"]
+    assert not any("adoucis" in w for w in avec["warnings"])
+    # Le fond reste transparent, le disque opaque.
+    fichier = Image.open(BytesIO(avec["png"]))
+    assert fichier.getpixel((2, 2))[3] == 0
+    assert fichier.getpixel((fichier.width // 2, fichier.height // 5))[3] == 255
+    assert abs(avec["stats"]["opaque_share"] - sans["stats"]["opaque_share"]) < 0.02
+
+
+def test_l_agrandissement_n_a_lieu_que_si_un_modele_est_configure(monkeypatch):
+    import asyncio
+    import dataclasses
+
+    import app.jobs as jobs
+    from app.techniques import resolve
+
+    png = _png_avec_blanc_interieur()
+    manager = jobs.JobManager(prompt_filter=None)
+
+    sans = asyncio.run(manager._upscale(png, resolve("dtf"), 25))
+    assert sans == (None, None)
+
+    monkeypatch.setattr(jobs, "settings", dataclasses.replace(jobs.settings, upscale_model="x.pth"))
+    agrandie, alerte = asyncio.run(manager._upscale(png, resolve("dtf"), 25))
+    assert alerte is None
+    from io import BytesIO
+
+    from PIL import Image
+    assert Image.open(BytesIO(agrandie)).width == 2953  # 25 cm à 300 dpi

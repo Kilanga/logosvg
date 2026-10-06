@@ -1,0 +1,28 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "init.png", "upload": "image" }
+  },
+  "2": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": { "model_name": "RealESRGAN_x4plus_anime_6B.pth" }
+  },
+  "3": {
+    "class_type": "ImageUpscaleWithModel",
+    "inputs": { "upscale_model": ["2", 0], "image": ["1", 0] }
+  },
+  "4": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": ["3", 0],
+      "upscale_method": "lanczos",
+      "width": 2953,
+      "height": 2953,
+      "crop": "disabled"
+    }
+  },
+  "5": {
+    "class_type": "SaveImage",
+    "inputs": { "filename_prefix": "pret_a_tirer_agrandi", "images": ["4", 0] }
+  }
+}

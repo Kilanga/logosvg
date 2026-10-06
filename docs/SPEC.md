@@ -556,7 +556,7 @@ Ces points bloquent la mise en production, pas la construction : Claude Code uti
 - [x] La lignée et le budget de reprises vivaient en mémoire dans le microservice (décidé le 06/10/2026 : **Rails compte aussi**, le plus bas l'emporte, et un design oublié par la machine est restauré par `POST /jobs/restore` au lieu d'échouer. Rendu nécessaire par l'allumage manuel de la machine à GPU)
 - [ ] Délais : validation automatique (7 jours), réponse à une proposition (72 h), graphiste choisi silencieux (12 h), expiration d'une demande (5 jours)
 - [x] Le fichier d'impression est-il toujours un SVG ? (décidé : non — la technique décide. Sérigraphie, flex et broderie donnent un SVG ; DTF, DTG et sublimation donnent un PNG détouré en 300 dpi à la taille d'impression. La technique est choisie avant la génération et façonne le prompt, pas seulement la sortie)
-- [ ] Agrandissement avant livraison des fichiers matriciels : nœud d'agrandissement dans le workflow ComfyUI, ou `IMAGE_SIZE` plus élevé. Sans lui, un DTF de 25 cm est livré à environ 100 dpi réels et l'avertissement s'affiche presque toujours
+- [x] Agrandissement avant livraison des fichiers matriciels (décidé : passe haute définition à 1,5 — 156 dpi réels à 25 cm —, puis, depuis le 06/10/2026, agrandissement par modèle ESRGAN jusqu'à 300 dpi quand `UPSCALE_MODEL` est renseigné. Voir docs/GENERATION.md §7)
 - [ ] Ajouter l'impression papier (offset et numérique, fichier CMJN avec fonds perdus) au catalogue, ou rester sur le textile en V1
 - [ ] Faut-il facturer la sublimation et le DTF comme la sérigraphie côté abonnement, sachant que ces ateliers n'ont pas le problème de vectorisation qui fait l'argument de vente
 - [ ] Seuil d'alerte du taux de renvoi des graphistes

@@ -282,6 +282,30 @@ n'est pas concerné — un tracé n'a pas de résolution.
 `source_dpi`, `net_width_cm` et `upscale` disent la vérité dans les deux cas : `dpi` est
 celui du fichier, `source_dpi` celui du dessin. C'est le second qui dit si le rendu sera net.
 
+### Jusqu'à 300 dpi réels : l'agrandissement par modèle (octobre 2026)
+
+156 dpi passent le seuil d'alerte, pas la résolution de la technique. Quand
+`UPSCALE_MODEL` nomme un fichier de `ComfyUI/models/upscale_models`, le moteur
+ajoute une troisième étape, toujours pour la famille matricielle seule : un
+modèle d'agrandissement (ESRGAN) redessine l'image jusqu'à la largeur
+d'impression à 300 dpi — 2 953 px pour 25 cm. Pas de diffusion : rien n'est
+réinventé, les bords et les textures sont reconstruits au lieu d'être étalés.
+
+Le détourage reste fait à la taille du dessin (il parcourt les pixels en Python,
+des minutes sur 6 000 px de côté) ; seul son masque est agrandi et posé sur
+l'image agrandie. `stats.model_upscale` donne le facteur (1,0 sans modèle), et
+`source_dpi` est alors celui de l'image agrandie.
+
+| Réglage | Résolution réelle à 25 cm | Temps ajouté (RTX 4070 Ti) |
+| --- | --- | --- |
+| `UPSCALE_MODEL` vide (défaut) | 156 dpi | — |
+| `RealESRGAN_x4plus_anime_6B.pth` | **300 dpi** | quelques secondes |
+
+Licence : `RealESRGAN_x4plus` et `_anime_6B` sont sous BSD, usage commercial
+permis. **Pas `4x-UltraSharp`**, sous licence non commerciale. Comme la passe
+haute définition, l'étape n'est jamais bloquante : en cas d'échec, le fichier
+part interpolé, avec un avertissement.
+
 ## 8. Attentes de performance
 
 - **5 minutes** entre la demande et `done`, au-delà l'essai est rendu.

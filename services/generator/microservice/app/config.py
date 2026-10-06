@@ -42,6 +42,13 @@ class Settings:
     # pas assez pour changer le dessin.
     hires_denoise: float = _float("HIRES_DENOISE", 0.35)
 
+    # Agrandissement par modèle (ESRGAN), après la passe haute définition, pour que
+    # le DTF atteigne vraiment la résolution de la technique (300 dpi). Nom d'un
+    # fichier de ComfyUI/models/upscale_models ; vide = désactivé. Licence à
+    # vérifier : RealESRGAN_x4plus(_anime_6B) est sous BSD, usage commercial
+    # permis ; 4x-UltraSharp ne l'est pas.
+    upscale_model: str = os.getenv("UPSCALE_MODEL", "")
+
     max_refinements: int = _int("MAX_REFINEMENTS", 3)
     max_variants: int = _int("MAX_VARIANTS", 3)
     refine_denoise: float = _float("REFINE_DENOISE", 0.55)

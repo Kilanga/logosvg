@@ -16,6 +16,12 @@ from .config import settings
 WORKFLOWS = Path(__file__).resolve().parent.parent / "workflows"
 TEXT2IMG = WORKFLOWS / "sdxl_flat.json"
 IMG2IMG = WORKFLOWS / "sdxl_img2img.json"
+UPSCALE = WORKFLOWS / "upscale_model.json"
+
+
+def _scaled_height(png: bytes, width: int) -> int:
+    with Image.open(io.BytesIO(png)) as img:
+        return max(int(round(img.height * width / img.width)), 1)
 
 
 class GenerationError(Exception):
@@ -59,6 +65,15 @@ class MockGenerator:
         img = Image.open(io.BytesIO(init_png)).convert("RGB")
         if size > img.width:
             img = img.resize((size, round(img.height * size / img.width)), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+
+    async def upscale(self, png: bytes, width: int) -> bytes:
+        """Sans GPU, l'agrandissement par modèle se réduit à un agrandissement simple."""
+        await asyncio.sleep(0.1)
+        img = Image.open(io.BytesIO(png)).convert("RGB")
+        img = img.resize((width, _scaled_height(png, width)), Image.LANCZOS)
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         return buf.getvalue()
@@ -178,6 +193,27 @@ class ComfyUIGenerator:
         return await self._run(
             self._workflow_refine(positive, negative, seed, name, denoise, size=size)
         )
+
+    async def upscale(self, png: bytes, width: int) -> bytes:
+        """Agrandit par un modèle (ESRGAN) puis ramène à la largeur d'impression.
+
+        Un modèle d'agrandissement dessine les bords et les textures au lieu de
+        les étaler : c'est ce qui sépare un DTF net à 300 dpi d'un fichier en
+        300 dpi interpolé. Pas de diffusion ici, donc rien de réinventé.
+        """
+        if not UPSCALE.exists():
+            raise GenerationError("Le workflow d'agrandissement est absent du service.")
+        try:
+            async with httpx.AsyncClient(base_url=settings.comfyui_url, timeout=60) as client:
+                name = await self._upload(client, png)
+        except httpx.HTTPError as exc:
+            raise GenerationError(f"ComfyUI injoignable : {exc}") from exc
+        wf = json.loads(UPSCALE.read_text(encoding="utf-8"))
+        wf["1"]["inputs"]["image"] = name
+        wf["2"]["inputs"]["model_name"] = settings.upscale_model
+        wf["4"]["inputs"]["width"] = width
+        wf["4"]["inputs"]["height"] = _scaled_height(png, width)
+        return await self._run(wf)
 
     async def refine(self, positive: str, negative: str, seed: int, colors: int,
                      init_png: bytes, denoise: float) -> bytes:

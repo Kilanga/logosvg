@@ -5,6 +5,7 @@ sont ses enfants. Le budget de reprises (settings.max_refinements) se compte sur
 pas sur l'utilisateur : passé ce budget, le site propose un graphiste.
 """
 import asyncio
+import io
 import logging
 import random
 import shutil
@@ -14,11 +15,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from PIL import Image
+
 from .config import settings
 from .generator import GenerationError, get_generator
 from .prompt_builder import build_prompts
 from .prompt_filter import PromptFilter
-from .raster import rasterize
+from .raster import rasterize, target_pixels
 from .refine import apply_instruction
 from .techniques import DEFAULT_PRINT_WIDTH_CM, DEFAULT_TECHNIQUE, resolve
 from .translate import to_english
@@ -213,6 +216,26 @@ class JobManager:
                 "mais les détails fins seront plus doux à grande taille."
             )
 
+    async def _upscale(self, png: bytes, profile, print_width_cm: float) -> tuple:
+        """Porte l'image à la résolution de la technique par un modèle d'agrandissement.
+
+        Seulement si un modèle est configuré (UPSCALE_MODEL) et si l'image est plus
+        petite que le fichier visé. Jamais bloquant, comme la passe haute définition.
+        """
+        wanted = target_pixels(print_width_cm, profile.dpi)
+        with Image.open(io.BytesIO(png)) as img:
+            width = img.width
+        if not settings.upscale_model or wanted <= width * 1.05:
+            return None, None
+        try:
+            return await self.generator.upscale(png, wanted), None
+        except GenerationError as exc:
+            log.warning("Agrandissement par modèle abandonné : %s", exc)
+            return None, (
+                "L'agrandissement n'a pas abouti : le fichier reste imprimable, "
+                "mais il est interpolé au-delà de la définition du dessin."
+            )
+
     async def _run(self, job: Job) -> None:
         subject = await self._subject_for(job)
         # Les marques survivent à la traduction comme à la réécriture : on refiltre le texte.
@@ -259,12 +282,14 @@ class JobManager:
             )
             (job.directory / "design.svg").write_text(out["svg"], encoding="utf-8")
         else:
+            upscaled, upscale_warning = await self._upscale(png, profile, job.print_width_cm)
             out = await asyncio.to_thread(
-                rasterize, png, profile, job.remove_background, job.print_width_cm
+                rasterize, png, profile, job.remove_background, job.print_width_cm, upscaled
             )
             (job.directory / "print.png").write_bytes(out["png"])
-            if hires_warning:
-                out["warnings"].append(hires_warning)
+            for warning in (hires_warning, upscale_warning):
+                if warning:
+                    out["warnings"].append(warning)
 
 
         if traduction_manquee:
