@@ -287,8 +287,8 @@ Base : `services/generator/microservice` (FastAPI, port 5000, `127.0.0.1`).
 
 | Appel                              | Entrée                                                                   | Sortie                                                       |
 | ---------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ |
-| `POST /generate`                   | `prompt` (3–300), `style`, `colors` (1–6), `remove_background`, `user_id`, `seed?`, `init_image?` (base64) | `202` : `job_id`, `status`, `position`, `refinements_left` |
-| `POST /jobs/:id/refine`            | `instruction` (3–200), `user_id`                                          | `202` : `job_id`, `status`, `position`, `refinements_left`   |
+| `POST /generate`                   | `prompt` (3–300), `style`, `colors` (1–6), `remove_background`, `user_id`, `seed?`, `init_image?` (base64), `count?` (1–3) | `202` : `job_ids`, `job_id`, `status`, `position`, `refinements_left` |
+| `POST /jobs/:id/refine`            | `instruction` (3–200), `user_id`, `count?`                                | `202` : `job_ids`, `job_id`, `status`, `position`, `refinements_left` |
 | `POST /jobs/:id/variants`          | `user_id`, `count`                                                        | `202` : `job_ids`, `job_id`, `status`, `position`, `refinements_left` |
 | `GET /jobs/:id?user_id=`           | —                                                                        | `status`, `position`, `error`, `mode`, `parent_id`, `root_id`, `refinements_left`, `result` |
 | `GET /jobs/:id/design.svg?user_id=`| —                                                                        | le SVG                                                       |
@@ -297,7 +297,12 @@ Base : `services/generator/microservice` (FastAPI, port 5000, `127.0.0.1`).
 | `GET /health`                      | — (sans clé)                                                             | `{"status":"ok"}`                                            |
 
 `result` contient `palette`, `inks`, `stats` (dont `paths` et `opaque_share`),
-`warnings`, `prompt_used`, `subject`, `instruction`, `seed`.
+`warnings`, `prompt_used`, `subject`, `instruction`, `seed`, `flavour`.
+
+**Trois propositions par clic** (octobre 2026) : création, retouche et variantes
+envoient `count` = `generation.proposals_per_request` ; Rails crée un design par
+`job_id`, liés par un `batch_token`, et le client doit en **choisir** un avant de
+continuer. Un clic compte pour une génération et pour une reprise.
 
 Codes à traiter : **401** (configuration, message générique), **409** (reprise
 demandée sur une version pas encore prête), **422** (terme interdit ou prompt
@@ -369,7 +374,7 @@ chaque accès fichier traverse une passerelle et où le démarrage de Rails pren
 plusieurs fois plus de temps.
 
 **Une seule machine porte désormais les deux moitiés du projet** : l'application
-dans WSL, et le moteur de génération (ComfyUI + SDXL + Ollama + le microservice)
+dans WSL, et le moteur de génération (ComfyUI + FLUX.2 klein + Ollama + le microservice)
 côté Windows, sur le même poste. Il n'y a donc **ni tunnel ni réseau privé en
 développement** : `GENERATOR_URL=http://127.0.0.1:5000` suffit.
 

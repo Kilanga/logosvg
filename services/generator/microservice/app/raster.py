@@ -56,7 +56,7 @@ def _white_share(img: Image.Image) -> float:
 
 # Le détourage vectoriel part d'une image réduite à quelques aplats : deux pixels du fond
 # y sont rigoureusement identiques, et le remplissage peut être sans tolérance. En
-# matriciel il n'y a pas de réduction de couleurs — le fond d'une image SDXL est un léger
+# matriciel il n'y a pas de réduction de couleurs — le fond d'une image générée est un léger
 # dégradé bruité (74 teintes distinctes sur le seul pourtour d'un essai réel). Sans
 # tolérance, le remplissage s'arrête au premier pixel et le fond reste : un rectangle
 # beige imprimé autour du sujet.

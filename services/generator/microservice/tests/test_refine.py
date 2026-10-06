@@ -302,3 +302,35 @@ def test_l_image_est_ramenee_au_carre_de_travail_sans_ses_metadonnees():
     assert img.size == (512, 512)
     assert img.getpixel((5, 5)) == (255, 255, 255)  # bandes blanches, pas de déformation
     assert not img.info.get("exif")
+
+
+# ------------------------------------------------------------ trois propositions
+# Décidé le 06/10/2026 : chaque demande dessine trois propositions, dans des
+# registres voisins ; le client en choisit une. Un clic, une seule reprise.
+
+def test_une_creation_donne_trois_propositions_d_un_meme_lot(client):
+    r = client.post("/generate", headers=HEADERS, json={
+        "prompt": "un renard qui fait du skate", "style": "mascotte", "colors": 3,
+        "user_id": "p1", "count": 3,
+    })
+    assert r.status_code == 202, r.text
+    ids = r.json()["job_ids"]
+    assert len(ids) == 3 and r.json()["job_id"] == ids[0]
+
+    results = [wait_for(client, job_id, "p1")["result"] for job_id in ids]
+    assert sorted(res["flavour"] for res in results) == [0, 1, 2]
+    assert len({res["prompt_used"] for res in results}) == 3
+    assert len({res["seed"] for res in results}) == 3
+
+
+def test_une_retouche_donne_trois_propositions_pour_une_seule_reprise(client):
+    parent = create_design(client, "p2")
+    r = client.post(f"/jobs/{parent}/refine", headers=HEADERS,
+                    json={"instruction": "ajoute un casque", "user_id": "p2", "count": 3})
+    assert r.status_code == 202, r.text
+    assert len(r.json()["job_ids"]) == 3
+    assert r.json()["refinements_left"] == 2
+    datas = [wait_for(client, job_id, "p2") for job_id in r.json()["job_ids"]]
+    assert all(d["status"] == "done" for d in datas)
+    # Une seule description pour le lot : le traducteur n'est appelé qu'une fois.
+    assert len({d["result"]["subject"] for d in datas}) == 1

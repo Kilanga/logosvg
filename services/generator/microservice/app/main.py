@@ -29,7 +29,7 @@ FILES = {
     "source.png": "image/png",
 }
 USER_ID = r"^[A-Za-z0-9_-]+$"
-# 12 Mo d'image une fois décodée : une image de départ SDXL en pèse deux.
+# 12 Mo d'image une fois décodée : une image de départ de 1 024 px en pèse deux.
 MAX_RESTORE_B64 = 16 * 1024 * 1024
 
 prompt_filter = PromptFilter(settings.blocklist_file)
@@ -69,11 +69,14 @@ class GenerateRequest(BaseModel):
     # Facultative : une image du client (PNG, JPEG ou WebP en base64) dont le
     # dessin part, transformée selon le prompt.
     init_image: Optional[str] = Field(default=None, max_length=MAX_RESTORE_B64)
+    # Propositions à dessiner pour cette demande, plafonnées par PROPOSALS.
+    count: int = Field(default=1, ge=1, le=6)
 
 
 class RefineRequest(BaseModel):
     instruction: str = Field(min_length=3, max_length=200)
     user_id: str = Field(min_length=1, max_length=64, pattern=USER_ID)
+    count: int = Field(default=1, ge=1, le=6)
 
 
 class RestoreRequest(BaseModel):
@@ -167,8 +170,34 @@ def techniques():
     return {"techniques": catalog_payload()}
 
 
+def _room_for(count: int) -> int:
+    """Combien de propositions la file peut prendre, ou 503 si aucune."""
+    wanted = min(count, settings.proposals, manager.free_slots())
+    if wanted < 1:
+        raise HTTPException(status_code=503, detail="Beaucoup de demandes en cours. Réessayez dans quelques minutes.")
+    return wanted
+
+
+def _rate_limited(user_id: str):
+    """Une demande du client compte une fois, quel que soit le nombre de propositions."""
+    retry_after = rate_limiter.hit(user_id)
+    if retry_after is None:
+        return None
+    return JSONResponse(
+        status_code=429,
+        headers={"Retry-After": str(retry_after)},
+        content={"detail": f"Limite de générations atteinte. Réessayez dans {retry_after // 60 + 1} min."},
+    )
+
+
+def _batch(count: int):
+    """Le jeton qui scelle les propositions d'un même clic : une seule reprise."""
+    return uuid.uuid4().hex if count > 1 else None
+
+
 @app.post("/generate", status_code=202, dependencies=[Depends(require_api_key)])
 def generate(req: GenerateRequest):
+    """Dessine `count` propositions d'une même idée, dans des registres voisins."""
     prompt = clean_prompt(req.prompt)
     if len(prompt) < 3:
         raise HTTPException(status_code=422, detail="Décrivez votre design en quelques mots.")
@@ -179,19 +208,14 @@ def generate(req: GenerateRequest):
         )
     # Lue avant de compter la demande : une image refusée ne coûte rien.
     init_png = _init_png(req.init_image)
-    if manager.is_full():
-        raise HTTPException(status_code=503, detail="Beaucoup de demandes en cours. Réessayez dans quelques minutes.")
-
-    retry_after = rate_limiter.hit(req.user_id)
-    if retry_after is not None:
-        return JSONResponse(
-            status_code=429,
-            headers={"Retry-After": str(retry_after)},
-            content={"detail": f"Limite de générations atteinte. Réessayez dans {retry_after // 60 + 1} min."},
-        )
+    wanted = _room_for(req.count)
+    limited = _rate_limited(req.user_id)
+    if limited is not None:
+        return limited
 
     profile = resolve(req.technique)
-    job = manager.submit(Job(
+    lot = _batch(wanted)
+    created = [manager.submit(Job(
         user_id=req.user_id,
         prompt=prompt,
         style=req.style,
@@ -199,16 +223,18 @@ def generate(req: GenerateRequest):
         remove_background=req.remove_background,
         technique=profile.key,
         print_width_cm=req.print_width_cm,
-        seed=req.seed if req.seed is not None else new_seed(),
+        # Le tirage demandé pour la première, un neuf pour les autres.
+        seed=req.seed if (req.seed is not None and index == 0) else new_seed(),
         init_png=init_png,
-    ))
-    return {"job_id": job.id, "status": job.status, "position": manager.position(job),
-            "refinements_left": manager.refinements_left(job.root_id)}
+        batch_id=lot,
+        flavour=index,
+    )) for index in range(wanted)]
+    return _submitted(created)
 
 
 @app.post("/jobs/{job_id}/refine", status_code=202, dependencies=[Depends(require_api_key)])
 def refine(job_id: str, req: RefineRequest):
-    """Applique une demande de modification à un design déjà produit."""
+    """Applique une demande de modification : `count` propositions, une reprise."""
     parent = _parent_ready(job_id, req.user_id)
     instruction = clean_prompt(req.instruction)
     if len(instruction) < 3:
@@ -222,48 +248,33 @@ def refine(job_id: str, req: RefineRequest):
     refusal = _budget_refusal(parent.root_id, 1)
     if refusal is not None:
         return refusal
-    if manager.is_full():
-        raise HTTPException(status_code=503, detail="Beaucoup de demandes en cours. Réessayez dans quelques minutes.")
+    wanted = _room_for(req.count)
+    limited = _rate_limited(req.user_id)
+    if limited is not None:
+        return limited
 
-    retry_after = rate_limiter.hit(req.user_id)
-    if retry_after is not None:
-        return JSONResponse(
-            status_code=429,
-            headers={"Retry-After": str(retry_after)},
-            content={"detail": f"Limite de générations atteinte. Réessayez dans {retry_after // 60 + 1} min."},
-        )
-
-    job = manager.submit(child_job(parent, REFINE, instruction))
-    return _submitted([job])
+    lot = _batch(wanted)
+    created = [manager.submit(child_job(parent, REFINE, instruction, batch_id=lot, flavour=index))
+               for index in range(wanted)]
+    return _submitted(created)
 
 
 @app.post("/jobs/{job_id}/variants", status_code=202, dependencies=[Depends(require_api_key)])
 def variants(job_id: str, req: VariantsRequest):
     """Relance le même design avec d'autres tirages, pour que le client choisisse."""
     parent = _parent_ready(job_id, req.user_id)
-    wanted = min(req.count, settings.max_variants, manager.free_slots())
-    if wanted < 1:
-        raise HTTPException(status_code=503, detail="Beaucoup de demandes en cours. Réessayez dans quelques minutes.")
-
     # Un clic, une reprise — quel que soit le nombre de tirages qu'il produit.
     refusal = _budget_refusal(parent.root_id, 1)
     if refusal is not None:
         return refusal
+    wanted = _room_for(req.count)
+    limited = _rate_limited(req.user_id)
+    if limited is not None:
+        return limited
 
-    # Le jeton du lot : il scelle ces tirages comme une seule action du client.
     lot = uuid.uuid4().hex
-    created = []
-    for _ in range(wanted):
-        if rate_limiter.hit(req.user_id) is not None:
-            break
-        created.append(manager.submit(child_job(parent, VARIANT, batch_id=lot)))
-
-    if not created:
-        return JSONResponse(
-            status_code=429,
-            content={"detail": "Limite de générations atteinte. Réessayez plus tard.",
-                     "refinements_left": manager.refinements_left(parent.root_id)},
-        )
+    created = [manager.submit(child_job(parent, VARIANT, batch_id=lot, flavour=index))
+               for index in range(wanted)]
     return _submitted(created)
 
 

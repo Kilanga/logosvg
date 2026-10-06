@@ -1,7 +1,7 @@
 """Chat de retouche : transforme une demande du client en nouvelle description d'image.
 
 Le client écrit « enlève le skateboard, mets-le plus souriant » ; le modèle local fusionne
-cette demande dans la description anglaise déjà utilisée, et SDXL repart de l'image existante.
+cette demande dans la description anglaise déjà utilisée, et le modèle repart de l'image existante.
 Sans Ollama, on se rabat sur une simple concaténation : moins fin, mais jamais bloquant.
 """
 import logging

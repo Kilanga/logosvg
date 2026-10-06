@@ -3,7 +3,7 @@
 Ordre des opérations, et pourquoi :
 
 1. lissage médian — supprime le bruit de génération qui deviendrait des micro-formes ;
-2. aplatissement des quasi-blancs — SDXL rend un fond « blanc » légèrement teinté et
+2. aplatissement des quasi-blancs — le modèle rend un fond « blanc » légèrement teinté et
    dégradé ; sans ça la quantification le coupe en deux teintes voisines et la moitié du
    fond survit au retrait ;
 3. quantification à (couleurs + 1) par couverture de l'espace des couleurs, puis recalage
@@ -59,7 +59,7 @@ def _is_light(pixel) -> bool:
 
 
 def flatten_near_white(img: Image.Image) -> None:
-    """Ramène au blanc pur les pixels presque blancs et peu colorés (fond « blanc » de SDXL)."""
+    """Ramène au blanc pur les pixels presque blancs et peu colorés (fond « blanc » des modèles d'image)."""
     img.putdata([
         WHITE if (_luma(r, g, b) >= NEAR_WHITE_LUMA and max(r, g, b) - min(r, g, b) <= NEAR_WHITE_SPREAD)
         else (r, g, b)

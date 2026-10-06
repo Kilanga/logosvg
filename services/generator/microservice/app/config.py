@@ -22,31 +22,30 @@ class Settings:
 
     generator_mode: str = os.getenv("GENERATOR_MODE", "mock")
     comfyui_url: str = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
-    comfyui_checkpoint: str = os.getenv("COMFYUI_CHECKPOINT", "sd_xl_base_1.0.safetensors")
     comfyui_timeout: int = _int("COMFYUI_TIMEOUT", 180)
     image_size: int = _int("IMAGE_SIZE", 1024)
 
-    # Le modèle d'image. `sdxl` (défaut) : workflows sdxl_*.json, un seul fichier
-    # checkpoint. `flux2_klein` : FLUX.2 [klein] 4B (Apache 2.0, usage commercial
-    # permis), en trois fichiers — modèle, encodeur de texte, VAE — et ses propres
-    # workflows flux2_klein*.json. Voir scripts/comparer-modeles.py.
-    image_model: str = os.getenv("IMAGE_MODEL", "sdxl")
-    flux_unet: str = os.getenv("FLUX_UNET", "flux-2-klein-base-4b-fp8.safetensors")
+    # Le modèle d'image : FLUX.2 [klein] 4B distillé (Apache 2.0, usage commercial
+    # permis), en trois fichiers de ComfyUI/models — modèle, encodeur de texte, VAE.
+    # Retenu le 06/10/2026 après comparaison avec SDXL et la version « base » : le
+    # plus rapide (4 s), les fichiers les plus propres (sujet isolé, 3 à 22 formes
+    # en sérigraphie contre une centaine), et le seul texte lisible. Distillé : 4
+    # pas, CFG 1, pas de prompt négatif.
+    flux_unet: str = os.getenv("FLUX_UNET", "flux-2-klein-4b-fp8.safetensors")
     flux_text_encoder: str = os.getenv("FLUX_TEXT_ENCODER", "qwen_3_4b.safetensors")
     flux_vae: str = os.getenv("FLUX_VAE", "flux2-vae.safetensors")
-    # Le modèle « base » suit le négatif avec un CFG autour de 5, en ~20 pas. La
-    # version distillée (flux-2-klein-4b-fp8) va cinq fois plus vite — 4 pas — mais
-    # ignore le négatif : FLUX_STEPS=4 et FLUX_CFG=1 avec elle.
-    flux_steps: int = _int("FLUX_STEPS", 20)
-    flux_cfg: float = _float("FLUX_CFG", 5.0)
+    flux_steps: int = _int("FLUX_STEPS", 4)
+    flux_cfg: float = _float("FLUX_CFG", 1.0)
+
+    # Propositions dessinées à chaque demande (création, retouche, variantes) : le
+    # client en choisit une pour continuer. Un seul clic, une seule reprise.
+    proposals: int = _int("PROPOSALS", 3)
 
     ollama_url: str = os.getenv("OLLAMA_URL", "")
     ollama_model: str = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 
-    # Retouches : combien de reprises (variantes ou corrections) par design, et a quel point
-    # la retouche s'ecarte de l'image de depart (0 = identique, 1 = image entierement nouvelle).
     # Passe haute définition, pour les techniques matricielles seulement (DTF, DTG,
-    # sublimation). SDXL dessine en 1 024 px : à 25 cm de large, cela ne fait que 104 dpi
+    # sublimation). Le modèle dessine en 1 024 px : à 25 cm de large, cela ne fait que 104 dpi
     # réels, et le fichier serait signalé « définition faible » à chaque commande. Une
     # seconde passe de diffusion agrandit l'image en *dessinant* les pixels manquants au
     # lieu de les interpoler. 1,5 tient confortablement dans 12 Go de VRAM ; 2,0 donne
@@ -68,8 +67,9 @@ class Settings:
     # faut souvent changer de style — d'une photo à des aplats imprimables.
     upload_denoise: float = _float("UPLOAD_DENOISE", 0.7)
 
+    # Reprises (retouches ou lots de variantes) par design, et à quel point la
+    # retouche s'écarte de l'image de départ (0 = identique, 1 = image nouvelle).
     max_refinements: int = _int("MAX_REFINEMENTS", 3)
-    max_variants: int = _int("MAX_VARIANTS", 3)
     refine_denoise: float = _float("REFINE_DENOISE", 0.55)
 
     rate_limit_count: int = _int("RATE_LIMIT_COUNT", 5)

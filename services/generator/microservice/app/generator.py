@@ -1,4 +1,8 @@
-"""Génération d'image : simulation locale ou ComfyUI (création et retouche)."""
+"""Génération d'image : simulation locale, ou FLUX.2 [klein] 4B dans ComfyUI.
+
+Un seul prompt par dessin (voir prompt_builder) : la version distillée de FLUX.2
+n'a pas de prompt négatif.
+"""
 import asyncio
 import io
 import json
@@ -14,8 +18,8 @@ from PIL import Image, ImageDraw
 from .config import settings
 
 WORKFLOWS = Path(__file__).resolve().parent.parent / "workflows"
-TEXT2IMG = WORKFLOWS / "sdxl_flat.json"
-IMG2IMG = WORKFLOWS / "sdxl_img2img.json"
+TEXT2IMG = WORKFLOWS / "flux2_klein.json"
+IMG2IMG = WORKFLOWS / "flux2_klein_img2img.json"
 UPSCALE = WORKFLOWS / "upscale_model.json"
 
 
@@ -31,7 +35,7 @@ class GenerationError(Exception):
 class MockGenerator:
     """Dessine un design plat aléatoire. Sert à tester tout le pipeline sans GPU."""
 
-    async def generate(self, positive: str, negative: str, seed: int, colors: int) -> bytes:
+    async def generate(self, prompt: str, seed: int, colors: int) -> bytes:
         await asyncio.sleep(1)  # simule un temps de calcul
         rng = random.Random(seed)
         size = 768
@@ -58,8 +62,7 @@ class MockGenerator:
         img.save(buf, format="PNG")
         return buf.getvalue()
 
-    async def hires(self, positive: str, negative: str, seed: int,
-                    init_png: bytes, denoise: float, size: int) -> bytes:
+    async def hires(self, prompt: str, seed: int, init_png: bytes, denoise: float, size: int) -> bytes:
         """Sans GPU, la passe haute définition se réduit à un agrandissement."""
         await asyncio.sleep(0.2)
         img = Image.open(io.BytesIO(init_png)).convert("RGB")
@@ -78,8 +81,7 @@ class MockGenerator:
         img.save(buf, format="PNG")
         return buf.getvalue()
 
-    async def refine(self, positive: str, negative: str, seed: int, colors: int,
-                     init_png: bytes, denoise: float) -> bytes:
+    async def refine(self, prompt: str, seed: int, colors: int, init_png: bytes, denoise: float) -> bytes:
         """Repart de l'image fournie et la modifie visiblement, sans GPU."""
         await asyncio.sleep(1)
         img = Image.open(io.BytesIO(init_png)).convert("RGB")
@@ -94,37 +96,55 @@ class MockGenerator:
         return buf.getvalue()
 
 
+def _multiple_of_16(value: int) -> int:
+    """Le latent de FLUX.2 se découpe en carreaux de 16 px : une taille qui n'en est
+    pas un multiple est refusée par ComfyUI. Arrondi vers le haut : on ne perd
+    jamais de définition."""
+    return max(16, math.ceil(value / 16.0) * 16)
+
+
 class ComfyUIGenerator:
-    """Envoie les workflows SDXL à ComfyUI et récupère l'image produite."""
+    """FLUX.2 [klein] 4B dans ComfyUI.
+
+    Le modèle se charge en trois fichiers (modèle, encodeur Qwen3, VAE) et
+    s'échantillonne par SamplerCustomAdvanced, comme dans le modèle de workflow
+    officiel de ComfyUI. Une retouche et la passe haute définition sont de
+    l'img2img : l'image encodée sert de latent de départ, et SplitSigmasDenoise
+    ne garde que la fin du planning de bruit.
+    """
 
     def __init__(self):
         self.text2img = json.loads(TEXT2IMG.read_text(encoding="utf-8"))
-        self.img2img = json.loads(IMG2IMG.read_text(encoding="utf-8")) if IMG2IMG.exists() else None
+        self.img2img = json.loads(IMG2IMG.read_text(encoding="utf-8"))
 
-    def _common(self, wf: dict, positive: str, negative: str, seed: int) -> dict:
-        wf["3"]["inputs"]["seed"] = seed
-        wf["4"]["inputs"]["ckpt_name"] = settings.comfyui_checkpoint
-        wf["6"]["inputs"]["text"] = positive
-        wf["7"]["inputs"]["text"] = negative
+    def _common(self, wf: dict, prompt: str, seed: int) -> dict:
+        wf["1"]["inputs"]["unet_name"] = settings.flux_unet
+        wf["2"]["inputs"]["clip_name"] = settings.flux_text_encoder
+        wf["3"]["inputs"]["vae_name"] = settings.flux_vae
+        wf["4"]["inputs"]["text"] = prompt
+        wf["7"]["inputs"]["steps"] = settings.flux_steps
+        wf["8"]["inputs"]["noise_seed"] = seed
+        wf["10"]["inputs"]["cfg"] = settings.flux_cfg
         return wf
 
-    def _workflow(self, positive: str, negative: str, seed: int) -> dict:
-        wf = self._common(json.loads(json.dumps(self.text2img)), positive, negative, seed)
-        wf["5"]["inputs"]["width"] = settings.image_size
-        wf["5"]["inputs"]["height"] = settings.image_size
+    def _sized(self, wf: dict, size: int) -> dict:
+        size = _multiple_of_16(size)
+        for node in ("6", "7", "15"):
+            if node in wf:
+                wf[node]["inputs"]["width"] = size
+                wf[node]["inputs"]["height"] = size
         return wf
 
-    def _workflow_refine(self, positive: str, negative: str, seed: int,
-                         image_name: str, denoise: float, size: int = None) -> dict:
-        if not self.img2img:
-            raise GenerationError("Le workflow de retouche est absent du service.")
-        wf = self._common(json.loads(json.dumps(self.img2img)), positive, negative, seed)
-        wf["3"]["inputs"]["denoise"] = denoise
-        wf["10"]["inputs"]["image"] = image_name
-        target = size or settings.image_size
-        wf["12"]["inputs"]["width"] = target
-        wf["12"]["inputs"]["height"] = target
-        return wf
+    def _workflow(self, prompt: str, seed: int) -> dict:
+        wf = self._common(json.loads(json.dumps(self.text2img)), prompt, seed)
+        return self._sized(wf, settings.image_size)
+
+    def _workflow_refine(self, prompt: str, seed: int, image_name: str,
+                         denoise: float, size: int = None) -> dict:
+        wf = self._common(json.loads(json.dumps(self.img2img)), prompt, seed)
+        wf["14"]["inputs"]["image"] = image_name
+        wf["17"]["inputs"]["denoise"] = denoise
+        return self._sized(wf, size or settings.image_size)
 
     async def _upload(self, client: httpx.AsyncClient, png: bytes) -> str:
         """Dépose l'image de départ dans le dossier d'entrée de ComfyUI."""
@@ -140,6 +160,13 @@ class ComfyUIGenerator:
         subfolder = body.get("subfolder") or ""
         stored = body.get("name", name)
         return f"{subfolder}/{stored}" if subfolder else stored
+
+    async def _uploaded(self, png: bytes) -> str:
+        try:
+            async with httpx.AsyncClient(base_url=settings.comfyui_url, timeout=60) as client:
+                return await self._upload(client, png)
+        except httpx.HTTPError as exc:
+            raise GenerationError(f"ComfyUI injoignable : {exc}") from exc
 
     async def _run(self, workflow: dict) -> bytes:
         payload = {"prompt": workflow, "client_id": uuid.uuid4().hex}
@@ -169,30 +196,18 @@ class ComfyUIGenerator:
                                 return view.content
                         if status.get("completed"):
                             raise GenerationError("ComfyUI n'a produit aucune image.")
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(0.5)
         except httpx.HTTPError as exc:
             raise GenerationError(f"ComfyUI injoignable : {exc}") from exc
         raise GenerationError("La génération a dépassé le délai autorisé.")
 
-    async def generate(self, positive: str, negative: str, seed: int, colors: int) -> bytes:
-        return await self._run(self._workflow(positive, negative, seed))
+    async def generate(self, prompt: str, seed: int, colors: int) -> bytes:
+        return await self._run(self._workflow(prompt, seed))
 
-    async def hires(self, positive: str, negative: str, seed: int,
-                    init_png: bytes, denoise: float, size: int) -> bytes:
-        """Seconde passe de diffusion, à la taille voulue : les pixels sont dessinés.
-
-        Le même workflow que la retouche, avec un bruit faible : la composition ne bouge
-        pas, mais les bords et les détails sont réellement redessinés à la nouvelle
-        résolution, là où un agrandissement se contenterait d'étaler les pixels existants.
-        """
-        try:
-            async with httpx.AsyncClient(base_url=settings.comfyui_url, timeout=60) as client:
-                name = await self._upload(client, init_png)
-        except httpx.HTTPError as exc:
-            raise GenerationError(f"ComfyUI injoignable : {exc}") from exc
-        return await self._run(
-            self._workflow_refine(positive, negative, seed, name, denoise, size=size)
-        )
+    async def hires(self, prompt: str, seed: int, init_png: bytes, denoise: float, size: int) -> bytes:
+        """Seconde passe, à la taille voulue : les pixels sont dessinés, pas étalés."""
+        name = await self._uploaded(init_png)
+        return await self._run(self._workflow_refine(prompt, seed, name, denoise, size=size))
 
     async def upscale(self, png: bytes, width: int) -> bytes:
         """Agrandit par un modèle (ESRGAN) puis ramène à la largeur d'impression.
@@ -201,13 +216,7 @@ class ComfyUIGenerator:
         les étaler : c'est ce qui sépare un DTF net à 300 dpi d'un fichier en
         300 dpi interpolé. Pas de diffusion ici, donc rien de réinventé.
         """
-        if not UPSCALE.exists():
-            raise GenerationError("Le workflow d'agrandissement est absent du service.")
-        try:
-            async with httpx.AsyncClient(base_url=settings.comfyui_url, timeout=60) as client:
-                name = await self._upload(client, png)
-        except httpx.HTTPError as exc:
-            raise GenerationError(f"ComfyUI injoignable : {exc}") from exc
+        name = await self._uploaded(png)
         wf = json.loads(UPSCALE.read_text(encoding="utf-8"))
         wf["1"]["inputs"]["image"] = name
         wf["2"]["inputs"]["model_name"] = settings.upscale_model
@@ -215,79 +224,12 @@ class ComfyUIGenerator:
         wf["4"]["inputs"]["height"] = _scaled_height(png, width)
         return await self._run(wf)
 
-    async def refine(self, positive: str, negative: str, seed: int, colors: int,
-                     init_png: bytes, denoise: float) -> bytes:
-        try:
-            async with httpx.AsyncClient(base_url=settings.comfyui_url, timeout=60) as client:
-                name = await self._upload(client, init_png)
-        except httpx.HTTPError as exc:
-            raise GenerationError(f"ComfyUI injoignable : {exc}") from exc
-        return await self._run(self._workflow_refine(positive, negative, seed, name, denoise))
-
-
-FLUX_TEXT2IMG = WORKFLOWS / "flux2_klein.json"
-FLUX_IMG2IMG = WORKFLOWS / "flux2_klein_img2img.json"
-
-
-def _multiple_of_16(value: int) -> int:
-    """Le latent de FLUX.2 se découpe en carreaux de 16 px : une taille qui n'en est
-    pas un multiple est refusée par ComfyUI. Arrondi vers le haut : on ne perd
-    jamais de définition."""
-    return max(16, math.ceil(value / 16.0) * 16)
-
-
-class Flux2KleinGenerator(ComfyUIGenerator):
-    """FLUX.2 [klein] 4B dans ComfyUI : même contrat que SDXL, autre graphe.
-
-    Le modèle se charge en trois fichiers (modèle, encodeur Qwen3, VAE) et
-    s'échantillonne par SamplerCustomAdvanced, comme dans le modèle de workflow
-    officiel de ComfyUI. Une retouche et la passe haute définition sont de
-    l'img2img classique : l'image encodée sert de latent de départ, et
-    SplitSigmasDenoise ne garde que la fin du planning de bruit.
-    """
-
-    def __init__(self):
-        self.text2img = json.loads(FLUX_TEXT2IMG.read_text(encoding="utf-8"))
-        self.img2img = json.loads(FLUX_IMG2IMG.read_text(encoding="utf-8"))
-
-    def _common(self, wf: dict, positive: str, negative: str, seed: int) -> dict:
-        wf["1"]["inputs"]["unet_name"] = settings.flux_unet
-        wf["2"]["inputs"]["clip_name"] = settings.flux_text_encoder
-        wf["3"]["inputs"]["vae_name"] = settings.flux_vae
-        wf["4"]["inputs"]["text"] = positive
-        wf["5"]["inputs"]["text"] = negative
-        wf["7"]["inputs"]["steps"] = settings.flux_steps
-        wf["8"]["inputs"]["noise_seed"] = seed
-        wf["10"]["inputs"]["cfg"] = settings.flux_cfg
-        return wf
-
-    def _sized(self, wf: dict, size: int) -> dict:
-        size = _multiple_of_16(size)
-        wf["7"]["inputs"]["width"] = size
-        wf["7"]["inputs"]["height"] = size
-        if "6" in wf:
-            wf["6"]["inputs"]["width"] = size
-            wf["6"]["inputs"]["height"] = size
-        if "15" in wf:
-            wf["15"]["inputs"]["width"] = size
-            wf["15"]["inputs"]["height"] = size
-        return wf
-
-    def _workflow(self, positive: str, negative: str, seed: int) -> dict:
-        wf = self._common(json.loads(json.dumps(self.text2img)), positive, negative, seed)
-        return self._sized(wf, settings.image_size)
-
-    def _workflow_refine(self, positive: str, negative: str, seed: int,
-                         image_name: str, denoise: float, size: int = None) -> dict:
-        wf = self._common(json.loads(json.dumps(self.img2img)), positive, negative, seed)
-        wf["14"]["inputs"]["image"] = image_name
-        wf["17"]["inputs"]["denoise"] = denoise
-        return self._sized(wf, size or settings.image_size)
+    async def refine(self, prompt: str, seed: int, colors: int, init_png: bytes, denoise: float) -> bytes:
+        name = await self._uploaded(init_png)
+        return await self._run(self._workflow_refine(prompt, seed, name, denoise))
 
 
 def get_generator():
-    if settings.generator_mode != "comfyui":
-        return MockGenerator()
-    if settings.image_model == "flux2_klein":
-        return Flux2KleinGenerator()
-    return ComfyUIGenerator()
+    if settings.generator_mode == "comfyui":
+        return ComfyUIGenerator()
+    return MockGenerator()
