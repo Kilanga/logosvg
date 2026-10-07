@@ -44,7 +44,8 @@ class PlatformStatus
     # that actually catches the mistake.
     def stripe
       missing = %w[ STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET
-                    STRIPE_PRICE_LISTING STRIPE_PRICE_ATELIER_PLUS ].reject do |key|
+                    STRIPE_PRICE_LISTING STRIPE_PRICE_ATELIER_PLUS
+                    STRIPE_CONNECT_WEBHOOK_SECRET ].reject do |key|
         ENV[key].present? || Rails.application.credentials.dig(:stripe, key.downcase.delete_prefix("stripe_").to_sym).present?
       end
 
