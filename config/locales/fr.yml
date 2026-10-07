@@ -1202,15 +1202,23 @@ fr:
         no_compatible_printer: "Aucun atelier référencé ne pratique cette technique pour l'instant."
         proposals_title: "Choisissez votre proposition"
         proposals_hint: >-
-          L'IA a dessiné plusieurs versions de votre idée, chacune avec son
-          parti pris. Gardez celle qui vous plaît : c'est d'elle que partiront
-          vos retouches, et les autres seront écartées.
+          L'IA a dessiné trois versions de votre idée, chacune avec son parti
+          pris. Choisissez-en une, puis modifiez-la ou envoyez-la à un atelier
+          juste en dessous.
         back_to_parent: "Revenir à la version précédente"
+        pick_first: "Choisissez d'abord une proposition ci-dessus."
+        selected: "Proposition %{number} sélectionnée"
+        send_to_workshop: "Envoyer à un atelier"
+        others_set_aside: >-
+          Dès que vous modifiez ou envoyez la proposition choisie, les autres
+          sont écartées.
       choose:
         chosen: "Proposition retenue. Vous pouvez la retoucher ou l'envoyer à un atelier."
       proposal:
         label: "Proposition"
-        choose: "Garder celle-ci"
+        number: "N° %{number}"
+        choose: "Choisir celle-ci"
+        chosen: "Choisie"
         enlarge: "Voir en grand"
       design:
         working: "Génération en cours"

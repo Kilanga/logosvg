@@ -509,7 +509,8 @@ class DesignsTest < ActionDispatch::IntegrationTest
 
   # --- Choosing among the proposals --------------------------------------
 
-  test "the proposals of a click are shown together, each with a way to keep it" do
+  # Decided on 07/10/2026: pick and retouch on the same page.
+  test "the proposals of a click are shown together, with the retouch on the same page" do
     sign_in_as users(:client)
     proposals = ready_proposals
 
@@ -517,8 +518,10 @@ class DesignsTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     proposals.each { |proposal| assert_select "#design_#{proposal.token}" }
-    assert_select "form[action=?]", design_choice_path(proposals.second)
-    assert_select "form[action=?]", design_refine_path(proposals.first), count: 0
+    assert_select "form[action=?][data-proposals-refine-url-param=?]",
+                  design_choice_path(proposals.second), design_refine_path(proposals.second)
+    assert_select "[data-controller=proposals] textarea[name=instruction]", count: 1
+    assert_select "form[data-kind=choice] input[name=suite][value=atelier]"
   end
 
   test "keeping a proposal sets the others aside" do
@@ -534,15 +537,40 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", design_refine_path(proposals.second)
   end
 
-  test "nothing goes further from a proposal before it is kept" do
+  test "retouching a proposal keeps it and sets the others aside" do
+    sign_in_as users(:client)
+    proposals = ready_proposals
+    proposals.second.update!(generator_job_id: "job-2")
+    stub_request(:post, %r{/jobs/job-2/refine})
+      .to_return(status: 202, body: { job_ids: %w[ r1 r2 r3 ], job_id: "r1", refinements_left: 2 }.to_json)
+
+    post design_refine_path(proposals.second), params: { instruction: "un casque rouge" }
+
+    assert_not proposals.second.reload.awaiting_choice?
+    assert proposals.values_at(0, 2).map(&:reload).none?(&:active?)
+    assert_equal 3, Design.where(parent: proposals.second).count
+  end
+
+  test "a failed retouche leaves every proposal on offer" do
+    sign_in_as users(:client)
+    proposals = ready_proposals
+    stub_request(:post, %r{/refine}).to_return(status: 503, body: "{}")
+
+    post design_refine_path(proposals.second), params: { instruction: "un casque rouge" }
+
+    assert proposals.map(&:reload).all? { |proposal| proposal.active? && proposal.awaiting_choice? }
+  end
+
+  test "a proposal reaches a workshop only once kept, and keeping it can lead straight there" do
     sign_in_as users(:client)
     proposal = ready_proposals.first
 
-    post design_refine_path(proposal), params: { instruction: "un casque rouge" }
-    assert_not_requested :post, %r{/refine}
-
     get new_design_print_request_path(proposal)
     assert_response :redirect
+    assert_not_equal new_design_print_request_path(proposal), URI(response.location).path
+
+    post design_choice_path(proposal), params: { suite: "atelier" }
+    assert_redirected_to new_design_print_request_path(proposal)
   end
 
   test "a design already kept cannot be chosen again" do

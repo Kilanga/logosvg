@@ -1,4 +1,12 @@
 module DesignsHelper
+  # 1, 2 or 3: where a proposal stands among those of its click. Counted, not
+  # stored: a broadcast renders one card alone and still has to say which.
+  def proposal_number(design)
+    return 1 if design.batch_token.blank?
+
+    Design.where(batch_token: design.batch_token).where(id: ..design.id).count
+  end
+
   # The technique under the name the shop in context gives it, falling back to
   # the catalogue's. A client who arrived by a workshop's link should read that
   # workshop's words.

@@ -49,8 +49,12 @@ class DesignsTest < ApplicationSystemTestCase
     visit design_path(design)
     assert_text displayed("client.designs.show.proposals_title")
     assert_selector "button", text: I18n.t("client.designs.proposal.choose"), count: 3
+    # Picking only picks: the panel underneath now acts on that proposal.
     within("#design_#{design.token}") { click_on I18n.t("client.designs.proposal.choose") }
-    assert_text I18n.t("client.designs.choose.chosen")
+    assert_text displayed("client.designs.show.selected", number: 1)
+    click_on I18n.t("client.designs.show.send_to_workshop")
+    assert_current_path new_design_print_request_path(design)
+    visit design_path(design)
 
     # Vector output is counted in screens, and each ink is one.
     assert_text displayed("client.designs.design.screens", count: 2)
@@ -90,8 +94,8 @@ class DesignsTest < ApplicationSystemTestCase
     assert_predicate design.reload, :ready?
     assert_equal "png", design.print_format
 
+    post_choice(design)
     visit design_path(design)
-    within("#design_#{design.token}") { click_on I18n.t("client.designs.proposal.choose") }
 
     assert_text displayed("client.designs.design.print_file")
     assert_text displayed("designs.facts.resolution")
@@ -207,7 +211,48 @@ class DesignsTest < ApplicationSystemTestCase
     assert_selector "dialog[open]"
   end
 
+  # Decided on 07/10/2026: the three proposals, the pick and the retouche on
+  # one page.
+  test "a client picks a proposal and retouches it on the same page" do
+    stub_generation(print_file: "design.svg", bytes: svg, result: {
+      "palette" => [ { "hex" => "#1F5F7A" } ], "inks" => 1, "stats" => { "paths" => 4 }, "warnings" => []
+    })
+    stub_request(:post, %r{/jobs/job-sys2/refine}).to_return(
+      status: 202, body: { job_ids: %w[ r1 r2 r3 ], job_id: "r1", refinements_left: 2 }.to_json
+    )
+
+    sign_in users(:client)
+    visit new_design_path
+    choose "design_technique_screen_printing", allow_label_click: true
+    fill_in "design_prompt", with: "un hibou qui lit"
+    perform_enqueued_jobs do
+      click_on I18n.t("client.designs.new.submit")
+      assert_selector "h1", text: shown("un hibou qui lit")
+    end
+
+    second = Design.where(batch_token: first_proposal.batch_token).order(:id).second
+    visit design_path(first_proposal)
+    assert_selector "[data-proposals-target=card]", count: 3
+
+    within("#design_#{second.token}") { click_on I18n.t("client.designs.proposal.choose") }
+    assert_text displayed("client.designs.show.selected", number: 2)
+    fill_in "instruction_proposals", with: "ajoute des lunettes"
+    click_on I18n.t("client.designs.design.refine_submit")
+
+    # The new proposals' page — waited for, not assumed.
+    assert_no_current_path design_path(first_proposal)
+    assert_text displayed("client.designs.show.proposals_title")
+    assert_equal 3, Design.where(parent: second).count
+    assert_not second.reload.awaiting_choice?
+    assert_equal 1, Design.where(batch_token: second.batch_token).active.count
+  end
+
   private
+    # Keeps a proposal the way a browser without the picker would.
+    def post_choice(design)
+      ChooseProposal.call(design)
+    end
+
     def first_proposal
       Design.where(batch_token: Design.order(:id).last.batch_token).order(:id).first
     end

@@ -58,14 +58,15 @@ class DesignPolicyTest < ActiveSupport::TestCase
     assert_empty DesignPolicy::Scope.new(nil, Design).resolve
   end
 
-  # One of several proposals goes nowhere until the client has kept it.
-  test "a proposal is kept before anything else, and kept only once" do
+  # A proposal is retouched straight from the choice screen — which keeps it —
+  # but never reaches a workshop or a designer before it is kept.
+  test "a proposal is kept before it leaves the platform, and kept only once" do
     proposal = designs(:fox_screen)
     proposal.batch_token = "click-1"
 
     assert DesignPolicy.new(users(:client), proposal).choose?
-    assert_not DesignPolicy.new(users(:client), proposal).refine?
-    assert_not DesignPolicy.new(users(:client), proposal).variants?
+    assert DesignPolicy.new(users(:client), proposal).refine?
+    assert DesignPolicy.new(users(:client), proposal).variants?
     assert_not DesignPolicy.new(users(:printer), proposal).choose?
     assert_not PrintRequestPolicy.new(users(:client), PrintRequest.new(design: proposal)).create?
     assert_not ReviewPolicy.new(users(:client), Review.new(design: proposal)).create?

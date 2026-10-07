@@ -84,7 +84,11 @@ module Client
       authorize @design
 
       ChooseProposal.call(@design)
-      redirect_to design_path(@design), notice: t(".chosen")
+      case params[:suite]
+      when "atelier" then redirect_to new_design_print_request_path(@design)
+      when "graphiste" then redirect_to new_design_review_path(@design)
+      else redirect_to design_path(@design), notice: t(".chosen")
+      end
     end
 
     # The only rendering a client ever receives: a watermarked raster of the
@@ -192,6 +196,9 @@ module Client
           ReviveDesign.call(@design)
           yield
         end
+        # Retouched or varied straight from the choice screen: the proposal
+        # it started from is the one kept.
+        ChooseProposal.call(@design) if @design.awaiting_choice?
         workshop_quota.notify_if_reached!
         redirect_to design_path(children.first)
       rescue ReviveDesign::Unrecoverable
