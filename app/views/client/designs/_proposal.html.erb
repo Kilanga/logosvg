@@ -20,6 +20,9 @@
 
   <% else %>
     <div class="screen-tint relative aspect-square w-full p-4">
+      <p class="pill absolute right-3 top-3 border border-line bg-surface font-display font-semibold">
+        <%= t("client.designs.proposal.number", number: proposal_number(design)) %>
+      </p>
       <p class="pill absolute left-3 top-3 border border-line bg-surface text-muted"
          title="<%= t("designs.ai_label_hint") %>"><%= t("designs.ai_label") %></p>
       <%= link_to design_image_path(design), target: "_blank", rel: "noopener",
@@ -39,8 +42,20 @@
         </div>
       <% end %>
 
+      <%# Without JavaScript this keeps the proposal outright; with it, the
+          card is only picked, and the panel under the grid acts on it. %>
       <%= button_to t("client.designs.proposal.choose"), design_choice_path(design),
-            class: "btn btn-primary mt-auto w-full text-sm" %>
+            class: "btn btn-primary mt-auto w-full text-sm",
+            data: { proposals_pick: true,
+                    pick_label: t("client.designs.proposal.choose"),
+                    picked_label: t("client.designs.proposal.chosen") },
+            aria: { pressed: false },
+            form: { data: { action: "submit->proposals#select",
+                            proposals_token_param: design.token,
+                            proposals_number_param: proposal_number(design),
+                            proposals_refine_url_param: design_refine_path(design),
+                            proposals_variants_url_param: design_variants_path(design),
+                            proposals_choice_url_param: design_choice_path(design) } } %>
     </div>
   <% end %>
 </div>
