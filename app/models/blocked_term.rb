@@ -26,12 +26,32 @@ class BlockedTerm < ApplicationRecord
 
   def self.reset_cache! = Rails.cache.delete(CACHE_KEY)
 
-  # The first term the text contains, or nil. Matched on word boundaries so
-  # "art" does not catch "cartes" — a list that refuses innocent prompts is one
-  # the administration will be asked to remove.
+  # The first term the text contains, or nil. Matched on whole words so "art"
+  # does not catch "cartes" — a list that refuses innocent prompts is one the
+  # administration will be asked to remove.
+  #
+  # Both sides are folded first (see .fold): "Pokémon", "N1KE" and "n i k e"
+  # are caught by "pokemon" and "nike". The generation service folds the same
+  # way for its own list.
   def self.matching(text)
-    haystack = text.to_s.downcase
-    terms.find { |term| haystack.match?(/(?<![[:alnum:]])#{Regexp.escape(term)}(?![[:alnum:]])/) }
+    haystack = " #{fold(text)} "
+    terms.find { |term| (folded = fold(term)).present? && haystack.include?(" #{folded} ") }
+  end
+
+  # Digits and signs read as letters, only when stuck to a letter: "2026"
+  # stays a number.
+  LOOKALIKES = [ "013457@$", "oieastas" ].freeze
+  DISGUISED = /(?<=[a-z])[013457@$]+|[013457@$]+(?=[a-z])/
+  # Single letters spaced out: "n i k e", "d.i.s.n.e.y".
+  SPACED = /\b(?:[a-z] ){2,}[a-z]\b/
+
+  # Lowercase, no accents, look-alike digits read as letters, punctuation as
+  # spaces, spaced-out letters joined back.
+  def self.fold(text)
+    plain = I18n.transliterate(text.to_s.unicode_normalize(:nfkc)).downcase
+    plain = plain.gsub(DISGUISED) { |match| match.tr(*LOOKALIKES) }
+    words = plain.gsub(/[^a-z0-9]+/, " ").strip
+    words.gsub(SPACED) { |match| match.delete(" ") }
   end
 
   # Counted rather than logged: how often a term catches something is what

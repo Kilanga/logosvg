@@ -99,4 +99,22 @@ class DesignBlockedTermTest < ActiveSupport::TestCase
         user: users(:client), technique: "screen_printing", print_width_cm: 25
       }.merge(attributes))
     end
+
+  # The usual disguises are read back as the word (October 2026).
+  test "accents, look-alike digits and spaced letters do not get past the list" do
+    BlockedTerm.create!(term: "pokemon")
+    BlockedTerm.create!(term: "nike")
+
+    assert_equal "pokemon", BlockedTerm.matching("un Pokémon en armure")
+    assert_equal "nike", BlockedTerm.matching("le logo N1KE")
+    assert_equal "nike", BlockedTerm.matching("n i k e en grand")
+    assert_equal "nike", BlockedTerm.matching("N.I.K.E")
+    assert_nil BlockedTerm.matching("FÊTE 2026 au village")
+  end
+
+  test "a term written with an accent catches the word written without" do
+    BlockedTerm.create!(term: "Pokémon")
+
+    assert_equal "pokémon", BlockedTerm.matching("un pokemon")
+  end
 end

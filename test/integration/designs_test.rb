@@ -598,6 +598,21 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_equal 1, GenerationQuota.for(users(:client)).used
   end
 
+  test "a retouche naming a blocked term is refused before anything is spent" do
+    sign_in_as users(:client)
+    BlockedTerm.create!(term: "pikachu")
+    designs(:fox_screen).update!(generator_job_id: "job-42")
+
+    assert_no_difference "Design.count" do
+      post design_refine_path(designs(:fox_screen)), params: { instruction: "transforme-le en P1KACHU" }
+    end
+
+    assert_equal I18n.t("client.designs.take_it_further.blocked"), flash[:alert]
+    assert_not_requested :post, %r{/refine}
+    assert_equal 0, GenerationQuota.for(users(:client)).used
+    assert_equal 1, BlockedTerm.find_by(term: "pikachu").hits_count
+  end
+
   private
     def ready_proposals
       design = designs(:fox_screen)
