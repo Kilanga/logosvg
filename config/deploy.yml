@@ -51,15 +51,16 @@ env:
     - GENERATOR_USER_KEY
     - SMTP_USER_NAME
     - SMTP_PASSWORD
-    # Paiements et anti-robot. ⚠ Kamal refuse de déployer si l'un d'eux manque
-    # de l'environnement : les huit secrets GitHub doivent exister AVANT que
-    # cette version soit fusionnée (voir docs/EXPLOITATION.md, « Les secrets »).
+    # Paiements et anti-robot. Chaque nom doit figurer dans .kamal/secrets ;
+    # une valeur vide ne bloque pas le déploiement, /admin la signale.
+    # Voir docs/EXPLOITATION.md, « Les secrets ».
     - STRIPE_SECRET_KEY
     - STRIPE_PUBLISHABLE_KEY
     - STRIPE_WEBHOOK_SECRET
     - STRIPE_PRICE_LISTING
     - STRIPE_PRICE_ATELIER_PLUS
     - STRIPE_TAX_RATE
+    - STRIPE_CONNECT_WEBHOOK_SECRET
     - TURNSTILE_SITE_KEY
     - TURNSTILE_SECRET_KEY
   clear:

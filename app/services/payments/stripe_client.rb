@@ -28,6 +28,15 @@ module Payments
         Rails.application.credentials.dig(:stripe, :webhook_secret)
     end
 
+    # The second endpoint, for events from the designers' connected accounts
+    # (`account.updated`). Stripe gives it a signing secret of its own, on the
+    # same URL. Optional: without it, only the designers' payout status stops
+    # following Stripe.
+    def self.connect_webhook_secret
+      ENV["STRIPE_CONNECT_WEBHOOK_SECRET"].presence ||
+        Rails.application.credentials.dig(:stripe, :connect_webhook_secret)
+    end
+
     # The price ids for the two plans. Never in settings.yml: they identify
     # billable objects in an account, and belong with the secrets.
     def self.price_for(plan)
@@ -178,10 +187,19 @@ module Payments
 
     # Verifies the signature and returns the event. An unsigned or missigned
     # payload never becomes an event at all.
+    #
+    # Two endpoints share the URL, each signing with its own secret: the
+    # platform's, and the connected accounts'. A payload is accepted if either
+    # signs it.
     def self.decode_webhook(payload:, signature:)
       raise NotConfigured, "STRIPE_WEBHOOK_SECRET is not set" if webhook_secret.blank?
 
-      Stripe::Webhook.construct_event(payload, signature, webhook_secret)
+      secrets = [ webhook_secret, connect_webhook_secret ].compact_blank
+      secrets.each_with_index do |secret, index|
+        return Stripe::Webhook.construct_event(payload, signature, secret)
+      rescue Stripe::SignatureVerificationError
+        raise if index == secrets.size - 1
+      end
     end
 
     private
