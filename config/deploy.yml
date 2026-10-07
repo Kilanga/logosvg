@@ -51,12 +51,17 @@ env:
     - GENERATOR_USER_KEY
     - SMTP_USER_NAME
     - SMTP_PASSWORD
-    # Les clés Stripe et Turnstile ne sont pas déclarées ici : les comptes
-    # ne sont pas ouverts, et Kamal refuse de déployer si un secret déclaré
-    # est absent de l'environnement. L'application vit très bien sans :
-    # elle les lit paresseusement et PlatformStatus signale leur absence.
-    # Le jour où les comptes existent, remettre les cinq lignes ici et
-    # dans .kamal/secrets.
+    # Paiements et anti-robot. ⚠ Kamal refuse de déployer si l'un d'eux manque
+    # de l'environnement : les huit secrets GitHub doivent exister AVANT que
+    # cette version soit fusionnée (voir docs/EXPLOITATION.md, « Les secrets »).
+    - STRIPE_SECRET_KEY
+    - STRIPE_PUBLISHABLE_KEY
+    - STRIPE_WEBHOOK_SECRET
+    - STRIPE_PRICE_LISTING
+    - STRIPE_PRICE_ATELIER_PLUS
+    - STRIPE_TAX_RATE
+    - TURNSTILE_SITE_KEY
+    - TURNSTILE_SECRET_KEY
   clear:
     # Le nom servi. Il alimente à la fois les liens des emails et la protection
     # contre la réécriture d'en-tête `Host`.
