@@ -135,7 +135,8 @@ Ordre de démarrage : ComfyUI → (Ollama) → le service. `ALLUMER-IA.bat` s'en
 - **File d'attente en mémoire** : un redémarrage du service perd les créations en
   cours, et remet à zéro les compteurs de reprises. Suffisant pour une
   démonstration ; à déplacer côté Rails si cela devient un enjeu commercial.
-- **Filtre de prompts** : une liste de mots est contournable. Pour la production,
-  ajouter une modération par modèle.
+- **Filtre de prompts** : la liste de mots est complétée depuis octobre 2026 par
+  une relecture par le modèle de langue (`MODERATION`, voir docs/GENERATION.md).
+  Elle dépend d'Ollama : machine sans Ollama, seule la liste joue.
 - **Qualité d'impression** : valider sur de vrais designs et ajuster
   `filter_speckle` et le flou médian dans `app/vectorizer.py`.

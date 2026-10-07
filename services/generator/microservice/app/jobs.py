@@ -19,6 +19,7 @@ from PIL import Image
 
 from .config import settings
 from .generator import GenerationError, get_generator
+from .moderation import review
 from .prompt_builder import build_prompt
 from .prompt_filter import PromptFilter
 from .raster import rasterize, target_pixels
@@ -80,6 +81,8 @@ class JobManager:
         self.generator = get_generator()
         self.prompt_filter = prompt_filter
         self.batch_subjects: dict = {}
+        # Le refus de la modération, une fois par lot comme la traduction.
+        self.batch_refusals: dict = {}
 
     # ------------------------------------------------------------------ file d'attente
     def is_full(self) -> bool:
@@ -180,13 +183,35 @@ class JobManager:
     async def _subject_for(self, job: Job) -> str:
         """La description anglaise, calculée une fois par lot : les trois
         propositions d'un clic décrivent la même chose, et chaque appel au
-        traducteur recharge son modèle à froid."""
+        traducteur recharge son modèle à froid.
+
+        La demande du client est relue avant d'être traduite : refusée, aucune
+        image n'est dessinée, et les trois propositions du clic échouent
+        ensemble avec la même phrase."""
+        if job.batch_id and job.batch_id in self.batch_refusals:
+            raise GenerationError(self.batch_refusals[job.batch_id])
         if job.batch_id and job.batch_id in self.batch_subjects:
             return self.batch_subjects[job.batch_id]
+        refusal = await self._review(job)
+        if refusal:
+            if job.batch_id:
+                self.batch_refusals[job.batch_id] = refusal
+            raise GenerationError(refusal)
         subject = await self._fresh_subject(job)
         if job.batch_id:
             self.batch_subjects[job.batch_id] = subject
         return subject
+
+    async def _review(self, job: Job) -> Optional[str]:
+        """Ce que le client a écrit, relu par le modèle. Une variante n'écrit
+        rien de neuf : elle reprend une description déjà relue."""
+        if job.mode == CREATE:
+            return await review(job.prompt)
+        if job.mode == REFINE:
+            parent = self.get(job.parent_id) if job.parent_id else None
+            context = (parent.subject or parent.prompt) if parent else ""
+            return await review(job.instruction or "", context)
+        return None
 
     async def _fresh_subject(self, job: Job) -> str:
         if job.mode == CREATE:
@@ -348,6 +373,9 @@ class JobManager:
                     shutil.rmtree(job.directory, ignore_errors=True)
                     self.jobs.pop(job_id, None)
             live = {j.batch_id for j in self.jobs.values() if j.batch_id}
+            for batch in list(self.batch_refusals):
+                if batch not in live:
+                    self.batch_refusals.pop(batch, None)
             for batch in list(self.batch_subjects):
                 if batch not in live:
                     self.batch_subjects.pop(batch, None)
