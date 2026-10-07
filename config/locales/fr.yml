@@ -1282,6 +1282,9 @@ fr:
         L'atelier en est prévenu ; vous pourrez créer votre design dès le mois
         prochain, ou le lui demander directement.
       take_it_further:
+        blocked: >-
+          Cette modification contient une marque, un personnage ou un terme que
+          la plateforme n'imprime pas. Reformulez-la avec votre propre idée.
         too_old: >-
           Ce design est trop ancien pour être repris : son image d'origine n'a
           pas été conservée. Créez-en un nouveau à partir de la même idée.

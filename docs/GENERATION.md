@@ -352,6 +352,27 @@ Le texte entre guillemets (« », "", “”) **n'est jamais traduit** :
 Avec 4 s par image, chaque clic dessine **trois propositions** de partis pris
 différents ; le client en choisit une pour continuer.
 
+### Les demandes interdites : la liste, puis le modèle (octobre 2026)
+
+Deux filtres, dans cet ordre :
+
+1. **La liste de mots** (`blocklist.txt`, et `BlockedTerm` côté Rails, éditable
+   dans `/admin`). Instantanée, prévisible, refus en `422` avant toute file
+   d'attente. Accents, chiffres déguisés (« n1ke ») et lettres espacées
+   (« n i k e ») sont ramenés au mot. Les noms qui sont aussi des mots courants
+   (puma, jordan, mario…) n'y sont pas : ils arrêteraient un animal ou un prénom.
+2. **Le modèle de langue** (`app/moderation.py`, le même Ollama que la
+   traduction), qui reconnaît ce qu'une demande désigne sans le nommer. Il
+   relit le texte du client — le prompt d'une création, l'instruction d'une
+   retouche avec le design qu'elle modifie — **une fois par lot**, avant la
+   traduction. Il choisit une catégorie (`brand`, `character`, `person`,
+   `sexual`, `hate`, `violence`, `drugs`), et c'est le service qui écrit la
+   phrase française. Un refus fait échouer les trois propositions du clic avec
+   cette phrase dans `error` ; Rails rend alors la génération au client.
+
+Le modèle ne bloque jamais par panne : Ollama éteint, réponse illisible ou
+catégorie inconnue, la demande passe. `MODERATION=0` le coupe.
+
 ## 8. Attentes de performance
 
 - **5 minutes** entre la demande et `done`, au-delà l'essai est rendu.

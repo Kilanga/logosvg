@@ -1,8 +1,13 @@
 # Un terme par ligne, insensible à la casse et aux accents.
 # Les prompts contenant un de ces termes sont refusés avant génération.
-# Liste de départ à compléter selon vos besoins.
+# Les chiffres et lettres espacées sont ramenés au mot (« n1ke », « n i k e »).
+# Cette liste est le premier filtre ; le modèle de langue relit ensuite chaque
+# demande (MODERATION, app/moderation.py) pour ce qu'elle ne nomme pas.
 
 # Marques et licences
+# Pas les noms qui sont aussi des mots courants (puma, jordan, apple, mario,
+# stitch…) : refusés ici, ils arrêteraient un animal ou un prénom. Le modèle de
+# langue les juge dans leur contexte.
 disney
 marvel
 pixar
@@ -23,6 +28,74 @@ nba
 nfl
 psg
 real madrid
+barcelone
+juventus
+manchester united
+olympique de marseille
+olympique lyonnais
+lacoste
+reebok
+new balance
+the north face
+balenciaga
+dior
+prada
+rolex
+ralph lauren
+tommy hilfiger
+mcdonalds
+starbucks
+pepsi
+red bull
+monster energy
+heineken
+playstation
+xbox
+netflix
+kenzo
+
+# Personnages et œuvres protégés
+batman
+superman
+spiderman
+spider man
+avengers
+hulk
+iron man
+hello kitty
+pikachu
+zelda
+one piece
+naruto
+dragon ball
+goku
+simpsons
+looney tunes
+bugs bunny
+minions
+shrek
+barbie
+lego
+fortnite
+minecraft
+schtroumpf
+schtroumpfs
+asterix
+tintin
+snoopy
+la reine des neiges
+roi lion
+toy story
+bob l'éponge
+spongebob
+totoro
+ghibli
+minnie
+donald duck
+peppa pig
+pat patrouille
+sangoku
+dbz
 
 # Contenus inappropriés
 nsfw
@@ -34,3 +107,18 @@ gore
 nazi
 swastika
 croix gammee
+porno
+pornographique
+sexe
+xxx
+hentai
+erotique
+topless
+seins nus
+hitler
+nazis
+kkk
+white power
+sieg heil
+heil
+1488

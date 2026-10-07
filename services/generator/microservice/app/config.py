@@ -16,6 +16,13 @@ def _float(name: str, default: float) -> float:
     return float(os.getenv(name, str(default)))
 
 
+def _flag(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() not in ("0", "false", "non", "no", "off", "")
+
+
 @dataclass(frozen=True)
 class Settings:
     api_key: str = os.getenv("API_KEY", "")
@@ -43,6 +50,9 @@ class Settings:
 
     ollama_url: str = os.getenv("OLLAMA_URL", "")
     ollama_model: str = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+    # Relecture de chaque demande par ce même modèle, avant la génération
+    # (app/moderation.py). Sans effet tant qu'OLLAMA_URL est vide.
+    moderation: bool = _flag("MODERATION", True)
 
     # Passe haute définition, pour les techniques matricielles seulement (DTF, DTG,
     # sublimation). Le modèle dessine en 1 024 px : à 25 cm de large, cela ne fait que 104 dpi

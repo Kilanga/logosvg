@@ -175,6 +175,13 @@ module Client
       # service's resets whenever its machine is switched off. And a design the
       # machine has forgotten is put back on it once, then asked again.
       def take_it_further
+        # A retouche is the client's own words too: the platform's list reads
+        # them here, before anything is spent or sent.
+        if @instruction.present? && (term = BlockedTerm.matching(@instruction))
+          BlockedTerm.record_hit!(term)
+          return redirect_to design_path(@design), alert: t("client.designs.take_it_further.blocked")
+        end
+
         if @design.refinements_remaining.zero?
           return redirect_to design_path(@design), alert: t(".budget_exhausted")
         end
