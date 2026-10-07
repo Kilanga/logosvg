@@ -5,9 +5,14 @@ on:
   push:
     branches: [ main ]
 
+# Les machines sont épinglées sur Ubuntu 26.04 plutôt que `ubuntu-latest`,
+# qui y bascule entre le 19 octobre et le 19 novembre 2026 sans prévenir : la
+# version change quand nous le décidons, pas au milieu d'une semaine de travail.
+# Retour possible à `ubuntu-24.04` en cas de souci. Même choix dans
+# sauvegarde.yml.
 jobs:
   scan_ruby:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout code
@@ -25,7 +30,7 @@ jobs:
         run: bin/bundler-audit
       
   scan_js:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       # `bin/importmap audit` démarre l'application pour lire l'importmap, donc
@@ -49,7 +54,7 @@ jobs:
         run: bin/importmap audit
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
@@ -75,7 +80,7 @@ jobs:
         run: bin/rubocop -f github
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     services:
       postgres:
@@ -114,7 +119,7 @@ jobs:
         run: bin/rails db:test:prepare test
 
   system-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     services:
       postgres:
@@ -170,7 +175,7 @@ jobs:
   deploy:
     needs: [ scan_ruby, scan_js, lint, test, system-test ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     # Deux déploiements simultanés se disputeraient le verrou de Kamal. On
     # n'annule pas celui qui tourne : interrompre un déploiement en cours est
