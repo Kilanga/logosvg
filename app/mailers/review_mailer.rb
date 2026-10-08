@@ -99,6 +99,40 @@ class ReviewMailer < ApplicationMailer
     mail to: recipients, subject: t("mailers.review.settled_by_admin.subject")
   end
 
+  # --- Disputes (decided on 08/10/2026) -------------------------------------
+
+  # The client says the delivery is not right. The designer is told, and the
+  # administration in copy: if the two do not settle it, someone has to.
+  def dispute_opened(review)
+    @review = Review.includes(:client, designer_profile: :user).find(review.id)
+    mail to: @review.designer_profile.user.email_address,
+         bcc: User.admin.active.pluck(:email_address),
+         subject: t("mailers.review.dispute_opened.subject")
+  end
+
+  def fix_offered(review)
+    @review = Review.includes(:client).find(review.id)
+    mail to: @review.client.email_address, subject: t("mailers.review.fix_offered.subject")
+  end
+
+  def fix_accepted(review)
+    @review = Review.includes(designer_profile: :user).find(review.id)
+    mail to: @review.designer_profile.user.email_address, subject: t("mailers.review.fix_accepted.subject")
+  end
+
+  def dispute_withdrawn(review)
+    @review = Review.includes(designer_profile: :user).find(review.id)
+    mail to: @review.designer_profile.user.email_address, subject: t("mailers.review.dispute_withdrawn.subject")
+  end
+
+  # Before the week runs out: silence is about to count as a yes.
+  def acceptance_reminder(review, days_left)
+    @review = Review.includes(:client).find(review.id)
+    @days_left = days_left
+    mail to: @review.client.email_address,
+         subject: t("mailers.review.acceptance_reminder.subject", count: days_left)
+  end
+
   private
     def addresses_for(review)
       if review.chosen? && review.designer_profile

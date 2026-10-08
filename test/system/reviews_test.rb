@@ -156,6 +156,33 @@ class ReviewsTest < ApplicationSystemTestCase
     assert_text shown("Est-ce que le fond peut rester transparent")
   end
 
+  # Decided on 08/10/2026: the designer ticks the brief point by point, and
+  # a client who disagrees signals it instead of waiting for the week to end.
+  test "the brief is ticked on delivery, and the client signals a problem" do
+    reviews(:queued).update_columns(brief: { "change" => "Épaissir les contours", "text" => "RENARD" },
+                                    status: "in_progress", designer_profile_id: designer_profiles(:ines).id)
+    sign_in users(:designer)
+    visit designer_review_path(reviews(:queued))
+
+    check "coverage_change"
+    attach_file "file", svg_path
+    click_on I18n.t("designer.reviews.show.send_version")
+    assert_text displayed("reviews.version", number: 1)
+
+    sign_out
+    sign_in users(:client)
+    visit review_path(reviews(:queued))
+    assert_text I18n.t("reviews.brief.text")
+
+    find("summary", text: I18n.t("client.reviews.show.dispute_open")).click
+    choose "reason_not_as_requested", allow_label_click: true
+    fill_in "dispute_message", with: "Le texte RENARD n'apparaît pas."
+    click_on I18n.t("client.reviews.show.dispute_submit")
+
+    assert_text I18n.t("client.reviews.dispute.opened")
+    assert_predicate reviews(:queued).reload, :disputed?
+  end
+
   private
     def sign_in(user)
       visit new_session_path

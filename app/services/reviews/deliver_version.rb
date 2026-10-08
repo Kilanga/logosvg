@@ -12,10 +12,11 @@ module Reviews
 
     def self.call(...) = new(...).call
 
-    def initialize(review:, file:, message: nil)
+    def initialize(review:, file:, message: nil, coverage: nil)
       @review = review
       @file = file
       @message = message
+      @coverage = coverage || {}
     end
 
     def call
@@ -67,7 +68,8 @@ module Reviews
           message: @message,
           file: marked_file,
           inks_count: (inspection.inks if design.vector?),
-          checks: checks_from(inspection)
+          checks: checks_from(inspection),
+          brief_coverage: coverage
         )
       end
 
@@ -79,6 +81,16 @@ module Reviews
         { io: StringIO.new(AiProvenance.mark(bytes, content_type: content_type, kind: AiProvenance::EDITED)),
           filename: @file.respond_to?(:original_filename) ? @file.original_filename : "version.#{design.vector? ? "svg" : "png"}",
           content_type: content_type }
+      end
+
+      # The designer's own account, point by point, of what this version does
+      # with the client's brief: ticked or not, for each point the client
+      # filled. Read by the client, and by an administrator if it comes to a
+      # dispute.
+      def coverage
+        @review.brief_items.to_h do |key, _|
+          [ key, ActiveModel::Type::Boolean.new.cast(@coverage[key] || @coverage[key.to_sym]) == true ]
+        end
       end
 
       def checks_from(inspection)

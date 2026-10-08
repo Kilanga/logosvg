@@ -26,6 +26,13 @@ class ReviewPolicy < ApplicationPolicy
   # Only offered once the chosen designer has gone quiet.
   def reopen? = client? && record.chosen_designer_silent?
 
+  # Once per review, on a delivered version (decided on 08/10/2026).
+  def dispute? = client? && record.may_dispute?
+
+  def accept_fix? = client? && record.may_accept_fix?
+
+  def withdraw_dispute? = client? && record.may_withdraw_dispute?
+
   # Rated once, after it is settled.
   def rate? = client? && record.accepted? && record.rating.nil?
 
@@ -36,6 +43,9 @@ class ReviewPolicy < ApplicationPolicy
   def deliver? = designer? && record.may_deliver?
 
   def return_to_client? = designer? && record.may_return_to_client?
+
+  # A dispute answered by one more go, at no cost to the client. Offered once.
+  def offer_fix? = designer? && record.disputed? && !record.fix_offered?
 
   # Only a custom job closes without the client accepting a file here.
   def finish? = designer? && record.may_finish_off_platform?

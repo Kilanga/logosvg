@@ -1,0 +1,7 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.acceptance_reminder.eyebrow"),
+      heading: t("mailers.review.acceptance_reminder.heading", count: @days_left),
+      body: t("mailers.review.acceptance_reminder.body",
+              date: l((@review.delivered_at + Rails.application.config.tshirt.reviews[:auto_accept_days].days).to_date, format: :long)),
+      url: review_url(@review),
+      action: t("mailers.review.acceptance_reminder.action") %>

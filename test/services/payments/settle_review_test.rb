@@ -4,7 +4,10 @@ module Payments
   # Charges and transfers are separate: the money sits on the platform's
   # account until the client is satisfied.
   class SettleReviewTest < ActiveSupport::TestCase
-    setup { ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder" }
+    setup do
+      ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
+      stub_payment_intent
+    end
     teardown { ENV.delete("STRIPE_SECRET_KEY") }
 
     test "an accepted review transfers the designer's share" do
@@ -60,7 +63,47 @@ module Payments
       end
     end
 
+    # Tied to the client's charge, so a client who accepts before the money is
+    # available does not make the transfer fail (decided on 08/10/2026).
+    test "the transfer is tied to the client's charge" do
+      stub_transfer
+      SettleReview.call(review: accepted_review)
+
+      assert_requested :post, %r{/v1/transfers} do |request|
+        Rack::Utils.parse_nested_query(request.body)["source_transaction"] == "ch_test_delivered"
+      end
+    end
+
+    test "a payout larger than the last charge falls back on the balance" do
+      stub_payment_intent(amount_received: 500)
+      stub_transfer
+      SettleReview.call(review: accepted_review)
+
+      assert_requested :post, %r{/v1/transfers} do |request|
+        !Rack::Utils.parse_nested_query(request.body).key?("source_transaction")
+      end
+    end
+
+    test "a split decided by an administrator pays what was decided" do
+      stub_transfer
+      review = accepted_review
+      review.update!(designer_payout_cents: 800)
+      SettleReview.call(review: review)
+
+      assert_requested :post, %r{/v1/transfers} do |request|
+        Rack::Utils.parse_nested_query(request.body)["amount"] == "800"
+      end
+    end
+
     private
+      def stub_payment_intent(amount_received: 1900)
+        stub_request(:get, %r{/v1/payment_intents/pi_test_delivered}).to_return(
+          headers: { "Content-Type" => "application/json" },
+          body: { id: "pi_test_delivered", object: "payment_intent",
+                  latest_charge: "ch_test_delivered", amount_received: amount_received }.to_json
+        )
+      end
+
       def accepted_review
         reviews(:delivered).tap do |review|
           review.accept!

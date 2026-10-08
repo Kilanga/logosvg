@@ -69,12 +69,35 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_predicate review, :awaiting_payment?
   end
 
+  # Decided on 08/10/2026: the brief in four points, the first required.
+  test "the brief is asked point by point, and what must change is required" do
+    sign_in_as users(:client)
+
+    assert_no_difference "Review.count" do
+      post design_reviews_path(designs(:fox_screen)), params: { review: {
+        review_level_id: review_levels(:retouch).id, brief: { keep: "Les couleurs." }
+      } }
+    end
+    assert_response :unprocessable_entity
+
+    post design_reviews_path(designs(:fox_screen)), params: { review: {
+      review_level_id: review_levels(:retouch).id,
+      brief: { change: "Épaissir les contours", keep: "Les couleurs", text: "RENARD", colors: "" }
+    } }
+
+    review = Review.order(:created_at).last
+    assert_equal({ "change" => "Épaissir les contours", "keep" => "Les couleurs", "text" => "RENARD" }, review.brief)
+    assert_includes review.client_brief, "Ce qui doit changer : Épaissir les contours"
+    assert_equal %w[ change keep text ], review.brief_items.map(&:first)
+  end
+
   test "choosing a designer records that it was a choice" do
     sign_in_as users(:client)
 
     post design_reviews_path(designs(:fox_screen)), params: { review: {
       review_level_id: review_levels(:retouch).id,
-      designer_profile_id: designer_profiles(:ines).id
+      designer_profile_id: designer_profiles(:ines).id,
+      brief: { change: "Nettoyer les tracés du renard." }
     } }
 
     review = Review.order(:created_at).last
@@ -102,7 +125,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     sign_in_as users(:client)
 
     post design_reviews_path(designs(:fox_screen)), params: { review: {
-      review_level_id: review_levels(:retouch).id
+      review_level_id: review_levels(:retouch).id, brief: { change: "Nettoyer les tracés." }
     } }
 
     assert_response :redirect

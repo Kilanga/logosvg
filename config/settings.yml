@@ -67,6 +67,13 @@ shared:
     # Délais décidés le 06/10/2026. Le graphiste choisi a 24 h, et non 12 :
     # une nuit ne doit pas suffire à lui faire perdre une mission.
     auto_accept_days: 7
+    # Décidé le 08/10/2026 : le client est prévenu 3 jours puis 1 jour avant
+    # la validation automatique d'une livraison.
+    acceptance_reminder_days: [ 3, 1 ]
+    # Décidé le 08/10/2026 : un graphiste avec 2 litiges perdus ou plus
+    # (remboursement décidé par l'administration) sur 90 jours est signalé.
+    dispute_alert_count: 2
+    dispute_alert_days: 90
     proposal_expiry_hours: 72
     proposal_reminder_hours: 24
     designer_claim_timeout_hours: 24

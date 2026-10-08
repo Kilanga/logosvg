@@ -95,4 +95,33 @@ class SweepReviewsJobTest < ActiveJob::TestCase
 
     assert_predicate reviews(:in_progress).reload, :in_progress?
   end
+  # --- Reminders before the automatic acceptance (decided on 08/10/2026) ---
+
+  test "the client is reminded three days, then one day, before silence counts" do
+    review = reviews(:delivered)
+
+    review.update!(delivered_at: 4.days.ago - 1.minute)
+    assert_emails(1) { SweepReviewsJob.perform_now; perform_enqueued_jobs }
+    assert_equal 1, review.reload.acceptance_reminders_sent
+
+    assert_emails(0) { SweepReviewsJob.perform_now; perform_enqueued_jobs }
+
+    review.update!(delivered_at: 6.days.ago - 1.minute)
+    assert_emails(1) { SweepReviewsJob.perform_now; perform_enqueued_jobs }
+    assert_equal 2, review.reload.acceptance_reminders_sent
+    assert_predicate review, :delivered?
+  end
+
+  test "a sweep that missed a run sends only the closest reminder" do
+    reviews(:delivered).update!(delivered_at: 6.days.ago - 1.minute)
+
+    assert_emails(1) { SweepReviewsJob.perform_now; perform_enqueued_jobs }
+    assert_equal 2, reviews(:delivered).reload.acceptance_reminders_sent
+  end
+
+  test "nothing is sent on the first days" do
+    reviews(:delivered).update!(delivered_at: 2.days.ago)
+
+    assert_emails(0) { SweepReviewsJob.perform_now; perform_enqueued_jobs }
+  end
 end

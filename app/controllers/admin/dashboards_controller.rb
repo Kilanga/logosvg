@@ -20,6 +20,12 @@ module Admin
       @returning = DesignerProfile.listed
                                   .where(id: alarming_ids)
                                   .order(:display_name)
+
+      # Designers whose disputes keep ending with the client refunded.
+      @lost_disputes = DesignerProfile.lost_disputes(DesignerProfile.listed)
+      @disputing = DesignerProfile.listed
+                                  .where(id: @lost_disputes.select { |_, count| count >= dispute_alert_count }.keys)
+                                  .order(:display_name)
     end
 
     private
@@ -29,9 +35,13 @@ module Admin
         @return_rates.select { |_, rate| rate >= threshold }.keys
       end
 
-      # Work past its deadline, or delivered and plainly unanswered.
+      def dispute_alert_count = Rails.application.config.tshirt.reviews[:dispute_alert_count]
+
+      # Disputes opened by a client, work past its deadline, or delivered and
+      # plainly unanswered.
       def disputes_count
-        overdue = Review.where(status: "in_progress").where(due_at: ...Time.current).count
+        overdue = Review.where(status: "disputed")
+                        .or(Review.where(status: "in_progress").where(due_at: ...Time.current)).count
         stale = Review.where(status: "delivered")
                       .where(delivered_at: ...auto_accept_days.days.ago).count
 

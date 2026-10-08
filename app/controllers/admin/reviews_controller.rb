@@ -28,7 +28,8 @@ module Admin
 
       result = Admin::SettleDispute.call(
         review: @review, admin: Current.user,
-        amount_cents: euros_to_cents(params[:refund]), note: params[:note]
+        amount_cents: euros_to_cents(params[:refund]), note: params[:note],
+        pay_designer: params[:decision] == "split"
       )
 
       if result.success?
@@ -45,7 +46,7 @@ module Admin
 
       def counts
         {
-          "open" => scope.where(status: %w[ queued in_progress delivered ]).count,
+          "open" => scope.where(status: %w[ queued in_progress delivered disputed ]).count,
           "disputed" => disputed.count,
           "returned" => scope.where(status: "returned_to_client").count,
           "settled" => scope.where.not(settled_at: nil).count,
@@ -59,7 +60,7 @@ module Admin
         when "returned" then scope.where(status: "returned_to_client")
         when "settled" then scope.where.not(settled_at: nil)
         when "all" then scope
-        else scope.where(status: %w[ queued in_progress delivered ])
+        else scope.where(status: %w[ queued in_progress delivered disputed ])
         end
       end
 
@@ -67,7 +68,8 @@ module Admin
       # run past its deadline, and work delivered long enough ago that the
       # client is plainly not answering.
       def disputed
-        scope.where(status: "in_progress").where(due_at: ...Time.current)
+        scope.where(status: "disputed")
+             .or(scope.where(status: "in_progress").where(due_at: ...Time.current))
              .or(scope.where(status: "delivered")
                       .where(delivered_at: ...auto_accept_days.days.ago))
       end

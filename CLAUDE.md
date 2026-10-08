@@ -272,6 +272,8 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 | `price_listing_cents` / `price_atelier_plus_cents` | `2900` / `5900` HT | **décidé** — Atelier+ inclut le Référencement |
 | `monthly_generations`              | `listing: 100`, `atelier_plus: null` | **décidé** — par atelier et par mois |
 | `trial_period_days`                | `30`              | **décidé** (06/10/2026)                |
+| `reviews.acceptance_reminder_days` | `[3, 1]`          | **décidé** (08/10/2026) — rappels avant validation auto |
+| `reviews.dispute_alert_count` / `dispute_alert_days` | `2` / `90` | **décidé** (08/10/2026) — litiges perdus |
 | `consent_text_version`             | `2026-09-v1`      | version du texte de consentement       |
 
 Décisions déjà tranchées par le cahier des charges : le client télécharge

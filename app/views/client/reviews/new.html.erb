@@ -79,14 +79,29 @@
         <legend class="font-display text-xl font-bold uppercase"><%= t(".brief") %></legend>
       </div>
 
-      <div class="mt-4">
-        <%= form.label :client_brief, t("activerecord.attributes.review.client_brief"),
-              class: "label-rule block" %>
-        <%= form.text_area :client_brief, rows: 4, maxlength: 1000,
-              placeholder: t(".brief_placeholder"),
-              class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
-        <p class="mt-1.5 text-sm text-muted"><%= t(".brief_hint") %></p>
-      </div>
+      <%# Decided on 08/10/2026: the brief in four points rather than one box.
+          The designer ticks each point on delivery, so whether the work does
+          what was asked can be read, not argued. Only the first is required. %>
+      <p class="mt-4 text-sm text-muted"><%= t(".brief_hint") %></p>
+      <%= form.fields_for :brief, brief_fields(@review) do |brief| %>
+        <% Review::BRIEF_KEYS.each do |key| %>
+          <div class="mt-4">
+            <%= brief.label key, t("reviews.brief.#{key}"), class: "label-rule block" %>
+            <% if key == "change" %>
+              <%= brief.text_area key, rows: 3, maxlength: 1000, required: true,
+                    placeholder: t(".brief_placeholders.#{key}"),
+                    class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+            <% else %>
+              <%= brief.text_field key, maxlength: 1000,
+                    placeholder: t(".brief_placeholders.#{key}"),
+                    class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+      <% if @review.errors[:brief].any? %>
+        <p class="mt-2 text-sm text-warning"><%= @review.errors[:brief].first %></p>
+      <% end %>
     </fieldset>
 
     <div class="border-t border-line pt-8">
