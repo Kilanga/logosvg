@@ -37,7 +37,15 @@ Rails.application.configure do
                      "https://js.stripe.com",
                      "https://hooks.stripe.com"
 
-    policy.form_action :self
+    # Les formulaires qui ouvrent Stripe (abonnement, portail de facturation,
+    # paiement d'une retouche, inscription et tableau de bord des graphistes)
+    # aboutissent, par redirection, sur ces domaines. `form-action` s'applique
+    # aussi à la cible d'une redirection : sans eux, le navigateur arrête le
+    # formulaire sans rien afficher.
+    policy.form_action :self,
+                       "https://checkout.stripe.com",
+                       "https://billing.stripe.com",
+                       "https://connect.stripe.com"
 
     policy.upgrade_insecure_requests unless Rails.env.local?
   end
