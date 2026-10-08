@@ -29,7 +29,8 @@
         </dl>
 
         <div class="mt-5 flex flex-wrap gap-3">
-          <%= button_to accept_review_proposal_path(@review), class: "btn btn-primary text-sm" do %>
+          <%= button_to accept_review_proposal_path(@review), class: "btn btn-primary text-sm",
+                form: { data: { turbo: false } } do %>
             <%= @review.proposal_difference_cents.positive? ? t(".accept_and_pay") : t(".accept_and_refund") %>
           <% end %>
           <%= button_to t(".decline"), decline_review_proposal_path(@review),

@@ -2,7 +2,8 @@
 <% content_for :heading, t(".heading") %>
 
 <div class="grid max-w-5xl gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)] lg:items-start">
-  <%= form_with model: @review, url: design_reviews_path(@design), class: "space-y-10" do |form| %>
+  <%= form_with model: @review, url: design_reviews_path(@design), class: "space-y-10",
+                data: { turbo: false } do |form| %>
     <% if @review.errors.any? %>
       <div class="border-l-2 border-warning bg-warning-bg px-4 py-3">
         <p class="font-semibold text-warning">
