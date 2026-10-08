@@ -1280,6 +1280,11 @@ fr:
           large_back: "Grand dos"
         template_alt: "Gabarit de t-shirt montrant la zone imprimée à l'échelle"
         submit: "Générer mon design"
+        upload_title: "Vous avez déjà votre visuel ?"
+        upload_hint: >-
+          Une image faite ailleurs, par une autre IA ou à la main : nous la
+          mettons au format de la machine de l'atelier, sans la redessiner.
+        upload_link: "Déposer mon visuel"
         remaining:
           zero: "Plus de création disponible aujourd'hui."
           one: "Il vous reste %{count} création aujourd'hui."
@@ -1298,6 +1303,9 @@ fr:
         see_directory: "Voir dans l'annuaire"
         no_compatible_printer: "Aucun atelier référencé ne pratique cette technique pour l'instant."
         proposals_title: "Choisissez votre proposition"
+        origin: "Origine"
+        origin_upload: "Votre visuel, déposé tel quel"
+        origin_upload_ai: "Votre visuel, déposé tel quel (créé par IA)"
         proposals_hint: >-
           L'IA a dessiné trois versions de votre idée, chacune avec son parti
           pris. Choisissez-en une, puis modifiez-la ou envoyez-la à un atelier
@@ -1359,6 +1367,10 @@ fr:
           other: "Il reste %{count} reprises pour ce design."
         reviewed_by: "Version finalisée par %{designer}. Prête à envoyer à votre atelier."
         from_reference: "Parti de votre image."
+        from_upload: "Votre visuel, tel que vous l'avez déposé."
+        upload_note: >-
+          Votre visuel est gardé tel quel : il n'y a pas de reprise par l'IA.
+          Pour le retoucher, un graphiste peut le reprendre pour vous.
         budget_spent: "Vous avez utilisé vos trois reprises"
         budget_spent_body: >-
           Pour aller plus loin, un graphiste professionnel peut reprendre ce
@@ -1386,6 +1398,37 @@ fr:
           Ce design est trop ancien pour être repris : son image d'origine n'a
           pas été conservée. Créez-en un nouveau à partir de la même idée.
 
+    uploads:
+      default_title: "Mon visuel"
+      new:
+        title: "Déposer mon visuel"
+        heading: "Déposer mon visuel"
+        intro: >-
+          Vous avez déjà votre image, créée par une autre IA ou par vos soins, et
+          vous ne voulez pas la modifier : nous la préparons simplement au
+          format que la machine de l'atelier imprime — vectorisée en aplats
+          pour la sérigraphie, le flex ou la broderie, PNG détouré à 300 dpi
+          pour le DTF, le DTG ou la sublimation.
+        image_legend: "Votre visuel"
+        image: "Votre image"
+        image_hint: "PNG, JPEG ou WebP, 10 Mo au plus. Plus elle est grande, plus le fichier sera net."
+        rights: >-
+          Ce visuel m'appartient ou j'ai le droit de l'imprimer, il ne reprend
+          ni la marque, ni le personnage, ni l'œuvre de quelqu'un d'autre, et il
+          ne montre personne d'identifiable sans son accord.
+        ai_declared: "Ce visuel a été créé avec une IA (il sera signalé comme tel, comme la loi le demande)."
+        remove_background: "Retirer le fond blanc (le textile apparaîtra à la place)"
+        name: "Un nom pour le retrouver (facultatif)"
+        name_placeholder: "Logo du club, affiche de la fête…"
+        technique_hint: >-
+          Elle décide du fichier préparé : des aplats vectoriels pour les
+          techniques à écrans ou à fils, une image haute définition pour les
+          impressions numériques.
+        submit: "Préparer mon fichier"
+        free: "Gratuit : ce dépôt ne compte pas dans vos créations du jour."
+        back_to_generation: "Je préfère créer un visuel avec l'IA"
+      create:
+        missing_image: "Ajoutez votre visuel pour que nous puissions le préparer."
     print_requests:
       index:
         title: "Mes demandes"

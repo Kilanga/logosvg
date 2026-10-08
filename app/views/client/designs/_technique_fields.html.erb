@@ -1,0 +1,23 @@
+<%# The technique comes first: it shapes the prompt sent to the model, not
+    only the file that comes back. %>
+<fieldset>
+  <div class="flex items-baseline gap-4 border-b border-line pb-3">
+    <span class="font-display text-xl font-bold text-emulsion"><%= local_assigns.fetch(:number, "01") %></span>
+    <legend class="font-display text-xl font-bold uppercase"><%= t("client.designs.new.technique_legend") %></legend>
+  </div>
+  <p class="mt-3 text-sm text-muted"><%= local_assigns.fetch(:hint) { t("client.designs.new.technique_hint") } %></p>
+
+  <div class="mt-4 grid gap-2 sm:grid-cols-2">
+    <% available_techniques.each do |entry| %>
+      <label class="flex cursor-pointer flex-col gap-1 rounded-xs border border-line p-3
+                    has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+        <%= form.radio_button :technique, entry.key,
+              class: "sr-only", data: { design_form_target: "technique", action: "design-form#sync" } %>
+        <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
+          <%= workshop_technique_label(entry) %>
+        </span>
+        <span class="text-sm text-muted"><%= technique_family_hint(entry) %></span>
+      </label>
+    <% end %>
+  </div>
+</fieldset>

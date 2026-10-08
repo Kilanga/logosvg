@@ -48,3 +48,35 @@ def decode(data_b64: str, size: int) -> bytes:
     out = io.BytesIO()
     square.save(out, format="PNG")
     return out.getvalue()
+
+
+def decode_for_print(data_b64: str, max_side: int) -> bytes:
+    """Le visuel du client, préparé tel quel pour l'impression (pas pour le modèle).
+
+    Contrairement à `decode`, rien n'est recadré au carré : les proportions sont
+    celles du fichier, et la définition est gardée jusqu'à `max_side` — un PNG
+    d'impression se juge à ses pixels. La transparence est posée sur du blanc,
+    comme pour un dessin du modèle : le détourage du service la retrouve, et un
+    logo détouré ne devient pas un carré noir au passage.
+    """
+    try:
+        raw = base64.b64decode(data_b64, validate=True)
+    except (binascii.Error, ValueError):
+        raise InitImageError("Le visuel est illisible.")
+
+    Image.MAX_IMAGE_PIXELS = MAX_PIXELS
+    try:
+        with Image.open(io.BytesIO(raw)) as img:
+            if img.format not in FORMATS:
+                raise InitImageError("Le visuel doit être un PNG, un JPEG ou un WebP.")
+            img = ImageOps.exif_transpose(img)
+            rgba = img.convert("RGBA")
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError):
+        raise InitImageError("Le visuel est illisible.")
+
+    flat = Image.new("RGB", rgba.size, "white")
+    flat.paste(rgba, mask=rgba.getchannel("A"))
+    flat.thumbnail((max_side, max_side), Image.LANCZOS)
+    out = io.BytesIO()
+    flat.save(out, format="PNG")
+    return out.getvalue()

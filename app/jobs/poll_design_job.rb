@@ -76,7 +76,8 @@ class PollDesignJob < ApplicationJob
     # back only when the last of them fails, never once per failure.
     def give_up(design, message)
       fresh = Design.find(design.id)
-      GenerationQuota.for_user_id(fresh.user_id).refund! if whole_click_failed?(fresh)
+      # A client's own image put in format was never counted as a generation.
+      GenerationQuota.for_user_id(fresh.user_id).refund! if !fresh.upload? && whole_click_failed?(fresh)
 
       return unless fresh.may_fail?
 

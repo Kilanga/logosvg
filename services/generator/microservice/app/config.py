@@ -76,6 +76,13 @@ class Settings:
     # point le dessin s'en écarte. Plus haut qu'une retouche (0,55), parce qu'il
     # faut souvent changer de style — d'une photo à des aplats imprimables.
     upload_denoise: float = _float("UPLOAD_DENOISE", 0.7)
+    # Le visuel d'un client préparé tel quel (POST /convert) : la définition est
+    # gardée jusqu'à cette taille. Au-delà, un fichier de 25 cm à 300 dpi n'en
+    # demande pas plus, et la vectorisation ralentirait pour rien.
+    convert_max_side: int = _int("CONVERT_MAX_SIDE", 4096)
+    # La vectorisation, elle, travaille sur une image plus petite : des aplats
+    # n'ont pas besoin de 4 000 px, et vtracer y passerait des minutes.
+    convert_vector_side: int = _int("CONVERT_VECTOR_SIDE", 2048)
 
     # Reprises (retouches ou lots de variantes) par design, et à quel point la
     # retouche s'écarte de l'image de départ (0 = identique, 1 = image nouvelle).

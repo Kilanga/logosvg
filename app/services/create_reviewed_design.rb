@@ -47,6 +47,7 @@ class CreateReviewedDesign
         prompt: parent.prompt, style: parent.style, technique: parent.technique,
         colors_requested: parent.colors_requested, print_width_cm: parent.print_width_cm,
         remove_background: parent.remove_background, subject: parent.subject,
+        ai_declared: parent.ai_declared,
         prompt_used: parent.prompt_used, seed: parent.seed,
         print_format: parent.vector? ? "svg" : "png",
         inks_count: version.inks_count,

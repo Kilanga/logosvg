@@ -4,7 +4,9 @@ class Design < ApplicationRecord
   STYLES = %w[ illustration logo mascotte badge ].freeze
   # `reviewed`: a designer's accepted delivery, made a design of its own so it
   # can be sent to a workshop. See CreateReviewedDesign.
-  MODES = %w[ create variant refine reviewed ].freeze
+  # `upload`: the client's own finished image, put in the workshop's format
+  # without being redrawn — no model, no prompt, nothing to take further.
+  MODES = %w[ create variant refine reviewed upload ].freeze
   PRINT_FORMATS = %w[ svg png ].freeze
 
   belongs_to :user
@@ -36,6 +38,7 @@ class Design < ApplicationRecord
   # identifiable without their consent. Asked only when an image is sent.
   attribute :reference_rights_confirmed, :boolean, default: false
   validate :reference_image_rights_confirmed, on: :create
+  validate :upload_has_image, on: :create
 
   has_secure_token :token
 
@@ -93,6 +96,24 @@ class Design < ApplicationRecord
   def to_param = token
 
   def reviewed? = mode == "reviewed"
+
+  def upload? = mode == "upload"
+
+  # Whether the picture comes out of a generative model, and so carries the AI
+  # mark in its files and the mention on its previews. Always, for what the
+  # platform drew; for a client's own image — and a designer's rework of one —
+  # only when the client said so.
+  def ai_generated? = client_original? ? ai_declared? : true
+
+  # The client's own picture, or a designer's rework of it. Read by query: a
+  # reviewed design reaches here from jobs and mailers, loaded bare.
+  def client_original?
+    return true if upload?
+    return false unless reviewed?
+
+    @client_original = Design.where(id: lineage_root_id).pick(:mode) == "upload" unless defined?(@client_original)
+    @client_original
+  end
 
   # Reprises already spent on this lineage, counted by the application.
   #
@@ -159,6 +180,10 @@ class Design < ApplicationRecord
   end
 
   private
+    def upload_has_image
+      errors.add(:reference_image, :blank) if upload? && !reference_image.attached?
+    end
+
     def reference_image_rights_confirmed
       return unless reference_image.attached?
       return if reference_rights_confirmed

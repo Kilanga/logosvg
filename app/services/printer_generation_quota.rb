@@ -30,8 +30,9 @@ class PrinterGenerationQuota
   def used
     return 0 if @printer.nil?
 
+    # A client's own image put in format draws nothing: it is not a generation.
     Design.where(printer_id: @printer.id, created_at: month)
-          .where.not(status: "failed")
+          .where.not(status: "failed").where.not(mode: "upload")
           .distinct.count(Arel.sql("COALESCE(designs.batch_token, designs.token)"))
   end
 

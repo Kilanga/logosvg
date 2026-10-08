@@ -15,6 +15,7 @@ class GenerateDesignJob < ApplicationJob
 
   def perform(design)
     return unless design.may_start?
+    return convert(design) if design.upload?
 
     designs = [ design, *waiting_siblings(design) ]
     response = GeneratorClient.new.generate(design, count: designs.size)
@@ -58,6 +59,13 @@ class GenerateDesignJob < ApplicationJob
   end
 
   private
+    # The client's own image: one job, no siblings, no reprises. It cost no
+    # generation, so a refusal refunds nothing.
+    def convert(design)
+      response = GeneratorClient.new.convert(design)
+      launch(design, response.fetch("job_id"), nil)
+    end
+
     # Le filet ne doit jamais masquer l'erreur qu'il attrape.
     def safely
       yield
@@ -90,7 +98,7 @@ class GenerateDesignJob < ApplicationJob
     # The whole click is refused at once — its waiting siblings with it — and
     # refunded once, since it was counted once.
     def refuse(design, message, refund:)
-      GenerationQuota.for_user_id(design.user_id).refund! if refund
+      GenerationQuota.for_user_id(design.user_id).refund! if refund && !design.upload?
 
       [ design, *waiting_siblings(design) ].each { |proposal| abandon(proposal, message) }
     end

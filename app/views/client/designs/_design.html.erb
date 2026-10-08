@@ -32,8 +32,10 @@
       <div data-design-preview-target="stage" class="screen-tint relative flex items-center justify-center p-6">
         <%# Said on screen as well as in the pixels: the client must know the
             picture was drawn by an AI before approving it. %>
+        <% if design.ai_generated? %>
         <p class="pill absolute left-3 top-3 border border-line bg-surface text-muted"
            title="<%= t("designs.ai_label_hint") %>"><%= t("designs.ai_label") %></p>
+        <% end %>
         <div class="relative w-full max-w-64">
           <%= render "client/designs/garment" %>
           <button type="button" data-action="design-preview#zoom"
@@ -127,7 +129,17 @@
     <% if design.reference_image.attached? %>
       <div class="flex items-center gap-3 border-t border-line px-4 py-3 text-sm text-muted">
         <%= image_tag design_reference_image_path(design), alt: "", class: "size-12 flex-none rounded-xs border border-line object-contain bg-surface" %>
-        <span><%= t("client.designs.design.from_reference") %></span>
+        <span><%= t(design.upload? ? "client.designs.design.from_upload" : "client.designs.design.from_reference") %></span>
+      </div>
+    <% end %>
+
+    <%# Kept as the client sent it: no AI reprise, but a person can still
+        rework it — the paid path, offered rather than left to be found. %>
+    <% if design.upload? %>
+      <div class="border-t border-line p-4 text-sm">
+        <p class="text-muted"><%= t("client.designs.design.upload_note") %></p>
+        <%= link_to t("client.designs.design.ask_designer"), new_design_review_path(design),
+              class: "btn btn-secondary mt-3 text-sm" %>
       </div>
     <% end %>
 

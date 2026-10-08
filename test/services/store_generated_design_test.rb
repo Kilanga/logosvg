@@ -204,6 +204,31 @@ class StoreGeneratedDesignTest < ActiveSupport::TestCase
     assert_not_predicate @design.source_png, :attached?
   end
 
+  # A client's own picture is not the platform's drawing: unmarked unless the
+  # client said it came from an AI, and never offered a reprise.
+  test "a client's own picture is stored unmarked, with no reprise" do
+    @design.update_columns(mode: "upload")
+    stub_file("print.png", png)
+    stub_file("source.png", png)
+
+    StoreGeneratedDesign.call(design: @design, answer: raster_answer.merge("refinements_left" => 0))
+    @design.reload
+
+    assert_predicate @design, :ready?
+    assert_not AiProvenance.marked?(@design.print_file.download)
+    assert_nil @design.refinements_left
+  end
+
+  test "a client's own picture declared made with an AI is marked" do
+    @design.update_columns(mode: "upload", ai_declared: true)
+    stub_file("print.png", png)
+    stub_file("source.png", png)
+
+    StoreGeneratedDesign.call(design: @design, answer: raster_answer)
+
+    assert AiProvenance.marked?(@design.reload.print_file.download)
+  end
+
   private
     # Un design par technique, dans l'etat ou le travail de fond le trouve :
     # le budget d'encres est renseigne la ou il existe, et vide ailleurs — c'est

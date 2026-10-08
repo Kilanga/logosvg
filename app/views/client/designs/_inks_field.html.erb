@@ -1,0 +1,14 @@
+<%# Only where inks are counted one by one. %>
+<div data-design-form-target="inks">
+  <%= form.label :colors_requested, t("activerecord.attributes.design.colors_requested"),
+        class: "label-rule block" %>
+  <div class="mt-2 flex items-center gap-4">
+    <%= form.range_field :colors_requested, min: 1, max: 6, step: 1,
+          class: "h-2 w-full accent-emulsion",
+          data: { action: "design-form#showInkValue" } %>
+    <span class="font-display text-2xl font-bold" data-design-form-target="inkValue">
+      <%= @design.colors_requested || 3 %>
+    </span>
+  </div>
+  <p class="mt-1.5 text-sm text-muted"><%= t("client.designs.new.colors_hint") %></p>
+</div>

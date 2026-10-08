@@ -15,7 +15,8 @@ from pydantic import BaseModel, Field
 from .config import settings
 from .init_image import InitImageError
 from .init_image import decode as decode_init_image
-from .jobs import CREATE, REFINE, VARIANT, Job, JobManager, child_job, new_seed
+from .init_image import decode_for_print
+from .jobs import CONVERT, CREATE, REFINE, VARIANT, Job, JobManager, child_job, new_seed
 from .prompt_filter import PromptFilter, clean_prompt
 from .security import RateLimiter, require_api_key
 from .techniques import DEFAULT_PRINT_WIDTH_CM, DEFAULT_TECHNIQUE, KEYS, catalog_payload, resolve
@@ -101,6 +102,18 @@ class RestoreRequest(BaseModel):
     init_image: Optional[str] = Field(default=None, max_length=MAX_RESTORE_B64)
 
 
+class ConvertRequest(BaseModel):
+    """Le visuel déjà fait d'un client, à mettre au format de l'atelier."""
+    user_id: str = Field(min_length=1, max_length=64, pattern=USER_ID)
+    image: str = Field(min_length=8, max_length=MAX_RESTORE_B64)
+    technique: Literal[KEYS] = DEFAULT_TECHNIQUE
+    colors: Optional[int] = Field(default=None, ge=1, le=6)
+    print_width_cm: float = Field(default=DEFAULT_PRINT_WIDTH_CM, ge=3, le=60)
+    remove_background: bool = True
+    # Un nom pour s'y retrouver, jamais envoyé à un modèle.
+    title: str = Field(default="Visuel du client", max_length=300)
+
+
 class VariantsRequest(BaseModel):
     user_id: str = Field(min_length=1, max_length=64, pattern=USER_ID)
     count: int = Field(default=3, ge=1, le=6)
@@ -118,6 +131,9 @@ def _parent_ready(job_id: str, user_id: str) -> Job:
     parent = _job_or_404(job_id, user_id)
     if parent.status != "done":
         raise HTTPException(status_code=409, detail="La version précédente n'est pas encore prête.")
+    if parent.mode == CONVERT:
+        # Le visuel du client est gardé tel quel : il n'y a rien à redessiner.
+        raise HTTPException(status_code=422, detail="Un visuel déposé tel quel ne se retouche pas ici.")
     return parent
 
 
@@ -230,6 +246,38 @@ def generate(req: GenerateRequest):
         flavour=index,
     )) for index in range(wanted)]
     return _submitted(created)
+
+
+@app.post("/convert", status_code=202, dependencies=[Depends(require_api_key)])
+def convert(req: ConvertRequest):
+    """Prépare le visuel du client pour l'atelier, sans le redessiner.
+
+    Une seule proposition, aucun budget de reprises : il n'y a rien à reprendre.
+    La limite horaire s'applique comme pour une génération — la machine travaille.
+    """
+    try:
+        png = decode_for_print(req.image, settings.convert_max_side)
+    except InitImageError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    _room_for(1)
+    limited = _rate_limited(req.user_id)
+    if limited is not None:
+        return limited
+
+    profile = resolve(req.technique)
+    job = manager.submit(Job(
+        user_id=req.user_id,
+        prompt=clean_prompt(req.title) or "Visuel du client",
+        style="illustration",
+        colors=profile.clamp_colors(req.colors),
+        remove_background=req.remove_background,
+        technique=profile.key,
+        print_width_cm=req.print_width_cm,
+        seed=0,
+        init_png=png,
+        mode=CONVERT,
+    ))
+    return _submitted([job])
 
 
 @app.post("/jobs/{job_id}/refine", status_code=202, dependencies=[Depends(require_api_key)])

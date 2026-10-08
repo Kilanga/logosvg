@@ -97,10 +97,17 @@
           <dt class="label-rule"><%= t("activerecord.attributes.design.technique") %></dt>
           <dd class="mt-0.5 font-medium"><%= @design.technique_label %></dd>
         </div>
-        <div>
-          <dt class="label-rule"><%= t("activerecord.attributes.design.style") %></dt>
-          <dd class="mt-0.5"><%= t("enums.design.style.#{@design.style}") %></dd>
-        </div>
+        <% if @design.upload? %>
+          <div>
+            <dt class="label-rule"><%= t(".origin") %></dt>
+            <dd class="mt-0.5"><%= t(@design.ai_declared? ? ".origin_upload_ai" : ".origin_upload") %></dd>
+          </div>
+        <% else %>
+          <div>
+            <dt class="label-rule"><%= t("activerecord.attributes.design.style") %></dt>
+            <dd class="mt-0.5"><%= t("enums.design.style.#{@design.style}") %></dd>
+          </div>
+        <% end %>
         <% if @design.printer %>
           <div>
             <dt class="label-rule"><%= t(".workshop") %></dt>

@@ -31,6 +31,8 @@ from .vectorizer import vectorize
 log = logging.getLogger(__name__)
 
 CREATE, VARIANT, REFINE = "create", "variant", "refine"
+# Le visuel du client préparé tel quel pour l'atelier : ni modèle, ni prompt.
+CONVERT = "convert"
 
 
 @dataclass
@@ -157,6 +159,9 @@ class JobManager:
         return job
 
     def refinements_left(self, root_id: str) -> int:
+        root = self.jobs.get(root_id)
+        if root is not None and root.mode == CONVERT:
+            return 0  # un visuel déposé tel quel n'a rien à reprendre
         return max(settings.max_refinements - self.used_refinements(root_id), 0)
 
     # -------------------------------------------------------------------------- worker
@@ -276,6 +281,9 @@ class JobManager:
             )
 
     async def _run(self, job: Job) -> None:
+        if job.mode == CONVERT:
+            return await self._convert(job)
+
         subject = await self._subject_for(job)
         # Les marques survivent à la traduction comme à la réécriture : on refiltre le texte.
         if self.prompt_filter.blocked_term(subject):
@@ -364,6 +372,63 @@ class JobManager:
             "from_image": job.init_png is not None,
         }
 
+    async def _convert(self, job: Job) -> None:
+        """Le visuel du client, mis au format de l'atelier sans rien redessiner.
+
+        Décidé le 08/10/2026 : un client qui a déjà son image — faite ailleurs,
+        par une autre IA ou à la main — veut seulement l'envoyer à l'atelier dans
+        le bon format. Aucun appel au modèle d'image ni au traducteur : les
+        mêmes étapes de préparation que pour un dessin du modèle (vectorisation
+        en aplats, ou PNG détouré à 300 dpi agrandi au besoin), à partir de
+        l'image telle qu'elle est.
+        """
+        png = job.init_png
+        if png is None:
+            raise GenerationError("Le visuel est introuvable. Déposez-le à nouveau.")
+
+        profile = resolve(job.technique)
+        colors = profile.clamp_colors(job.colors)
+        job.colors = colors
+
+        job.directory.mkdir(parents=True, exist_ok=True)
+        (job.directory / "source.png").write_bytes(png)
+
+        if profile.family == "vector":
+            small = await asyncio.to_thread(_shrink, png, settings.convert_vector_side)
+            out = await asyncio.to_thread(
+                vectorize, small, colors, job.remove_background,
+                settings.max_paths_warning, profile.key,
+            )
+            (job.directory / "design.svg").write_text(out["svg"], encoding="utf-8")
+        else:
+            upscaled, upscale_warning = await self._upscale(png, profile, job.print_width_cm)
+            out = await asyncio.to_thread(
+                rasterize, png, profile, job.remove_background, job.print_width_cm, upscaled
+            )
+            (job.directory / "print.png").write_bytes(out["png"])
+            if upscale_warning:
+                out["warnings"].append(upscale_warning)
+
+        job.result = {
+            "technique": profile.key,
+            "technique_label": profile.label,
+            "output": profile.family,
+            "print_file": profile.file_name,
+            "colors": colors,
+            "palette": out["palette"],
+            "inks": out["inks"],
+            "stats": out["stats"],
+            "warnings": out["warnings"],
+            "prompt_used": None,
+            "flavour": 0,
+            "subject": None,
+            "instruction": None,
+            "mode": CONVERT,
+            "parent_id": None,
+            "seed": None,
+            "from_image": True,
+        }
+
     async def cleanup_loop(self) -> None:
         while True:
             await asyncio.sleep(300)
@@ -379,6 +444,18 @@ class JobManager:
             for batch in list(self.batch_subjects):
                 if batch not in live:
                     self.batch_subjects.pop(batch, None)
+
+
+def _shrink(png: bytes, side: int) -> bytes:
+    """La même image, ramenée à `side` px de grand côté au plus."""
+    with Image.open(io.BytesIO(png)) as img:
+        if max(img.size) <= side:
+            return png
+        img = img.copy()
+        img.thumbnail((side, side), Image.LANCZOS)
+        out = io.BytesIO()
+        img.save(out, format="PNG")
+        return out.getvalue()
 
 
 def new_seed() -> int:

@@ -62,7 +62,8 @@ class SendPrintRequest
     def attach_copy(source, to:)
       return unless source.attached?
 
-      bytes = AiProvenance.mark(source.download, content_type: source.content_type)
+      bytes = source.download
+      bytes = AiProvenance.mark(bytes, content_type: source.content_type) if @print_request.design.ai_generated?
       to.attach(io: StringIO.new(bytes), filename: source.filename.to_s,
                 content_type: source.content_type)
     end
