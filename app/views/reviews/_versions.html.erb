@@ -17,6 +17,22 @@
           <p class="border-b border-line px-4 py-3 whitespace-pre-line"><%= version.message %></p>
         <% end %>
 
+        <%# The designer's own account of the brief, point by point (decided
+            on 08/10/2026): what the client and, in a dispute, an
+            administrator check the delivery against. %>
+        <% if version.brief_coverage.present? %>
+          <ul class="flex flex-wrap gap-x-5 gap-y-1 border-b border-line px-4 py-3 text-sm"
+              aria-label="<%= t("reviews.brief.coverage") %>">
+            <% version.brief_coverage.each do |key, covered| %>
+              <li class="flex items-center gap-1.5 <%= covered ? "text-success" : "text-warning" %>">
+                <span aria-hidden="true" class="font-bold"><%= covered ? "✓" : "–" %></span>
+                <%= t("reviews.brief.#{key}") %>
+                <span class="sr-only"><%= covered ? t("reviews.brief.covered") : t("reviews.brief.not_covered") %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+
         <dl class="flex flex-wrap gap-x-6 gap-y-1 px-4 py-3 text-sm">
           <% version_checks(version).each do |check| %>
             <dd class="text-muted"><%= check %></dd>

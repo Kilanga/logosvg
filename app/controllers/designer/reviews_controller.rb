@@ -11,7 +11,7 @@ module Designer
       # Three lists, in the order a designer looks at them: what is mine to do,
       # what is waiting on the client, and what is finished.
       @mine = scope.where(designer_profile: profile, status: %w[ in_progress ]).order(:due_at)
-      @waiting = scope.where(designer_profile: profile, status: %w[ delivered returned_to_client ])
+      @waiting = scope.where(designer_profile: profile, status: %w[ delivered returned_to_client disputed ])
       # Empty when this designer could not take any of it: offering a button
       # that will be refused is worse than saying plainly why there is none.
       @available = if profile&.can_take_work?
@@ -45,7 +45,8 @@ module Designer
       authorize @review
 
       result = Reviews::DeliverVersion.call(
-        review: @review, file: params[:file], message: params[:message]
+        review: @review, file: params[:file], message: params[:message],
+        coverage: params[:coverage]&.to_unsafe_h
       )
 
       if result.success?
@@ -67,6 +68,18 @@ module Designer
 
       if result.success?
         redirect_to designer_reviews_path, notice: t(".returned")
+      else
+        redirect_to designer_review_path(@review), alert: result.error
+      end
+    end
+
+    # The answer to a dispute: one more go, at no cost to the client.
+    def offer_fix
+      authorize @review
+
+      result = Reviews::OfferFix.call(review: @review, author: Current.user, message: params[:fix_message])
+      if result.success?
+        redirect_to designer_review_path(@review), notice: t(".offered")
       else
         redirect_to designer_review_path(@review), alert: result.error
       end

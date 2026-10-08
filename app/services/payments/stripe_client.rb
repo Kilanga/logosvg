@@ -140,6 +140,13 @@ module Payments
       end
     end
 
+    # What a payment brought in, and the charge behind it: a transfer tied to
+    # that charge goes through once the money has arrived, instead of being
+    # refused while the platform's balance is still pending.
+    def retrieve_payment_intent(id)
+      request(nil) { @stripe.v1.payment_intents.retrieve(id).to_hash }
+    end
+
     def create_refund(payment_intent:, amount_cents: nil, idempotency_key:)
       request(idempotency_key) do
         @stripe.v1.refunds.create(

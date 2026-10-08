@@ -24,6 +24,30 @@
     <% end %>
   </section>
 
+  <%# Designers whose disputes keep ending with the client refunded (decided
+      on 08/10/2026). A signal for the administration, never shown publicly. %>
+  <% if @disputing.any? %>
+    <section>
+      <h2 class="label-rule border-b border-line pb-3"><%= t(".lost_disputes") %></h2>
+      <ul class="mt-4 space-y-2">
+        <% @disputing.each do |profile| %>
+          <li class="panel flex flex-wrap items-center gap-4 border-l-2 border-l-warning p-4">
+            <div class="min-w-0 flex-1">
+              <p class="font-medium">
+                <%= link_to profile.display_name, designer_path(profile),
+                      class: "underline-offset-4 hover:underline" %>
+              </p>
+              <p class="mt-0.5 text-sm text-muted">
+                <%= t(".lost_disputes_body", days: Rails.application.config.tshirt.reviews[:dispute_alert_days]) %>
+              </p>
+            </div>
+            <p class="font-display text-2xl font-bold text-warning"><%= @lost_disputes[profile.id] %></p>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
   <%# Designers handing work back more often than the platform expects. Not a
       sanction, a signal: usually the levels are wrong, sometimes the designer
       is picking. %>

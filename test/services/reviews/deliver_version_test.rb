@@ -20,6 +20,17 @@ module Reviews
       assert SvgInspector.call(stored).valid?
     end
 
+    # Decided on 08/10/2026: the designer says, point by point, what this
+    # version does with the client's brief.
+    test "the designer's account of the brief is kept, point by point" do
+      review = reviews(:in_progress_vector)
+      review.update_columns(brief: { "change" => "Épaissir", "text" => "RENARD" })
+
+      result = DeliverVersion.call(review: review, file: svg_file, coverage: { "change" => "1", "keep" => "1" })
+
+      assert_equal({ "change" => true, "text" => false }, result.version.brief_coverage)
+    end
+
     test "the inks the inspector counted are kept on the version" do
       result = deliver(reviews(:in_progress_vector), two_colour_svg)
 

@@ -93,6 +93,16 @@ class DesignerProfile < ApplicationRecord
     totals.to_h { |id, total| [ id, (returned.fetch(id, 0).to_f / total).round(3) ] }
   end
 
+  # Disputes this designer lost — closed by an administrator with money going
+  # back to the client — over the alert window, for many designers at once.
+  def self.lost_disputes(profiles, days: nil)
+    days ||= Rails.application.config.tshirt.reviews[:dispute_alert_days]
+    Review.where(designer_profile: profiles)
+          .where.not(disputed_at: nil).where.not(settled_at: nil)
+          .where(settled_at: days.days.ago..).where("refunded_cents > 0")
+          .group(:designer_profile_id).count
+  end
+
   def return_rate_alarming?(days: 30)
     rate = return_rate(days: days)
     return false if rate.nil?

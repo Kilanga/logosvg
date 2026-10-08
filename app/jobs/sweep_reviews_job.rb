@@ -10,6 +10,7 @@ class SweepReviewsJob < ApplicationJob
     expire_proposals
     remind_about_proposals
     warn_about_silent_designers
+    remind_before_auto_accept
     auto_accept
   end
 
@@ -50,6 +51,28 @@ class SweepReviewsJob < ApplicationJob
             .find_each do |review|
         review.update!(designer_reminded_at: Time.current)
         ReviewMailer.designer_silent(review).deliver_later
+      end
+    end
+
+    # Decided on 08/10/2026: a client who missed the delivery email must not
+    # find out a week later that silence counted as a yes. Told three days,
+    # then one day, before it does — each reminder once per delivery, and
+    # never one that is already late: a sweep that missed a run sends the
+    # closest reminder only.
+    def remind_before_auto_accept
+      days = settings[:auto_accept_days]
+      reminders = Array(settings[:acceptance_reminder_days]).map(&:to_i).sort.reverse
+
+      # Closest first: a review that already earned the last reminder is
+      # marked past the earlier ones, which then leave it alone.
+      reminders.each_with_index.reverse_each do |days_left, index|
+        Review.where(status: "delivered", acceptance_reminders_sent: ...(index + 1))
+              .where(delivered_at: ..(days - days_left).days.ago)
+              .where(delivered_at: (days.days.ago + 1.minute)..)
+              .find_each do |review|
+          review.update!(acceptance_reminders_sent: index + 1)
+          ReviewMailer.acceptance_reminder(review, days_left).deliver_later
+        end
       end
     end
 

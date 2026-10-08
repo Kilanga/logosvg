@@ -1,0 +1,6 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.dispute_opened.eyebrow"),
+      heading: t("mailers.review.dispute_opened.heading"),
+      body: t("mailers.review.dispute_opened.body", reason: t("enums.review.dispute_reason.#{@review.dispute_reason}"), message: @review.dispute_message),
+      url: designer_review_url(@review),
+      action: t("mailers.review.dispute_opened.action") %>

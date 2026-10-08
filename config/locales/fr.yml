@@ -262,6 +262,10 @@ fr:
           has_one: "Un enregistrement %{record} dépend de celui-ci"
           has_many: "Des enregistrements %{record} dépendent de celui-ci"
       models:
+        review:
+          attributes:
+            brief:
+              what_to_change: "doit dire au moins ce qui doit changer"
         user:
           attributes:
             terms_accepted_at:
@@ -476,8 +480,13 @@ fr:
         in_progress: "En cours"
         delivered: "Version à valider"
         returned_to_client: "Renvoyée pour décision"
+        disputed: "Signalée, en discussion"
         accepted: "Terminée"
         canceled: "Annulée"
+      dispute_reason:
+        not_as_requested: "Ne correspond pas à ma demande"
+        file_defect: "Défaut technique du fichier"
+        other: "Autre raison"
       return_reason:
         level_too_low: "La demande dépasse le niveau payé"
         level_too_high: "Un niveau inférieur suffirait"
@@ -533,6 +542,21 @@ fr:
   # --- Vérifications, textes partagés --------------------------------------
   reviews:
     price_ttc: "%{amount} TTC"
+    brief:
+      change: "Ce qui doit changer"
+      keep: "Ce qui doit rester"
+      text: "Texte exact à imprimer"
+      colors: "Couleurs imposées"
+      coverage: "Ce que cette version couvre de la demande"
+      covered: "couvert"
+      not_covered: "non couvert"
+    dispute:
+      errors:
+        not_disputable: "Cette vérification ne peut plus être signalée : un seul signalement par vérification, sur une version livrée."
+        reason: "Choisissez le motif du signalement."
+        message: "Expliquez en une ou deux phrases ce qui ne va pas."
+        not_disputed: "Cette vérification n'est pas signalée."
+        already_offered: "Vous avez déjà proposé une correction."
     version: "Version %{number}"
     no_version: "Aucune version déposée pour l'instant."
     conversation: "Échanges"
@@ -769,6 +793,49 @@ fr:
         workshop: "Atelier : %{printer}"
 
     review:
+      dispute_opened:
+        subject: "Le client signale un problème sur sa vérification"
+        eyebrow: "Signalement"
+        heading: "Le client n'est pas satisfait de la livraison"
+        body: >-
+          Motif : %{reason}. Son message : « %{message} ». Le paiement est
+          suspendu. Vous pouvez lui proposer une correction gratuite depuis la
+          page de la vérification ; sans accord entre vous, l'administration
+          tranche.
+        action: "Voir la vérification"
+      fix_offered:
+        subject: "Le graphiste propose de corriger votre design"
+        eyebrow: "Correction proposée"
+        heading: "Votre graphiste propose une correction gratuite"
+        body: >-
+          Il a répondu à votre signalement dans la conversation. Acceptez sa
+          correction pour qu'il reprenne le travail, sans frais.
+        action: "Répondre"
+      fix_accepted:
+        subject: "Le client accepte votre correction"
+        eyebrow: "Correction acceptée"
+        heading: "À vous de jouer"
+        body: "Le client accepte votre proposition : la vérification est de nouveau en cours, avec un nouveau délai."
+        action: "Voir la vérification"
+      dispute_withdrawn:
+        subject: "Le client a retiré son signalement"
+        eyebrow: "Signalement retiré"
+        heading: "Le signalement est retiré"
+        body: "Votre dernière version est de nouveau à valider par le client, avec une semaine pour répondre."
+        action: "Voir la vérification"
+      acceptance_reminder:
+        subject:
+          one: "Votre vérification sera validée demain"
+          other: "Votre vérification sera validée dans %{count} jours"
+        eyebrow: "Rappel"
+        heading:
+          one: "Plus qu'un jour pour répondre"
+          other: "Plus que %{count} jours pour répondre"
+        body: >-
+          Sans réponse de votre part, la dernière version sera validée le
+          %{date} et le graphiste sera réglé. Si elle ne correspond pas à votre
+          demande, demandez un retour ou signalez un problème avant.
+        action: "Voir la version"
       notify_designers:
         subject: "Une vérification à prendre"
         eyebrow: "Nouvelle demande"
@@ -1033,8 +1100,15 @@ fr:
           pourrez changer d'avis ou être remboursé.
         first_available: "Le premier graphiste disponible"
         brief: "Vos attentes"
-        brief_placeholder: "Ce qui vous gêne, ce que vous aimeriez voir changer…"
-        brief_hint: "Facultatif, mais c'est ce qui évite un aller-retour."
+        brief_hint: >-
+          Le graphiste coche chaque point à la livraison : vous voyez tout de
+          suite si votre demande est couverte. Seul le premier est obligatoire.
+        brief_placeholders:
+          change: "Ce qui vous gêne, ce que vous voulez voir changer, précisément."
+          keep: "Ce que vous aimez et qui ne doit pas bouger."
+          text: "Le texte à imprimer, lettre pour lettre."
+          colors: "Les couleurs ou encres imposées (par ex. bleu marine, blanc)."
+
         submit: "Envoyer la demande"
         payment_hint: >-
           Retouche : le paiement passe par Stripe, et le graphiste n'est réglé
@@ -1105,6 +1179,29 @@ fr:
         rate: "Noter ce graphiste"
         rate_placeholder: "Un mot sur le travail rendu, si vous le souhaitez."
         send_rating: "Envoyer ma note"
+        dispute_open: "Cette version ne correspond pas à ma demande"
+        dispute_hint: >-
+          Le paiement du graphiste est suspendu le temps de régler le
+          problème. Il peut vous proposer une correction gratuite ; sinon,
+          l'administration tranche. Un seul signalement par vérification.
+        dispute_reason: "Motif"
+        dispute_message: "Ce qui ne va pas"
+        dispute_placeholder: "Ce que vous aviez demandé, et ce que la version fait à la place."
+        dispute_submit: "Signaler le problème"
+        disputed: "Problème signalé"
+        disputed_body: >-
+          Le paiement du graphiste est suspendu. Échangez avec lui ci-dessous ;
+          sans accord, l'administration tranche et vous écrit.
+        fix_offered: "Le graphiste propose une correction gratuite"
+        fix_offered_body: "Acceptez-la pour qu'il reprenne le travail, sans frais."
+        accept_fix: "Accepter la correction"
+        withdraw_dispute: "Retirer mon signalement"
+      dispute:
+        opened: "Problème signalé. Le graphiste et l'administration sont prévenus."
+      accept_fix:
+        accepted: "Correction acceptée. Le graphiste reprend le travail."
+      withdraw_dispute:
+        withdrawn: "Signalement retiré. Vous avez de nouveau une semaine pour valider."
       accept:
         accepted: "Travail validé. Le graphiste va être réglé."
       revision:
@@ -1766,6 +1863,16 @@ fr:
         finish: "Clôturer la demande"
         finish_confirm: "Clôturer cette création sur mesure ?"
         generator_warnings: "Alertes du générateur"
+        disputed: "Le client signale un problème"
+        disputed_admin: "Sans accord entre vous, l'administration tranche. Le paiement est suspendu d'ici là."
+        offer_fix_label: "Proposer une correction gratuite"
+        offer_fix_hint: "Une reprise de plus, sans frais pour le client. S'il accepte, la vérification repart en cours avec un nouveau délai."
+        offer_fix: "Proposer la correction"
+        fix_offered_waiting: "Correction proposée : le client doit l'accepter."
+        coverage: "La demande du client"
+        coverage_hint: "Cochez chaque point que cette version traite. Le client voit ce que vous avez coché."
+      offer_fix:
+        offered: "Correction proposée. Le client est prévenu."
       finish:
         finished: "Création sur mesure clôturée."
       claim:
@@ -1983,6 +2090,8 @@ fr:
         note_required: "Expliquez votre décision : elle est envoyée aux deux parties."
         not_open: "Cette vérification est déjà close."
         too_much: "Le remboursement dépasse ce qui reste à rendre."
+        nothing_delivered: "Pour payer le graphiste, il faut une version livrée."
+        nothing_left: "Avec ce remboursement, il ne reste rien à verser au graphiste : choisissez l'annulation."
     dashboards:
       show:
         title: "Administration"
@@ -1995,6 +2104,8 @@ fr:
         return_rates: "Taux de renvoi"
         return_rate_body: "Renvoie ses demandes plus souvent que le seuil fixé, sur 30 jours."
         no_return_alert: "Aucun graphiste ne dépasse le seuil de %{threshold} sur 30 jours."
+        lost_disputes: "Litiges perdus"
+        lost_disputes_body: "Signalements tranchés avec remboursement du client, sur %{days} jours."
         platform: "État de la plateforme"
         platform_body: "Service de génération, clés Stripe, file de tâches et catalogue des techniques."
         see_status: "Voir l'état"
@@ -2048,7 +2159,16 @@ fr:
         note_placeholder: "Ce que vous avez décidé et pourquoi."
         note_hint: "Ce texte est envoyé au client et au graphiste."
         settle_action: "Clôturer cette vérification"
-        settle_confirm: "Clôturer et rembourser ? Cette décision est définitive."
+        settle_confirm: "Clôturer avec cette décision ? Elle est définitive."
+        decision: "Décision"
+        decision_cancel: "Annuler la vérification : le client est remboursé du montant indiqué, le graphiste n'est pas payé."
+        decision_split: >-
+          Partager : le client est remboursé du montant indiqué, le graphiste
+          est payé pour le reste (commission déduite) et le client garde le
+          fichier. Avec 0 €, le graphiste est payé en entier.
+        disputed: "Signalée par le client le %{date}"
+        fix_offered: "Correction gratuite proposée par le graphiste le %{date}."
+
       settle:
         settled: "Vérification close. Les deux parties ont été prévenues."
 

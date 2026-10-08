@@ -1,4 +1,10 @@
 module ReviewsHelper
+  BriefFields = Struct.new(*Review::BRIEF_KEYS.map(&:to_sym))
+
+  # What `fields_for :brief` reads the four points from: the brief is a hash
+  # in the database, and a form builder wants methods.
+  def brief_fields(review) = BriefFields.new(*Review::BRIEF_KEYS.map { |key| review.brief[key] })
+
   def review_status_pill(review)
     style = case review.status
     when "accepted" then "pill-success"

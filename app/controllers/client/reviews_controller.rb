@@ -25,6 +25,7 @@ module Client
     # session id and nothing else to hang it on.
     def create
       @review = build_review(review_params)
+      @review.brief_required = true
       authorize @review
 
       unless @review.save
@@ -124,6 +125,41 @@ module Client
       redirect_to review_path(@review), notice: t(".reopened")
     end
 
+    # --- Disputes (decided on 08/10/2026) ---------------------------------
+
+    def dispute
+      authorize @review
+
+      result = Reviews::OpenDispute.call(review: @review, author: Current.user,
+                                         reason: params[:reason], message: params[:dispute_message])
+      if result.success?
+        redirect_to review_path(@review), notice: t(".opened")
+      else
+        redirect_to review_path(@review), alert: result.error
+      end
+    end
+
+    # The designer offered one more go at no cost; the client takes it.
+    def accept_fix
+      authorize @review
+
+      @review.accept_fix!
+      @review.save!
+      ReviewMailer.fix_accepted(@review).deliver_later
+
+      redirect_to review_path(@review), notice: t(".accepted")
+    end
+
+    def withdraw_dispute
+      authorize @review
+
+      @review.withdraw_dispute!
+      @review.save!
+      ReviewMailer.dispute_withdrawn(@review).deliver_later
+
+      redirect_to review_path(@review), notice: t(".withdrawn")
+    end
+
     def rate
       authorize @review
 
@@ -161,6 +197,7 @@ module Client
           designer_profile: profile,
           assignment_mode: profile ? "chosen" : "first_available",
           client_brief: attributes[:client_brief],
+          brief: attributes[:brief].to_h,
           # Copied now, on purpose: a level whose price changes next month must
           # not rewrite what was paid.
           price_cents: level&.price_cents.to_i,
@@ -233,7 +270,8 @@ module Client
       end
 
       def review_params
-        params.expect(review: [ :review_level_id, :designer_profile_id, :client_brief ])
+        params.expect(review: [ :review_level_id, :designer_profile_id, :client_brief,
+                                brief: Review::BRIEF_KEYS ])
       end
   end
 end

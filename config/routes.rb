@@ -83,6 +83,12 @@ Rails.application.routes.draw do
   post "verifications/:token/relancer",  to: "client/reviews#reopen", as: :reopen_review
   post "verifications/:token/note",      to: "client/reviews#rate",   as: :rate_review
   post "verifications/:token/messages",  to: "client/reviews#message", as: :review_messages
+  # Litiges (08/10/2026) : le client signale, accepte la correction offerte
+  # ou retire son signalement.
+  post "verifications/:token/signaler",  to: "client/reviews#dispute", as: :dispute_review
+  post "verifications/:token/correction", to: "client/reviews#accept_fix", as: :accept_fix_review
+  post "verifications/:token/retirer-signalement", to: "client/reviews#withdraw_dispute",
+       as: :withdraw_dispute_review
 
   # --- Annuaire public -------------------------------------------------------
   get "imprimeurs",       to: "public/printers#index", as: :printers
@@ -151,6 +157,7 @@ Rails.application.routes.draw do
        as: :return_designer_review
   post "studio/revues/:token/messages",  to: "designer/reviews#message", as: :designer_review_messages
   post "studio/revues/:token/terminer",  to: "designer/reviews#finish",   as: :finish_designer_review
+  post "studio/revues/:token/correction", to: "designer/reviews#offer_fix", as: :offer_fix_designer_review
 
   get  "studio/paiements",            to: "designer/payouts#show",   as: :designer_payouts
   post "studio/paiements/inscription", to: "designer/payouts#onboard", as: :designer_payouts_onboarding

@@ -27,6 +27,17 @@
       </section>
     <% end %>
 
+    <% if @review.disputed_at %>
+      <section class="panel border-l-2 border-l-warning p-5">
+        <p class="label-rule text-warning"><%= t(".disputed", date: l(@review.disputed_at, format: :long)) %></p>
+        <p class="mt-2 font-medium"><%= t("enums.review.dispute_reason.#{@review.dispute_reason}") %></p>
+        <p class="mt-2 whitespace-pre-line text-muted"><%= @review.dispute_message %></p>
+        <% if @review.fix_offered_at %>
+          <p class="mt-3 text-sm"><%= t(".fix_offered", date: l(@review.fix_offered_at, format: :long)) %></p>
+        <% end %>
+      </section>
+    <% end %>
+
     <% if @review.return_reason_code.present? %>
       <section class="panel border-l-2 border-l-warning p-5">
         <p class="label-rule text-warning"><%= t(".returned") %></p>
@@ -130,6 +141,25 @@
         <p class="mt-2 text-sm text-muted"><%= t(".settle_body") %></p>
 
         <%= form_with url: settle_admin_review_path(@review), class: "mt-4 space-y-4" do %>
+          <%# Decided on 08/10/2026: a dispute is rarely all one way. Splitting
+              accepts the work, refunds what is named and pays the designer
+              the rest, commission applied to what is paid. %>
+          <fieldset class="space-y-2">
+            <legend class="label-rule"><%= t(".decision") %></legend>
+            <label class="flex min-h-touch cursor-pointer items-start gap-3 rounded-xs border border-line px-3 py-2
+                          has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+              <%= radio_button_tag :decision, "cancel", true, class: "mt-1 size-4 flex-none" %>
+              <span class="text-sm"><%= t(".decision_cancel") %></span>
+            </label>
+            <% if @review.delivered_any? && @review.may_accept? %>
+              <label class="flex min-h-touch cursor-pointer items-start gap-3 rounded-xs border border-line px-3 py-2
+                            has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+                <%= radio_button_tag :decision, "split", false, class: "mt-1 size-4 flex-none" %>
+                <span class="text-sm"><%= t(".decision_split") %></span>
+              </label>
+            <% end %>
+          </fieldset>
+
           <div>
             <%= label_tag :refund, t(".refund_amount"), class: "label-rule block" %>
             <%= number_field_tag :refund, (@review.price_cents - @review.refunded_cents) / 100.0,

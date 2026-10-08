@@ -297,6 +297,18 @@ stateDiagram-v2
 | `decline_proposal` | Client, ou expiration | — | Remboursement intégral ; statut `canceled` |
 | `cancel` | Admin | Litige | Remboursement total ou partiel saisi par l'admin |
 
+### Signalement, correction et arbitrage (décidé le 08/10/2026)
+
+Le graphiste est payé à la validation, et seulement à la validation : l'argent du client reste sur le compte de la plateforme jusque-là. Pour que « validé » veuille dire « satisfait » :
+
+- **Demande en quatre points** : ce qui doit changer (obligatoire), ce qui doit rester, le texte exact à imprimer, les couleurs imposées. À chaque livraison, le graphiste coche les points que la version traite ; le client et l'administration voient ce qui est couvert.
+- **Rappels** 3 jours puis 1 jour avant la validation automatique (`reviews.acceptance_reminder_days`), une fois par livraison.
+- **Signalement** : sur une version livrée, une fois par vérification, avec un motif (`not_as_requested`, `file_defect`, `other`) et une explication. La vérification passe en `disputed` : plus de validation automatique ; le graphiste et l'administration sont prévenus.
+- **Correction gratuite** : le graphiste peut proposer une reprise de plus, sans frais ; si le client accepte, la vérification repart `in_progress` avec un nouveau délai. Le client peut aussi valider ou retirer son signalement (une semaine pleine lui est rendue).
+- **Arbitrage** : l'administration annule et rembourse (le graphiste n'est pas payé), ou **partage** : remboursement du montant choisi, le graphiste est payé pour le reste, commission appliquée au montant versé au taux de la vérification, et le client garde le fichier.
+- **Signal côté administration** : un graphiste avec `reviews.dispute_alert_count` litiges perdus (remboursement décidé) sur `reviews.dispute_alert_days` jours apparaît sur le tableau de bord.
+- **Virement** rattaché au paiement du client (`source_transaction`) quand il tient dans ce paiement : une validation rapide ne fait plus échouer le virement faute de solde disponible.
+
 ### Renvoi au client par le graphiste
 
 Le graphiste renvoie la demande quand l'option choisie ne permet pas de faire le travail correctement. Il le fait avant toute livraison, et sa prise en charge n'est pas facturée.

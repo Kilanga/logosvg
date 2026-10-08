@@ -14,6 +14,14 @@ class Review < ApplicationRecord
   RETURN_REASONS = %w[ level_too_low level_too_high unusable_design forbidden_content other ].freeze
   PROPOSING_REASONS = %w[ level_too_low level_too_high ].freeze
 
+  # Why a client says a delivery is not right. Decided on 08/10/2026: once per
+  # review, on a delivered version, and it stops the automatic acceptance.
+  DISPUTE_REASONS = %w[ not_as_requested file_defect other ].freeze
+
+  # The structured brief, in the order the client fills it. `change` is the
+  # one that is required: a designer cannot work from nothing.
+  BRIEF_KEYS = %w[ change keep text colors ].freeze
+
   belongs_to :design
   belongs_to :client, class_name: "User"
   belongs_to :designer_profile, optional: true
@@ -34,6 +42,16 @@ class Review < ApplicationRecord
             numericality: { greater_than_or_equal_to: 0 }
   validates :return_reason_code, inclusion: { in: RETURN_REASONS }, allow_nil: true
   validates :rating, numericality: { in: 1..5 }, allow_nil: true
+  validates :dispute_reason, inclusion: { in: DISPUTE_REASONS }, allow_nil: true
+  validates :designer_payout_cents, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  # Asked of a client filling the form, not of every row created elsewhere
+  # (an administrator's tools, the seeds): set by the controller.
+  attribute :brief_required, :boolean, default: false
+  validate :brief_says_what_to_change, on: :create, if: :brief_required
+
+  # Kept to the four known points, stripped, and composed into `client_brief`,
+  # which every screen, email and export already reads.
+  before_validation :tidy_brief
   validate :chosen_designer_takes_this_level, if: -> { chosen? && designer_profile.present? }
 
   scope :newest_first, -> { order(created_at: :desc) }
@@ -48,6 +66,7 @@ class Review < ApplicationRecord
     state :in_progress
     state :delivered
     state :returned_to_client
+    state :disputed
     state :accepted
     state :canceled
 
@@ -70,9 +89,13 @@ class Review < ApplicationRecord
       transitions from: :queued, to: :in_progress, guard: :claimable?
     end
 
+    # Every delivery starts the client's week again, reminders included.
     event :deliver do
       transitions from: :in_progress, to: :delivered
-      after { self.delivered_at = Time.current }
+      after do
+        self.delivered_at = Time.current
+        self.acceptance_reminders_sent = 0
+      end
     end
 
     # The client asks for another go, within what they paid for.
@@ -81,10 +104,41 @@ class Review < ApplicationRecord
       after { self.revisions_used += 1 }
     end
 
-    # By the client, or by the sweep seven days after the last delivery.
+    # By the client, or by the sweep seven days after the last delivery — or,
+    # from a dispute, by the client satisfied after all or by an administrator
+    # who decides the designer is paid.
     event :accept do
-      transitions from: :delivered, to: :accepted
+      transitions from: [ :delivered, :disputed ], to: :accepted
       after { self.accepted_at = Time.current }
+    end
+
+    # The client says the delivery does not do what was asked. Once per
+    # review: the automatic acceptance stops, and the designer and an
+    # administrator are told.
+    event :dispute do
+      transitions from: :delivered, to: :disputed, guard: :disputable?
+      after { self.disputed_at = Time.current }
+    end
+
+    # The designer offered to put it right at no cost, and the client took
+    # the offer: one more go than the level included.
+    event :accept_fix do
+      transitions from: :disputed, to: :in_progress, guard: :fix_offered?
+      after do
+        self.revisions_included += 1
+        self.revisions_used += 1
+        self.due_at = Time.current + review_level.turnaround_hours.hours
+      end
+    end
+
+    # The client changed their mind. The delivery is back on the table with a
+    # fresh week to answer, as if it had just arrived.
+    event :withdraw_dispute do
+      transitions from: :disputed, to: :delivered
+      after do
+        self.delivered_at = Time.current
+        self.acceptance_reminders_sent = 0
+      end
     end
 
     # Before any delivery, once per review, and the work done is not billed.
@@ -124,7 +178,7 @@ class Review < ApplicationRecord
     # Abandoned before payment, or settled by an administrator.
     event :cancel do
       transitions from: [ :awaiting_payment, :queued, :in_progress, :delivered,
-                          :returned_to_client ], to: :canceled
+                          :returned_to_client, :disputed ], to: :canceled
       after { self.canceled_at = Time.current }
     end
   end
@@ -143,11 +197,32 @@ class Review < ApplicationRecord
 
   def revisions_left? = revisions_left.positive?
 
+  # A paid review, delivered, never disputed before.
+  def disputable? = delivered? && disputed_at.nil? && !off_platform?
+
+  def fix_offered? = fix_offered_at.present?
+
+  # The points of the brief the client actually filled, in order.
+  def brief_items = BRIEF_KEYS.filter_map { |key| [ key, brief[key] ] if brief[key].present? }
+
+  # What the designer is paid: the full share, or what an administrator
+  # decided when splitting.
+  def payout_cents = designer_payout_cents || designer_share_cents
+
+  # The designer's share of what the platform keeps after a partial refund:
+  # the commission applies to what is paid, at the review's own rate.
+  def payout_after_refund(refund_cents)
+    kept = [ price_cents - refunded_cents - refund_cents, 0 ].max
+    return 0 if price_cents.zero?
+
+    kept - (kept * platform_fee_cents / price_cents.to_f).round
+  end
+
   def latest_version = versions.last
 
   def delivered_any? = versions.any?
 
-  def open? = %w[ queued in_progress delivered returned_to_client ].include?(status)
+  def open? = %w[ queued in_progress delivered returned_to_client disputed ].include?(status)
 
   def settled? = %w[ accepted canceled ].include?(status)
 
@@ -221,6 +296,24 @@ class Review < ApplicationRecord
 
   private
     def settings = Rails.application.config.tshirt.reviews
+
+    def tidy_brief
+      raw = (brief || {}).to_h.stringify_keys.slice(*BRIEF_KEYS)
+      self.brief = raw.transform_values { |value| value.to_s.strip.first(1000) }.compact_blank
+      return if brief.empty?
+
+      self.client_brief = brief_items.map do |key, value|
+        "#{I18n.t("reviews.brief.#{key}")} : #{value}"
+      end.join("\n")
+    end
+
+    def brief_says_what_to_change
+      # A free-text brief (older forms, the API of tests) still counts; a
+      # structured one must say what to change.
+      return if brief.empty? ? client_brief.present? : brief["change"].present?
+
+      errors.add(:brief, :what_to_change)
+    end
 
     def claimable? = claimable_by?(designer_profile)
 
