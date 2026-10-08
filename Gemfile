@@ -47,7 +47,7 @@ gem "thruster", require: false
 # 2.x fixes remote code execution through unsafe loader/saver options and through
 # operation names taken from user input — which is exactly how this application
 # uses it, watermarking images produced from a client's prompt.
-gem "image_processing", "~> 2.1"
+gem "image_processing", "~> 2.2"
 # From image_processing 2.0 the backend is a soft dependency: without this line
 # the watermarking code raises LoadError at runtime rather than at boot.
 gem "ruby-vips"
