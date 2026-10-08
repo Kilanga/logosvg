@@ -23,8 +23,10 @@
       <p class="pill absolute right-3 top-3 border border-line bg-surface font-display font-semibold">
         <%= t("client.designs.proposal.number", number: proposal_number(design)) %>
       </p>
+      <% if design.ai_generated? %>
       <p class="pill absolute left-3 top-3 border border-line bg-surface text-muted"
          title="<%= t("designs.ai_label_hint") %>"><%= t("designs.ai_label") %></p>
+      <% end %>
       <%= link_to design_image_path(design), target: "_blank", rel: "noopener",
             aria: { label: t("client.designs.proposal.enlarge") } do %>
         <%= image_tag design_image_path(design), alt: design.prompt, class: "size-full object-contain" %>

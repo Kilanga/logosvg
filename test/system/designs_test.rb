@@ -68,6 +68,51 @@ class DesignsTest < ApplicationSystemTestCase
     assert_text shown(printers(:rennes).name)
   end
 
+  # Decided on 08/10/2026: a client with a finished picture sends it as is,
+  # in the workshop's format, without the AI redrawing it.
+  test "a client who already has a picture sends it in the workshop's format, without AI" do
+    stub_request(:post, "http://generator.test/convert").to_return(
+      body: { job_ids: %w[ job-up ], job_id: "job-up", status: "queued", refinements_left: 0 }.to_json
+    )
+    stub_request(:get, %r{/jobs/job-up\?}).to_return(body: {
+      status: "done", refinements_left: 0,
+      result: { "print_file" => "print.png", "palette" => [], "warnings" => [], "mode" => "convert",
+                "stats" => { "width_px" => 2835, "dpi" => 300 }, "prompt_used" => nil, "seed" => nil }
+    }.to_json)
+    stub_request(:get, %r{/jobs/job-up/print\.png}).to_return(body: png)
+    stub_request(:get, %r{/jobs/job-up/source\.png}).to_return(body: png)
+
+    sign_in users(:client)
+    visit new_design_path
+    click_on I18n.t("client.designs.new.upload_link")
+    # The visit has landed: a file attached to the page Turbo is replacing is lost.
+    assert_selector "h1", text: displayed("client.uploads.new.heading")
+
+    # In the system temp dir, as the other uploads: the browser may not read the app's own tmp.
+    picture = File.join(Dir.tmpdir, "visuel-systeme-#{SecureRandom.hex(4)}.png")
+    File.binwrite(picture, png)
+    attach_file "design_reference_image", picture
+    check "design_reference_rights_confirmed"
+    fill_in "design_prompt", with: "Logo du club"
+    choose "design_technique_dtf", allow_label_click: true
+
+    perform_enqueued_jobs do
+      click_on I18n.t("client.uploads.new.submit")
+      assert_selector "h1", text: shown("Logo du club")
+    end
+
+    design = Design.order(:id).last
+    assert_equal "upload", design.mode
+    assert_predicate design.reload, :ready?
+
+    visit design_path(design)
+    assert_text displayed("client.designs.design.upload_note")
+    assert_no_text displayed("designs.ai_label")
+    assert_no_button I18n.t("client.designs.design.variants")
+  ensure
+    FileUtils.rm_f(picture) if picture
+  end
+
   # The other family: no screens to count, a file measured in pixels instead.
   test "a client generates a dtf design and reads it in pixels, not in screens" do
     stub_generation(print_file: "print.png", bytes: png, result: {

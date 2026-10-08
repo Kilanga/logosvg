@@ -45,6 +45,15 @@ class StoreGeneratedDesign
       @result["from_image"] ? AiProvenance::EDITED : AiProvenance::GENERATED
     end
 
+    # A client's own image is marked only when the client declared it drawn by
+    # an AI — and then as generated: the platform only changed its format.
+    def marked(bytes, content_type)
+      return bytes unless @design.ai_generated?
+
+      kind = @design.upload? ? AiProvenance::GENERATED : provenance
+      AiProvenance.mark(bytes, content_type: content_type, kind: kind)
+    end
+
     # Only SVG is inspected for content: a PNG cannot carry a script, and its
     # type is checked by Active Storage on attachment.
     def inspect!(format, bytes)
@@ -61,12 +70,12 @@ class StoreGeneratedDesign
     def attach(file_name, bytes, format)
       content_type = CONTENT_TYPES.fetch(format, "application/octet-stream")
       @design.print_file.attach(
-        io: StringIO.new(AiProvenance.mark(bytes, content_type: content_type, kind: provenance)),
+        io: StringIO.new(marked(bytes, content_type)),
         filename: file_name, content_type: content_type
       )
 
       source = client.download(@design.generator_job_id, "source.png", user_id: @design.user_id)
-      @design.source_png.attach(io: StringIO.new(AiProvenance.mark(source, content_type: "image/png", kind: provenance)),
+      @design.source_png.attach(io: StringIO.new(marked(source, "image/png")),
                                 filename: "source.png", content_type: "image/png")
     rescue GeneratorClient::NotFound
       # The original image is a nicety for comparison, not the deliverable.
@@ -87,7 +96,7 @@ class StoreGeneratedDesign
         prompt_used: @result["prompt_used"],
         subject: @result["subject"],
         seed: @result["seed"],
-        refinements_left: [ @answer["refinements_left"], @design.refinements_remaining ].compact.min,
+        refinements_left: (@design.upload? ? nil : [ @answer["refinements_left"], @design.refinements_remaining ].compact.min),
         colors_requested: recorded_colors,
         inks_count: (@inspected&.inks || @result["inks"] if format == "svg"),
         paths_count: (stats["paths"] if format == "svg")

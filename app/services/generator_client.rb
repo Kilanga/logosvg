@@ -78,6 +78,21 @@ class GeneratorClient
     }.compact)
   end
 
+  # The client's own finished image, put in the workshop's format without being
+  # redrawn: no model, one job, nothing to take further. The image is the one
+  # ReferenceImage re-encoded, kept on the design.
+  def convert(design)
+    post("/convert", {
+      user_id: pseudonym(design.user_id),
+      image: reference_image(design),
+      title: design.prompt,
+      technique: design.technique,
+      colors: design.colors_requested,
+      print_width_cm: design.print_width_cm,
+      remove_background: design.remove_background
+    }.compact)
+  end
+
   def refine(job_id, instruction:, user_id:, count: self.class.proposals)
     post("/jobs/#{job_id}/refine", { instruction: instruction, user_id: pseudonym(user_id), count: count })
   end

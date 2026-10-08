@@ -33,6 +33,9 @@ Rails.application.routes.draw do
   get "a/:slug", to: "public/workshop_links#show", as: :workshop_link
 
   get  "designs/nouveau", to: "client/designs#new",    as: :new_design
+  # Un visuel déjà fait, mis au format de l'atelier sans être redessiné.
+  get  "designs/deposer", to: "client/uploads#new",    as: :new_design_upload
+  post "designs/deposer", to: "client/uploads#create", as: :design_uploads
   post "designs",         to: "client/designs#create", as: :designs
   get  "designs/:token",  to: "client/designs#show",   as: :design
   # Le rendu filigrané : jamais le fichier d'impression lui-même.

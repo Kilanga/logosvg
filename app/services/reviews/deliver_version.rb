@@ -78,7 +78,10 @@ module Reviews
         @file.rewind if @file.respond_to?(:rewind)
         content_type = design.vector? ? "image/svg+xml" : "image/png"
 
-        { io: StringIO.new(AiProvenance.mark(bytes, content_type: content_type, kind: AiProvenance::EDITED)),
+        # A client's own picture not declared AI stays unmarked, reworked or not.
+        bytes = AiProvenance.mark(bytes, content_type: content_type, kind: AiProvenance::EDITED) if design.ai_generated?
+
+        { io: StringIO.new(bytes),
           filename: @file.respond_to?(:original_filename) ? @file.original_filename : "version.#{design.vector? ? "svg" : "png"}",
           content_type: content_type }
       end

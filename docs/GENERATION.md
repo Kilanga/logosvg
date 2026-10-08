@@ -154,6 +154,39 @@ Réponse : `job_id`, `status` (`done`), `refinements_left`. Le travail restauré
 est la racine d'une nouvelle lignée côté service, qui part de
 `used_refinements` reprises déjà consommées. `422` si l'image n'est pas un PNG.
 
+### `POST /convert` → `202` (octobre 2026)
+
+Le visuel déjà fait d'un client — dessiné ailleurs, par une autre IA ou à la
+main — mis au format de l'atelier **sans être redessiné** : ni modération par
+le modèle, ni traduction, ni génération. Les mêmes étapes de préparation que
+pour un dessin du modèle, à partir de l'image telle qu'elle est :
+vectorisation en aplats (sur une copie ramenée à `CONVERT_VECTOR_SIDE`, 2 048 px)
+ou PNG d'impression détouré, agrandi par modèle au besoin. Proportions
+gardées, définition gardée jusqu'à `CONVERT_MAX_SIDE` (4 096 px).
+
+```json
+{
+  "user_id": "a1b2c3…",
+  "image": "<base64 PNG, JPEG ou WebP, 16 Mo au plus>",
+  "title": "Logo du club",
+  "technique": "dtf",
+  "colors": null,
+  "print_width_cm": 25,
+  "remove_background": true
+}
+```
+
+Réponse : comme `/generate`, un seul `job_id`, et `refinements_left` à `0`.
+`result.mode` vaut `"convert"`, `prompt_used`, `subject` et `seed` sont `null`.
+Un travail converti ne se reprend pas : `refine` et `variants` répondent `422`.
+La limite horaire s'applique comme pour une génération.
+
+Côté Rails, c'est le mode `upload` d'un design (`/designs/deposer`). Il ne
+compte ni dans les créations du jour du client ni dans le forfait mensuel de
+l'atelier. Les fichiers ne portent la marque IA (`AiProvenance`) et l'aperçu la
+mention « Image générée par IA » que si le client a coché que son visuel a été
+créé avec une IA (`designs.ai_declared`).
+
 ### `GET /health`
 
 Sans clé. `{"status":"ok"}`. Interrogé par la page `/admin/etat`.

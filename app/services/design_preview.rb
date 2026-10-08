@@ -88,7 +88,8 @@ class DesignPreview
         # Flattened again on the way out: compositing a semi-transparent band
         # puts an alpha channel back on, and the preview has no use for one.
         stamped = stamped.flatten(background: [ 255, 255, 255 ]) if stamped.has_alpha? && !transparent?
-        AiProvenance.mark(stamped.write_to_buffer(".png"), content_type: "image/png")
+        png = stamped.write_to_buffer(".png")
+        @design.ai_generated? ? AiProvenance.mark(png, content_type: "image/png") : png
       end
     end
 
@@ -97,7 +98,8 @@ class DesignPreview
     # workshop's credit, then the AI mention the client must be able to see.
     def watermark(width)
       @watermark ||= begin
-        lines = "#{ERB::Util.html_escape(credit)}\n#{ERB::Util.html_escape(I18n.t("designs.watermark_ai"))}"
+        lines = ERB::Util.html_escape(credit)
+        lines += "\n#{ERB::Util.html_escape(I18n.t("designs.watermark_ai"))}" if @design.ai_generated?
         text = Vips::Image.text(lines, width: width - 40, dpi: 72)
         band = text.embed(20, 12, width, text.height + 24)
         band.new_from_image([ 0, 0, 0 ]).bandjoin(band * 0.55).copy(interpretation: :srgb)
