@@ -21,7 +21,7 @@ module Payments
         plan: plan_from_price || @subscription.plan,
         stripe_subscription_id: @stripe[:id],
         stripe_customer_id: @stripe[:customer] || @subscription.stripe_customer_id,
-        current_period_end: timestamp(@stripe[:current_period_end]),
+        current_period_end: timestamp(period_end),
         canceled_at: timestamp(@stripe[:canceled_at]),
         past_due_since: past_due_since(previous_status)
       )
@@ -37,6 +37,13 @@ module Payments
       def status
         value = @stripe[:status].to_s
         Subscription::STATUSES.include?(value) ? value : "incomplete"
+      end
+
+      # Since Stripe's API version 2025-03-31 ("basil") the billing period
+      # lives on each subscription item, not on the subscription: read there
+      # first, and on the subscription for an event sent at an older version.
+      def period_end
+        @stripe.dig(:items, :data, 0, :current_period_end) || @stripe[:current_period_end]
       end
 
       # The price decides the plan: a shop that upgrades through the Stripe

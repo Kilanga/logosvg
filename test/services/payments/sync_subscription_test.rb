@@ -90,6 +90,20 @@ module Payments
       assert_predicate subscription.reload, :incomplete?
     end
 
+    # Since API version "basil", the billing period lives on the items.
+    test "the period end is read from the subscription item at a recent API version" do
+      ends_at = 20.days.from_now.change(usec: 0)
+      SyncSubscription.call(
+        subscription: subscription,
+        stripe_subscription: {
+          id: "sub_test_rennes", customer: "cus_test_rennes", status: "active",
+          items: { data: [ { price: { id: "price_listing_test" }, current_period_end: ends_at.to_i } ] }
+        }
+      )
+
+      assert_in_delta ends_at, subscription.reload.current_period_end, 1.second
+    end
+
     private
       def subscription = subscriptions(:rennes)
 

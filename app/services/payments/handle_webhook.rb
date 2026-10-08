@@ -111,10 +111,18 @@ module Payments
       # is what carries the resulting status, so it is re-read rather than
       # inferred from the invoice.
       def sync_from_invoice
-        subscription = find_subscription(object[:subscription], object[:customer])
-        return if subscription.nil? || object[:subscription].blank?
+        subscription = find_subscription(invoice_subscription_id, object[:customer])
+        return if subscription.nil? || invoice_subscription_id.blank?
 
-        sync(subscription, object[:subscription])
+        sync(subscription, invoice_subscription_id)
+      end
+
+      # Since API version 2025-03-31 ("basil") an invoice no longer carries
+      # `subscription`: it says what produced it under `parent`. Read both, so
+      # an endpoint at either version is understood — the account's endpoints
+      # are at 2026-03-25.dahlia, where the old field is simply absent.
+      def invoice_subscription_id
+        object.dig(:parent, :subscription_details, :subscription).presence || object[:subscription]
       end
 
       def sync(subscription, stripe_subscription_id)

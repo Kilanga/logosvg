@@ -73,6 +73,20 @@ module Payments
       assert_requested :get, %r{/v1/subscriptions/sub_test_rennes}
     end
 
+    # The account's endpoints are at API version 2026-03-25.dahlia: since
+    # "basil", an invoice names its subscription under `parent`.
+    test "an invoice at a recent API version is traced to its subscription" do
+      stub_subscription_fetch(status: "past_due")
+
+      handle(event("evt_10", "invoice.payment_failed", object: {
+        id: "in_test", customer: "cus_test_rennes",
+        parent: { type: "subscription_details", subscription_details: { subscription: "sub_test_rennes" } }
+      }))
+
+      assert_predicate subscriptions(:rennes).reload, :past_due?
+      assert_requested :get, %r{/v1/subscriptions/sub_test_rennes}
+    end
+
     test "an event we do not handle is recorded and left alone" do
       assert_equal :processed, handle(event("evt_7", "customer.created"))
       assert_not_nil StripeEvent.find_by(stripe_id: "evt_7").processed_at
