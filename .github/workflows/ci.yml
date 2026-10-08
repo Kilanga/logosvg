@@ -12,7 +12,7 @@ on:
 # sauvegarde.yml.
 jobs:
   scan_ruby:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -30,7 +30,7 @@ jobs:
         run: bin/bundler-audit
       
   scan_js:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
 
     steps:
       # `bin/importmap audit` démarre l'application pour lire l'importmap, donc
@@ -54,7 +54,7 @@ jobs:
         run: bin/importmap audit
 
   lint:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
@@ -80,7 +80,7 @@ jobs:
         run: bin/rubocop -f github
 
   test:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
@@ -119,7 +119,7 @@ jobs:
         run: bin/rails db:test:prepare test
 
   system-test:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
@@ -175,7 +175,7 @@ jobs:
   deploy:
     needs: [ scan_ruby, scan_js, lint, test, system-test ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
 
     # Deux déploiements simultanés se disputeraient le verrou de Kamal. On
     # n'annule pas celui qui tourne : interrompre un déploiement en cours est

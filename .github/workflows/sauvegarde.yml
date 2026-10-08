@@ -11,7 +11,7 @@ on:
 
 jobs:
   sauvegarder:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
 
     # Une sauvegarde qui se chevaucherait avec la précédente n'a rien à gagner
     # à s'exécuter : elle attend son tour plutôt que de doubler la charge du
