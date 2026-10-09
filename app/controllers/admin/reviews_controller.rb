@@ -42,7 +42,11 @@ module Admin
     private
       def scope = policy_scope(Review, policy_scope_class: ReviewPolicy::AdminScope)
 
-      def set_review = @review = scope.find_by!(token: params[:token])
+      def set_review
+        @review = scope.includes(:client, :design, :review_level, :proposed_level, :settled_by,
+                                 designer_profile: :user)
+                       .find_by!(token: params[:token])
+      end
 
       def counts
         {

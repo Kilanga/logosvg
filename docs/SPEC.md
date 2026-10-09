@@ -369,6 +369,14 @@ Le graphiste renvoie la demande quand l'option choisie ne permet pas de faire le
 
 Si le graphiste choisi ne prend pas la revue en charge dans les 12 h, le client choisit : passer en « premier disponible », choisir un autre graphiste, ou être remboursé.
 
+### Graphistes et ateliers (décidé le 09/10/2026)
+
+- **Personne ne paie pour rien.** Le formulaire de vérification ne propose que les niveaux qu'au moins un graphiste actif, aux versements activés et acceptant des missions, prend en ce moment ; sans aucun, il dit qu'aucun graphiste n'est disponible et ne propose pas de payer. `POST` refusé dans le même cas.
+- **Remboursement d'office.** Une revue restée en file `reviews.unclaimed_refund_hours` (48 h) après son entrée en file (`queued_at` : paiement, ouverture sans paiement, retour en file après une proposition ou un changement de graphiste) est annulée et remboursée en entier ; un sur-mesure, non payé ici, est simplement clos. Email `unclaimed` au client. Un remboursement qui échoue laisse la revue en file, retentée au passage suivant.
+- **Les 30 jours suspendus.** Tant qu'une revue du client sur un design fait pour son atelier est ouverte (`queued`, `in_progress`, `delivered`, `returned_to_client`, `disputed`), son rattachement ne peut pas échoir. Une livraison (`deliver`) ou la clôture d'un sur-mesure (`finish_off_platform`) lui redonne 30 jours pleins ; une revue qui se termine sans livraison (annulée, remboursée, proposition refusée) lui rend le temps qu'elle a tenu suspendu.
+- **L'atelier suit.** L'atelier pour lequel le design a été créé voit les revues de ses clients dans « Vérifications » (`/atelier/verifications`, lecture seule) et reçoit en copie (`orders_email`) tous les emails du site sur le travail : prise en charge, livraisons, retours, propositions, litiges, mise en relation d'un sur-mesure, annulation faute de graphiste. Pas les emails d'argent (versement au graphiste, remboursement, arbitrage chiffré). Le client en est informé sur le formulaire.
+- **Graphiste recommandé.** L'atelier peut recommander un graphiste actif (`printers.recommended_designer_profile_id`). Sur le formulaire de ses clients, ce graphiste vient en tête, présélectionné, avec « Recommandé par votre atelier » — seulement s'il accepte des missions et peut être payé.
+
 ## Reprise d'un design
 
 Un design `ready` ne se modifie pas : le client le reprend, et chaque reprise crée un enfant de la même lignée (`root_id`). Deux façons de reprendre, et une sortie payante quand le budget est épuisé.
@@ -430,6 +438,8 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 | `GET /studio/revues/:id` | Demande du client, fichier d'origine et alertes, dépôt de version, messagerie, bouton « Proposer une autre option » | Graphiste attribué |
 | `POST /studio/revues/:id/claim`, `/versions`, `/return_to_client`, `/messages` | Actions du graphiste | Graphiste |
 | `GET /studio/profil`, `/studio/paiements` | Profil, niveaux acceptés ; lien vers le tableau de bord Stripe Express | Graphiste |
+| `GET /studio/aide` | Aide du graphiste : fonctionnement en six étapes (profil, missions, livraison, paiement, renvoi, sur-mesure) et questions fréquentes | Graphiste |
+| `GET /atelier/verifications`, `PATCH /atelier/verifications/graphiste` | Revues sur les designs de l'atelier ; choix du graphiste recommandé | Imprimeur |
 | `/admin/...` | Imprimeurs et graphistes à valider, revues et litiges, remboursements, niveaux, termes bloqués, taux de renvoi | Admin |
 | `POST /webhooks/stripe` | Webhooks signés | Stripe |
 
@@ -595,7 +605,7 @@ Onze étapes, chacune livrable et testée seule ; Claude Code s'arrête après c
 **Règles valables à chaque étape**
 
 - Tests modèles, policies, services et au moins un test système par parcours.
-- Aucune requête N+1 sur les listes (`includes`, vérification avec `strict_loading` en développement).
+- Aucune requête N+1 sur les listes : `strict_loading_by_default` est actif en développement **et dans les tests** (depuis le 09/10/2026), donc une association lue sans `includes` fait échouer la CI. Un point d'entrée charge ce qu'il lit ; un modèle qui ne sait pas comment son appelant l'a chargé passe par `read_association`.
 - Tout texte visible dans `config/locales/fr.yml`.
 - Migration réversible, index sur toutes les clés étrangères et les colonnes filtrées.
 

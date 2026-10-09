@@ -113,7 +113,7 @@ class AccountExport
 
     # Only for the accounts that have one.
     def printer
-      shop = @user.printer
+      shop = Printer.includes(:techniques).find_by(user_id: @user.id)
       return nil if shop.nil?
 
       { name: shop.name, slug: shop.slug, city: shop.city, status: shop.status,
@@ -122,7 +122,7 @@ class AccountExport
     end
 
     def designer_profile
-      profile = @user.designer_profile
+      profile = DesignerProfile.includes(:review_levels).find_by(user_id: @user.id)
       return nil if profile.nil?
 
       { display_name: profile.display_name, bio: profile.bio, city: profile.city,

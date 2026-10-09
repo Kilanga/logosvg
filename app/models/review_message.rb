@@ -24,7 +24,7 @@ class ReviewMessage < ApplicationRecord
     def author_is_a_party_to_the_review
       return if review.nil?
       return if author_id == review.client_id
-      return if author_id == review.designer_profile&.user_id
+      return if author_id == review.read_association(:designer_profile)&.user_id
 
       errors.add(:author, :not_a_party)
     end

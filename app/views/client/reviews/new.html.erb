@@ -2,6 +2,14 @@
 <% content_for :heading, t(".heading") %>
 
 <div class="grid max-w-5xl gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)] lg:items-start">
+  <%# Decided on 09/10/2026: no designer able to take it, nothing to pay for. %>
+  <% if @levels.empty? %>
+    <div class="panel border-l-2 border-l-warning p-6">
+      <h2 class="font-display text-xl font-bold uppercase"><%= t(".none_available.title") %></h2>
+      <p class="mt-3 text-muted"><%= t(".none_available.body") %></p>
+      <%= link_to t(".none_available.back"), design_path(@design), class: "btn btn-secondary mt-5 text-sm" %>
+    </div>
+  <% else %>
   <%= form_with model: @review, url: design_reviews_path(@design), class: "space-y-10",
                 data: { turbo: false } do |form| %>
     <% if @review.errors.any? %>
@@ -9,6 +17,9 @@
         <p class="font-semibold text-warning">
           <%= t("errors.template.header", count: @review.errors.count) %>
         </p>
+        <% if @review.errors[:base].any? %>
+          <p class="mt-1 text-sm text-warning"><%= @review.errors[:base].to_sentence %></p>
+        <% end %>
       </div>
     <% end %>
 
@@ -54,20 +65,24 @@
       <div class="mt-4 space-y-2">
         <label class="flex min-h-touch cursor-pointer items-center gap-3 rounded-xs border border-line px-3
                       has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
-          <%= form.radio_button :designer_profile_id, "", checked: true,
+          <%= form.radio_button :designer_profile_id, "", checked: @recommended_designer_id.nil?,
                 class: "size-4 border-line text-emulsion" %>
           <span class="text-sm font-medium"><%= t(".first_available") %></span>
         </label>
 
-        <% DesignerProfile.listed.accepting.by_reputation.limit(8).each do |profile| %>
-          <label class="flex min-h-touch cursor-pointer items-center gap-3 rounded-xs border border-line px-3
+        <% @designers.each do |profile| %>
+          <% recommended = profile.id == @recommended_designer_id %>
+          <label class="flex min-h-touch cursor-pointer flex-wrap items-center gap-3 rounded-xs border border-line px-3 py-2
                         has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
-            <%= form.radio_button :designer_profile_id, profile.id,
+            <%= form.radio_button :designer_profile_id, profile.id, checked: recommended,
                   class: "size-4 flex-none border-line text-emulsion" %>
             <span class="min-w-0 flex-1 text-sm">
               <span class="font-medium"><%= profile.display_name %></span>
               <span class="text-muted"> · <%= rating_summary(profile) %></span>
             </span>
+            <% if recommended %>
+              <span class="pill pill-success"><%= t(".recommended") %></span>
+            <% end %>
           </label>
         <% end %>
       </div>
@@ -105,9 +120,15 @@
     </fieldset>
 
     <div class="border-t border-line pt-8">
+      <% if shop_name %>
+        <p class="mb-4 border-l-2 border-line bg-surface px-4 py-3 text-sm text-muted">
+          <%= t(".shop_copy", name: shop_name) %>
+        </p>
+      <% end %>
       <%= form.submit t(".submit"), class: "btn btn-primary w-full sm:w-auto" %>
       <p class="mt-3 text-sm text-muted"><%= t(".payment_hint") %></p>
     </div>
+  <% end %>
   <% end %>
 
   <aside class="space-y-6 lg:sticky lg:top-8">

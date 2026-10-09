@@ -51,4 +51,16 @@ class HelpPagesTest < ActionDispatch::IntegrationTest
       sign_out
     end
   end
+
+  test "a designer reads their guide and questions, with today's figures" do
+    sign_in_as users(:designer)
+
+    get designer_help_path
+
+    assert_response :success
+    assert_select "ol li h3", count: 6
+    assert_select "details summary", minimum: 6
+    assert_match "commission de la plateforme (15 %)", response.body
+    assert_no_match(/%\{/, response.body)
+  end
 end

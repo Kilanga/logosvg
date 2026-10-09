@@ -42,7 +42,7 @@ class DesignsTest < ApplicationSystemTestCase
     design = first_proposal
 
     assert_equal 25, design.print_width_cm
-    assert_equal printers(:rennes), design.printer
+    assert_equal printers(:rennes).id, design.printer_id
     assert_predicate design.reload, :ready?
 
     # Three proposals of the same idea; the client keeps one.

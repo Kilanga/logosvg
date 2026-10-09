@@ -69,7 +69,7 @@ module Payments
       # `featured` lives on the listing because that is what the directory
       # orders by; the subscription is what decides its value.
       def apply_to_printer
-        @subscription.printer.update!(featured: @subscription.featured?)
+        @subscription.read_association(:printer).update!(featured: @subscription.featured?)
       end
 
       # Told once, when the payment first fails — not on every webhook that

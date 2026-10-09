@@ -48,7 +48,7 @@ class ClientSpaceTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "a[href=?]", design_path(designs(:fox_screen))
     assert_select "li.panel", count: Design.active.roots.where(user: users(:client)).count
-    assert_equal designs(:fox_screen), variant.root
+    assert_equal designs(:fox_screen).id, variant.root_id
   end
 
   test "the design list holds to the signed-in client" do

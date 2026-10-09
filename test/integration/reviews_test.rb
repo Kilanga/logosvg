@@ -103,7 +103,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     review = Review.order(:created_at).last
 
     assert_predicate review, :chosen?
-    assert_equal designer_profiles(:ines), review.designer_profile
+    assert_equal designer_profiles(:ines).id, review.designer_profile_id
   end
 
   # A designer who could not do the work is not a choice.
@@ -213,7 +213,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_redirected_to design_path(design)
     assert_predicate design, :reviewed?
     assert_equal [ { "hex" => "#1f5f7a" } ], design.palette
-    assert_equal review.design, design.parent
+    assert_equal review.design_id, design.parent_id
 
     follow_redirect!
     assert_includes response.body, ERB::Util.html_escape(

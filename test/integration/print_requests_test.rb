@@ -19,8 +19,8 @@ class PrintRequestsTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to print_request_path(request)
     assert_predicate request, :sent?
-    assert_equal printers(:rennes), request.printer
-    assert_equal users(:client), request.client
+    assert_equal printers(:rennes).id, request.printer_id
+    assert_equal users(:client).id, request.client_id
     assert_equal 20, request.total_qty
   end
 

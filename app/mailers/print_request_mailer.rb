@@ -5,7 +5,7 @@ class PrintRequestMailer < ApplicationMailer
   # file, the watermarked preview so the job can be recognised at a glance, the
   # technical sheet, and a link to confirm receipt.
   def to_printer(print_request)
-    @print_request = print_request
+    print_request = @print_request = reload(print_request)
     @design = print_request.design
     @sheet = PrintRequestSheet.call(print_request: print_request)
     @confirmation_url = print_request_confirmation_url(print_request.confirmation_token)
@@ -20,7 +20,7 @@ class PrintRequestMailer < ApplicationMailer
 
   # The client's copy carries the preview, never the print file.
   def to_client(print_request)
-    @print_request = print_request
+    print_request = @print_request = reload(print_request)
     @design = print_request.design
     @sheet = PrintRequestSheet.call(print_request: print_request)
 
@@ -34,7 +34,7 @@ class PrintRequestMailer < ApplicationMailer
   # Nothing after 48 hours. The files travel again: a workshop that lost the
   # first email should not have to ask for them.
   def reminder(print_request)
-    @print_request = print_request
+    print_request = @print_request = reload(print_request)
     @design = print_request.design
     @confirmation_url = print_request_confirmation_url(print_request.confirmation_token)
 
@@ -46,7 +46,7 @@ class PrintRequestMailer < ApplicationMailer
   end
 
   def expired(print_request)
-    @print_request = print_request
+    print_request = @print_request = reload(print_request)
 
     mail to: print_request.client.email_address,
          subject: t("mailers.print_request.expired.subject",
@@ -54,7 +54,7 @@ class PrintRequestMailer < ApplicationMailer
   end
 
   def status_changed(print_request)
-    @print_request = print_request
+    print_request = @print_request = reload(print_request)
 
     mail to: print_request.client.email_address,
          subject: t("mailers.print_request.status_changed.subject",
@@ -62,6 +62,12 @@ class PrintRequestMailer < ApplicationMailer
   end
 
   private
+    # Reloaded with what the email reads: a mailer job gets a bare record.
+    def reload(print_request)
+      PrintRequest.includes(:client, :printer, { final_file_attachment: :blob }, { preview_png_attachment: :blob },
+                            design: { print_file_attachment: :blob }).find(print_request.id)
+    end
+
     def attach_files
       file = @print_request.final_file
       attachments[file.filename.to_s] = file.download if file.attached?

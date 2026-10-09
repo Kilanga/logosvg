@@ -161,6 +161,11 @@ Rails.application.routes.draw do
   # L'ancienne fiche unique mène aux fiches numérotées.
   get "atelier/aide/fiche-client", to: redirect("/atelier/fiches"), as: :workshop_client_sheet
 
+  # Les vérifications par un graphiste sur les designs faits pour l'atelier.
+  get "atelier/verifications", to: "workshop/reviews#index", as: :workshop_reviews
+  # Le graphiste que l'atelier recommande à ses clients.
+  patch "atelier/verifications/graphiste", to: "workshop/reviews#recommend", as: :workshop_recommended_designer
+
   # Les clients de l'atelier, et les demandes qui attendent sa réponse.
   get  "atelier/clients",                to: "workshop/clients#index",   as: :workshop_clients
   post "atelier/clients/demandes/:id/accepter", to: "workshop/clients#accept",
@@ -178,6 +183,8 @@ Rails.application.routes.draw do
   # Le profil du graphiste, ses niveaux et ses versements.
   # Pas d'action « soumettre » : un profil naît en relecture, et c'est
   # l'administration qui l'active.
+  # L'aide du graphiste : comment il est payé, les litiges, le sur-mesure.
+  get   "studio/aide",   to: "designer/help#show",       as: :designer_help
   get   "studio/profil", to: "designer/profiles#edit",   as: :edit_designer_profile
   patch "studio/profil", to: "designer/profiles#update", as: :designer_profile
 

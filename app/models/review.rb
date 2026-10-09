@@ -75,12 +75,13 @@ class Review < ApplicationRecord
     # pay here, so it goes straight to the designers.
     event :open_without_payment do
       transitions from: :awaiting_payment, to: :queued, guard: :off_platform?
+      after { self.queued_at = Time.current }
     end
 
     # Stripe's webhook, never a button.
     event :pay do
       transitions from: :awaiting_payment, to: :queued
-      after { self.paid_at = Time.current }
+      after { self.paid_at = self.queued_at = Time.current }
     end
 
     # A designer takes it. The guard is the point of step 7: nothing reaches
@@ -92,6 +93,7 @@ class Review < ApplicationRecord
     # Every delivery starts the client's week again, reminders included.
     event :deliver do
       transitions from: :in_progress, to: :delivered
+      after { restart_client_period }
       after do
         self.delivered_at = Time.current
         self.acceptance_reminders_sent = 0
@@ -152,6 +154,7 @@ class Review < ApplicationRecord
     # level, with the same designer if they offered to do it.
     event :accept_proposal do
       transitions from: :returned_to_client, to: :queued, guard: :proposal_open?
+      after { self.queued_at = Time.current }
     end
 
     # The client did not want to pay the proposed difference, but is not ready
@@ -160,36 +163,66 @@ class Review < ApplicationRecord
     # MAX_DESIGNER_REFUSALS — past that, only the proposal or a refund remain.
     event :pick_new_designer do
       transitions from: :returned_to_client, to: :queued, guard: :reassignable?
+      after { self.queued_at = Time.current }
     end
 
     # Refused, or simply never answered.
     event :decline_proposal do
       transitions from: :returned_to_client, to: :canceled
-      after { self.canceled_at = Time.current }
+      after do
+        self.canceled_at = Time.current
+        resume_client_period
+      end
     end
 
     # A custom job the designer and the client finished between themselves,
     # with or without a file handed back here.
     event :finish_off_platform do
       transitions from: [ :in_progress, :delivered ], to: :accepted, guard: :off_platform?
-      after { self.accepted_at = Time.current }
+      after do
+        self.accepted_at = Time.current
+        restart_client_period
+      end
     end
 
     # Abandoned before payment, or settled by an administrator.
     event :cancel do
       transitions from: [ :awaiting_payment, :queued, :in_progress, :delivered,
                           :returned_to_client, :disputed ], to: :canceled
-      after { self.canceled_at = Time.current }
+      after do
+        resume_client_period
+        self.canceled_at = Time.current
+      end
     end
   end
 
   def to_param = token
 
+  # --- The client's thirty days with the shop (decided on 09/10/2026) --------
+
+  # The designer has delivered: thirty fresh days with the shop the design was
+  # made for — as long as the client still belongs to it.
+  def restart_client_period
+    printer_id = Design.where(id: design_id).pick(:printer_id)
+    User.extend_attachment!(client_id: client_id, printer_id: printer_id) if printer_id
+  end
+
+  # Ended without a delivery: the time the review held the period still is
+  # given back. Nothing was held before the review went into the queue.
+  def resume_client_period
+    held_since = paid_at || queued_at
+    printer_id = Design.where(id: design_id).pick(:printer_id)
+    return if held_since.nil? || printer_id.nil? || aasm.from_state == :awaiting_payment
+
+    User.resume_attachment!(client_id: client_id, printer_id: printer_id,
+                            paused_seconds: Time.current - held_since)
+  end
+
   def chosen? = assignment_mode == "chosen"
 
   # Quoted, arranged and paid between the designer and the client: the
   # platform only introduces them and keeps track.
-  def off_platform? = review_level&.quoted? || false
+  def off_platform? = read_association(:review_level)&.quoted? || false
 
   def first_available? = assignment_mode == "first_available"
 
@@ -262,10 +295,11 @@ class Review < ApplicationRecord
   # A proposal to go custom costs nothing here: the whole price paid comes
   # back, and the job is quoted outside the platform.
   def proposed_amount_cents
-    return 0 if proposed_level&.quoted?
+    level = read_association(:proposed_level)
+    return 0 if level&.quoted?
     return proposed_price_cents if proposed_price_cents.present?
 
-    proposed_level&.price_cents
+    level&.price_cents
   end
 
   def designer_share_cents = price_cents - platform_fee_cents

@@ -18,7 +18,8 @@ module Client
     def new
       @review = build_review
       authorize @review
-      @levels = ReviewLevel.offered
+      @levels = available_levels
+      load_designers
     end
 
     # The review row exists before Stripe does: the webhook comes back with a
@@ -28,8 +29,19 @@ module Client
       @review.brief_required = true
       authorize @review
 
+      # Decided on 09/10/2026: nobody pays for a review no designer could
+      # take. The form offers only levels someone takes; this holds for a form
+      # left open while the last designer stopped accepting work.
+      unless @review.review_level && available_levels.include?(@review.review_level)
+        @review.errors.add(:base, :no_designer)
+        @levels = available_levels
+        load_designers
+        return render :new, status: :unprocessable_entity
+      end
+
       unless @review.save
-        @levels = ReviewLevel.offered
+        @levels = available_levels
+        load_designers
         return render :new, status: :unprocessable_entity
       end
 
@@ -184,7 +196,8 @@ module Client
       end
 
       def set_review
-        @review = policy_scope(Review).find_by!(token: params[:token])
+        @review = policy_scope(Review).includes(:review_level, :proposed_level, :design, designer_profile: :user)
+                                     .find_by!(token: params[:token])
       end
 
       def build_review(attributes = {})
@@ -204,6 +217,29 @@ module Client
           platform_fee_cents: level&.platform_fee_cents.to_i,
           revisions_included: level&.revisions_included.to_i
         )
+      end
+
+      # The workshop copied on this review's emails, named on the form before
+      # the client commits (decided on 09/10/2026).
+      def shop_name = @shop_name ||= Printer.where(id: @design&.printer_id).pick(:name)
+      helper_method :shop_name
+
+      # The designers on offer, the one the client's workshop recommends first
+      # (decided on 09/10/2026) — when that one is taking work at all.
+      def load_designers
+        designers = DesignerProfile.listed.accepting.by_reputation.limit(8).to_a
+        recommended_id = Printer.where(id: @design.printer_id).pick(:recommended_designer_profile_id)
+        recommended = recommended_id && DesignerProfile.listed.accepting.find_by(id: recommended_id)
+
+        @recommended_designer_id = recommended&.id
+        @designers = recommended ? [ recommended ] + designers.reject { |d| d.id == recommended.id } : designers
+      end
+
+      # The levels at least one designer who can be paid would take right now.
+      def available_levels
+        @available_levels ||= ReviewLevel.offered.select do |level|
+          DesignerProfile.listed.accepting.offering(level).exists?
+        end
       end
 
       # Only a designer who could actually do it.

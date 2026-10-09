@@ -1,0 +1,28 @@
+<% content_for :title, t("help.designer.title") %>
+<% content_for :heading, t("help.designer.heading") %>
+
+<div class="max-w-4xl space-y-12">
+  <section aria-labelledby="guide-title">
+    <h2 id="guide-title" class="font-display text-2xl font-bold uppercase"><%= help_text(t("help.designer.guide_title")) %></h2>
+    <ol class="mt-6 space-y-8">
+      <% t("help.designer.steps").each_with_index do |step, index| %>
+        <li class="grid gap-x-5 sm:grid-cols-[3rem_minmax(0,1fr)]">
+          <span class="font-display text-3xl font-bold text-emulsion"><%= format("%02d", index + 1) %></span>
+          <div>
+            <h3 class="font-display text-lg font-bold uppercase"><%= help_text(step[:title]) %></h3>
+            <div class="mt-2 space-y-2">
+              <% step[:body].each do |paragraph| %>
+                <p><%= help_text(paragraph) %></p>
+              <% end %>
+            </div>
+          </div>
+        </li>
+      <% end %>
+    </ol>
+  </section>
+
+  <section aria-labelledby="faq-title">
+    <h2 id="faq-title" class="mb-6 font-display text-2xl font-bold uppercase"><%= t("help.designer.faq_title") %></h2>
+    <%= render "shared/faq", groups: t("help.designer.groups"), id_prefix: "faq-graphiste" %>
+  </section>
+</div>

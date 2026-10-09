@@ -64,7 +64,7 @@ class PurgeUnattachedClients
     # the foreign keys are not cascading, and must not be loosened for this.
     def delete!
       ActiveRecord::Base.transaction do
-        PrintRequest.where(id: print_request_ids).find_each(&:destroy!)
+        PrintRequest.where(id: print_request_ids).strict_loading(false).find_each(&:destroy!)
 
         designs = Design.where(id: design_ids)
         designs.update_all(source_review_id: nil, parent_id: nil, root_id: nil)
@@ -72,11 +72,11 @@ class PurgeUnattachedClients
         # and loses only the link back.
         Design.where(source_review_id: review_ids).update_all(source_review_id: nil)
 
-        Review.where(id: review_ids).find_each(&:destroy!)
-        designs.find_each(&:destroy!)
+        Review.where(id: review_ids).strict_loading(false).find_each(&:destroy!)
+        designs.strict_loading(false).find_each(&:destroy!)
 
         GenerationCounter.where(user_id: client_ids).delete_all
-        User.where(id: client_ids).find_each(&:destroy!)
+        User.where(id: client_ids).strict_loading(false).find_each(&:destroy!)
       end
       @io.puts "Terminé."
     end

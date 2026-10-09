@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_09_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_09_143000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -262,11 +262,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_09_120000) do
     t.bigint "user_id", null: false
     t.string "website"
     t.string "invite_code", null: false
+    t.bigint "recommended_designer_profile_id"
     t.index ["city"], name: "index_printers_on_city"
     t.index ["featured"], name: "index_printers_on_featured"
     t.index ["invite_code"], name: "index_printers_on_invite_code", unique: true
     t.index ["latitude", "longitude"], name: "index_printers_on_latitude_and_longitude"
     t.index ["postal_code"], name: "index_printers_on_postal_code"
+    t.index ["recommended_designer_profile_id"], name: "index_printers_on_recommended_designer_profile_id"
     t.index ["ships"], name: "index_printers_on_ships"
     t.index ["slug"], name: "index_printers_on_slug", unique: true
     t.index ["status"], name: "index_printers_on_status"
@@ -360,6 +362,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_09_120000) do
     t.datetime "fix_offered_at"
     t.integer "acceptance_reminders_sent", default: 0, null: false
     t.integer "designer_payout_cents"
+    t.datetime "queued_at"
     t.index ["client_id", "created_at"], name: "index_reviews_on_client_id_and_created_at"
     t.index ["client_id"], name: "index_reviews_on_client_id"
     t.index ["design_id"], name: "index_reviews_on_design_id"
@@ -490,6 +493,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_09_120000) do
   add_foreign_key "print_requests", "review_versions"
   add_foreign_key "print_requests", "users", column: "client_id"
   add_foreign_key "printer_techniques", "printers"
+  add_foreign_key "printers", "designer_profiles", column: "recommended_designer_profile_id", on_delete: :nullify
   add_foreign_key "printers", "users"
   add_foreign_key "review_messages", "reviews"
   add_foreign_key "review_messages", "users", column: "author_id"

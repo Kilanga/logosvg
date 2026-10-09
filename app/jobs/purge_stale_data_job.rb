@@ -27,7 +27,7 @@ class PurgeStaleDataJob < ApplicationJob
       Design.where(created_at: ...settings[:design_retention_days].days.ago)
             .where.missing(:print_requests)
             .where.missing(:reviews)
-            .find_each(&:destroy)
+            .strict_loading(false).find_each(&:destroy)
     end
 
     # The order stays; the person does not. What a workshop printed, in what
@@ -64,8 +64,8 @@ class PurgeStaleDataJob < ApplicationJob
 
     def anonymise(user)
       User.transaction do
-        user.sessions.destroy_all
-        user.designs.find_each(&:destroy)
+        Session.where(user_id: user.id).destroy_all
+        Design.where(user_id: user.id).strict_loading(false).find_each(&:destroy)
 
         user.update_columns(
           email_address: "compte-supprime-#{user.id}@invalid",

@@ -266,6 +266,9 @@ fr:
           has_many: "Des enregistrements %{record} dépendent de celui-ci"
       models:
         review:
+          no_designer: >-
+            Aucun graphiste ne prend ce niveau de vérification en ce moment :
+            rien ne vous a été facturé.
           attributes:
             brief:
               what_to_change: "doit dire au moins ce qui doit changer"
@@ -850,6 +853,20 @@ fr:
         workshop: "Atelier : %{printer}"
 
     review:
+      unclaimed:
+        subject: "Votre vérification est annulée et remboursée"
+        eyebrow: "Vérification"
+        heading: "Aucun graphiste n'a pu la prendre"
+        body: >-
+          Aucun graphiste n'a pris votre vérification dans les %{hours} heures.
+          Elle est annulée et vous êtes remboursé en entier, sur le moyen de
+          paiement utilisé. Votre visuel reste dans votre espace : vous pouvez
+          le redemander plus tard, ou l'envoyer tel quel à l'atelier.
+        body_custom: >-
+          Aucun graphiste n'a pris votre demande de création sur mesure dans
+          les %{hours} heures : elle est close, et rien ne vous a été facturé.
+          Vous pouvez la refaire plus tard.
+        action: "Voir mon visuel"
       dispute_opened:
         subject: "Le client signale un problème sur sa vérification"
         eyebrow: "Signalement"
@@ -1101,6 +1118,9 @@ fr:
         none_yet: "Vous pourrez créer dès que l'atelier aura accepté votre demande."
         pending: "Demande envoyée à %{name} le %{date}, en attente de sa réponse."
         until: "Jusqu'au %{date}."
+        suspended: >-
+          Délai suspendu pendant la vérification de votre visuel par un
+          graphiste. Il repart pour 30 jours dès que le graphiste livre.
         ending_soon: >-
           Votre rattachement se termine le %{date}. Il repart pour 30 jours
           quand l'atelier confirme l'une de vos demandes d'impression : c'est
@@ -1165,6 +1185,18 @@ fr:
           que l'atelier sortira sans retouche.
         browse_designs: "Voir mes designs"
       new:
+        recommended: "Recommandé par votre atelier"
+        shop_copy: >-
+          %{name}, l'atelier pour lequel ce visuel a été créé, suit cette
+          vérification et reçoit une copie des emails que le site envoie à son
+          sujet.
+        none_available:
+          title: "Aucun graphiste disponible pour le moment"
+          body: >-
+            Aucun graphiste ne peut prendre de vérification en ce moment. Vous
+            n'avez rien à payer : réessayez un peu plus tard, ou envoyez votre
+            visuel tel quel à l'atelier.
+          back: "Retour au visuel"
         title: "Faire vérifier ce design"
         heading: "Faire vérifier ce design"
         level: "Ce que vous demandez"
@@ -1687,6 +1719,7 @@ fr:
           remove: "Retirer"
           extend: "Prolonger"
           until: "jusqu'au %{date}"
+          suspended: "délai suspendu, vérification en cours"
           confirm: >-
             %{name} ne pourra plus créer de visuels sur votre forfait. Ses
             visuels déjà créés lui restent. Continuer ?
@@ -1701,6 +1734,33 @@ fr:
         done: "%{name} n'est plus votre client. Un email l'en informe."
       extend_period:
         done: "%{name} reste votre client jusqu'au %{date}."
+    reviews:
+      index:
+        title: "Vérifications"
+        heading: "Vérifications"
+        lead: >-
+          Les visuels de vos clients qu'un graphiste reprend avant impression,
+          vérifications et créations sur mesure. Vous recevez aussi une copie
+          des emails que le site envoie à leur sujet.
+        untitled: "Visuel déposé"
+        unassigned: "graphiste pas encore désigné"
+        asked: "Demande : %{text}"
+        none: "Aucun de vos clients n'a encore fait appel à un graphiste."
+        recommend:
+          title: "Votre graphiste recommandé"
+          body: >-
+            Quand vos clients demandent une vérification, ce graphiste leur est
+            présenté en premier, avec la mention « Recommandé par votre
+            atelier ». Ils restent libres d'en choisir un autre.
+          label: "Graphiste"
+          none: "Aucune recommandation"
+          submit: "Enregistrer"
+          directory: "Voir les profils des graphistes"
+          no_designers: "Aucun graphiste n'est encore inscrit sur la plateforme."
+      recommend:
+        done: "%{name} est votre graphiste recommandé."
+        cleared: "Vous ne recommandez plus de graphiste."
+
     invites:
       index:
         title: "Fiches client"
@@ -2606,7 +2666,10 @@ fr:
                   %{attachment_days} jours à compter de votre arrivée. Ils
                   repartent de zéro chaque fois que l'atelier confirme l'une de
                   vos demandes d'impression ; il peut aussi les prolonger
-                  lui-même. Votre espace vous prévient la dernière semaine.
+                  lui-même. Pendant une vérification par un graphiste, le délai
+                  est suspendu, et il repart pour %{attachment_days} jours dès
+                  que le graphiste livre. Votre espace vous prévient la
+                  dernière semaine.
                 - >-
                   Une fois le délai passé, vos visuels restent dans votre
                   espace. Pour créer à nouveau, adressez une nouvelle demande à
@@ -2707,7 +2770,13 @@ fr:
                   Un graphiste reprend votre visuel pour qu'il s'imprime au
                   mieux : couleurs, détails trop fins, texte. Vous lui dites ce
                   qui doit changer et ce qui doit rester. C'est facultatif et
-                  payant ; le prix est affiché avant de commander.
+                  payant ; le prix est affiché avant de commander. Si aucun
+                  graphiste ne la prend dans les %{unclaimed_hours} heures, elle
+                  est annulée et vous êtes remboursé.
+                - >-
+                  Votre atelier suit la vérification et reçoit une copie des
+                  emails que le site envoie à son sujet : c'est lui qui
+                  imprimera le résultat.
             - q: "Quand le graphiste est-il payé ?"
               a:
                 - >-
@@ -2787,6 +2856,12 @@ fr:
               %{max_refinements} fois, ou déposer une image qu'il a déjà. Il
               peut aussi la faire vérifier par un graphiste.
             - "Le visuel est préparé pour vos limites : nombre d'encres, largeur d'impression."
+            - >-
+              Quand un client fait appel à un graphiste, vérification ou
+              création sur mesure, vous la suivez dans « Vérifications » et
+              recevez une copie des emails du site. Pendant ce temps, ses
+              %{attachment_days} jours sont suspendus ; ils repartent quand le
+              graphiste livre.
         - title: "Les demandes d'impression"
           body:
             - >-
@@ -2854,6 +2929,12 @@ fr:
                   personne, une seule fois. Vous savez ainsi à qui vous l'avez
                   donnée, et vous pouvez réadmettre un ancien client sans
                   attendre sa demande. Une fiche perdue se retire en un clic.
+            - q: "Puis-je recommander un graphiste à mes clients ?"
+              a:
+                - >-
+                  Oui, dans « Vérifications » : le graphiste choisi est présenté
+                  en premier à vos clients, avec la mention « Recommandé par
+                  votre atelier ». Ils restent libres d'en prendre un autre.
             - q: "Comment garder un bon client au-delà de ses 30 jours ?"
               a:
                 - >-
@@ -2904,6 +2985,132 @@ fr:
                   Votre fiche reste visible %{grace_days} jours, le temps de
                   mettre votre carte à jour ; elle est ensuite masquée de
                   l'annuaire jusqu'au paiement.
+
+    # --- Graphiste : /studio/aide -------------------------------------------------
+    designer:
+      title: "Aide"
+      heading: "Aide"
+      guide_title: "Travailler sur %{platform}"
+      faq_title: "Questions fréquentes"
+      steps:
+        - title: "Votre profil"
+          body:
+            - >-
+              Présentez-vous, montrez votre portfolio et cochez les niveaux que
+              vous acceptez. Nous relisons chaque profil avant de l'activer.
+            - >-
+              Pour recevoir des missions, il vous faut aussi vos versements :
+              « Mes paiements », puis l'inscription sécurisée de Stripe. Tant
+              qu'ils ne sont pas activés, aucune mission ne vous est proposée.
+        - title: "Prendre une mission"
+          body:
+            - >-
+              Un client paie une vérification, puis la mission vous est
+              proposée par email et dans « Vérifications ». Choisi nommément, vous
+              avez %{claim_hours} heures pour la prendre avant que le client
+              puisse en choisir un autre ; une mission que personne ne prend en
+              %{unclaimed_hours} heures est annulée et remboursée au client.
+            - >-
+              La demande du client tient en quatre points : ce qui change
+              (toujours rempli), ce qui reste, le texte exact, les couleurs.
+              Vous cochez chacun à la livraison.
+        - title: "Livrer"
+          body:
+            - >-
+              Déposez une version au format attendu par l'atelier : un SVG en
+              aplats pour la sérigraphie, le flex ou la broderie, contrôlé à
+              l'envoi ; un PNG à la bonne définition pour le DTF, le DTG ou la
+              sublimation. Le nombre de retours inclus dépend du niveau.
+            - >-
+              L'atelier pour lequel le visuel a été créé suit la mission et
+              reçoit une copie des emails que le site envoie à son sujet.
+        - title: "Être payé"
+          body:
+            - >-
+              Le client paie à la commande ; l'argent attend sur la plateforme
+              et vous est versé quand il valide votre version. Sans réponse de
+              sa part, la version est validée d'office au bout de
+              %{auto_accept_days} jours — il est prévenu %{reminder_days} jours
+              avant.
+            - >-
+              Vous recevez le prix de la mission moins la commission de la
+              plateforme (%{fee_percent} %). Les factures sont établies par la
+              plateforme en votre nom (auto-facturation sous mandat).
+        - title: "Si la mission ne convient pas"
+          body:
+            - >-
+              Le visuel ne peut pas être repris tel quel, ou le niveau choisi
+              ne correspond pas au travail demandé ? Renvoyez la demande au
+              client avec votre motif. S'il s'agit du niveau, joignez une
+              proposition : il a %{proposal_hours} heures pour l'accepter,
+              sinon il est remboursé.
+        - title: "Création sur mesure"
+          body:
+            - >-
+              Pour le sur-mesure, le site ne fait que la mise en relation : en
+              prenant la demande, vous recevez les coordonnées du client par
+              email, vous chiffrez et vous vous réglez directement entre vous,
+              sans commission. Vous clôturez la demande ici une fois le travail
+              terminé.
+      groups:
+        - title: "Paiement"
+          questions:
+            - q: "Quand suis-je payé ?"
+              a:
+                - >-
+                  Quand le client valide votre version, ou au bout de
+                  %{auto_accept_days} jours sans réponse de sa part. Le virement
+                  part alors vers votre compte Stripe.
+            - q: "Pourquoi ne reçois-je aucune mission ?"
+              a:
+                - >-
+                  Vérifiez trois choses : votre profil est activé, vos versements
+                  sont activés dans « Mes paiements », et vous acceptez des missions
+                  dans votre profil. Les missions ne vont qu'aux niveaux que vous
+                  avez cochés.
+            - q: "Et le sur-mesure, combien prend la plateforme ?"
+              a:
+                - "Rien : vous chiffrez et encaissez directement auprès du client."
+        - title: "Litiges"
+          questions:
+            - q: "Le client signale ma livraison. Que se passe-t-il ?"
+              a:
+                - >-
+                  La validation automatique s'arrête, et vous êtes prévenu avec
+                  son motif et son explication. Vous pouvez lui proposer une
+                  correction gratuite, qu'il accepte ; il peut aussi retirer son
+                  signalement. Un client ne peut signaler qu'une fois par
+                  vérification.
+            - q: "Et si nous ne trouvons pas d'accord ?"
+              a:
+                - >-
+                  L'administration tranche : soit la vérification est annulée et
+                  le client remboursé, soit le remboursement est partagé et vous
+                  êtes payé pour le reste. Au-delà de %{dispute_alert_count}
+                  litiges perdus en %{dispute_alert_days} jours, votre profil
+                  est examiné.
+        - title: "Le travail"
+          questions:
+            - q: "Un atelier peut-il me recommander ?"
+              a:
+                - >-
+                  Oui : chaque atelier peut choisir un graphiste recommandé.
+                  Vous êtes alors présenté en premier à ses clients quand ils
+                  demandent une vérification — à condition d'accepter des
+                  missions et d'avoir vos versements activés.
+            - q: "Pourquoi l'atelier est-il en copie ?"
+              a:
+                - >-
+                  C'est lui qui imprimera le visuel. Il suit l'avancement et
+                  reçoit une copie des emails du site à propos de la mission.
+                  Le client en est informé à la commande.
+            - q: "Puis-je rendre un PNG pour un visuel de sérigraphie ?"
+              a:
+                - >-
+                  Non : la version doit être au format que la machine de
+                  l'atelier attend. Un SVG est contrôlé à l'envoi (couleurs,
+                  éléments interdits) ; un PNG l'est en type, en dimensions et
+                  en résolution.
 
     # --- Fiche client : /atelier/aide/fiche-client -------------------------------
     sheet:
@@ -2999,6 +3206,7 @@ fr:
             quand l'atelier confirme l'une de vos demandes d'impression.
           pending: "Votre demande est envoyée à %{name}. Vous recevrez un email dès qu'il aura répondu."
           not_a_client: "Cette page s'adresse aux clients de l'atelier."
+          member_suspended: "Vous êtes client de %{name}. Votre délai est suspendu pendant la vérification de votre visuel."
           former: >-
             Vous avez déjà été client de %{name}. Son affiche n'accueille que
             les nouveaux clients : adressez-lui une demande, ou demandez-lui

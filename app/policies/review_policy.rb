@@ -38,7 +38,7 @@ class ReviewPolicy < ApplicationPolicy
 
   # --- The designer's ---------------------------------------------------------
 
-  def claim? = designer_user? && record.claimable_by?(user.designer_profile)
+  def claim? = designer_user? && record.claimable_by?(user.read_association(:designer_profile))
 
   def deliver? = designer? && record.may_deliver?
 

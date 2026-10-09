@@ -7,6 +7,7 @@ class SweepReviewsJob < ApplicationJob
   queue_as :default
 
   def perform
+    release_unclaimed
     expire_proposals
     remind_about_proposals
     warn_about_silent_designers
@@ -16,6 +17,24 @@ class SweepReviewsJob < ApplicationJob
 
   private
     def settings = Rails.application.config.tshirt.reviews
+
+    # Decided on 09/10/2026: a review no designer took within
+    # `unclaimed_refund_hours` of going into the queue is called off, and the
+    # client gets back everything paid — a custom job, unpaid here, is simply
+    # closed. Their thirty days with the shop, held while it was open, run
+    # again from where they were.
+    def release_unclaimed
+      Review.awaiting_claim.where(queued_at: ..settings[:unclaimed_refund_hours].hours.ago).find_each do |review|
+        refund = Payments::RefundReview.call(review: review, notify: false) unless review.off_platform?
+        # Money that could not go back must not look as if it had: left in the
+        # queue, it is tried again on the next run — and stays visible.
+        next if refund == :failed
+
+        review.cancel!
+        review.save!
+        ReviewMailer.unclaimed(review).deliver_later
+      end
+    end
 
     # A proposal nobody answered is a refusal, and the client gets their money
     # back. Run before the reminder, so a proposal past its date is not chased

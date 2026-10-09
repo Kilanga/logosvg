@@ -1,0 +1,7 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.unclaimed.eyebrow"),
+      heading: t("mailers.review.unclaimed.heading"),
+      body: t(@review.off_platform? ? "mailers.review.unclaimed.body_custom" : "mailers.review.unclaimed.body",
+              hours: Rails.application.config.tshirt.reviews[:unclaimed_refund_hours]),
+      url: design_url(@review.design),
+      action: t("mailers.review.unclaimed.action") %>

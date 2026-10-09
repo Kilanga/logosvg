@@ -36,7 +36,7 @@ class PrintRequestPolicy < ApplicationPolicy
   private
     def client? = user.present? && record.client_id == user.id
 
-    def workshop? = user&.printer? && record.printer_id == user.printer&.id
+    def workshop? = user&.printer? && record.printer_id == Printer.where(user_id: user.id).pick(:id)
 
     def owns_design? = record.design&.user_id == user&.id
 end
