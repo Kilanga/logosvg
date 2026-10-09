@@ -230,6 +230,10 @@ ActiveRecord::Base.transaction do
   thabor = Printer.find_by!(slug: "serigraphie-du-thabor")
   loire = Printer.find_by!(slug: "atelier-loire")
 
+  # Un client appartient à un atelier (09/10/2026) : Camille est arrivée par
+  # l'affiche du Thabor, donc admise d'office.
+  ClientAffiliation.admit!(client: camille, printer: thabor) unless camille.workshop_id
+
   # 1. Un design prêt, envoyé à un atelier, que celui-ci a confirmé.
   renard = design!(
     camille, token: "demo-renard", printer: thabor, technique: "screen_printing",

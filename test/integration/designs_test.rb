@@ -224,17 +224,33 @@ class DesignsTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "a shop's link is remembered for the whole session" do
+  test "scanning another shop's poster moves the client to that shop" do
     sign_in_as users(:client)
+    lyon = printers(:lyon)
 
-    get workshop_link_path(slug: printers(:lyon).slug)
+    get workshop_invite_path(slug: lyon.slug, code: lyon.invite_code)
+    follow_redirect!
 
     assert_redirected_to new_design_path
+    assert_equal lyon.id, users(:client).reload.workshop_id
 
     get new_design_path
 
     assert_response :success
     assert_select "body", text: /Presse Rhône/i
+  end
+
+  test "another shop's page without its code does not move the client" do
+    sign_in_as users(:client)
+
+    get workshop_link_path(slug: printers(:lyon).slug)
+
+    assert_response :success
+    assert_equal printers(:rennes).id, users(:client).reload.workshop_id
+
+    get new_design_path
+
+    assert_select "body", text: /Sérigraphie du Thabor/i
   end
 
   test "a link to a shop that is no longer listed sends the client to the directory" do

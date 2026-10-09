@@ -11,6 +11,7 @@ module Workshop
       @subscription = @printer&.subscription
       @print_requests = recent_requests
       @month = month_figures
+      @pending_clients = @printer ? ClientAffiliation.pending.where(printer_id: @printer.id).count : 0
     end
 
     private

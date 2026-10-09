@@ -43,7 +43,7 @@ class StrictLoadingTest < ActionDispatch::IntegrationTest
   {
     client: %i[client_dashboard client_designs client_print_requests client_reviews client_account],
     printer: %i[workshop_dashboard workshop_print_requests workshop_link_share
-                edit_workshop_profile workshop_subscription],
+                edit_workshop_profile workshop_subscription workshop_clients],
     designer: %i[designer_dashboard designer_reviews edit_designer_profile designer_payouts],
     admin: %i[admin_dashboard admin_printers admin_designers admin_reviews admin_levels
               admin_blocked_terms admin_status]
@@ -174,5 +174,42 @@ class StrictLoadingTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to client_account_path
     assert_nil Session.find_by(id: elsewhere.id)
+  end
+
+  # --- Clients and their workshop (09/10/2026) -------------------------------
+
+  test "a workshop's clients screen with requests and clients opens with strict loading on" do
+    stranger = User.create!(email_address: "inconnu@example.invalid", password: "motdepasse-test",
+                            first_name: "Paul", last_name: "Inconnu", role: "client",
+                            terms_accepted_at: Time.current)
+    ClientAffiliation.request!(client: stranger, printer: printers(:rennes))
+    sign_in_as users(:printer)
+
+    get workshop_clients_path
+    assert_response :success
+
+    get workshop_dashboard_path
+    assert_response :success
+  end
+
+  test "a client waiting on a workshop sees their dashboard and the shop's page with strict loading on" do
+    client = users(:client)
+    client.update!(workshop_id: nil)
+    ClientAffiliation.request!(client: client, printer: printers(:lyon))
+    sign_in_as client
+
+    get client_dashboard_path
+    assert_response :success
+
+    get workshop_link_path(slug: printers(:lyon).slug)
+    assert_response :success
+  end
+
+  test "a visitor reaches a shop's page and the sign-up form with strict loading on" do
+    get workshop_link_path(slug: printers(:rennes).slug)
+    assert_response :success
+
+    get new_registration_path
+    assert_response :success
   end
 end

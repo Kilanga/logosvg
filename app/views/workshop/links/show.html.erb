@@ -11,7 +11,7 @@
     <div class="mt-5 flex flex-wrap items-center gap-3"
          data-controller="clipboard"
          data-clipboard-copied-value="<%= t('.copied') %>">
-      <input type="text" readonly value="<%= workshop_link_url(slug: @printer.slug) %>"
+      <input type="text" readonly value="<%= workshop_invite_url(slug: @printer.slug, code: @printer.invite_code) %>"
              data-clipboard-target="source"
              onclick="this.select()"
              class="min-h-touch flex-1 rounded-xs border border-line bg-paper px-3 font-mono text-sm"
@@ -23,11 +23,22 @@
     </div>
   </div>
 
+  <%# The code at the end of the link is what admits a client without the shop
+      deciding. Said plainly, with the way to take it back. %>
+  <section class="panel p-6" aria-labelledby="invite-code">
+    <h2 id="invite-code" class="label-rule"><%= t(".code.title") %></h2>
+    <p class="mt-3 text-sm"><%= t(".code.body_html", code: tag.code(@printer.invite_code, class: "font-mono")) %></p>
+    <p class="mt-2 text-sm text-muted"><%= t(".code.without") %></p>
+    <%= button_to t(".code.regenerate"), workshop_link_code_path,
+          class: "btn btn-secondary mt-5 text-sm", form_class: "contents",
+          data: { turbo_confirm: t(".code.confirm") } %>
+  </section>
+
   <div class="grid gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
     <div class="panel justify-self-center p-6">
       <%# The QR code is drawn, not fetched: it encodes nothing but the URL. %>
       <%# It carries `?s=qr`, so a scan and a click on the link are told apart. %>
-      <div class="flex justify-center" aria-hidden="true"><%= raw WorkshopQrCode.svg(workshop_link_url(slug: @printer.slug, s: WorkshopLinkVisit::QR)) %></div>
+      <div class="flex justify-center" aria-hidden="true"><%= raw WorkshopQrCode.svg(workshop_invite_url(slug: @printer.slug, code: @printer.invite_code, s: WorkshopLinkVisit::QR)) %></div>
       <p class="label-rule mt-4 text-center"><%= t(".qr") %></p>
     </div>
 
@@ -79,7 +90,7 @@
                 </div>
               </div>
               <div class="mt-3 flex flex-wrap items-center gap-3">
-                <input type="text" readonly value="<%= workshop_link_url(slug: @printer.slug, s: channel.key) %>"
+                <input type="text" readonly value="<%= workshop_invite_url(slug: @printer.slug, code: @printer.invite_code, s: channel.key) %>"
                        data-clipboard-target="source" onclick="this.select()"
                        class="min-h-touch flex-1 rounded-xs border border-line bg-paper px-3 font-mono text-sm"
                        aria-label="<%= t('.channel_link', label: channel.label) %>">

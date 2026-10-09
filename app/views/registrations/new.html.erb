@@ -9,8 +9,8 @@
     <fieldset>
       <legend class="label-rule"><%= t("registrations.new.role_legend") %></legend>
 
-      <div class="mt-3 grid gap-2 sm:grid-cols-3">
-        <% User::SELF_ASSIGNABLE_ROLES.each do |role| %>
+      <div class="mt-3 grid gap-2 <%= offered_roles.size == 3 ? "sm:grid-cols-3" : "sm:grid-cols-2" %>">
+        <% offered_roles.each do |role| %>
           <label class="group flex cursor-pointer flex-col gap-1 rounded-xs border border-line p-3
                         has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5
                         has-[:focus-visible]:outline has-[:focus-visible]:outline-2
@@ -23,6 +23,26 @@
           </label>
         <% end %>
       </div>
+
+      <% if @user.errors.include?(:role) %>
+        <p class="mt-2 text-sm text-warning"><%= @user.errors[:role].to_sentence %></p>
+      <% end %>
+
+      <%# A client account belongs to a workshop. Which one, and whether it has
+          already said yes, is said before the form is filled; without a shop,
+          where a client should go instead. %>
+      <% if @workshop %>
+        <p class="mt-4 border-l-2 border-emulsion bg-emulsion/5 px-4 py-3 text-sm">
+          <%= t(@invited ? "registrations.new.workshop_invited_html" : "registrations.new.workshop_request_html",
+                name: tag.strong(@workshop.name)) %>
+        </p>
+      <% else %>
+        <p class="mt-4 border-l-2 border-line bg-surface px-4 py-3 text-sm text-muted">
+          <%= t("registrations.new.client_without_workshop") %>
+          <%= link_to t("registrations.new.find_workshop"), printers_path,
+                class: "font-medium text-ink underline underline-offset-4 hover:text-emulsion" %>
+        </p>
+      <% end %>
     </fieldset>
 
     <div class="grid gap-5 sm:grid-cols-2">

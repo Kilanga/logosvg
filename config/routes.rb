@@ -29,8 +29,13 @@ Rails.application.routes.draw do
   resources :passwords, path: "mot-de-passe", param: :token, only: %i[ new create edit update ]
 
   # --- Designs ---------------------------------------------------------------
-  # Le lien que l'imprimeur partage : il retient l'atelier pour la session.
-  get "a/:slug", to: "public/workshop_links#show", as: :workshop_link
+  # La page de l'atelier pour ses clients. Avec son code (affiche, QR code,
+  # liens nommés), le client est admis d'office ; sans, il demande à l'atelier,
+  # qui accepte ou refuse dans son espace. Voir docs/SPEC.md, « Rattachement
+  # d'un client à un atelier ».
+  get  "a/:slug",           to: "public/workshop_links#show", as: :workshop_link
+  post "a/:slug/rejoindre", to: "public/workshop_links#join", as: :join_workshop
+  get  "a/:slug/:code",     to: "public/workshop_links#show", as: :workshop_invite
 
   get  "designs/nouveau", to: "client/designs#new",    as: :new_design
   # Un visuel déjà fait, mis au format de l'atelier sans être redessiné.
@@ -139,6 +144,17 @@ Rails.application.routes.draw do
   # Les liens nommés (flyer, salon, réseau social), un compteur chacun.
   post   "atelier/lien/canaux",      to: "workshop/link_channels#create",  as: :workshop_link_channels
   delete "atelier/lien/canaux/:key", to: "workshop/link_channels#destroy", as: :workshop_link_channel
+
+  # Le code de l'affiche : un nouveau rend l'ancien inopérant.
+  post "atelier/lien/code",     to: "workshop/links#regenerate_code", as: :workshop_link_code
+
+  # Les clients de l'atelier, et les demandes qui attendent sa réponse.
+  get  "atelier/clients",                to: "workshop/clients#index",   as: :workshop_clients
+  post "atelier/clients/demandes/:id/accepter", to: "workshop/clients#accept",
+       as: :accept_workshop_client_request
+  post "atelier/clients/demandes/:id/refuser",  to: "workshop/clients#decline",
+       as: :decline_workshop_client_request
+  delete "atelier/clients/:id",          to: "workshop/clients#remove",  as: :workshop_client
 
   # Les demandes reçues par l'atelier, et leur suivi.
   get   "atelier/demandes",        to: "workshop/print_requests#index",  as: :workshop_print_requests

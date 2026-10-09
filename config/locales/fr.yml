@@ -176,6 +176,7 @@ fr:
     admin: "Administration"
     dashboard: "Tableau de bord"
     my_listing: "Ma fiche"
+    my_clients: "Mes clients"
     print_requests: "Demandes"
     my_designs: "Mes designs"
     my_requests: "Mes demandes"
@@ -272,6 +273,10 @@ fr:
               blank: "doivent être acceptées"
             current_password:
               invalid: "ne correspond pas à votre mot de passe actuel"
+            role:
+              workshop_required: >-
+                Un compte client se crée depuis le lien de votre atelier ou
+                depuis sa page dans l'annuaire.
         designer_profile:
           attributes:
             review_levels:
@@ -696,8 +701,20 @@ fr:
       terms_required: "Vous devez accepter les conditions pour créer un compte."
       submit: "Créer mon compte"
       has_account: "Vous avez déjà un compte ?"
+      workshop_invited_html: "Compte client : il sera rattaché à %{name}, qui vous a donné son lien."
+      workshop_request_html: >-
+        Compte client : votre demande sera envoyée à %{name}. Vous pourrez
+        créer dès que l'atelier l'aura acceptée.
+      client_without_workshop: >-
+        Vous êtes client d'un atelier ? Un compte client se crée depuis le
+        lien ou le QR code de votre imprimeur, ou depuis sa page dans
+        l'annuaire.
+      find_workshop: "Trouver un atelier"
     create:
       welcome: "Bienvenue, %{name}. Votre compte est créé."
+      welcome_pending: >-
+        Bienvenue, %{name}. Votre demande est envoyée à %{workshop} : vous
+        recevrez un email dès que l'atelier l'aura acceptée.
 
   passwords:
     new:
@@ -723,6 +740,41 @@ fr:
       mismatch: "Les deux mots de passe ne correspondent pas."
 
   mailers:
+    affiliation:
+      requested:
+        subject: "%{name} demande à devenir votre client"
+        eyebrow: "Nouveau client"
+        heading: "Une demande attend votre réponse"
+        body: >-
+          %{client} (%{email}) souhaite créer ses visuels avec %{name}. Tant
+          que vous n'avez pas accepté, son compte ne peut rien générer, et
+          rien n'est décompté de votre forfait. Répondez depuis votre espace
+          atelier.
+        action: "Voir la demande"
+      accepted:
+        subject: "%{name} a accepté votre demande"
+        eyebrow: "Demande acceptée"
+        heading: "Vous pouvez créer"
+        body: "%{name} vous compte parmi ses clients. Décrivez votre idée : l'atelier imprimera le visuel que vous garderez."
+        action: "Créer un visuel"
+      declined:
+        subject: "Votre demande à %{name}"
+        eyebrow: "Demande refusée"
+        heading: "L'atelier n'a pas donné suite"
+        body: >-
+          %{name} n'a pas accepté votre demande. Vous pouvez en adresser une à
+          un autre atelier de l'annuaire, ou demander directement à votre
+          imprimeur son lien ou son QR code.
+        action: "Voir l'annuaire des ateliers"
+      removed:
+        subject: "Vous n'êtes plus client de %{name}"
+        eyebrow: "Atelier"
+        heading: "Votre compte n'est plus rattaché à cet atelier"
+        body: >-
+          %{name} vous a retiré de sa liste de clients. Vos visuels restent
+          dans votre espace ; pour en créer de nouveaux, rejoignez un autre
+          atelier depuis l'annuaire ou avec le lien de votre imprimeur.
+        action: "Voir l'annuaire des ateliers"
     footer:
       sent_by: "Cet email vous a été envoyé par %{name}."
 
@@ -1035,6 +1087,16 @@ fr:
         see_all: "Tout voir"
         no_design: "Vous n'avez pas encore créé de design."
         no_request: "Aucune demande d'impression pour l'instant."
+      workshop_panel:
+        title: "Votre atelier"
+        none: >-
+          Aucun atelier ne vous compte encore parmi ses clients. Demandez son
+          lien ou son QR code à votre imprimeur, ou adressez une demande à un
+          atelier de l'annuaire.
+        none_yet: "Vous pourrez créer dès que l'atelier aura accepté votre demande."
+        pending: "Demande envoyée à %{name} le %{date}, en attente de sa réponse."
+        change: "Changer d'atelier"
+        find: "Trouver un atelier"
 
     accounts:
       edit:
@@ -1390,7 +1452,13 @@ fr:
         Ce mois-ci, %{printer} a utilisé toutes les générations de sa formule.
         L'atelier en est prévenu ; vous pourrez créer votre design dès le mois
         prochain, ou le lui demander directement.
+      workshop_required: >-
+        Votre compte n'est rattaché à aucun atelier pour le moment : vous
+        pourrez créer dès qu'un atelier vous aura accepté.
       take_it_further:
+        other_workshop: >-
+          Ce visuel a été créé pour un atelier dont vous n'êtes plus client.
+          Créez-en un nouveau avec votre atelier actuel.
         blocked: >-
           Cette modification contient une marque, un personnage ou un terme que
           la plateforme n'imprime pas. Reformulez-la avec votre propre idée.
@@ -1504,6 +1572,12 @@ fr:
   workshop:
     dashboards:
       show:
+        pending_clients:
+          label: "Nouveaux clients"
+          count:
+            one: "1 demande attend votre réponse"
+            other: "%{count} demandes attendent votre réponse"
+          cta: "Répondre"
         title: "Atelier"
         heading: "Bonjour %{name}"
         listing: "Votre fiche"
@@ -1577,15 +1651,68 @@ fr:
       portal:
         no_customer: "Aucun abonnement à gérer pour l'instant."
 
+    clients:
+      index:
+        title: "Mes clients"
+        heading: "Mes clients"
+        pending:
+          title: "Demandes à traiter"
+          body: >-
+            Ces personnes vous ont trouvé sans votre lien, dans l'annuaire le
+            plus souvent. Tant que vous n'avez pas accepté, leur compte ne
+            peut rien générer, et rien n'est décompté de votre forfait.
+          asked_on: "Demande du %{date}"
+          accept: "Accepter"
+          decline: "Refuser"
+          none: "Aucune demande en attente."
+        clients:
+          title: "Vos clients"
+          count:
+            zero: "aucun client"
+            one: "1 client"
+            other: "%{count} clients"
+          remove: "Retirer"
+          confirm: >-
+            %{name} ne pourra plus créer de visuels sur votre forfait. Ses
+            visuels déjà créés lui restent. Continuer ?
+          none: >-
+            Pas encore de client. Ils arrivent par votre lien ou votre QR code,
+            ou par une demande depuis l'annuaire.
+      accept:
+        done: "%{name} est maintenant votre client. Un email l'en informe."
+      decline:
+        done: "La demande de %{name} est refusée. Un email l'en informe."
+      remove:
+        done: "%{name} n'est plus votre client. Un email l'en informe."
+
     links:
+      regenerate_code:
+        done: "Nouveau code en place. Pensez à réimprimer votre affiche et vos QR codes."
       show:
         title: "Mon lien"
         heading: "Mon lien client"
         no_listing: "Créez d'abord votre fiche : c'est elle qui donne son adresse à votre lien."
         your_link: "Votre adresse"
         your_link_body: >-
-          Partagez-la à vos clients : ils arrivent directement sur l'écran de
-          création, avec vos techniques déjà sélectionnées.
+          Partagez-la à vos clients : ils arrivent sur votre page, créent leur
+          compte et deviennent vos clients sans attendre votre accord, avec
+          vos techniques déjà sélectionnées.
+        code:
+          title: "Le code de votre lien"
+          body_html: >-
+            La fin de votre adresse, %{code}, est ce qui rend vos clients
+            membres d'office. Elle figure sur votre affiche, votre QR code et
+            vos liens nommés.
+          without: >-
+            Un client qui vous trouve dans l'annuaire n'a pas ce code : il vous
+            adresse une demande, que vous acceptez ou refusez dans « Mes
+            clients ». Si votre lien a circulé au-delà de vos clients, changez
+            de code : l'ancien lien mènera toujours à votre page, mais il
+            faudra vous demander.
+          regenerate: "Changer de code"
+          confirm: >-
+            L'ancien lien n'admettra plus personne d'office. Votre affiche et
+            vos QR codes devront être réimprimés. Continuer ?
         copy: "Copier"
         copied: "Copié"
         qr: "Votre QR code"
@@ -2412,6 +2539,42 @@ fr:
     workshop_links:
       show:
         unknown: "Cet atelier n'est plus référencé. Choisissez-en un autre."
+        admitted: "Vous êtes client de %{name}. Décrivez votre idée, l'atelier l'imprimera."
+        title: "%{name} — créez votre visuel"
+        lead: >-
+          Décrivez votre idée en quelques mots : l'IA vous propose trois
+          visuels, vous gardez celui qui vous plaît, et %{name} l'imprime.
+        how:
+          title: "Comment ça marche"
+          steps:
+            - title: "Vous décrivez"
+              body: "Une phrase suffit, ou une image de départ si vous en avez une."
+            - title: "Vous choisissez"
+              body: "Trois propositions à chaque fois. Vous pouvez retoucher celle que vous gardez."
+            - title: "L'atelier imprime"
+              body: "Le fichier part à l'atelier au bon format pour ses machines."
+        techniques: "Ce que fait l'atelier"
+        about: "L'atelier"
+        full_page: "Voir la fiche complète de l'atelier"
+        join:
+          title: "Créer avec cet atelier"
+          invited: "Votre lien vient de %{name} : votre compte lui sera rattaché dès sa création."
+          ask: >-
+            %{name} valide chacun de ses nouveaux clients. Votre demande lui
+            sera envoyée ; vous pourrez créer dès qu'il l'aura acceptée.
+          switch: >-
+            Vous êtes déjà client d'un autre atelier. Si %{name} accepte votre
+            demande, vos prochaines créations seront pour lui.
+          sign_up: "Créer mon compte"
+          sign_in: "J'ai déjà un compte"
+          member: "Vous êtes client de %{name}."
+          pending: "Votre demande est envoyée à %{name}. Vous recevrez un email dès qu'il aura répondu."
+          not_a_client: "Cette page s'adresse aux clients de l'atelier."
+          join: "Rejoindre cet atelier"
+          request: "Demander à rejoindre cet atelier"
+      join:
+        clients_only: "Seul un compte client peut rejoindre un atelier."
+        requested: "Votre demande est envoyée à %{name}. Vous recevrez un email dès qu'il aura répondu."
 
     cookie_consents:
       create:
@@ -2520,6 +2683,7 @@ fr:
           accepts_client_textile: "Accepte mon textile"
       show:
         preview: "Aperçu de votre fiche, actuellement %{status}. Les visiteurs ne la voient pas encore."
+        create_here: "Créer mon visuel avec cet atelier"
         about: "Présentation"
         techniques: "Techniques"
         contact: "Contact"

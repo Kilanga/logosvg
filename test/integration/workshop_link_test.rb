@@ -7,7 +7,7 @@ class WorkshopLinkTest < ActionDispatch::IntegrationTest
     get workshop_link_share_path
 
     assert_response :success
-    assert_select "input[value=?]", workshop_link_url(slug: printers(:rennes).slug)
+    assert_select "input[value=?]", workshop_invite_url(slug: printers(:rennes).slug, code: printers(:rennes).invite_code)
     assert_select "a[href=?]", workshop_link_poster_path
   end
 
@@ -119,10 +119,10 @@ class WorkshopLinkTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "a robot is still sent on its way, and still remembers the shop" do
+  test "a robot still gets the page, and still remembers the shop" do
     get workshop_link_path(slug: printers(:rennes).slug), headers: { "User-Agent" => "curl/8.4.0" }
 
-    assert_redirected_to new_design_path
+    assert_response :success
     assert_equal printers(:rennes).id, session[:printer_id]
   end
 

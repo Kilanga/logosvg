@@ -17,9 +17,8 @@ class CookieConsentTest < ActionDispatch::IntegrationTest
 
   test "the session still knows the shop, so the site works without any answer" do
     scan
-    sign_in_as users(:client)
 
-    get new_design_path
+    get new_registration_path
 
     assert_select "body", text: /#{SHOP}/i
   end
@@ -96,9 +95,8 @@ class CookieConsentTest < ActionDispatch::IntegrationTest
     scan
     post cookie_consent_path, params: { choice: "accepted" }
     close_browser
-    sign_in_as users(:client)
 
-    get new_design_path
+    get new_registration_path
 
     assert_select "body", text: /#{SHOP}/i
   end
@@ -132,8 +130,7 @@ class CookieConsentTest < ActionDispatch::IntegrationTest
     assert_equal "declined", cookies[:cookie_consent]
     assert_predicate cookies[:shop_ref], :blank?
 
-    sign_in_as users(:client)
-    get new_design_path
+    get new_registration_path
     assert_select "body", text: /#{SHOP}/i
   end
 

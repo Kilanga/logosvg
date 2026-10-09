@@ -9,6 +9,10 @@ module Client
 
     def show
       @dashboard = ClientDashboard.call(client: Current.user)
+      # Whose client this is, and any request still waiting: an account with no
+      # shop yet can do nothing else, so this leads the page.
+      @workshop = Printer.find_by(id: Current.user.workshop_id) if Current.user.workshop_id
+      @pending_affiliation = ClientAffiliation.pending.includes(:printer).find_by(client_id: Current.user.id)
     end
   end
 end

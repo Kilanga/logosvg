@@ -15,6 +15,7 @@
 class ShopContext
   CONSENT_KEY = :cookie_consent
   SHOP_KEY = :shop_ref
+  INVITE_KEY = :invited_printer_id
   CHOICES = %w[ accepted declined ].freeze
 
   def initialize(cookies:, session:, settings: Rails.application.config.tshirt.privacy)
@@ -49,6 +50,20 @@ class ShopContext
     @session[:printer_id] = printer.id
     write_shop(printer.id) if accepted?
   end
+
+  # The shop's own code was in the link — the poster, the QR code, a named
+  # link. Session only, never the cookie: the code admits a client without the
+  # shop deciding, so it must not outlive the visit it came with.
+  def invite!(printer)
+    @session[INVITE_KEY] = printer.id
+  end
+
+  def invited_by?(printer) = printer.present? && @session[INVITE_KEY] == printer.id
+
+  # The shop a sign-up would join, and whether it admits at once. The invited
+  # shop first; failing that, the shop this visit or the cookie knows — which
+  # can only be asked.
+  def invited_printer_id = @session[INVITE_KEY]
 
   # Accepting keeps the shop the visitor is looking at right now, not just the
   # next one: they have already scanned the poster by the time they see the banner.

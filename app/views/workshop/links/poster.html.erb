@@ -25,7 +25,7 @@
 
     <p class="label-rule mt-6"><%= t(".scan") %></p>
     <p class="mt-2 font-mono text-sm text-muted">
-      <%= workshop_link_url(slug: @printer.slug).sub(%r{\Ahttps?://}, "") %>
+      <%= workshop_invite_url(slug: @printer.slug, code: @printer.invite_code).sub(%r{\Ahttps?://}, "") %>
     </p>
   </div>
 

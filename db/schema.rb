@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_08_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_09_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -54,6 +54,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_08_190000) do
     t.index ["active"], name: "index_blocked_terms_on_active"
     t.index ["created_by_id"], name: "index_blocked_terms_on_created_by_id"
     t.index ["term"], name: "index_blocked_terms_on_term", unique: true
+  end
+
+  create_table "client_affiliations", force: :cascade do |t|
+    t.bigint "client_id", null: false
+    t.bigint "printer_id", null: false
+    t.integer "status", default: 0, null: false
+    t.integer "source", default: 0, null: false
+    t.datetime "decided_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_id"], name: "index_client_affiliations_on_client_id"
+    t.index ["client_id"], name: "index_client_affiliations_one_pending_per_client", unique: true, where: "(status = 0)"
+    t.index ["printer_id", "status"], name: "index_client_affiliations_on_printer_id_and_status"
+    t.index ["printer_id"], name: "index_client_affiliations_on_printer_id"
   end
 
   create_table "designer_levels", force: :cascade do |t|
@@ -247,8 +261,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_08_190000) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.string "website"
+    t.string "invite_code", null: false
     t.index ["city"], name: "index_printers_on_city"
     t.index ["featured"], name: "index_printers_on_featured"
+    t.index ["invite_code"], name: "index_printers_on_invite_code", unique: true
     t.index ["latitude", "longitude"], name: "index_printers_on_latitude_and_longitude"
     t.index ["postal_code"], name: "index_printers_on_postal_code"
     t.index ["ships"], name: "index_printers_on_ships"
@@ -410,9 +426,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_08_190000) do
     t.integer "role", default: 0, null: false
     t.datetime "terms_accepted_at"
     t.datetime "updated_at", null: false
+    t.bigint "workshop_id"
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["role"], name: "index_users_on_role"
+    t.index ["workshop_id"], name: "index_users_on_workshop_id"
   end
 
   create_table "workshop_link_channels", force: :cascade do |t|
@@ -438,6 +456,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_08_190000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "blocked_terms", "users", column: "created_by_id"
+  add_foreign_key "client_affiliations", "printers", on_delete: :cascade
+  add_foreign_key "client_affiliations", "users", column: "client_id", on_delete: :cascade
   add_foreign_key "designer_levels", "designer_profiles"
   add_foreign_key "designer_levels", "review_levels"
   add_foreign_key "designer_profiles", "users"
@@ -464,6 +484,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_08_190000) do
   add_foreign_key "reviews", "users", column: "settled_by_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "subscriptions", "printers"
+  add_foreign_key "users", "printers", column: "workshop_id", on_delete: :nullify
   add_foreign_key "workshop_link_channels", "printers"
   add_foreign_key "workshop_link_visits", "printers"
 end
