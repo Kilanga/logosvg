@@ -46,7 +46,9 @@
           <li class="flex flex-wrap items-center gap-4 py-3">
             <span class="min-w-0 flex-1 basis-60">
               <span class="block font-medium"><%= client.full_name %></span>
-              <span class="mt-0.5 block break-all text-sm text-muted"><%= client.email_address %></span>
+              <span class="mt-0.5 block break-all text-sm text-muted">
+                <%= client.email_address %> · <%= t(".clients.until", date: l(client.workshop_until.to_date, format: :long)) %>
+              </span>
             </span>
             <%= button_to t(".clients.remove"), workshop_client_path(client), method: :delete,
                   class: "text-sm underline underline-offset-4 hover:text-emulsion", form_class: "contents",

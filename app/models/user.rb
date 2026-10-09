@@ -58,8 +58,29 @@ class User < ApplicationRecord
 
   def full_name = [ first_name, last_name ].compact_blank.join(" ")
 
-  # A client may create only once a workshop has them.
-  def attached_to_workshop? = workshop_id.present?
+  # A client may create only while a workshop has them — for
+  # `clients.attachment_days` from their admission (decided on 09/10/2026),
+  # after which they scan the shop's link or QR code again, or ask again.
+  def self.attachment_period = Rails.application.config.tshirt.clients.fetch(:attachment_days).days
+
+  scope :attached_to, ->(printer) { where(workshop_id: printer).where("workshop_until > ?", Time.current) }
+
+  def attached_to_workshop? = workshop_id.present? && workshop_until.present? && workshop_until.future?
+
+  # The shop this client creates for today; nil once the period has run out.
+  def active_workshop_id = (workshop_id if attached_to_workshop?)
+
+  # Admitted, or admitted again: the period starts over from now. Takes the
+  # shop or its id — the id is all it needs, and a record reached through an
+  # association nobody preloaded would raise under strict loading.
+  def attach_to!(printer)
+    update!(workshop_id: printer.is_a?(Printer) ? printer.id : printer,
+            workshop_until: User.attachment_period.from_now)
+  end
+
+  def detach_from_workshop!
+    update!(workshop_id: nil, workshop_until: nil)
+  end
 
   # Marks the account as gone without destroying it: invoices and print requests
   # still reference it until the purge task runs.

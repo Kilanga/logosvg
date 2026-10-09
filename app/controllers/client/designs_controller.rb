@@ -241,7 +241,7 @@ module Client
         # Avec ses techniques et son abonnement : `technique_keys` lit les
         # premières, `listed?` le second, et les deux sont lus dès le formulaire.
         @context_printer = (Printer.listed.includes(:techniques, :subscription)
-                                   .find_by(id: Current.user.workshop_id) if Current.user&.workshop_id)
+                                   .find_by(id: Current.user.active_workshop_id) if Current.user&.active_workshop_id)
       end
 
       # Without a listed shop there is nothing to create for: the dashboard says
@@ -255,7 +255,7 @@ module Client
 
       def reprise_allowed?
         Current.user.attached_to_workshop? &&
-          (@design.printer_id.nil? || @design.printer_id == Current.user.workshop_id)
+          (@design.printer_id.nil? || @design.printer_id == Current.user.active_workshop_id)
       end
 
       # A shop in context narrows the choice to what it actually does; without

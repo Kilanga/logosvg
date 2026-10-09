@@ -755,7 +755,10 @@ fr:
         subject: "%{name} a accepté votre demande"
         eyebrow: "Demande acceptée"
         heading: "Vous pouvez créer"
-        body: "%{name} vous compte parmi ses clients. Décrivez votre idée : l'atelier imprimera le visuel que vous garderez."
+        body: >-
+          %{name} vous compte parmi ses clients pour 30 jours. Décrivez votre
+          idée : l'atelier imprimera le visuel que vous garderez. Pour
+          prolonger, scannez à nouveau son QR code ou rouvrez son lien.
         action: "Créer un visuel"
       declined:
         subject: "Votre demande à %{name}"
@@ -1095,6 +1098,13 @@ fr:
           atelier de l'annuaire.
         none_yet: "Vous pourrez créer dès que l'atelier aura accepté votre demande."
         pending: "Demande envoyée à %{name} le %{date}, en attente de sa réponse."
+        until: "Jusqu'au %{date}."
+        ending_soon: >-
+          Votre rattachement se termine le %{date}. Pour le prolonger, scannez
+          à nouveau le QR code de l'atelier ou rouvrez son lien.
+        lapsed: >-
+          Votre rattachement à %{name} est terminé. Scannez à nouveau son QR
+          code ou rouvrez son lien, ou adressez-lui une nouvelle demande.
         change: "Changer d'atelier"
         find: "Trouver un atelier"
 
@@ -1658,8 +1668,8 @@ fr:
         pending:
           title: "Demandes à traiter"
           body: >-
-            Ces personnes vous ont trouvé sans votre lien, dans l'annuaire le
-            plus souvent. Tant que vous n'avez pas accepté, leur compte ne
+            Ces personnes vous ont trouvé sans votre lien ni votre QR code,
+            dans l'annuaire le plus souvent. Tant que vous n'avez pas accepté, leur compte ne
             peut rien générer, et rien n'est décompté de votre forfait.
           asked_on: "Demande du %{date}"
           accept: "Accepter"
@@ -1672,6 +1682,7 @@ fr:
             one: "1 client"
             other: "%{count} clients"
           remove: "Retirer"
+          until: "jusqu'au %{date}"
           confirm: >-
             %{name} ne pourra plus créer de visuels sur votre forfait. Ses
             visuels déjà créés lui restent. Continuer ?
@@ -2539,7 +2550,7 @@ fr:
     workshop_links:
       show:
         unknown: "Cet atelier n'est plus référencé. Choisissez-en un autre."
-        admitted: "Vous êtes client de %{name}. Décrivez votre idée, l'atelier l'imprimera."
+        admitted: "Vous êtes client de %{name} jusqu'au %{date}. Décrivez votre idée, l'atelier l'imprimera."
         title: "%{name} — créez votre visuel"
         lead: >-
           Décrivez votre idée en quelques mots : l'IA vous propose trois
@@ -2558,7 +2569,9 @@ fr:
         full_page: "Voir la fiche complète de l'atelier"
         join:
           title: "Créer avec cet atelier"
-          invited: "Votre lien vient de %{name} : votre compte lui sera rattaché dès sa création."
+          invited: >-
+            Votre lien ou QR code vient de %{name} : votre compte lui sera
+            rattaché dès sa création, pour 30 jours.
           ask: >-
             %{name} valide chacun de ses nouveaux clients. Votre demande lui
             sera envoyée ; vous pourrez créer dès qu'il l'aura acceptée.
@@ -2567,7 +2580,9 @@ fr:
             demande, vos prochaines créations seront pour lui.
           sign_up: "Créer mon compte"
           sign_in: "J'ai déjà un compte"
-          member: "Vous êtes client de %{name}."
+          member: >-
+            Vous êtes client de %{name} jusqu'au %{date}. Pour prolonger,
+            scannez à nouveau son QR code ou rouvrez son lien.
           pending: "Votre demande est envoyée à %{name}. Vous recevrez un email dès qu'il aura répondu."
           not_a_client: "Cette page s'adresse aux clients de l'atelier."
           join: "Rejoindre cet atelier"

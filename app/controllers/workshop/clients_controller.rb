@@ -17,7 +17,9 @@ module Workshop
 
       @pending = ClientAffiliation.pending.where(printer_id: @printer.id)
                                   .includes(:client).order(:created_at).to_a
-      @clients = User.client.active.where(workshop_id: @printer.id)
+      # Only those whose period is still running: a client whose thirty days
+      # are over has to scan again or ask again, and is no longer this shop's.
+      @clients = User.client.active.attached_to(@printer.id)
                      .order(:last_name, :first_name).to_a
     end
 
@@ -44,8 +46,8 @@ module Workshop
     def remove
       authorize @printer, :update?
 
-      client = User.client.where(workshop_id: @printer.id).find(params[:id])
-      client.update!(workshop_id: nil)
+      client = User.client.attached_to(@printer.id).find(params[:id])
+      client.detach_from_workshop!
       AffiliationMailer.removed(client, @printer).deliver_later
       redirect_to workshop_clients_path, notice: t(".done", name: client.full_name)
     end

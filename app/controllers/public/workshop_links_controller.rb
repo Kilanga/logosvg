@@ -59,7 +59,7 @@ module Public
     def join
       return redirect_to(space_path_for(Current.user), alert: t(".clients_only")) unless Current.user.client?
       return admit_and_create if shop_context.invited_by?(@printer)
-      return redirect_to(new_design_path) if Current.user.workshop_id == @printer.id
+      return redirect_to(new_design_path) if Current.user.active_workshop_id == @printer.id
 
       if (affiliation = ClientAffiliation.request!(client: Current.user, printer: @printer))
         AffiliationMailer.requested(affiliation).deliver_later
@@ -75,13 +75,12 @@ module Public
         redirect_to printers_path, alert: t("public.workshop_links.show.unknown") if @printer.nil?
       end
 
+      # Scanned again by one of the shop's clients, the code starts their
+      # period over: that is how a client stays.
       def admit_and_create
-        if Current.user.workshop_id == @printer.id
-          redirect_to new_design_path
-        else
-          ClientAffiliation.admit!(client: Current.user, printer: @printer)
-          redirect_to new_design_path, notice: t("public.workshop_links.show.admitted", name: @printer.name)
-        end
+        ClientAffiliation.admit!(client: Current.user, printer: @printer)
+        redirect_to new_design_path, notice: t("public.workshop_links.show.admitted",
+                                               name: @printer.name, date: l(Current.user.workshop_until.to_date, format: :long))
       end
 
       def new_visitor? = shop_context.printer_id != @printer.id

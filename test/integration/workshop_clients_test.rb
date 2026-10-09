@@ -227,4 +227,78 @@ class WorkshopClientsTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("client.designs.take_it_further.other_workshop").squish, flash[:alert].squish
     assert_equal 0, GenerationQuota.for(client).used
   end
+
+  # --- Thirty days, then scan again or ask again ------------------------------------
+
+  test "an admission lasts thirty days" do
+    get workshop_invite_path(slug: @lyon.slug, code: @lyon.invite_code)
+    sign_in_as @stranger
+
+    post join_workshop_path(slug: @lyon.slug)
+
+    assert_in_delta 30.days.from_now, @stranger.reload.workshop_until, 1.minute
+  end
+
+  test "an accepted request lasts thirty days too" do
+    affiliation = ClientAffiliation.request!(client: @stranger, printer: @rennes)
+    sign_in_as users(:printer)
+
+    post accept_workshop_client_request_path(affiliation)
+
+    assert_in_delta 30.days.from_now, @stranger.reload.workshop_until, 1.minute
+  end
+
+  test "once the thirty days are over, the client cannot create and the dashboard says what to do" do
+    client = users(:client)
+    client.update!(workshop_until: 1.minute.ago)
+    sign_in_as client
+
+    get new_design_path
+    assert_redirected_to client_dashboard_path
+
+    get client_dashboard_path
+    assert_match "Votre rattachement à Sérigraphie du Thabor est terminé", response.body
+    assert_select "a[href=?]", workshop_link_path(slug: @rennes.slug)
+  end
+
+  test "the shop no longer lists a client whose thirty days are over" do
+    users(:client).update!(workshop_until: 1.minute.ago)
+    sign_in_as users(:printer)
+
+    get workshop_clients_path
+
+    assert_select "li", text: /Claire Martin/, count: 0
+  end
+
+  test "scanning the QR code again starts the thirty days over" do
+    client = users(:client)
+    client.update!(workshop_until: 2.days.from_now)
+    sign_in_as client
+
+    get workshop_invite_path(slug: @rennes.slug, code: @rennes.invite_code)
+    follow_redirect!
+
+    assert_redirected_to new_design_path
+    assert_in_delta 30.days.from_now, client.reload.workshop_until, 1.minute
+    assert_equal 0, ClientAffiliation.where(client: client).count, "a renewal is not a new admission"
+  end
+
+  test "once the thirty days are over, the client can ask the same shop again" do
+    client = users(:client)
+    client.update!(workshop_until: 1.minute.ago)
+    sign_in_as client
+
+    post join_workshop_path(slug: @rennes.slug)
+
+    assert ClientAffiliation.pending.exists?(client: client, printer: @rennes)
+  end
+
+  test "the last week tells the client how to stay" do
+    users(:client).update!(workshop_until: 3.days.from_now)
+    sign_in_as users(:client)
+
+    get client_dashboard_path
+
+    assert_match "Pour le prolonger, scannez", response.body
+  end
 end

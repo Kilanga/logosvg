@@ -128,6 +128,13 @@ shared:
     client_may_download_svg: false
     watermark_enabled: true
 
+  # --- Clients et ateliers -------------------------------------------------
+  # Décidé le 09/10/2026 : un client est rattaché à un atelier pour une durée
+  # limitée, comptée depuis son admission. Au-delà, il rescanne le lien ou le
+  # QR code de l'atelier, ou lui adresse une nouvelle demande.
+  clients:
+    attachment_days: 30
+
   # --- Anti-abus -----------------------------------------------------------
   rate_limits:
     design_creation: { count: 10, within_seconds: 60 }

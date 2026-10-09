@@ -232,7 +232,7 @@ ActiveRecord::Base.transaction do
 
   # Un client appartient à un atelier (09/10/2026) : Camille est arrivée par
   # l'affiche du Thabor, donc admise d'office.
-  ClientAffiliation.admit!(client: camille, printer: thabor) unless camille.workshop_id
+  ClientAffiliation.admit!(client: camille, printer: thabor)
 
   # 1. Un design prêt, envoyé à un atelier, que celui-ci a confirmé.
   renard = design!(
