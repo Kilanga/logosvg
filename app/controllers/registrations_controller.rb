@@ -57,7 +57,10 @@ class RegistrationsController < ApplicationController
     def set_workshop
       id = shop_context.invited_printer_id || shop_context.printer_id
       @workshop = Printer.listed.find_by(id: id) if id
-      @invited = shop_context.invited_by?(@workshop)
+      # A new account has never been anyone's client: the poster or a sheet
+      # admits it. See WorkshopEntry.
+      @entry = WorkshopEntry.new(client: nil, printer: @workshop, shop_context: shop_context) if @workshop
+      @invited = @entry&.admits? || false
     end
 
     # The account and its place with the shop are one thing: a client account
@@ -68,9 +71,9 @@ class RegistrationsController < ApplicationController
       saved = User.transaction do
         raise ActiveRecord::Rollback unless @user.save
 
-        if @invited
-          ClientAffiliation.admit!(client: @user, printer: @workshop)
-        else
+        # A sheet spent by someone else a moment ago: a request instead.
+        unless @invited && @entry.admit!(@user)
+          @invited = false
           @affiliation = ClientAffiliation.request!(client: @user, printer: @workshop)
         end
         true

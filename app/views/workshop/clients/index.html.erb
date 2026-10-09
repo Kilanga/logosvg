@@ -48,8 +48,11 @@
               <span class="block font-medium"><%= client.full_name %></span>
               <span class="mt-0.5 block break-all text-sm text-muted">
                 <%= client.email_address %> · <%= t(".clients.until", date: l(client.workshop_until.to_date, format: :long)) %>
+                <% if (number = @sheet_numbers[client.id]) %> · <%= t("help.sheet.number", number: number) %><% end %>
               </span>
             </span>
+            <%= button_to t(".clients.extend"), extend_workshop_client_path(client),
+                  class: "btn btn-secondary text-sm", form_class: "contents" %>
             <%= button_to t(".clients.remove"), workshop_client_path(client), method: :delete,
                   class: "text-sm underline underline-offset-4 hover:text-emulsion", form_class: "contents",
                   data: { turbo_confirm: t(".clients.confirm", name: client.full_name) } %>

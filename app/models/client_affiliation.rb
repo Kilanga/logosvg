@@ -7,9 +7,12 @@
 # what is still waiting.
 class ClientAffiliation < ApplicationRecord
   enum :status, { pending: 0, accepted: 1, declined: 2, cancelled: 3 }, validate: true
-  # `invitation`: the code on the poster, the QR code or a named link.
-  # `request`: the directory, or a link without its code.
-  enum :source, { invitation: 0, request: 1 }, prefix: :from, validate: true
+  # `invitation`: the code on the poster, the QR code or a named link — admits
+  #   only a client who has never been this shop's.
+  # `request`: the directory, a link without its code, or a former client.
+  # `sheet`: a numbered single-use sheet (WorkshopInvite), the shop's
+  #   agreement given to one person.
+  enum :source, { invitation: 0, request: 1, sheet: 2 }, prefix: :from, validate: true
 
   belongs_to :client, class_name: "User"
   belongs_to :printer
@@ -18,16 +21,28 @@ class ClientAffiliation < ApplicationRecord
 
   scope :newest_first, -> { order(created_at: :desc, id: :desc) }
 
-  # The workshop's code: the client is in at once, and leaves any other shop.
-  # Scanned again by a client already there, it only starts the period over.
-  def self.admit!(client:, printer:)
-    return client.attach_to!(printer) if client.active_workshop_id == printer.id
+  # The poster admits once (decided on 09/10/2026): a client who has been this
+  # shop's before — whose thirty days have run out — asks again, so that
+  # scanning the counter again cannot keep the AI running without the shop.
+  def self.first_time?(client:, printer:)
+    client.nil? || !accepted.exists?(client: client, printer: printer)
+  end
+
+  # In at once, by the shop's code or one of its sheets, leaving any other
+  # shop. A sheet is spent in the same transaction: if another sign-up spent
+  # it first, nothing happens and this returns false. Already this shop's
+  # client: nothing to do — only the shop extends a client's period.
+  def self.admit!(client:, printer:, source: :invitation, invite: nil)
+    return true if client.active_workshop_id == printer.id
 
     transaction do
+      raise ActiveRecord::Rollback if invite && !invite.consume!(client)
+
       where(client: client, status: :pending).update_all(status: statuses[:cancelled], decided_at: Time.current, updated_at: Time.current)
-      create!(client: client, printer: printer, source: :invitation, status: :accepted, decided_at: Time.current)
+      create!(client: client, printer: printer, source: source, status: :accepted, decided_at: Time.current)
       client.attach_to!(printer)
-    end
+      true
+    end || false
   end
 
   # A request to the workshop. Asking another shop replaces the one still open:

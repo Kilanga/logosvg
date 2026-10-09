@@ -14,6 +14,10 @@
         path: workshop_clients_path,
         current: current_page?(workshop_clients_path) %>
   <%= render "layouts/space_link",
+        label: t("nav.client_sheets"),
+        path: workshop_invites_path,
+        current: current_page?(workshop_invites_path) %>
+  <%= render "layouts/space_link",
         label: t("nav.my_listing"),
         path: edit_workshop_profile_path,
         current: current_page?(edit_workshop_profile_path) %>

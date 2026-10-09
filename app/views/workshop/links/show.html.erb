@@ -51,8 +51,7 @@
               target: "_blank", rel: "noopener" %>
         <%= link_to t(".qr_svg"), workshop_link_qr_path(format: :svg), class: "btn btn-secondary text-sm" %>
         <%= link_to t(".qr_png"), workshop_link_qr_path(format: :png), class: "btn btn-secondary text-sm" %>
-        <%= link_to t("help.workshop.sheet_cta"), workshop_client_sheet_path, class: "btn btn-secondary text-sm",
-              target: "_blank", rel: "noopener" %>
+        <%= link_to t("help.workshop.sheet_cta"), workshop_invites_path, class: "btn btn-secondary text-sm" %>
       </div>
     </div>
   </div>

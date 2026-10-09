@@ -1,0 +1,3 @@
+<% content_for :title, t(".title", printer: @printer.name, batch: params[:batch]) %>
+
+<%= render partial: "sheet", collection: @invites, as: :invite %>

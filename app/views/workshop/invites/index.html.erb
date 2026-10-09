@@ -1,0 +1,62 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-4xl space-y-10">
+  <section class="panel p-6" aria-labelledby="new-batch">
+    <h2 id="new-batch" class="font-display text-lg font-bold uppercase"><%= t(".new.title") %></h2>
+    <p class="mt-2 text-sm text-muted"><%= help_text(t(".new.body")) %></p>
+    <%= form_with url: workshop_invites_path, class: "mt-5 flex flex-wrap items-end gap-3" do |form| %>
+      <div>
+        <%= form.label :count, t(".new.count"), class: "label-rule" %>
+        <%= form.number_field :count, value: 10, min: 1, max: WorkshopInvite::BATCH_MAX, required: true,
+              class: "mt-1 block min-h-touch w-28 rounded-xs border border-line bg-paper px-3" %>
+      </div>
+      <%= form.submit t(".new.submit"), class: "btn btn-primary" %>
+    <% end %>
+  </section>
+
+  <section aria-labelledby="sheets-title">
+    <div class="flex items-baseline justify-between gap-4 border-b border-line pb-3">
+      <h2 id="sheets-title" class="font-display text-xl font-bold uppercase"><%= t(".list.title") %></h2>
+      <span class="text-sm text-muted"><%= t(".list.available", count: @invites.count(&:usable?)) %></span>
+    </div>
+
+    <% if @invites.any? %>
+      <% @invites.group_by(&:batch).each do |batch, invites| %>
+        <div class="mt-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 class="label-rule"><%= t(".list.batch", batch: batch, date: l(invites.first.created_at.to_date, format: :long)) %></h3>
+            <% if invites.any?(&:usable?) %>
+              <%= link_to t(".list.print"), print_workshop_invites_path(batch: batch),
+                    class: "btn btn-secondary text-sm", target: "_blank", rel: "noopener" %>
+            <% end %>
+          </div>
+          <ul class="mt-2 divide-y divide-line border-y border-line">
+            <% invites.each do |invite| %>
+              <li class="flex flex-wrap items-center gap-4 py-2.5 text-sm">
+                <span class="w-24 flex-none whitespace-nowrap font-mono"><%= t("help.sheet.number", number: invite.number) %></span>
+                <span class="min-w-0 flex-1">
+                  <% if invite.used? %>
+                    <%= t(".list.used", name: invite.used_by&.full_name || t(".list.deleted_account"),
+                                        date: l(invite.used_at.to_date, format: :long)) %>
+                  <% elsif invite.revoked? %>
+                    <span class="text-muted"><%= t(".list.revoked") %></span>
+                  <% else %>
+                    <span class="text-success"><%= t(".list.free") %></span>
+                  <% end %>
+                </span>
+                <% if invite.usable? %>
+                  <%= button_to t(".list.revoke"), revoke_workshop_invite_path(invite),
+                        class: "underline underline-offset-4 hover:text-emulsion", form_class: "contents",
+                        data: { turbo_confirm: t(".list.revoke_confirm", number: invite.number) } %>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="panel mt-4 p-5"><p class="text-muted"><%= t(".list.none") %></p></div>
+    <% end %>
+  </section>
+</div>
