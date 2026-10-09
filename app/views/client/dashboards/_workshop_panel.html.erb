@@ -1,0 +1,42 @@
+<%# The client's workshop. Since 09/10/2026 an account creates only through one
+    that agreed to it, so a client still waiting — or with none — is told here,
+    first, rather than finding out at the creation screen. %>
+<section class="panel flex flex-wrap items-center justify-between gap-4 p-5" aria-labelledby="workshop-title">
+  <div class="min-w-0 flex-1 basis-72">
+    <h2 id="workshop-title" class="label-rule text-emulsion"><%= t(".title") %></h2>
+
+    <% if workshop %>
+      <p class="mt-1 font-display text-lg font-bold uppercase"><%= workshop.name %></p>
+      <%# Thirty days from admission (09/10/2026); the last week says how to stay. %>
+      <% if until_at <= 7.days.from_now %>
+        <p class="mt-2 border-l-2 border-warning bg-warning-bg px-3 py-2 text-sm text-warning">
+          <%= t(".ending_soon", date: l(until_at.to_date, format: :long)) %>
+        </p>
+      <% else %>
+        <p class="mt-1 text-sm text-muted"><%= t(".until", date: l(until_at.to_date, format: :long)) %></p>
+      <% end %>
+    <% elsif lapsed && !pending %>
+      <p class="mt-2 border-l-2 border-warning bg-warning-bg px-3 py-2 text-sm text-warning">
+        <%= t(".lapsed", name: lapsed.name) %>
+      </p>
+    <% else %>
+      <p class="mt-1 text-sm"><%= t(pending ? ".none_yet" : ".none") %></p>
+    <% end %>
+
+    <% if pending %>
+      <p class="mt-2 border-l-2 border-warning bg-warning-bg px-3 py-2 text-sm text-warning">
+        <%= t(".pending", name: pending.printer.name, date: l(pending.created_at.to_date, format: :long)) %>
+      </p>
+    <% end %>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <% if workshop %>
+      <%= link_to t("nav.create"), new_design_path, class: "btn btn-primary text-sm" %>
+    <% end %>
+    <% if lapsed && !pending %>
+      <%= link_to lapsed.name, workshop_link_path(slug: lapsed.slug), class: "btn btn-primary text-sm" %>
+    <% end %>
+    <%= link_to t(workshop ? ".change" : ".find"), printers_path, class: "btn btn-secondary text-sm" %>
+  </div>
+</section>

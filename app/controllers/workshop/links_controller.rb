@@ -43,6 +43,16 @@ module Workshop
       render layout: "poster"
     end
 
+    # A new code for the poster, the QR code and every named link: the old
+    # ones stop admitting anyone and lead to the shop's page, where a visitor
+    # can only ask. Printed posters have to be printed again.
+    def regenerate_code
+      authorize @printer, :update?
+
+      @printer.regenerate_invite_code!
+      redirect_to workshop_link_share_path, notice: t(".done")
+    end
+
     private
       def set_printer = @printer = current_printer
 
@@ -53,7 +63,7 @@ module Workshop
         redirect_to edit_workshop_profile_path, alert: t("workshop.links.show.no_listing")
       end
 
-      def share_url(source: nil) = workshop_link_url(slug: @printer.slug, s: source)
+      def share_url(source: nil) = workshop_invite_url(slug: @printer.slug, code: @printer.invite_code, s: source)
 
       # A channel that is not this shop's is a 404, not a fallback: a download
       # named after the wrong channel would be a QR code that counts elsewhere.

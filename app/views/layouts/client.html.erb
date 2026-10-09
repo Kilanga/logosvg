@@ -25,5 +25,9 @@
         label: t("nav.my_account"),
         path: client_account_path,
         current: current_page?(client_account_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.help"),
+        path: help_path,
+        current: false %>
 <% end %>
 <%= render template: "layouts/console" %>

@@ -1,0 +1,66 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-4xl space-y-10">
+  <%# What waits on the shop leads: until it answers, the client can do nothing. %>
+  <section aria-labelledby="pending-title">
+    <h2 id="pending-title" class="label-rule flex items-center gap-2.5 text-emulsion">
+      <%= registration_mark %><%= t(".pending.title") %>
+    </h2>
+    <p class="mt-2 text-sm text-muted"><%= t(".pending.body") %></p>
+
+    <% if @pending.any? %>
+      <ul class="mt-4 space-y-2">
+        <% @pending.each do |affiliation| %>
+          <li class="panel flex flex-wrap items-center gap-4 border-l-2 border-l-emulsion p-4">
+            <span class="min-w-0 flex-1 basis-60">
+              <span class="block font-medium"><%= affiliation.client.full_name %></span>
+              <span class="mt-0.5 block break-all text-sm text-muted">
+                <%= affiliation.client.email_address %><% if affiliation.client.city.present? %> · <%= affiliation.client.city %><% end %>
+              </span>
+              <span class="mt-0.5 block text-sm text-muted"><%= t(".pending.asked_on", date: l(affiliation.created_at.to_date, format: :long)) %></span>
+            </span>
+            <span class="flex gap-3">
+              <%= button_to t(".pending.decline"), decline_workshop_client_request_path(affiliation),
+                    class: "btn btn-secondary text-sm", form_class: "contents" %>
+              <%= button_to t(".pending.accept"), accept_workshop_client_request_path(affiliation),
+                    class: "btn btn-primary text-sm", form_class: "contents" %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="panel mt-4 p-5"><p class="text-muted"><%= t(".pending.none") %></p></div>
+    <% end %>
+  </section>
+
+  <section aria-labelledby="clients-title">
+    <div class="flex items-baseline justify-between gap-4 border-b border-line pb-3">
+      <h2 id="clients-title" class="font-display text-xl font-bold uppercase"><%= t(".clients.title") %></h2>
+      <span class="text-sm text-muted"><%= t(".clients.count", count: @clients.size) %></span>
+    </div>
+
+    <% if @clients.any? %>
+      <ul class="mt-4 divide-y divide-line border-y border-line">
+        <% @clients.each do |client| %>
+          <li class="flex flex-wrap items-center gap-4 py-3">
+            <span class="min-w-0 flex-1 basis-60">
+              <span class="block font-medium"><%= client.full_name %></span>
+              <span class="mt-0.5 block break-all text-sm text-muted">
+                <%= client.email_address %> · <%= t(".clients.until", date: l(client.workshop_until.to_date, format: :long)) %>
+              </span>
+            </span>
+            <%= button_to t(".clients.remove"), workshop_client_path(client), method: :delete,
+                  class: "text-sm underline underline-offset-4 hover:text-emulsion", form_class: "contents",
+                  data: { turbo_confirm: t(".clients.confirm", name: client.full_name) } %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="panel mt-4 p-5">
+        <p class="text-muted"><%= t(".clients.none") %></p>
+        <%= link_to t("nav.my_link"), workshop_link_share_path, class: "btn btn-secondary mt-4 text-sm" %>
+      </div>
+    <% end %>
+  </section>
+</div>

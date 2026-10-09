@@ -63,7 +63,7 @@ Quatre rôles connectés partagent un seul modèle `User` ; un utilisateur a exa
 | Rôle | Ce qu'il fait | Espace |
 | --- | --- | --- |
 | Visiteur | Consulte l'accueil, l'annuaire et les fiches ; doit créer un compte pour générer | Pages publiques |
-| Client | Crée des designs, demande une vérification, envoie des demandes d'impression, suit tout | `/mon-espace` |
+| Client | Rattaché à **un** atelier qui l'a accepté ; crée des designs, demande une vérification, envoie des demandes d'impression, suit tout | `/mon-espace` |
 | Imprimeur | S'abonne, remplit sa fiche, partage son lien et son QR code, reçoit et traite les demandes | `/atelier` |
 | Graphiste | Réalise les vérifications, dépose les versions, peut renvoyer une demande au client | `/studio` |
 | Admin | Valide imprimeurs et graphistes, gère litiges, remboursements, niveaux et liste de termes bloqués | `/admin` |
@@ -72,8 +72,10 @@ Quatre rôles connectés partagent un seul modèle `User` ; un utilisateur a exa
 
 ```mermaid
 flowchart LR
-  A[Lien de l'atelier<br/>ou QR code] --> C[Création du design]
-  B[Annuaire et carte] --> F[Fiche imprimeur] --> C
+  A[Lien de l'atelier avec son code<br/>ou QR code] --> L[Page de l'atelier] --> I[Compte admis d'office] --> C[Création du design]
+  B[Annuaire et carte] --> F[Fiche imprimeur] --> L
+  L --> Q[Demande à l'atelier] --> K{L'atelier accepte ?}
+  K -- oui --> C
   C --> V{Vérification ?}
   V -- oui --> R[Revue graphiste<br/>payée]
   R --> E[Demande d'impression]
@@ -82,7 +84,32 @@ flowchart LR
   M --> D[Devis de l'atelier<br/>hors plateforme]
 ```
 
-Un client arrivé par `/a/:slug` a l'atelier présélectionné pendant toute sa session. Il peut en changer depuis le bandeau de l'écran de création.
+Un client appartient à un atelier, et seulement avec son accord — voir « Rattachement d'un client à un atelier ». L'écran de création propose les techniques de cet atelier ; « changer d'atelier » mène à l'annuaire.
+
+### Rattachement d'un client à un atelier (décidé le 09/10/2026)
+
+**Pourquoi.** L'offre Référencement compte 100 générations par mois pour les clients d'un atelier. Si n'importe qui pouvait s'en déclarer client, un inconnu épuiserait ce forfait sans que l'atelier le sache. Un compte client n'existe donc qu'à travers un atelier, et seulement avec son accord. L'accueil `/` s'adresse aux ateliers ; la page d'accueil d'un client est celle de son atelier.
+
+**Deux portes.**
+
+- **Le code de l'atelier** — `/a/:slug/:code`, sur l'affiche, le QR code et les liens nommés. C'est l'accord donné d'avance : le compte créé pendant cette visite est admis d'office, et un client déjà inscrit qui scanne l'affiche d'un autre atelier passe chez lui. Le code est retiré de l'adresse aussitôt lu (redirection vers `/a/:slug`) et retenu **en session seulement**, jamais dans le cookie de 30 jours. Il est comparé sans tenir compte de la casse et en temps constant.
+- **La page de l'atelier sans le code** — `/a/:slug`, atteinte depuis l'annuaire ou un lien recopié. Le slug est public, donc il ne fait que **demander** : le compte est créé, une demande part à l'atelier par email, et le compte peut se connecter mais **ne génère rien** tant que l'atelier n'a pas accepté. Un client déjà rattaché peut demander à changer d'atelier de la même façon ; il reste chez le premier jusqu'à l'accord du second.
+
+**Trente jours.** Le rattachement dure `clients.attachment_days` (30 jours) à compter de l'admission, par le code comme par une demande acceptée (`users.workshop_until`). Rescanner le QR code de l'atelier, ou rouvrir son lien, relance les 30 jours. À l'échéance, le client ne génère plus et ne figure plus dans « Mes clients » ; il rescanne, ou adresse une nouvelle demande — au même atelier comme à un autre. Le tableau de bord du client affiche la date de fin, prévient la dernière semaine et, une fois le délai passé, renvoie vers la page de l'atelier. Ici comme ailleurs, « le lien de l'atelier » vaut aussi pour son QR code : c'est la même adresse.
+
+**Décision dans l'outil, pas dans l'email.** L'email prévient l'atelier et pointe vers « Mes clients » (`/atelier/clients`), où il accepte ou refuse, connecté. Un lien qui valide en un clic serait déclenché par les antivirus de messagerie qui ouvrent les liens tout seuls, ou par quiconque reçoit le mail transféré. Le client est prévenu par email de la réponse.
+
+**Ce que l'atelier peut faire d'autre.** Retirer un client de sa liste (il garde son compte et ses visuels, mais ne génère plus sur ce forfait), et **changer de code** si son lien a circulé au-delà de ses clients : l'ancien lien mène toujours à sa page, mais il faut alors demander. Les affiches déjà imprimées sont à réimprimer.
+
+**Règles.**
+
+- Une seule demande ouverte par client (index unique partiel) ; en adresser une autre remplace la première.
+- Le rôle client n'est proposé à l'inscription que si la visite connaît un atelier (code, page de l'atelier, ou cookie accepté) ; sans atelier, le formulaire renvoie vers l'annuaire. Un rôle inconnu, `admin` compris, est refusé plutôt que converti.
+- L'écran de création, le dépôt d'un visuel et `POST /designs` exigent un atelier référencé ; sinon retour au tableau de bord, qui dit où en est la demande.
+- Une reprise (variantes, retouche) n'est possible que sur un design fait pour l'atelier **actuel** du client : un atelier quitté ne paie plus les reprises de ses anciens clients.
+- Les générations comptent toujours sur l'atelier porté par le design, lui-même pris sur le compte au moment de la création.
+
+**Mise en place.** Tous les comptes clients créés avant cette décision étaient des comptes de test : `bin/rails clients:purge_unattached` les liste, `CONFIRM=1` les supprime avec leurs designs, demandes et vérifications. Un client en attente de réponse est conservé. La tâche est à lancer une fois, pas à planifier : le jour où de vrais clients existent, un compte sans atelier est un client qu'un atelier a laissé partir.
 
 ### Espace client
 
@@ -96,7 +123,7 @@ Un client arrivé par `/a/:slug` a l'atelier présélectionné pendant toute sa 
 
 1. Inscription, puis abonnement via Stripe Checkout.
 2. Remplissage de la fiche ; publication après validation par l'admin.
-3. Partage du lien `/a/:slug`, du QR code et de l'affiche comptoir.
+3. Partage du lien `/a/:slug/:code`, du QR code et de l'affiche comptoir ; réponse aux demandes des clients venus de l'annuaire dans « Mes clients ».
 4. Réception des demandes par email ; confirmation de réception par lien, puis mise à jour du statut depuis l'email ou l'espace atelier.
 
 ### Parcours graphiste
@@ -214,8 +241,9 @@ flowchart LR
 
 | Modèle | Champs principaux | Règles |
 | --- | --- | --- |
-| `User` | email, password\_digest, first\_name, last\_name, phone, city, role (client, printer, designer, admin), terms\_accepted\_at, deleted\_at | Email unique ; suppression douce puis purge |
-| `Printer` | user\_id, name, slug, description, address, postal\_code, city, latitude, longitude, orders\_email, phone, website, opening\_hours, response\_time\_hours, min\_order\_qty, standard\_lead\_days, express\_available, express\_lead\_hours, ships, shipping\_zones, shipping\_lead, shipping\_price\_note, pickup, provides\_textile, accepts\_client\_textile, textile\_brands, textile\_label (none, gots, oeko\_tex), placements (tableau), max\_print\_width\_cm, max\_print\_height\_cm, price\_note, brand\_color, status (draft, pending\_review, published, suspended), featured ; pièces jointes logo et photos | Slug unique ; géocodé à chaque changement d'adresse ; visible si `published` et abonnement actif |
+| `User` | email, password\_digest, first\_name, last\_name, phone, city, role (client, printer, designer, admin), **workshop\_id** et **workshop\_until** (l'atelier d'un client et la fin de son rattachement), terms\_accepted\_at, deleted\_at | Email unique ; suppression douce puis purge ; un client sans atelier, ou dont le rattachement est échu, ne génère rien |
+| `ClientAffiliation` | client\_id, printer\_id, status (pending, accepted, declined, cancelled), source (invitation, request), decided\_at | Historique des rattachements et file des demandes ; une seule demande ouverte par client |
+| `Printer` | user\_id, name, slug, **invite\_code** (secret de l'affiche, régénérable), description, address, postal\_code, city, latitude, longitude, orders\_email, phone, website, opening\_hours, response\_time\_hours, min\_order\_qty, standard\_lead\_days, express\_available, express\_lead\_hours, ships, shipping\_zones, shipping\_lead, shipping\_price\_note, pickup, provides\_textile, accepts\_client\_textile, textile\_brands, textile\_label (none, gots, oeko\_tex), placements (tableau), max\_print\_width\_cm, max\_print\_height\_cm, price\_note, brand\_color, status (draft, pending\_review, published, suspended), featured ; pièces jointes logo et photos | Slug unique ; géocodé à chaque changement d'adresse ; visible si `published` et abonnement actif |
 | `PrinterTechnique` | printer\_id, technique (clé du catalogue), **label**, **output\_format** (svg, png, pdf), **color\_space** (rgb, cmyk), max\_colors, primary, max\_print\_width\_cm, max\_print\_height\_cm, note | Une ligne par technique pratiquée ; `technique` est une clé du catalogue, jamais une liste recopiée dans Rails ; `label` vide retombe sur le libellé du catalogue ; `max_colors` requis et borné par le plafond de la technique pour celles à encres comptées, **interdit** pour les autres ; une seule ligne `primary` par atelier, garantie par un index unique partiel autant que par une validation ; les dimensions vides retombent sur celles de la fiche |
 | `Subscription` | printer\_id, plan (listing, atelier\_plus), status (incomplete, trialing, active, past\_due, canceled), stripe\_customer\_id, stripe\_subscription\_id, current\_period\_end | Mise à jour uniquement par les webhooks Stripe |
 | `Design` | user\_id, printer\_id (contexte, facultatif), parent\_id (variante), prompt, style (illustration, logo, mascotte, badge), **technique**, **print\_format** (svg, png), **print\_width\_cm**, colors\_requested, remove\_background, seed, status, generator\_job\_id, error\_message, inks\_count, palette (jsonb), paths\_count, warnings (jsonb), prompt\_used, subject, root\_id, mode (create, variant, refine), instruction, refinements\_left, deleted\_at ; pièces jointes **print\_file** et source\_png | `technique` obligatoire, figée à la création et héritée par toute la lignée ; `print_format` en découle et dit si `print_file` est un SVG ou un PNG ; `colors_requested` borné par le plafond de la technique **puis** par celui de l'atelier ; `paths_count` et `inks_count` ne sont renseignés qu'en sortie vectorielle ; `parent_id` et `root_id` forment la lignée, indexés tous les deux |
@@ -358,7 +386,10 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 | Route | Écran | Accès |
 | --- | --- | --- |
 | `GET /` | Accueil imprimeurs : avant/après pixel et vecteur, fonctionnement, exemple d'email, abonnements, appel aux graphistes | Tous |
-| `GET /a/:slug` | Enregistre l'atelier en session et redirige vers la création | Tous |
+| `GET /a/:slug` | Page de l'atelier pour ses clients : présentation, fonctionnement, techniques ; créer un compte, se connecter, rejoindre ou demander à rejoindre | Tous |
+| `GET /a/:slug/:code` | Retient l'invitation en session, retire le code de l'adresse ; un client connecté passe chez cet atelier et va à la création | Tous |
+| `POST /a/:slug/rejoindre` | Demande à l'atelier (ou admission, si le code est dans la visite) | Client |
+| `GET /aide` | Questions fréquentes des clients ; chiffres lus dans `config/settings.yml` | Tous |
 | `GET /imprimeurs` | Annuaire : filtres à gauche — **technique d'impression en tête**, puis rayon, textile, délai, livraison — liste au centre, carte à droite ; les ateliers qui livrent partout en France restent visibles hors rayon | Tous |
 | `GET /imprimeurs/:slug` | Fiche : présentation, badges, photos, caractéristiques par groupe, carte, contact, compatibilité avec le dernier design | Tous |
 | `GET /graphistes`, `GET /graphistes/:id` | Liste avec filtres et carte facultative ; profil avec portfolio et avis | Tous |
@@ -377,6 +408,8 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 
 | Route | Écran | Accès |
 | --- | --- | --- |
+| `GET /atelier/aide` | Aide de l'atelier : fonctionnement du site en six étapes, questions fréquentes, accès à la fiche client | Imprimeur |
+| `GET /atelier/aide/fiche-client` | Fiche A4 à remettre aux clients : QR code de l'atelier avec son code, étapes du parcours, bon à savoir ; mise en page de l'affiche | Imprimeur |
 | `GET /demandes/confirmation/:token`, `POST` | Page de confirmation de réception, sans connexion | Porteur du lien |
 | `GET /atelier` | Tableau de bord : lien client et QR code, dernières demandes, chiffres du mois, abonnement, fiche à compléter | Imprimeur |
 | `GET /atelier/demandes`, `PATCH /atelier/demandes/:id` | Liste filtrable et changement de statut | Imprimeur |

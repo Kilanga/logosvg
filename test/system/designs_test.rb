@@ -20,7 +20,7 @@ class DesignsTest < ApplicationSystemTestCase
     })
 
     sign_in users(:client)
-    visit workshop_link_path(slug: printers(:rennes).slug)
+    visit workshop_invite_path(slug: printers(:rennes).slug, code: printers(:rennes).invite_code)
 
     # The shop's link narrows what is on offer to what it actually does.
     assert_text shown(printers(:rennes).name)
@@ -83,7 +83,8 @@ class DesignsTest < ApplicationSystemTestCase
     stub_request(:get, %r{/jobs/job-up/source\.png}).to_return(body: png)
 
     sign_in users(:client)
-    visit new_design_path
+    # Presse Rhône does DTF; its poster moves the client there.
+    visit workshop_invite_path(slug: printers(:lyon).slug, code: printers(:lyon).invite_code)
     click_on I18n.t("client.designs.new.upload_link")
     # The visit has landed: a file attached to the page Turbo is replacing is lost.
     assert_selector "h1", text: displayed("client.uploads.new.heading")
@@ -122,7 +123,7 @@ class DesignsTest < ApplicationSystemTestCase
     })
 
     sign_in users(:client)
-    visit workshop_link_path(slug: printers(:lyon).slug)
+    visit workshop_invite_path(slug: printers(:lyon).slug, code: printers(:lyon).invite_code)
 
     assert_text displayed("designs.family_hint.raster")
 
@@ -204,7 +205,7 @@ class DesignsTest < ApplicationSystemTestCase
   # screen must not give the wrong reason.
   test "the size explanation follows the technique" do
     sign_in users(:client)
-    visit workshop_link_path(slug: printers(:nantes).slug)
+    visit workshop_invite_path(slug: printers(:nantes).slug, code: printers(:nantes).invite_code)
 
     choose "design_technique_sublimation", allow_label_click: true
 

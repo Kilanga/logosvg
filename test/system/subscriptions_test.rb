@@ -57,7 +57,7 @@ class SubscriptionsTest < ApplicationSystemTestCase
     click_on I18n.t("nav.my_link")
 
     # The address sits in a readonly field, so it is a value and not text.
-    assert_field with: workshop_link_url(slug: printers(:rennes).slug)
+    assert_field with: workshop_invite_url(slug: printers(:rennes).slug, code: printers(:rennes).invite_code)
     assert_selector "svg"
 
     click_on I18n.t("workshop.links.show.poster")

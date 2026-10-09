@@ -25,6 +25,13 @@ class User < ApplicationRecord
   # Same for a designer.
   has_one :designer_profile, dependent: :destroy
 
+  # A client's workshop: the shop whose link brought them in, or that accepted
+  # their request. Nil until then — the account signs in but creates nothing.
+  # See docs/SPEC.md, "Rattachement d'un client à un atelier".
+  belongs_to :workshop, class_name: "Printer", optional: true, inverse_of: :clients
+  has_many :client_affiliations, foreign_key: :client_id, dependent: :delete_all,
+           inverse_of: :client
+
   has_many :designs, dependent: :destroy
   # A client's own orders. Never destroyed with the account: the workshop has a
   # job in hand, and `client_id` is NOT NULL. Closing an account anonymises
@@ -50,6 +57,30 @@ class User < ApplicationRecord
   def active? = deleted_at.nil?
 
   def full_name = [ first_name, last_name ].compact_blank.join(" ")
+
+  # A client may create only while a workshop has them — for
+  # `clients.attachment_days` from their admission (decided on 09/10/2026),
+  # after which they scan the shop's link or QR code again, or ask again.
+  def self.attachment_period = Rails.application.config.tshirt.clients.fetch(:attachment_days).days
+
+  scope :attached_to, ->(printer) { where(workshop_id: printer).where("workshop_until > ?", Time.current) }
+
+  def attached_to_workshop? = workshop_id.present? && workshop_until.present? && workshop_until.future?
+
+  # The shop this client creates for today; nil once the period has run out.
+  def active_workshop_id = (workshop_id if attached_to_workshop?)
+
+  # Admitted, or admitted again: the period starts over from now. Takes the
+  # shop or its id — the id is all it needs, and a record reached through an
+  # association nobody preloaded would raise under strict loading.
+  def attach_to!(printer)
+    update!(workshop_id: printer.is_a?(Printer) ? printer.id : printer,
+            workshop_until: User.attachment_period.from_now)
+  end
+
+  def detach_from_workshop!
+    update!(workshop_id: nil, workshop_until: nil)
+  end
 
   # Marks the account as gone without destroying it: invoices and print requests
   # still reference it until the purge task runs.

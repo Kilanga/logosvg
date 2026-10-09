@@ -3,6 +3,8 @@
 <% digest = BCrypt::Password.create("motdepasse-test", cost: 4) %>
 
 client:
+  workshop: rennes
+  workshop_until: <%= 20.days.from_now.to_fs(:db) %>
   email_address: claire@example.invalid
   password_digest: <%= digest %>
   first_name: Claire

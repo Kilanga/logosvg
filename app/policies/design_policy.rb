@@ -4,7 +4,9 @@ class DesignPolicy < ApplicationPolicy
   # that a leaked link is the only way anyone else could try.
   def show? = owner?
 
-  def create? = user&.client?
+  # A client creates only once a workshop has them. See docs/SPEC.md,
+  # "Rattachement d'un client à un atelier".
+  def create? = user&.client? && user.attached_to_workshop?
   def new? = create?
 
   # Their own list. The scope is what narrows it; this only says who has one.

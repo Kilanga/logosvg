@@ -22,6 +22,12 @@ class Printer < ApplicationRecord
   has_many :print_requests, dependent: :restrict_with_error, inverse_of: :printer
 
   has_one :subscription, dependent: :destroy
+
+  # The clients this shop has admitted, and the requests waiting on it.
+  # See docs/SPEC.md, "Rattachement d'un client à un atelier".
+  has_many :clients, class_name: "User", foreign_key: :workshop_id,
+           dependent: :nullify, inverse_of: :workshop
+  has_many :client_affiliations, dependent: :delete_all, inverse_of: :printer
   has_many :link_visits, class_name: "WorkshopLinkVisit", dependent: :delete_all,
            inverse_of: :printer
   has_many :link_channels, -> { order(:created_at, :id) }, class_name: "WorkshopLinkChannel",
@@ -31,6 +37,7 @@ class Printer < ApplicationRecord
   has_many_attached :photos
 
   before_validation :assign_slug, on: :create
+  before_validation :assign_invite_code, on: :create
 
   # Geocoded on every address change, from a background job: the form must not
   # wait on a third party, and a shop that moves must not keep its old pin.
@@ -42,6 +49,7 @@ class Printer < ApplicationRecord
   normalizes :website, with: ->(w) { w.strip.presence }
 
   validates :name, presence: true, length: { maximum: 120 }
+  validates :invite_code, presence: true, uniqueness: true
   validates :slug, presence: true, uniqueness: true,
                    format: { with: /\A[a-z0-9-]+\z/ }
   validates :orders_email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
@@ -194,7 +202,25 @@ class Printer < ApplicationRecord
 
   def technique_keys = live_techniques.map(&:technique)
 
+  # A poster that leaked, or a former employee who kept the link: a new code
+  # stops the old one from admitting anyone. It still leads to the shop's page,
+  # where a visitor can only ask.
+  def regenerate_invite_code!
+    update!(invite_code: self.class.new_invite_code)
+  end
+
+  # Compared in constant time: the code is a credential, however small.
+  def invite_code_matches?(candidate)
+    candidate.present? && ActiveSupport::SecurityUtils.secure_compare(invite_code.to_s, candidate.to_s.downcase)
+  end
+
+  def self.new_invite_code = SecureRandom.alphanumeric(10).downcase
+
   private
+    def assign_invite_code
+      self.invite_code ||= self.class.new_invite_code
+    end
+
     def leaving_draft? = !draft?
 
     # The rows that will still exist once the form is saved: a technique the

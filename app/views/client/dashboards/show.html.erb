@@ -2,6 +2,9 @@
 <% content_for :heading, t(".heading", name: Current.user.first_name) %>
 
 <div class="max-w-5xl space-y-10">
+  <%= render "workshop_panel", workshop: @workshop, until_at: @workshop_until,
+                               lapsed: @lapsed_workshop, pending: @pending_affiliation %>
+
   <%# What is waiting on the client leads. Anything else on this page is
       history, and history can wait. %>
   <section>
@@ -55,7 +58,9 @@
       <% else %>
         <div class="panel mt-4 p-6 text-center">
           <p class="text-muted"><%= t(".no_design") %></p>
-          <%= link_to t("nav.create"), new_design_path, class: "btn btn-primary mt-4" %>
+          <% if Current.user.attached_to_workshop? %>
+            <%= link_to t("nav.create"), new_design_path, class: "btn btn-primary mt-4" %>
+          <% end %>
         </div>
       <% end %>
     </section>

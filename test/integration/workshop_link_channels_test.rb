@@ -44,11 +44,12 @@ class WorkshopLinkChannelsTest < ActionDispatch::IntegrationTest
     assert_equal({ "link" => 1 }, sources(@lyon))
   end
 
-  test "the visitor is sent to the creation screen whatever the source" do
-    get workshop_link_path(slug: @lyon.slug, s: "qr"), headers: BROWSER
+  test "the visitor lands on the shop's page whatever the source" do
+    get workshop_invite_path(slug: @lyon.slug, code: @lyon.invite_code, s: "qr"), headers: BROWSER
 
-    assert_redirected_to new_design_path
+    assert_redirected_to workshop_link_path(slug: @lyon.slug)
     assert_equal @lyon.id, session[:printer_id]
+    assert_equal({ "qr" => 1 }, sources(@lyon))
   end
 
   # --- What the QR codes encode -----------------------------------------------------
@@ -60,8 +61,8 @@ class WorkshopLinkChannelsTest < ActionDispatch::IntegrationTest
 
     get workshop_link_poster_path
 
-    assert_includes response.body, WorkshopQrCode.svg(workshop_link_url(slug: @lyon.slug, s: "qr"), size: 320)
-    assert_not_includes response.body, WorkshopQrCode.svg(workshop_link_url(slug: @lyon.slug), size: 320)
+    assert_includes response.body, WorkshopQrCode.svg(workshop_invite_url(slug: @lyon.slug, code: @lyon.invite_code, s: "qr"), size: 320)
+    assert_not_includes response.body, WorkshopQrCode.svg(workshop_invite_url(slug: @lyon.slug, code: @lyon.invite_code), size: 320)
   end
 
   test "the downloadable qr code carries the qr source" do
@@ -69,7 +70,7 @@ class WorkshopLinkChannelsTest < ActionDispatch::IntegrationTest
 
     get workshop_link_qr_path(format: :svg)
 
-    assert_equal WorkshopQrCode.svg(workshop_link_url(slug: @lyon.slug, s: "qr")), response.body
+    assert_equal WorkshopQrCode.svg(workshop_invite_url(slug: @lyon.slug, code: @lyon.invite_code, s: "qr")), response.body
   end
 
   test "a named link's qr code carries its own key" do
@@ -78,7 +79,7 @@ class WorkshopLinkChannelsTest < ActionDispatch::IntegrationTest
 
     get workshop_link_qr_path(format: :svg, canal: channel.key)
 
-    assert_equal WorkshopQrCode.svg(workshop_link_url(slug: @lyon.slug, s: "flyer")), response.body
+    assert_equal WorkshopQrCode.svg(workshop_invite_url(slug: @lyon.slug, code: @lyon.invite_code, s: "flyer")), response.body
     assert_match(/flyer/, response.headers["Content-Disposition"])
   end
 
@@ -102,7 +103,7 @@ class WorkshopLinkChannelsTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to workshop_link_share_path
     follow_redirect!
-    assert_select "input[value=?]", workshop_link_url(slug: @lyon.slug, s: "salon-de-rennes")
+    assert_select "input[value=?]", workshop_invite_url(slug: @lyon.slug, code: @lyon.invite_code, s: "salon-de-rennes")
     assert_select "a[href=?]", workshop_link_qr_path(format: :svg, canal: "salon-de-rennes")
   end
 

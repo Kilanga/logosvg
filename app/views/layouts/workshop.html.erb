@@ -10,6 +10,10 @@
         path: workshop_print_requests_path,
         current: current_page?(workshop_print_requests_path) %>
   <%= render "layouts/space_link",
+        label: t("nav.my_clients"),
+        path: workshop_clients_path,
+        current: current_page?(workshop_clients_path) %>
+  <%= render "layouts/space_link",
         label: t("nav.my_listing"),
         path: edit_workshop_profile_path,
         current: current_page?(edit_workshop_profile_path) %>
@@ -21,5 +25,9 @@
         label: t("nav.subscription"),
         path: workshop_subscription_path,
         current: current_page?(workshop_subscription_path) %>
+  <%= render "layouts/space_link",
+        label: t("nav.help"),
+        path: workshop_help_path,
+        current: current_page?(workshop_help_path) %>
 <% end %>
 <%= render template: "layouts/console" %>

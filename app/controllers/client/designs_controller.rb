@@ -5,6 +5,9 @@ module Client
   # the output file — see docs/SPEC.md, "Techniques d'impression".
   class DesignsController < BaseController
     before_action :set_design, only: %i[ show image original_image garment_image reference_image variants refine choose destroy ]
+    # A client creates through their workshop, and only once it has them —
+    # see docs/SPEC.md, "Rattachement d'un client à un atelier".
+    before_action :require_workshop, only: %i[ new create ]
 
     rate_limit to: 10, within: 1.minute, only: %i[ create variants refine ],
                with: -> { redirect_to new_design_path, alert: t("flash.rate_limited") }
@@ -182,6 +185,13 @@ module Client
           return redirect_to design_path(@design), alert: t("client.designs.take_it_further.blocked")
         end
 
+        # Every reprise counts against the shop the design was made for. Once
+        # the client has left that shop — or it has let them go — it no longer
+        # pays for their reprises: a new design, with the new shop, does.
+        unless reprise_allowed?
+          return redirect_to design_path(@design), alert: t("client.designs.take_it_further.other_workshop")
+        end
+
         if @design.refinements_remaining.zero?
           return redirect_to design_path(@design), alert: t(".budget_exhausted")
         end
@@ -222,13 +232,30 @@ module Client
         redirect_to design_path(@design), alert: t("designs.errors.unavailable")
       end
 
-      # The shop in context comes from /a/:slug and lasts the whole session — or
-      # thirty days, for a visitor who agreed to the cookie that remembers it.
+      # The client's workshop, from the account rather than from the visit:
+      # since 09/10/2026 a client belongs to one shop, which agreed to it.
+      # Nil while the shop has not, or once it is no longer listed.
       def context_printer
+        return @context_printer if defined?(@context_printer)
+
         # Avec ses techniques et son abonnement : `technique_keys` lit les
         # premières, `listed?` le second, et les deux sont lus dès le formulaire.
-        @context_printer ||= Printer.listed.includes(:techniques, :subscription)
-                                    .find_by(id: shop_context.printer_id)
+        @context_printer = (Printer.listed.includes(:techniques, :subscription)
+                                   .find_by(id: Current.user.active_workshop_id) if Current.user&.active_workshop_id)
+      end
+
+      # Without a listed shop there is nothing to create for: the dashboard says
+      # why — a request still waiting, or a shop to find.
+      def require_workshop
+        return unless Current.user&.client?
+        return if context_printer
+
+        redirect_to client_dashboard_path, alert: t("client.designs.workshop_required")
+      end
+
+      def reprise_allowed?
+        Current.user.attached_to_workshop? &&
+          (@design.printer_id.nil? || @design.printer_id == Current.user.active_workshop_id)
       end
 
       # A shop in context narrows the choice to what it actually does; without

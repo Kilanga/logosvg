@@ -1,0 +1,8 @@
+<%= t("mailers.affiliation.requested.eyebrow") %>
+
+<%= t("mailers.affiliation.requested.heading") %>
+
+<%= t("mailers.affiliation.requested.body", client: @client.full_name, email: @client.email_address, name: @printer.name) %>
+
+<%= t("mailers.affiliation.requested.action") %> :
+<%= workshop_clients_url %>
