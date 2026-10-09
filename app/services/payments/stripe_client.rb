@@ -69,21 +69,23 @@ module Payments
         default_tax_rates: ([ self.class.tax_rate ] if self.class.tax_rate.present?)
       }.compact.presence
 
+      params = {
+        mode: "subscription",
+        line_items: [ { price: price, quantity: 1 } ],
+        customer: customer,
+        customer_email: (customer_email if customer.blank?),
+        # Our own printer id, handed back on the first webhook. Without it a
+        # brand-new subscription arrives with a customer we have never seen.
+        client_reference_id: client_reference_id,
+        subscription_data: subscription_data,
+        # Workshops are businesses: their VAT number goes on the invoice.
+        tax_id_collection: { enabled: true },
+        success_url: success_url,
+        cancel_url: cancel_url
+      }.compact
+
       request(idempotency_key) do
-        @stripe.v1.checkout.sessions.create({
-          mode: "subscription",
-          line_items: [ { price: price, quantity: 1 } ],
-          customer: customer,
-          customer_email: (customer_email if customer.blank?),
-          # Our own printer id, handed back on the first webhook. Without it a
-          # brand-new subscription arrives with a customer we have never seen.
-          client_reference_id: client_reference_id,
-          subscription_data: subscription_data,
-          # Workshops are businesses: their VAT number goes on the invoice.
-          tax_id_collection: { enabled: true },
-          success_url: success_url,
-          cancel_url: cancel_url
-        }.compact, { idempotency_key: idempotency_key })
+        @stripe.v1.checkout.sessions.create(params, { idempotency_key: session_key(idempotency_key, params) })
       end
     end
 
@@ -110,23 +112,25 @@ module Payments
     def create_payment_session(amount_cents:, product_name:, client_email:,
                                success_url:, cancel_url:, client_reference_id:,
                                metadata: {}, idempotency_key:)
+      params = {
+        mode: "payment",
+        line_items: [ {
+          quantity: 1,
+          price_data: {
+            currency: "eur",
+            unit_amount: amount_cents,
+            product_data: { name: product_name }
+          }
+        } ],
+        customer_email: client_email,
+        client_reference_id: client_reference_id,
+        metadata: metadata,
+        success_url: success_url,
+        cancel_url: cancel_url
+      }
+
       request(idempotency_key) do
-        @stripe.v1.checkout.sessions.create({
-          mode: "payment",
-          line_items: [ {
-            quantity: 1,
-            price_data: {
-              currency: "eur",
-              unit_amount: amount_cents,
-              product_data: { name: product_name }
-            }
-          } ],
-          customer_email: client_email,
-          client_reference_id: client_reference_id,
-          metadata: metadata,
-          success_url: success_url,
-          cancel_url: cancel_url
-        }, { idempotency_key: idempotency_key })
+        @stripe.v1.checkout.sessions.create(params, { idempotency_key: session_key(idempotency_key, params) })
       end
     end
 
@@ -210,6 +214,16 @@ module Payments
     end
 
     private
+      # A Checkout session's key is the caller's key plus the request itself.
+      # Stripe refuses a key reused with other parameters, for a day: on
+      # 09/10/2026 a shop that had opened Checkout the day before could not
+      # open it again once the VAT rate was added, and saw only "unavailable".
+      # A double click still reaches the same session; a changed price, rate,
+      # trial or address opens a new one.
+      def session_key(key, params)
+        "#{key}-#{Digest::SHA256.hexdigest(params.to_json).first(16)}"
+      end
+
       def request(_idempotency_key)
         yield
       rescue Stripe::StripeError => e
