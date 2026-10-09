@@ -44,8 +44,8 @@ class StrictLoadingTest < ActionDispatch::IntegrationTest
     client: %i[client_dashboard client_designs client_print_requests client_reviews client_account],
     printer: %i[workshop_dashboard workshop_print_requests workshop_link_share
                 edit_workshop_profile workshop_subscription workshop_clients
-                workshop_help workshop_invites],
-    designer: %i[designer_dashboard designer_reviews edit_designer_profile designer_payouts],
+                workshop_help workshop_invites workshop_reviews],
+    designer: %i[designer_dashboard designer_reviews edit_designer_profile designer_payouts designer_help],
     admin: %i[admin_dashboard admin_printers admin_designers admin_reviews admin_levels
               admin_blocked_terms admin_status]
   }.each do |role, routes|

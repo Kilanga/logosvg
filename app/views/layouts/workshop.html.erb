@@ -10,6 +10,10 @@
         path: workshop_print_requests_path,
         current: current_page?(workshop_print_requests_path) %>
   <%= render "layouts/space_link",
+        label: t("nav.reviews"),
+        path: workshop_reviews_path,
+        current: current_page?(workshop_reviews_path) %>
+  <%= render "layouts/space_link",
         label: t("nav.my_clients"),
         path: workshop_clients_path,
         current: current_page?(workshop_clients_path) %>

@@ -37,7 +37,8 @@ class SendPrintRequestTest < ActiveSupport::TestCase
     SendPrintRequest.call(print_request: request)
     blob_id = request.final_file.blob.id
 
-    @design.print_file.purge
+    # ActiveStorage walks to the blob's variants on its own: not ours to preload.
+    without_strict_loading { Design.find(@design.id).print_file.purge }
 
     assert_predicate request.reload.final_file, :attached?
     assert_equal blob_id, request.final_file.blob.id

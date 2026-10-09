@@ -2,7 +2,7 @@
 <% content_for :heading, t(".heading", name: Current.user.first_name) %>
 
 <div class="max-w-5xl space-y-10">
-  <%= render "workshop_panel", workshop: @workshop, until_at: @workshop_until,
+  <%= render "workshop_panel", workshop: @workshop, until_at: @workshop_until, suspended: @workshop_suspended,
                                lapsed: @lapsed_workshop, pending: @pending_affiliation %>
 
   <%# What is waiting on the client leads. Anything else on this page is

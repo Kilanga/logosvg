@@ -33,7 +33,7 @@ module Designer
       # A designer who has never filled anything in still gets a form.
       def set_profile
         @profile = current_designer_profile ||
-                   Current.user.build_designer_profile(display_name: Current.user.full_name)
+                   DesignerProfile.new(user: Current.user, display_name: Current.user.full_name)
       end
 
       # The levels arrive as a set of checkboxes, so the whole set is rewritten

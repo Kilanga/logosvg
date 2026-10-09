@@ -1,0 +1,58 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-4xl space-y-6">
+  <%# Decided on 09/10/2026: one designer the shop recommends, shown first to
+      its clients when they ask for a review. %>
+  <section class="panel p-6" aria-labelledby="recommended-title">
+    <h2 id="recommended-title" class="font-display text-lg font-bold uppercase"><%= t(".recommend.title") %></h2>
+    <p class="mt-2 text-sm text-muted"><%= t(".recommend.body") %></p>
+
+    <% if @designers.any? %>
+      <%= form_with url: workshop_recommended_designer_path, method: :patch,
+                    class: "mt-5 flex flex-wrap items-end gap-3" do |form| %>
+        <div class="min-w-0 flex-1 basis-64">
+          <%= form.label :designer_profile_id, t(".recommend.label"), class: "label-rule" %>
+          <%= form.select :designer_profile_id,
+                options_for_select(@designers.map { |d| [ [ d.display_name, d.city ].compact_blank.join(" — "), d.id ] },
+                                   @printer.recommended_designer_profile_id),
+                { include_blank: t(".recommend.none") },
+                class: "mt-1 block min-h-touch w-full rounded-xs border border-line bg-paper px-3" %>
+        </div>
+        <%= form.submit t(".recommend.submit"), class: "btn btn-primary" %>
+      <% end %>
+      <p class="mt-3 text-sm">
+        <%= link_to t(".recommend.directory"), designers_path, class: "underline underline-offset-4 hover:text-emulsion" %>
+      </p>
+    <% else %>
+      <p class="mt-4 text-sm"><%= t(".recommend.no_designers") %></p>
+    <% end %>
+  </section>
+
+  <p class="text-muted"><%= t(".lead") %></p>
+
+  <% if @reviews.any? %>
+    <ul class="divide-y divide-line border-y border-line">
+      <% @reviews.each do |review| %>
+        <li class="flex flex-wrap items-start gap-4 py-4">
+          <span class="min-w-0 flex-1 basis-72">
+            <span class="block font-medium"><%= review.design.prompt.presence || t(".untitled") %></span>
+            <span class="mt-0.5 block text-sm text-muted">
+              <%= review.client.full_name %> · <%= review.review_level.name %> ·
+              <%= review.designer_profile&.display_name || t(".unassigned") %>
+            </span>
+            <% if (change = review.brief.to_h["change"]).present? %>
+              <span class="mt-1 block text-sm"><%= t(".asked", text: change.truncate(160)) %></span>
+            <% end %>
+          </span>
+          <span class="flex-none text-right">
+            <span class="pill border border-line text-muted"><%= t("enums.review.status.#{review.status}") %></span>
+            <span class="mt-1 block text-xs text-muted"><%= l(review.created_at.to_date, format: :long) %></span>
+          </span>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="panel p-5"><p class="text-muted"><%= t(".none") %></p></div>
+  <% end %>
+</div>

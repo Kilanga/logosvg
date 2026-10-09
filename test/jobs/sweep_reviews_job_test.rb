@@ -124,4 +124,44 @@ class SweepReviewsJobTest < ActiveJob::TestCase
 
     assert_emails(0) { SweepReviewsJob.perform_now; perform_enqueued_jobs }
   end
+
+  # --- Nobody took it (09/10/2026) -------------------------------------------
+
+  test "a paid review nobody took in 48 hours is called off and refunded in full" do
+    ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
+    stub_request(:post, %r{/v1/refunds}).to_return(status: 200, body: { id: "re_1", status: "succeeded" }.to_json)
+    review = reviews(:queued)
+    review.update_column(:queued_at, 49.hours.ago)
+
+    assert_enqueued_email_with ReviewMailer, :unclaimed, args: [ review ] do
+      SweepReviewsJob.perform_now
+    end
+
+    assert_predicate review.reload, :canceled?
+    assert_equal review.price_cents, review.refunded_cents
+  ensure
+    ENV.delete("STRIPE_SECRET_KEY")
+  end
+
+  test "a review queued yesterday is left to the designers" do
+    review = reviews(:queued)
+    review.update_column(:queued_at, 20.hours.ago)
+
+    SweepReviewsJob.perform_now
+
+    assert_predicate review.reload, :queued?
+  end
+
+  test "a refund that fails leaves the review in the queue, to be tried again" do
+    ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
+    stub_request(:post, %r{/v1/refunds}).to_return(status: 500, body: "{}")
+    review = reviews(:queued)
+    review.update_column(:queued_at, 49.hours.ago)
+
+    SweepReviewsJob.perform_now
+
+    assert_predicate review.reload, :queued?
+  ensure
+    ENV.delete("STRIPE_SECRET_KEY")
+  end
 end

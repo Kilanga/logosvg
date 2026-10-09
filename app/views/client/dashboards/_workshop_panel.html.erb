@@ -8,7 +8,9 @@
     <% if workshop %>
       <p class="mt-1 font-display text-lg font-bold uppercase"><%= workshop.name %></p>
       <%# Thirty days from admission (09/10/2026); the last week says how to stay. %>
-      <% if until_at <= 7.days.from_now %>
+      <% if suspended %>
+        <p class="mt-1 text-sm text-muted"><%= t(".suspended") %></p>
+      <% elsif until_at <= 7.days.from_now %>
         <p class="mt-2 border-l-2 border-warning bg-warning-bg px-3 py-2 text-sm text-warning">
           <%= t(".ending_soon", date: l(until_at.to_date, format: :long)) %>
         </p>

@@ -26,7 +26,7 @@ class DesignsTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to design_path(design)
     assert_predicate design, :pending?
-    assert_equal users(:client), design.user
+    assert_equal users(:client).id, design.user_id
   end
 
   # Decided in October 2026: every click draws three proposals, each with its
@@ -182,7 +182,7 @@ class DesignsTest < ActionDispatch::IntegrationTest
 
     assert_equal 4, design.colors_requested, "Rennes prints four screens"
     assert_equal 30, design.print_width_cm
-    assert_equal printers(:rennes), design.printer
+    assert_equal printers(:rennes).id, design.printer_id
   end
 
   # The Référencement plan's monthly ceiling, counted on the workshop.
@@ -415,7 +415,7 @@ class DesignsTest < ActionDispatch::IntegrationTest
       post design_variants_path(designs(:fox_screen))
     end
 
-    assert_equal designs(:fox_screen), Design.order(:created_at).last.root
+    assert_equal designs(:fox_screen).id, Design.order(:created_at).last.root_id
   end
 
   # The budget is the service's to count, and running out opens the designer

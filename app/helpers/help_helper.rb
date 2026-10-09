@@ -1,5 +1,6 @@
 # The help pages: a guide and questions for workshops, a sheet a workshop hands
-# to its clients, and questions for clients (decided on 09/10/2026).
+# to its clients, questions for clients, and a guide for designers (decided on
+# 09/10/2026).
 #
 # The text lives in config/locales/fr.yml. The figures in it do not: they are
 # read from config/settings.yml here, so a quota or a price changed there is
@@ -23,6 +24,13 @@ module HelpHelper
         reminder_hours: settings.print_requests.fetch(:reminder_after_hours),
         expire_days: settings.print_requests.fetch(:expire_after_days),
         auto_accept_days: settings.reviews.fetch(:auto_accept_days),
+        fee_percent: (settings.reviews.fetch(:platform_fee_rate) * 100).round,
+        claim_hours: settings.reviews.fetch(:designer_claim_timeout_hours),
+        unclaimed_hours: settings.reviews.fetch(:unclaimed_refund_hours),
+        proposal_hours: settings.reviews.fetch(:proposal_expiry_hours),
+        reminder_days: settings.reviews.fetch(:acceptance_reminder_days).join(" puis "),
+        dispute_alert_count: settings.reviews.fetch(:dispute_alert_count),
+        dispute_alert_days: settings.reviews.fetch(:dispute_alert_days),
         support_email: settings.support_email
       }
     end

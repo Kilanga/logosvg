@@ -62,13 +62,14 @@ module Client
       end
 
       def set_print_request
-        @print_request = policy_scope(PrintRequest).find_by!(token: params[:token])
+        @print_request = policy_scope(PrintRequest).includes(:printer, :design).find_by!(token: params[:token])
       end
 
       # The shop comes from the directory link that led here, or from the one
       # the design was created for.
       def chosen_printer
-        Printer.listed.includes(:techniques).find_by(slug: params[:atelier]) || @design.printer
+        Printer.listed.includes(:techniques).find_by(slug: params[:atelier]) ||
+          Printer.includes(:techniques).find_by(id: @design.printer_id)
       end
 
       # Prefilled from the account and from the design: a client who has already

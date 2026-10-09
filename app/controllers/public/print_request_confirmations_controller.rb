@@ -33,7 +33,7 @@ module Public
       # A token that matches nothing, and one that has expired, are the same
       # answer to whoever is holding the link.
       def set_print_request
-        @print_request = PrintRequest.find_by(confirmation_token: params[:token])
+        @print_request = PrintRequest.includes(:design, :printer).find_by(confirmation_token: params[:token])
 
         head :not_found if @print_request.nil?
       end

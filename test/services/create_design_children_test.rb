@@ -32,8 +32,8 @@ class CreateDesignChildrenTest < ActiveSupport::TestCase
     assert_equal @parent.style, child.style
     assert_equal @parent.colors_requested, child.colors_requested
     assert_equal @parent.print_width_cm, child.print_width_cm
-    assert_equal @parent.user, child.user
-    assert_equal @parent.printer, child.printer
+    assert_equal @parent.user_id, child.user_id
+    assert_equal @parent.printer_id, child.printer_id
   end
 
   # One lineage, one root: a client may go back to any version and start again
@@ -42,9 +42,9 @@ class CreateDesignChildrenTest < ActiveSupport::TestCase
     child = CreateDesignChildren.call(parent: @parent) { { "job_id" => "job-f" } }.first
     grandchild = CreateDesignChildren.call(parent: child) { { "job_id" => "job-g" } }.first
 
-    assert_equal @parent, child.root
-    assert_equal @parent, grandchild.root, "the root is the head of the lineage, not the parent"
-    assert_equal child, grandchild.parent
+    assert_equal @parent.id, child.root_id
+    assert_equal @parent.id, grandchild.root_id, "the root is the head of the lineage, not the parent"
+    assert_equal child.id, grandchild.parent_id
   end
 
   test "the refinement budget is the service's figure, carried as it came" do

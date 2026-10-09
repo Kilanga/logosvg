@@ -47,7 +47,12 @@
             <span class="min-w-0 flex-1 basis-60">
               <span class="block font-medium"><%= client.full_name %></span>
               <span class="mt-0.5 block break-all text-sm text-muted">
-                <%= client.email_address %> · <%= t(".clients.until", date: l(client.workshop_until.to_date, format: :long)) %>
+                <%= client.email_address %> ·
+                <% if client.workshop_until&.future? %>
+                  <%= t(".clients.until", date: l(client.workshop_until.to_date, format: :long)) %>
+                <% else %>
+                  <%= t(".clients.suspended") %>
+                <% end %>
                 <% if (number = @sheet_numbers[client.id]) %> · <%= t("help.sheet.number", number: number) %><% end %>
               </span>
             </span>

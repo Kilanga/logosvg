@@ -30,7 +30,7 @@ class PasswordsController < ApplicationController
     if @user.update(params.permit(:password, :password_confirmation))
       # Every other device is signed out: a reset usually means the password was
       # compromised.
-      @user.sessions.destroy_all
+      Session.where(user_id: @user.id).destroy_all
       redirect_to new_session_path, notice: t("passwords.update.changed")
     else
       redirect_to edit_password_path(params[:token]), alert: t("passwords.update.mismatch")

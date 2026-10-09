@@ -40,7 +40,7 @@ module Workshop
       # dead end.
       def set_printer
         @printer = current_printer ||
-                   Current.user.build_printer(orders_email: Current.user.email_address)
+                   Printer.new(user: Current.user, orders_email: Current.user.email_address)
       end
 
       # Every technique in the catalogue is offered, in catalogue order: the

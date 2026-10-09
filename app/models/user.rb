@@ -63,9 +63,33 @@ class User < ApplicationRecord
   # after which they scan the shop's link or QR code again, or ask again.
   def self.attachment_period = Rails.application.config.tshirt.clients.fetch(:attachment_days).days
 
-  scope :attached_to, ->(printer) { where(workshop_id: printer).where("workshop_until > ?", Time.current) }
+  # Decided on 09/10/2026: while a review the client ordered on a design made
+  # for that shop is open, the thirty days stand still — the client is not
+  # left without a shop while a designer works for them.
+  REVIEWING_SQL = <<~SQL.squish.freeze
+    EXISTS (SELECT 1 FROM reviews INNER JOIN designs ON designs.id = reviews.design_id
+            WHERE reviews.client_id = users.id AND designs.printer_id = users.workshop_id
+              AND reviews.status IN ('queued', 'in_progress', 'delivered', 'returned_to_client', 'disputed'))
+  SQL
 
-  def attached_to_workshop? = workshop_id.present? && workshop_until.present? && workshop_until.future?
+  scope :attached_to, ->(printer) {
+    where(workshop_id: printer).where("users.workshop_until > ? OR #{REVIEWING_SQL}", Time.current)
+  }
+
+  def attached_to_workshop?
+    return false if workshop_id.blank?
+
+    workshop_until&.future? || reviewing_for_workshop?
+  end
+
+  # The period has run out, but a review holds it open.
+  def workshop_period_suspended? = workshop_id.present? && !workshop_until&.future? && reviewing_for_workshop?
+
+  def reviewing_for_workshop?
+    return @reviewing_for_workshop if defined?(@reviewing_for_workshop)
+
+    @reviewing_for_workshop = User.where(id: id).where(REVIEWING_SQL).exists?
+  end
 
   # The shop this client creates for today; nil once the period has run out.
   def active_workshop_id = (workshop_id if attached_to_workshop?)
@@ -86,6 +110,17 @@ class User < ApplicationRecord
           .update_all(workshop_until: attachment_period.from_now, updated_at: Time.current)
   end
 
+  # Gives back the time a review held the period still, once the review ends
+  # without a delivery (called off, refunded, proposal declined). A delivery
+  # gives thirty fresh days instead.
+  def self.resume_attachment!(client_id:, printer_id:, paused_seconds:)
+    return if paused_seconds.to_i <= 0
+
+    client.where(id: client_id, workshop_id: printer_id).where.not(workshop_until: nil)
+          .update_all([ "workshop_until = workshop_until + (? * interval '1 second'), updated_at = ?",
+                        paused_seconds.to_i, Time.current ])
+  end
+
   def detach_from_workshop!
     update!(workshop_id: nil, workshop_until: nil)
   end
@@ -94,7 +129,7 @@ class User < ApplicationRecord
   # still reference it until the purge task runs.
   def soft_delete!
     transaction do
-      sessions.destroy_all
+      Session.where(user_id: id).destroy_all
       update!(deleted_at: Time.current)
     end
   end

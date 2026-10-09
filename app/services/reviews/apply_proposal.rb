@@ -15,7 +15,7 @@ module Reviews
     def call
       return :not_returned unless @review.returned_to_client?
 
-      level = @review.proposed_level
+      level = @review.read_association(:proposed_level)
       amount = @review.proposed_amount_cents
       return :no_proposal if amount.nil?
 

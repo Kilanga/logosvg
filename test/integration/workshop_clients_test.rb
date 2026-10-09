@@ -250,7 +250,7 @@ class WorkshopClientsTest < ActionDispatch::IntegrationTest
 
   test "once the thirty days are over, the client cannot create and the dashboard says what to do" do
     client = users(:client)
-    client.update!(workshop_until: 1.minute.ago)
+    lapse!(client)
     sign_in_as client
 
     get new_design_path
@@ -262,7 +262,7 @@ class WorkshopClientsTest < ActionDispatch::IntegrationTest
   end
 
   test "the shop no longer lists a client whose thirty days are over" do
-    users(:client).update!(workshop_until: 1.minute.ago)
+    lapse!(users(:client))
     sign_in_as users(:printer)
 
     get workshop_clients_path
@@ -284,7 +284,7 @@ class WorkshopClientsTest < ActionDispatch::IntegrationTest
 
   test "once the thirty days are over, the client can ask the same shop again" do
     client = users(:client)
-    client.update!(workshop_until: 1.minute.ago)
+    lapse!(client)
     sign_in_as client
 
     post join_workshop_path(slug: @rennes.slug)
@@ -300,4 +300,11 @@ class WorkshopClientsTest < ActionDispatch::IntegrationTest
 
     assert_match "Il repart pour 30 jours quand l&#39;atelier confirme", response.body
   end
+
+  private
+    # Past the thirty days, and no open review to hold them.
+    def lapse!(client)
+      Review.where(client: client).update_all(status: "accepted")
+      client.update!(workshop_until: 1.minute.ago)
+    end
 end

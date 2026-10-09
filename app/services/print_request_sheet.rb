@@ -15,7 +15,7 @@ class PrintRequestSheet
 
   def initialize(print_request:)
     @print_request = print_request
-    @design = print_request.design
+    @design = print_request.read_association(:design)
   end
 
   def call

@@ -34,5 +34,16 @@ module ActiveSupport
     # La panne intermittente par excellence : elle ne dépend que de l'ordre de
     # passage, donc du seed, donc de rien.
     setup { ActionMailer::Base.deliveries.clear }
+
+    # The suite runs with `strict_loading_by_default`, as development does
+    # (config/environments/test.rb), so a lazy load breaks a test rather than
+    # a developer's browser. For the rare walk that is a library's own.
+    def without_strict_loading
+      previous = ActiveRecord::Base.strict_loading_by_default
+      ActiveRecord::Base.strict_loading_by_default = false
+      yield
+    ensure
+      ActiveRecord::Base.strict_loading_by_default = previous
+    end
   end
 end

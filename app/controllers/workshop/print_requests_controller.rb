@@ -50,7 +50,10 @@ module Workshop
       end
 
       def set_print_request
-        @print_request = policy_scope(PrintRequest).find_by!(token: params[:token])
+        @print_request = policy_scope(PrintRequest)
+                         .includes(:client, :printer, { final_file_attachment: :blob },
+                                   design: { print_file_attachment: :blob })
+                         .find_by!(token: params[:token])
       end
 
       def filtered

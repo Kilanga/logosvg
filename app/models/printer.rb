@@ -29,6 +29,9 @@ class Printer < ApplicationRecord
            dependent: :nullify, inverse_of: :workshop
   has_many :client_affiliations, dependent: :delete_all, inverse_of: :printer
   has_many :invites, class_name: "WorkshopInvite", dependent: :delete_all, inverse_of: :printer
+
+  # The designer this shop recommends to its clients (decided on 09/10/2026).
+  belongs_to :recommended_designer_profile, class_name: "DesignerProfile", optional: true
   has_many :link_visits, class_name: "WorkshopLinkVisit", dependent: :delete_all,
            inverse_of: :printer
   has_many :link_channels, -> { order(:created_at, :id) }, class_name: "WorkshopLinkChannel",
@@ -192,7 +195,7 @@ class Printer < ApplicationRecord
   # The instance side of the `listed` scope. Both have to agree, or a shop
   # disappears from the directory while its own page stays up — which is how a
   # lapsed subscription would keep being reachable by anyone holding the link.
-  def listed? = published? && subscription&.visible?.present?
+  def listed? = published? && read_association(:subscription)&.visible?.present?
 
   # What this shop would use for a client who answers "I don't know".
   def primary_technique = live_techniques.find(&:primary?)

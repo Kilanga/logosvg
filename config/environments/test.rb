@@ -53,4 +53,10 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # As in development: an association read without `includes` raises. Until
+  # 09/10/2026 only development had it, so a lazy load passed the whole suite
+  # and broke a screen on a developer's machine — three times over. Here it
+  # fails the build instead.
+  config.active_record.strict_loading_by_default = true
 end
