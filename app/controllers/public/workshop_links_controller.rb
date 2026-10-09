@@ -1,6 +1,7 @@
 module Public
   # `/a/:slug` — the shop's own page for its clients — and `/a/:slug/:code`, the
-  # link on its poster, its QR code and its named links.
+  # link on its poster, its QR code and its named links. Numbered single-use
+  # sheets land here too, through `/f/:code` (WorkshopSheetsController).
   #
   # Decided on 09/10/2026: a client belongs to one workshop, and only with that
   # workshop's agreement. The code is that agreement given in advance: whoever
@@ -40,16 +41,20 @@ module Public
         return redirect_to workshop_link_path(slug: @printer.slug)
       end
 
-      # A client who already has an account and scanned the poster: in, and
-      # straight to work — scanning another shop's poster is how one moves.
-      if shop_context.invited_by?(@printer) && Current.user&.client?
+      # A client with an account who scanned the poster or a sheet: in, and
+      # straight to work — that is also how one moves to another shop.
+      # One of the shop's clients scanning it again goes straight to work too —
+      # without a single day more: only the shop extends.
+      if Current.user&.client? && (entry.admits? || (entry.kind == :member && shop_context.invited_by?(@printer)))
         return admit_and_create
       end
 
       # "J'ai déjà un compte" comes back here, where the page knows what to offer.
       session[:return_to_after_authenticating] = workshop_link_url(slug: @printer.slug) unless authenticated?
 
-      @invited = shop_context.invited_by?(@printer)
+      @invited = entry.admits?
+      @former = Current.user&.client? && shop_context.invited_by?(@printer) && !@invited &&
+                Current.user.active_workshop_id != @printer.id
       @pending = Current.user&.client? &&
                  ClientAffiliation.pending.exists?(client_id: Current.user.id, printer_id: @printer.id)
     end
@@ -58,8 +63,8 @@ module Public
     # without its code. With the code in this visit, there is nothing to ask.
     def join
       return redirect_to(space_path_for(Current.user), alert: t(".clients_only")) unless Current.user.client?
-      return admit_and_create if shop_context.invited_by?(@printer)
-      return redirect_to(new_design_path) if Current.user.active_workshop_id == @printer.id
+      return redirect_to(new_design_path) if entry.kind == :member
+      return admit_and_create if entry.admits?
 
       if (affiliation = ClientAffiliation.request!(client: Current.user, printer: @printer))
         AffiliationMailer.requested(affiliation).deliver_later
@@ -75,12 +80,21 @@ module Public
         redirect_to printers_path, alert: t("public.workshop_links.show.unknown") if @printer.nil?
       end
 
-      # Scanned again by one of the shop's clients, the code starts their
-      # period over: that is how a client stays.
+      def entry
+        @entry ||= WorkshopEntry.new(client: (Current.user if Current.user&.client?),
+                                     printer: @printer, shop_context: shop_context)
+      end
+
       def admit_and_create
-        ClientAffiliation.admit!(client: Current.user, printer: @printer)
-        redirect_to new_design_path, notice: t("public.workshop_links.show.admitted",
-                                               name: @printer.name, date: l(Current.user.workshop_until.to_date, format: :long))
+        return redirect_to(new_design_path) if entry.kind == :member
+
+        if entry.admit!
+          redirect_to new_design_path, notice: t("public.workshop_links.show.admitted",
+                                                 name: @printer.name, date: l(Current.user.workshop_until.to_date, format: :long))
+        else
+          # The sheet was spent a moment ago, by someone else.
+          redirect_to workshop_link_path(slug: @printer.slug), alert: t("public.workshop_sheets.show.spent")
+        end
       end
 
       def new_visitor? = shop_context.printer_id != @printer.id

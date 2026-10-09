@@ -10,8 +10,7 @@
       <p class="mt-1 text-sm text-muted"><%= t("help.workshop.sheet_body") %></p>
       <p class="mt-2 text-sm text-muted"><%= help_text(t("help.workshop.help_for_clients", url: help_url)) %></p>
     </div>
-    <%= link_to t("help.workshop.sheet_cta"), workshop_client_sheet_path,
-          class: "btn btn-primary text-sm", target: "_blank", rel: "noopener" %>
+    <%= link_to t("help.workshop.sheet_cta"), workshop_invites_path, class: "btn btn-primary text-sm" %>
   </section>
 
   <section aria-labelledby="guide-title">

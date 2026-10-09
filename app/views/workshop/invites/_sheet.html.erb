@@ -1,8 +1,6 @@
-<% content_for :title, help_text(t("help.sheet.title", printer: @printer.name)) %>
-
-<%# The sheet a shop hands to a client who asks how it works: the same
-    two-ink vocabulary as the counter poster, its QR code, and every step. %>
-<article class="poster panel mx-auto flex max-w-[210mm] flex-col p-10 print:h-[273mm] print:p-0">
+<%# One numbered sheet: the same two-ink vocabulary as the counter poster, its
+    own single-use QR code, and every step. Each starts a printed page. %>
+<article class="poster panel mx-auto mb-10 flex max-w-[210mm] flex-col p-10 break-before-page first:break-before-auto print:mb-0 print:h-[273mm] print:p-0">
   <header class="flex items-start justify-between gap-6 border-b-2 border-ink pb-5">
     <div>
       <p class="label-rule text-emulsion"><%= t("help.sheet.eyebrow") %></p>
@@ -10,8 +8,9 @@
       <p class="mt-3 font-display text-2xl font-bold uppercase"><%= t("help.sheet.headline") %></p>
     </div>
     <div class="flex-none text-center">
-      <div aria-hidden="true"><%= raw @qr %></div>
+      <div aria-hidden="true"><%= raw WorkshopQrCode.svg(workshop_sheet_url(code: invite.code), size: 200) %></div>
       <p class="label-rule mt-2"><%= t("help.sheet.scan") %></p>
+      <p class="mt-1 font-mono text-xs text-muted"><%= t("help.sheet.number", number: invite.number) %></p>
     </div>
   </header>
 

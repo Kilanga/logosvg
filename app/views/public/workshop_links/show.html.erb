@@ -86,6 +86,13 @@
       </p>
 
     <% else %>
+      <%# A former client who scanned the poster again: the poster admits only
+          once, so the page says why it asks instead. %>
+      <% if @former %>
+        <p class="mt-3 border-l-2 border-warning bg-warning-bg px-4 py-3 text-sm text-warning">
+          <%= t(".join.former", name: @printer.name) %>
+        </p>
+      <% end %>
       <p class="mt-3 text-sm">
         <%= Current.user.attached_to_workshop? ? t(".join.switch", name: @printer.name) : t(".join.ask", name: @printer.name) %>
       </p>

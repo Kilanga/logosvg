@@ -21,6 +21,9 @@ module Workshop
       # are over has to scan again or ask again, and is no longer this shop's.
       @clients = User.client.active.attached_to(@printer.id)
                      .order(:last_name, :first_name).to_a
+      # Which numbered sheet brought each client in: the shop's follow-up.
+      @sheet_numbers = WorkshopInvite.where(printer_id: @printer.id, used_by_id: @clients.map(&:id))
+                                     .pluck(:used_by_id, :number).to_h
     end
 
     def accept
@@ -50,6 +53,17 @@ module Workshop
       client.detach_from_workshop!
       AffiliationMailer.removed(client, @printer).deliver_later
       redirect_to workshop_clients_path, notice: t(".done", name: client.full_name)
+    end
+
+    # Thirty more days from today (decided on 09/10/2026): the shop's call,
+    # for a client it wants to keep — never the client's.
+    def extend_period
+      authorize @printer, :update?
+
+      client = User.client.attached_to(@printer.id).find(params[:id])
+      client.attach_to!(@printer.id)
+      redirect_to workshop_clients_path,
+                  notice: t(".done", name: client.full_name, date: l(client.workshop_until.to_date, format: :long))
     end
 
     private

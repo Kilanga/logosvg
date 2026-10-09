@@ -28,6 +28,7 @@ class Printer < ApplicationRecord
   has_many :clients, class_name: "User", foreign_key: :workshop_id,
            dependent: :nullify, inverse_of: :workshop
   has_many :client_affiliations, dependent: :delete_all, inverse_of: :printer
+  has_many :invites, class_name: "WorkshopInvite", dependent: :delete_all, inverse_of: :printer
   has_many :link_visits, class_name: "WorkshopLinkVisit", dependent: :delete_all,
            inverse_of: :printer
   has_many :link_channels, -> { order(:created_at, :id) }, class_name: "WorkshopLinkChannel",

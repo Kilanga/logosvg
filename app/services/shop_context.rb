@@ -16,6 +16,7 @@ class ShopContext
   CONSENT_KEY = :cookie_consent
   SHOP_KEY = :shop_ref
   INVITE_KEY = :invited_printer_id
+  SHEET_KEY = :sheet_invite_id
   CHOICES = %w[ accepted declined ].freeze
 
   def initialize(cookies:, session:, settings: Rails.application.config.tshirt.privacy)
@@ -60,10 +61,29 @@ class ShopContext
 
   def invited_by?(printer) = printer.present? && @session[INVITE_KEY] == printer.id
 
+  # A numbered single-use sheet, scanned in this visit. Kept by id, in the
+  # session only, and read back only while it is still unspent.
+  def hold_sheet!(invite)
+    @session[SHEET_KEY] = invite.id
+  end
+
+  def sheet_for(printer)
+    return nil if printer.nil? || @session[SHEET_KEY].blank?
+
+    WorkshopInvite.usable.find_by(id: @session[SHEET_KEY], printer_id: printer.id)
+  end
+
+  # Once used, neither the poster nor the sheet should go on speaking for
+  # this visit.
+  def forget_invitations!
+    @session.delete(INVITE_KEY)
+    @session.delete(SHEET_KEY)
+  end
+
   # The shop a sign-up would join, and whether it admits at once. The invited
   # shop first; failing that, the shop this visit or the cookie knows — which
   # can only be asked.
-  def invited_printer_id = @session[INVITE_KEY]
+  def invited_printer_id = @session[INVITE_KEY] || WorkshopInvite.usable.where(id: @session[SHEET_KEY]).pick(:printer_id)
 
   # Accepting keeps the shop the visitor is looking at right now, not just the
   # next one: they have already scanned the poster by the time they see the banner.

@@ -270,7 +270,7 @@ class WorkshopClientsTest < ActionDispatch::IntegrationTest
     assert_select "li", text: /Claire Martin/, count: 0
   end
 
-  test "scanning the QR code again starts the thirty days over" do
+  test "scanning the QR code again no longer extends anything" do
     client = users(:client)
     client.update!(workshop_until: 2.days.from_now)
     sign_in_as client
@@ -279,8 +279,7 @@ class WorkshopClientsTest < ActionDispatch::IntegrationTest
     follow_redirect!
 
     assert_redirected_to new_design_path
-    assert_in_delta 30.days.from_now, client.reload.workshop_until, 1.minute
-    assert_equal 0, ClientAffiliation.where(client: client).count, "a renewal is not a new admission"
+    assert_in_delta 2.days.from_now, client.reload.workshop_until, 1.minute
   end
 
   test "once the thirty days are over, the client can ask the same shop again" do
@@ -299,6 +298,6 @@ class WorkshopClientsTest < ActionDispatch::IntegrationTest
 
     get client_dashboard_path
 
-    assert_match "Pour le prolonger, scannez", response.body
+    assert_match "Il repart pour 30 jours quand l&#39;atelier confirme", response.body
   end
 end

@@ -36,6 +36,8 @@ Rails.application.routes.draw do
   get  "a/:slug",           to: "public/workshop_links#show", as: :workshop_link
   post "a/:slug/rejoindre", to: "public/workshop_links#join", as: :join_workshop
   get  "a/:slug/:code",     to: "public/workshop_links#show", as: :workshop_invite
+  # Une fiche client numérotée : un QR code, un client, une seule fois.
+  get  "f/:code",           to: "public/workshop_sheets#show", as: :workshop_sheet
 
   get  "designs/nouveau", to: "client/designs#new",    as: :new_design
   # Un visuel déjà fait, mis au format de l'atelier sans être redessiné.
@@ -151,7 +153,13 @@ Rails.application.routes.draw do
   # L'aide de l'atelier : le fonctionnement et ses questions, et la fiche qu'il
   # remet à ses clients pour leur expliquer le parcours.
   get "atelier/aide",              to: "workshop/help#show",         as: :workshop_help
-  get "atelier/aide/fiche-client", to: "workshop/help#client_sheet", as: :workshop_client_sheet
+  # Les fiches client à usage unique, numérotées, par lots.
+  get  "atelier/fiches",                to: "workshop/invites#index",  as: :workshop_invites
+  post "atelier/fiches",                to: "workshop/invites#create"
+  get  "atelier/fiches/lots/:batch",    to: "workshop/invites#print",  as: :print_workshop_invites
+  post "atelier/fiches/:id/annuler",    to: "workshop/invites#revoke", as: :revoke_workshop_invite
+  # L'ancienne fiche unique mène aux fiches numérotées.
+  get "atelier/aide/fiche-client", to: redirect("/atelier/fiches"), as: :workshop_client_sheet
 
   # Les clients de l'atelier, et les demandes qui attendent sa réponse.
   get  "atelier/clients",                to: "workshop/clients#index",   as: :workshop_clients
@@ -160,6 +168,7 @@ Rails.application.routes.draw do
   post "atelier/clients/demandes/:id/refuser",  to: "workshop/clients#decline",
        as: :decline_workshop_client_request
   delete "atelier/clients/:id",          to: "workshop/clients#remove",  as: :workshop_client
+  post   "atelier/clients/:id/prolonger", to: "workshop/clients#extend_period", as: :extend_workshop_client
 
   # Les demandes reçues par l'atelier, et leur suivi.
   get   "atelier/demandes",        to: "workshop/print_requests#index",  as: :workshop_print_requests

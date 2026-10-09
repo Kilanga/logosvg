@@ -31,22 +31,16 @@ class HelpPagesTest < ActionDispatch::IntegrationTest
     assert_select "ol li h3", count: 6
     assert_select "details summary", minimum: 10
     assert_match "100 générations par mois", response.body
-    assert_select "a[href=?]", workshop_client_sheet_path
+    assert_select "a[href=?]", workshop_invites_path
     assert_no_match(/%\{/, response.body)
   end
 
-  test "the client sheet carries the shop's own coded QR code and every step" do
+  test "the former single sheet now leads to the numbered sheets" do
     sign_in_as users(:printer)
-    rennes = printers(:rennes)
 
-    get workshop_client_sheet_path
+    get "/atelier/aide/fiche-client"
 
-    assert_response :success
-    assert_select "h1", text: rennes.name
-    assert_includes response.body,
-                    WorkshopQrCode.svg(workshop_invite_url(slug: rennes.slug, code: rennes.invite_code, s: "qr"), size: 200)
-    assert_select "ol li", count: 6
-    assert_no_match(/%\{/, response.body)
+    assert_redirected_to "/atelier/fiches"
   end
 
   test "only a workshop reaches its help" do

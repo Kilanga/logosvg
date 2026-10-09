@@ -78,6 +78,14 @@ class User < ApplicationRecord
             workshop_until: User.attachment_period.from_now)
   end
 
+  # Thirty more days, given by the shop — never by the client: when it
+  # confirms one of their print requests, or with « Prolonger ». Only for the
+  # shop the client belongs to, even if their period has just run out.
+  def self.extend_attachment!(client_id:, printer_id:)
+    client.where(id: client_id, workshop_id: printer_id)
+          .update_all(workshop_until: attachment_period.from_now, updated_at: Time.current)
+  end
+
   def detach_from_workshop!
     update!(workshop_id: nil, workshop_until: nil)
   end

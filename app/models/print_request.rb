@@ -61,9 +61,15 @@ class PrintRequest < ApplicationRecord
     state :canceled
     state :expired
 
+    # The shop confirming a client's request is what keeps the client theirs:
+    # thirty more days (decided on 09/10/2026), so a client who prints keeps
+    # creating and one who only generates does not.
     event :acknowledge do
       transitions from: :sent, to: :acknowledged
-      after { self.acknowledged_at = Time.current }
+      after do
+        self.acknowledged_at = Time.current
+        User.extend_attachment!(client_id: client_id, printer_id: printer_id)
+      end
     end
 
     event :quote do
