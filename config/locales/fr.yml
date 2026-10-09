@@ -177,6 +177,7 @@ fr:
     dashboard: "Tableau de bord"
     my_listing: "Ma fiche"
     my_clients: "Mes clients"
+    help: "Aide"
     print_requests: "Demandes"
     my_designs: "Mes designs"
     my_requests: "Mes demandes"
@@ -2527,6 +2528,342 @@ fr:
       expired: "Ce design n'est plus disponible sur la machine de génération."
       unusable_file: "Le fichier produit n'a pas passé nos contrôles. Votre essai ne vous a pas été décompté."
 
+  help:
+    # --- Clients : /aide --------------------------------------------------------
+    client:
+      title: "Aide"
+      eyebrow: "Questions fréquentes"
+      heading: "Créer son visuel, l'envoyer à l'atelier"
+      lead: >-
+        Les réponses aux questions que se posent les clients des ateliers. Si
+        la vôtre n'y est pas, votre atelier est le mieux placé pour répondre
+        sur l'impression ; pour le site, écrivez-nous.
+      contact: "Une autre question ?"
+      contact_cta: "Nous écrire"
+      contact_body: "Sur l'impression, les prix ou les délais : votre atelier. Sur le site : %{support_email}."
+      groups:
+        - title: "Votre compte et votre atelier"
+          questions:
+            - q: "Comment créer un compte ?"
+              a:
+                - >-
+                  Par le lien ou le QR code de votre atelier : votre compte lui
+                  est rattaché dès sa création. Vous pouvez aussi choisir un
+                  atelier dans l'annuaire et lui demander à le rejoindre.
+            - q: "Pourquoi mon compte attend-il une réponse ?"
+              a:
+                - >-
+                  Vous êtes passé par l'annuaire, sans le lien de l'atelier :
+                  c'est lui qui accepte ses nouveaux clients. Vous recevez un
+                  email dès qu'il a répondu. En attendant, vous pouvez vous
+                  connecter, mais pas encore créer.
+                - "Pour aller plus vite, demandez-lui son lien ou scannez son QR code : vous êtes admis aussitôt."
+            - q: "Combien de temps suis-je rattaché à mon atelier ?"
+              a:
+                - >-
+                  %{attachment_days} jours à compter de votre arrivée. Pour
+                  prolonger, scannez à nouveau son QR code ou rouvrez son lien :
+                  les %{attachment_days} jours repartent de zéro. Votre espace
+                  vous prévient la dernière semaine.
+                - "Une fois le délai passé, vos visuels restent dans votre espace ; il suffit de rescanner, ou de refaire une demande, pour créer à nouveau."
+            - q: "Puis-je changer d'atelier ?"
+              a:
+                - >-
+                  Oui. Scannez le QR code du nouvel atelier, ou demandez-lui à
+                  le rejoindre depuis l'annuaire. Vous restez chez le premier
+                  tant que le second n'a pas accepté.
+        - title: "Créer un visuel"
+          questions:
+            - q: "Combien de visuels puis-je créer ?"
+              a:
+                - >-
+                  %{quota_per_day} créations par jour. Chaque création dessine
+                  %{proposals} propositions différentes : vous gardez celle qui
+                  vous plaît. Un essai qui échoue ne vous est pas décompté.
+            - q: "Comment bien décrire mon idée ?"
+              a:
+                - >-
+                  Décrivez le sujet, pas la technique : « un renard qui fait du
+                  skate, style rétro » plutôt que « un dessin vectoriel en trois
+                  couleurs ». Le nombre de couleurs et la technique se règlent
+                  dans le formulaire.
+                - "Un texte à écrire sur le visuel ? Mettez-le entre guillemets : il est reproduit tel quel, sans traduction."
+            - q: "Pourquoi dois-je choisir la technique d'impression en premier ?"
+              a:
+                - >-
+                  Parce qu'elle change le dessin lui-même : un visuel pensé pour
+                  deux couleurs de sérigraphie n'est pas celui d'une impression
+                  numérique en couleurs. Seules les techniques de votre atelier
+                  vous sont proposées. Vous ne savez pas ? Prenez celle qu'il
+                  propose en premier, ou demandez-lui.
+            - q: "Puis-je retoucher un visuel ?"
+              a:
+                - >-
+                  Oui, %{max_refinements} fois par visuel : une retouche
+                  (« enlève le skateboard, ajoute un casque ») ou d'autres
+                  versions des mêmes mots. Chacune compte aussi comme une
+                  création du jour. Au-delà, un graphiste peut prendre le
+                  relais.
+            - q: "J'ai déjà mon image, faite ailleurs. Puis-je l'utiliser ?"
+              a:
+                - >-
+                  Oui, avec « Déposer mon visuel » : elle est mise au format de
+                  la machine de l'atelier, sans être redessinée. C'est gratuit
+                  et ne compte pas dans vos créations du jour.
+                - "Elle doit vous appartenir, ou vous devez avoir le droit de l'utiliser : pas de marque, de personnage ni de personne reconnaissable sans accord."
+            - q: "Puis-je partir d'un croquis ou d'une photo ?"
+              a:
+                - "Oui : ajoutez une image de départ à votre description. L'IA la transforme selon ce que vous écrivez."
+        - title: "Le fichier et l'impression"
+          questions:
+            - q: "Puis-je télécharger mon visuel ?"
+              a:
+                - >-
+                  Vous téléchargez un aperçu filigrané. Le fichier d'impression,
+                  lui, part directement à l'atelier au format de sa machine : il
+                  n'est jamais remis au client.
+            - q: "Pourquoi le visuel prêt à imprimer diffère-t-il un peu de l'image générée ?"
+              a:
+                - >-
+                  Pour la sérigraphie, le flex ou la broderie, chaque couleur
+                  est un écran, une découpe ou un fil : l'image est redessinée
+                  en aplats, les nuances proches sont fusionnées et le blanc
+                  devient souvent la couleur du tissu. Validez toujours l'aperçu
+                  du fichier d'impression, pas seulement l'image de départ.
+            - q: "Comment envoyer mon visuel à l'atelier ?"
+              a:
+                - >-
+                  Depuis la page du visuel : « Envoyer à un atelier ». Indiquez
+                  le textile, l'emplacement, les tailles et les quantités.
+                  L'atelier reçoit la demande par email avec le fichier, la
+                  confirme, puis vous envoie son devis.
+            - q: "Combien coûte l'impression ?"
+              a:
+                - >-
+                  Le prix est celui de l'atelier : il vous envoie son devis et
+                  vous le réglez directement auprès de lui. Créer et retoucher
+                  vos visuels sur %{platform} ne vous coûte rien.
+            - q: "Puis-je annuler une demande ?"
+              a:
+                - "Oui, depuis « Mes demandes », tant que l'atelier ne vous a pas envoyé de devis."
+            - q: "L'atelier ne répond pas, que se passe-t-il ?"
+              a:
+                - >-
+                  Il est relancé au bout de %{reminder_hours} heures. Sans
+                  réponse après %{expire_days} jours, la demande est close et
+                  vous pouvez l'envoyer ailleurs.
+        - title: "Faire vérifier par un graphiste"
+          questions:
+            - q: "À quoi sert la vérification ?"
+              a:
+                - >-
+                  Un graphiste reprend votre visuel pour qu'il s'imprime au
+                  mieux : couleurs, détails trop fins, texte. Vous lui dites ce
+                  qui doit changer et ce qui doit rester. C'est facultatif et
+                  payant ; le prix est affiché avant de commander.
+            - q: "Quand le graphiste est-il payé ?"
+              a:
+                - >-
+                  Quand vous validez sa version. Sans réponse de votre part,
+                  elle est validée d'office au bout de %{auto_accept_days}
+                  jours ; vous êtes prévenu avant. Un problème ? Signalez-le
+                  depuis la vérification, avant de valider.
+        - title: "Vos données"
+          questions:
+            - q: "Qui voit mes visuels et mes coordonnées ?"
+              a:
+                - >-
+                  Vos visuels ne sont visibles que par vous. L'atelier ne reçoit
+                  vos coordonnées que lorsque vous lui envoyez une demande, avec
+                  votre accord. Le détail est dans la politique de
+                  confidentialité.
+            - q: "Comment récupérer ou supprimer mes données ?"
+              a:
+                - "Dans « Mon compte » : exporter vos données, ou fermer votre compte."
+            - q: "Pourquoi mes images portent-elles une mention « générée par IA » ?"
+              a:
+                - "La loi européenne sur l'IA demande de signaler les images générées. La mention figure sur l'aperçu et dans les données du fichier, pas sur le textile."
+
+    # --- Atelier : /atelier/aide -------------------------------------------------
+    workshop:
+      title: "Aide"
+      heading: "Aide"
+      guide_title: "Comment fonctionne %{platform}"
+      faq_title: "Questions fréquentes"
+      sheet_title: "Expliquer le parcours à vos clients"
+      sheet_body: >-
+        Une fiche d'une page avec votre QR code et les étapes, à imprimer pour
+        le comptoir ou à envoyer en PDF à un client qui vous demande comment
+        faire.
+      sheet_cta: "Ouvrir la fiche client"
+      help_for_clients: "Vos clients ont aussi leurs questions fréquentes, à leur indiquer : %{url}"
+      steps:
+        - title: "Votre fiche dans l'annuaire"
+          body:
+            - >-
+              Remplissez votre fiche : adresse, techniques pratiquées, avec
+              pour chacune le nombre de couleurs et les dimensions maximales.
+              Ce sont ces limites qui décident des visuels que vous recevez.
+            - >-
+              Nous relisons la fiche avant de la publier. Elle apparaît dans
+              l'annuaire dès qu'elle est publiée et que votre abonnement est
+              actif, essai gratuit de %{trial_days} jours compris.
+        - title: "Vos clients"
+          body:
+            - >-
+              Votre lien et votre QR code (affiche, flyers, liens nommés) mènent
+              à votre page sur %{platform}. Le client qui crée son compte depuis
+              eux devient votre client aussitôt : ils portent un code qui vaut
+              accord.
+            - >-
+              Un client qui vous trouve dans l'annuaire n'a pas ce code : il
+              vous adresse une demande, que vous acceptez ou refusez dans
+              « Mes clients ». Tant que vous n'avez pas accepté, il ne génère
+              rien sur votre forfait.
+            - >-
+              Un client vous est rattaché %{attachment_days} jours. Il prolonge
+              en rescannant votre QR code ; sinon il doit vous redemander.
+        - title: "Ce que fait votre client"
+          body:
+            - >-
+              Il choisit l'une de vos techniques, décrit son idée et reçoit
+              %{proposals} propositions. Il en garde une, peut la retoucher
+              %{max_refinements} fois, ou déposer une image qu'il a déjà. Il
+              peut aussi la faire vérifier par un graphiste.
+            - "Le visuel est préparé pour vos limites : nombre d'encres, largeur d'impression."
+        - title: "Les demandes d'impression"
+          body:
+            - >-
+              Vous recevez un email avec le fichier d'impression, la fiche
+              technique, les tailles et les quantités. Confirmez la réception
+              depuis l'email ; le client en est informé.
+            - >-
+              Le devis et le paiement se font entre vous et le client, hors de
+              la plateforme : aucune commission sur vos impressions. Suivez
+              ensuite l'avancement dans « Demandes » : devis envoyé, en
+              production, terminée.
+            - >-
+              Sans confirmation, vous êtes relancé à %{reminder_hours} heures ;
+              au bout de %{expire_days} jours, la demande est close.
+        - title: "Les fichiers que vous recevez"
+          body:
+            - >-
+              Sérigraphie, flex et broderie : un SVG en aplats, couleurs
+              comptées une à une, sans fond imprimé. DTF, DTG et sublimation :
+              un PNG détouré à 300 dpi à la largeur demandée.
+            - >-
+              Le client ne reçoit jamais le fichier d'impression, seulement un
+              aperçu filigrané à votre nom : il revient chez vous pour
+              imprimer.
+        - title: "Votre formule"
+          body:
+            - >-
+              Référencement, %{listing_price} HT par mois : votre fiche et
+              %{listing_generations} générations par mois pour vos clients.
+              Atelier+, %{atelier_plus_price} HT par mois : générations
+              illimitées, liens nommés et statistiques.
+            - "Chaque client reste limité à %{quota_per_day} créations par jour, quelle que soit votre formule."
+      groups:
+        - title: "Clients et générations"
+          questions:
+            - q: "Qu'est-ce qui compte comme une génération ?"
+              a:
+                - >-
+                  Un clic de votre client : une création, une retouche ou une
+                  demande d'autres versions, quel que soit le nombre de
+                  propositions dessinées. Les essais qui échouent et les images
+                  déposées telles quelles ne comptent pas.
+            - q: "Que se passe-t-il quand mes générations du mois sont épuisées ?"
+              a:
+                - >-
+                  Vos clients ne peuvent plus lancer de création jusqu'au 1er du
+                  mois suivant, et le message leur dit pourquoi. Vous êtes
+                  prévenu par email. Atelier+ n'a pas de plafond.
+            - q: "Un inconnu peut-il utiliser mon forfait ?"
+              a:
+                - >-
+                  Non. Sans votre lien ou votre QR code, il ne peut que vous
+                  demander, et vous décidez. Vous pouvez aussi retirer un
+                  client de votre liste à tout moment.
+            - q: "Mon lien ou mon affiche a circulé trop loin. Que faire ?"
+              a:
+                - >-
+                  Dans « Mon lien », changez de code. L'ancien lien mène
+                  toujours à votre page, mais il faut alors vous demander.
+                  Réimprimez votre affiche et vos QR codes.
+            - q: "Un client peut-il envoyer son visuel à un autre atelier ?"
+              a:
+                - >-
+                  Oui, la demande d'impression peut partir vers tout atelier
+                  capable de l'imprimer. Les générations, elles, restent
+                  comptées sur l'atelier du client au moment de la création.
+        - title: "Demandes et fichiers"
+          questions:
+            - q: "Le fichier reçu ne convient pas à ma machine."
+              a:
+                - >-
+                  Vérifiez d'abord que la technique et les limites de votre
+                  fiche sont justes : c'est sur elles que le fichier est
+                  préparé. Vous pouvez aussi conseiller au client une
+                  vérification par un graphiste. Sinon, écrivez-nous :
+                  %{support_email}.
+            - q: "Dois-je passer par le site pour le devis ?"
+              a:
+                - >-
+                  Non. Vous chiffrez et vous encaissez comme d'habitude. Le site
+                  sert à recevoir un fichier prêt à imprimer et à indiquer au
+                  client où en est sa demande.
+            - q: "Je ne peux pas faire une demande. Comment la refuser ?"
+              a:
+                - >-
+                  Il n'y a pas de bouton pour refuser : répondez au client, dont
+                  les coordonnées sont dans la demande. Tant que vous ne lui avez
+                  pas envoyé de devis, il peut l'annuler et l'envoyer à un autre
+                  atelier. Une demande jamais confirmée se ferme d'elle-même au
+                  bout de %{expire_days} jours.
+        - title: "Abonnement"
+          questions:
+            - q: "Comment changer de formule ou résilier ?"
+              a:
+                - >-
+                  Depuis « Abonnement » : changement de formule, résiliation,
+                  carte et factures se gèrent dans l'espace de paiement
+                  sécurisé.
+            - q: "Que se passe-t-il si un paiement échoue ?"
+              a:
+                - >-
+                  Votre fiche reste visible %{grace_days} jours, le temps de
+                  mettre votre carte à jour ; elle est ensuite masquée de
+                  l'annuaire jusqu'au paiement.
+
+    # --- Fiche client : /atelier/aide/fiche-client -------------------------------
+    sheet:
+      title: "Fiche client — %{printer}"
+      back: "Retour"
+      print: "Imprimer"
+      ready: "Cette page est prête pour une impression A4, ou à enregistrer en PDF."
+      eyebrow: "Votre visuel, imprimé chez nous"
+      headline: "Comment ça marche"
+      scan: "Scannez pour commencer"
+      steps:
+        - title: "Scannez le QR code"
+          body: "Il ouvre notre page sur %{platform}."
+        - title: "Créez votre compte"
+          body: "Il nous est rattaché tout de suite, pour %{attachment_days} jours. Rescannez pour prolonger."
+        - title: "Choisissez la technique"
+          body: "Seules nos techniques vous sont proposées. Un doute ? Prenez la première, ou demandez-nous."
+        - title: "Décrivez votre idée"
+          body: "Une phrase suffit. Un texte à écrire ? Entre guillemets, il est reproduit tel quel."
+        - title: "Gardez votre préférée"
+          body: "%{proposals} propositions à chaque fois. Vous pouvez la retoucher %{max_refinements} fois."
+        - title: "Envoyez-la-nous"
+          body: "Indiquez tailles et quantités. Nous confirmons, puis nous vous envoyons notre devis."
+      tips_title: "Bon à savoir"
+      tips:
+        - "%{quota_per_day} créations par jour, gratuites."
+        - "Déjà une image ? « Déposer mon visuel » la met au format de nos machines."
+        - "Questions fréquentes : %{help_url}"
+
   public:
     contact:
       show:
@@ -2567,6 +2904,7 @@ fr:
         techniques: "Ce que fait l'atelier"
         about: "L'atelier"
         full_page: "Voir la fiche complète de l'atelier"
+        faq: "Questions fréquentes"
         join:
           title: "Créer avec cet atelier"
           invited: >-

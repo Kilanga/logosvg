@@ -389,6 +389,7 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 | `GET /a/:slug` | Page de l'atelier pour ses clients : présentation, fonctionnement, techniques ; créer un compte, se connecter, rejoindre ou demander à rejoindre | Tous |
 | `GET /a/:slug/:code` | Retient l'invitation en session, retire le code de l'adresse ; un client connecté passe chez cet atelier et va à la création | Tous |
 | `POST /a/:slug/rejoindre` | Demande à l'atelier (ou admission, si le code est dans la visite) | Client |
+| `GET /aide` | Questions fréquentes des clients ; chiffres lus dans `config/settings.yml` | Tous |
 | `GET /imprimeurs` | Annuaire : filtres à gauche — **technique d'impression en tête**, puis rayon, textile, délai, livraison — liste au centre, carte à droite ; les ateliers qui livrent partout en France restent visibles hors rayon | Tous |
 | `GET /imprimeurs/:slug` | Fiche : présentation, badges, photos, caractéristiques par groupe, carte, contact, compatibilité avec le dernier design | Tous |
 | `GET /graphistes`, `GET /graphistes/:id` | Liste avec filtres et carte facultative ; profil avec portfolio et avis | Tous |
@@ -407,6 +408,8 @@ Les routes publiques sont en français ; chaque espace a son propre layout et so
 
 | Route | Écran | Accès |
 | --- | --- | --- |
+| `GET /atelier/aide` | Aide de l'atelier : fonctionnement du site en six étapes, questions fréquentes, accès à la fiche client | Imprimeur |
+| `GET /atelier/aide/fiche-client` | Fiche A4 à remettre aux clients : QR code de l'atelier avec son code, étapes du parcours, bon à savoir ; mise en page de l'affiche | Imprimeur |
 | `GET /demandes/confirmation/:token`, `POST` | Page de confirmation de réception, sans connexion | Porteur du lien |
 | `GET /atelier` | Tableau de bord : lien client et QR code, dernières demandes, chiffres du mois, abonnement, fiche à compléter | Imprimeur |
 | `GET /atelier/demandes`, `PATCH /atelier/demandes/:id` | Liste filtrable et changement de statut | Imprimeur |

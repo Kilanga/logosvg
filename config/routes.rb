@@ -148,6 +148,11 @@ Rails.application.routes.draw do
   # Le code de l'affiche : un nouveau rend l'ancien inopérant.
   post "atelier/lien/code",     to: "workshop/links#regenerate_code", as: :workshop_link_code
 
+  # L'aide de l'atelier : le fonctionnement et ses questions, et la fiche qu'il
+  # remet à ses clients pour leur expliquer le parcours.
+  get "atelier/aide",              to: "workshop/help#show",         as: :workshop_help
+  get "atelier/aide/fiche-client", to: "workshop/help#client_sheet", as: :workshop_client_sheet
+
   # Les clients de l'atelier, et les demandes qui attendent sa réponse.
   get  "atelier/clients",                to: "workshop/clients#index",   as: :workshop_clients
   post "atelier/clients/demandes/:id/accepter", to: "workshop/clients#accept",
@@ -217,6 +222,10 @@ Rails.application.routes.draw do
   # Pas un document légal : pas de bandeau "document de travail", juste
   # comment nous écrire, pour une question comme pour une réclamation.
   get "contact", to: "public/contact#show", as: :contact
+
+  # Les questions des clients, ouvertes à tous : on les lit avant de créer un
+  # compte autant qu'après.
+  get "aide", to: "public/help#show", as: :help
 
   # Le choix du visiteur sur le cookie qui retient l'atelier qui l'a envoyé.
   post "cookies", to: "public/cookie_consents#create", as: :cookie_consent

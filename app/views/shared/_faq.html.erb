@@ -1,0 +1,27 @@
+<%# Questions and answers, grouped. Native <details>: no script, readable with
+    one hand on a phone, and the browser's own find-in-page opens the answer
+    it lands in. `groups` is an array of { title:, questions: [{ q:, a: }] },
+    with the figures put in by HelpHelper#help_text. %>
+<div class="space-y-10">
+  <% groups.each_with_index do |group, group_index| %>
+    <section aria-labelledby="<%= "#{id_prefix}-#{group_index}" %>">
+      <h2 id="<%= "#{id_prefix}-#{group_index}" %>" class="label-rule text-emulsion"><%= help_text(group[:title]) %></h2>
+      <div class="mt-3 divide-y divide-line border-y border-line">
+        <% group[:questions].each do |item| %>
+          <details class="group py-4">
+            <summary class="flex cursor-pointer list-none items-start justify-between gap-4 font-medium
+                            hover:text-emulsion focus-visible:outline focus-visible:outline-2 focus-visible:outline-emulsion">
+              <span><%= help_text(item[:q]) %></span>
+              <span class="flex-none font-display text-xl leading-none text-emulsion group-open:rotate-45 transition-transform" aria-hidden="true">+</span>
+            </summary>
+            <div class="mt-3 max-w-3xl space-y-2 text-muted">
+              <% Array(item[:a]).each do |paragraph| %>
+                <p><%= help_text(paragraph) %></p>
+              <% end %>
+            </div>
+          </details>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+</div>

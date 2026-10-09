@@ -53,6 +53,8 @@
         <p class="mt-3 whitespace-pre-line"><%= @printer.description %></p>
         <%= link_to t(".full_page"), printer_path(@printer.slug),
               class: "mt-3 inline-block text-sm underline underline-offset-4 hover:text-emulsion" %>
+        <%= link_to t(".faq"), help_path,
+              class: "ml-4 mt-3 inline-block text-sm underline underline-offset-4 hover:text-emulsion" %>
       </section>
     <% end %>
   </div>
