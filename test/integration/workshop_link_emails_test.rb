@@ -14,7 +14,7 @@ class WorkshopLinkEmailsTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", workshop_link_emails_path
 
     assert_enqueued_emails 1 do
-      post workshop_link_emails_path, params: { link_email: { email: "client@example.invalid", message: "À bientôt" } }
+      post workshop_link_emails_path, params: { link_email: { email: "client@example.invalid" } }
     end
     assert_redirected_to workshop_link_share_path
     assert_equal "Votre lien est parti à client@example.invalid.", flash[:notice]
@@ -55,7 +55,8 @@ class WorkshopLinkEmailsTest < ActionDispatch::IntegrationTest
     assert_match "background-color: #2B50A8; color: #FFFFFF;", response.body
     assert_select "footer", text: /pretatirer\.fr/
     assert_select "h1", text: /Sérigraphie du Thabor/
-    assert_select "ol li", count: 6
+    assert_select "ol li", count: 5
+    assert_match "Besoin d&#39;un graphiste ?", response.body
   end
 
   test "a named link has its own poster, whose QR code counts apart" do

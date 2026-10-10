@@ -68,13 +68,6 @@
           <%= form.email_field :email, required: true, autocomplete: "off", id: "link_email_email",
                 class: "mt-1 min-h-touch w-full rounded-xs border border-line bg-paper px-3" %>
         </div>
-        <div>
-          <%= form.label :message, t(".email.message"), class: "label-rule", for: "link_email_message" %>
-          <%= form.text_area :message, rows: 3, maxlength: WorkshopLinkEmail::MESSAGE_MAX, id: "link_email_message",
-                aria: { describedby: "link_email_message_hint" },
-                class: "mt-1 w-full rounded-xs border border-line bg-paper px-3 py-2" %>
-          <p id="link_email_message_hint" class="mt-1 text-xs text-muted"><%= t(".email.message_hint", max: WorkshopLinkEmail::MESSAGE_MAX) %></p>
-        </div>
         <div class="flex flex-wrap items-center gap-4">
           <%= form.submit t(".email.submit"), class: "btn btn-primary text-sm",
                 disabled: @emails_sent_today >= WorkshopLinkEmail.daily_limit %>

@@ -6,17 +6,6 @@
   <%= t("mailers.workshop_link.invite.intro") %>
 </p>
 
-<%# The shop's own word, when it wrote one: what makes this email personal,
-    and the sign that the two have spoken. %>
-<% if @message.present? %>
-  <div style="margin:0 0 22px;padding:0 0 18px;border-bottom:1px solid #C8D0D4;">
-    <p style="<%= display %>margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:<%= @palette.text %>;">
-      <%= t("mailers.workshop_link.invite.message_title") %>
-    </p>
-    <p style="<%= sans %>margin:0;font-size:16px;line-height:1.5;font-style:italic;color:#1D2433;">« <%= @message %> »</p>
-  </div>
-<% end %>
-
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;">
   <tr>
     <td style="background:<%= @palette.base %>;border:2px solid #1D2433;">
@@ -51,11 +40,21 @@
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-top:2px solid #1D2433;">
   <% t("mailers.workshop_link.invite.steps").each_with_index do |step, index| %>
     <tr>
-      <td style="<%= display %>width:28px;padding:<%= index.zero? ? 16 : 8 %>px 12px 0 0;vertical-align:baseline;
+      <td style="<%= display %>width:28px;padding:<%= index.zero? ? 16 : 8 %>px 12px 0 0;vertical-align:middle;
                  font-size:22px;font-weight:900;line-height:1;color:<%= @palette.text %>;"><%= index + 1 %></td>
-      <td style="<%= sans %>padding:<%= index.zero? ? 16 : 8 %>px 0 0;vertical-align:baseline;font-size:15px;line-height:1.45;color:#1D2433;">
+      <td style="<%= sans %>padding:<%= index.zero? ? 16 : 8 %>px 0 0;vertical-align:middle;font-size:15px;line-height:1.45;color:#1D2433;">
         <strong><%= step[:title] %></strong> <%= I18n.interpolate(step[:body], @figures) %>
       </td>
     </tr>
   <% end %>
 </table>
+
+<%# What else the shop can do for a client: take a ready-made image as it is,
+    or point to a designer — on a quote, outside the platform. %>
+<div style="margin:22px 0 0;padding:14px 16px;background:#F2F4F3;">
+  <% t("mailers.workshop_link.invite.notes").each_with_index do |note, index| %>
+    <p style="<%= sans %>margin:<%= index.zero? ? 0 : 8 %>px 0 0;font-size:15px;line-height:1.45;color:#1D2433;">
+      <strong><%= note[:title] %></strong> <%= note[:body] %>
+    </p>
+  <% end %>
+</div>
