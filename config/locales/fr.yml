@@ -645,6 +645,7 @@ fr:
   print_requests:
     errors:
       design_not_ready: "Ce design n'est pas encore prêt à être envoyé."
+      design_not_approved: "Le rendu d'impression de ce visuel n'a pas encore été validé."
     sheet:
       technique: "Technique d'impression"
       print_width: "Largeur d'impression"
@@ -1409,6 +1410,9 @@ fr:
         send_to: "Envoyer"
         see_directory: "Voir dans l'annuaire"
         no_compatible_printer: "Aucun atelier référencé ne pratique cette technique pour l'instant."
+        approve_first: >-
+          Comparez d'abord votre image et le rendu d'impression, puis validez-le :
+          l'envoi à un atelier s'ouvre ensuite.
         proposals_title: "Choisissez votre proposition"
         origin: "Origine"
         origin_upload: "Votre visuel, déposé tel quel"
@@ -1474,16 +1478,32 @@ fr:
           other: "Il reste %{count} reprises pour ce design."
         reviewed_by: "Version finalisée par %{designer}. Prête à envoyer à votre atelier."
         from_reference: "Parti de votre image."
-        from_upload: "Votre visuel, tel que vous l'avez déposé."
         upload_note: >-
-          Votre visuel est gardé tel quel : il n'y a pas de reprise par l'IA.
-          Pour le retoucher, un graphiste peut le reprendre pour vous.
+          Votre visuel n'est pas redessiné par l'IA. Si le rendu ne vous
+          convient pas, essayez une autre technique de l'atelier, ou confiez-le
+          à un graphiste qui le reprendra pour vous.
+        proof_title: "Avant l'envoi : votre visuel, tel que l'atelier l'imprimera"
+        proof_yours: "Votre image"
+        proof_printed: "Imprimé en %{technique}"
+        proof_changes: "Ce qui change"
+        proof_warnings:
+          one: "Lisez aussi le point d'attention signalé plus haut."
+          other: "Lisez aussi les %{count} points d'attention signalés plus haut."
+        proof_confirm: >-
+          J'ai comparé mon image et le rendu d'impression, et je valide ce
+          rendu : c'est ce fichier que l'atelier recevra.
+        proof_submit: "Valider le rendu"
+        proof_approved: "Rendu validé le %{date}. Vous pouvez l'envoyer à un atelier."
+        other_technique: "Essayer une autre technique"
         budget_spent: "Vous avez utilisé vos trois reprises"
         budget_spent_body: >-
           Pour aller plus loin, un graphiste professionnel peut reprendre ce
           visuel : tracés nettoyés, encres ajustées, fichier prêt pour votre
           atelier.
         ask_designer: "Faire vérifier par un graphiste"
+      approve_print:
+        approved: "Rendu validé. Il ne reste qu'à compléter votre demande."
+        unconfirmed: "Cochez la case pour confirmer que vous validez ce rendu."
       variants:
         budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
       refine:
@@ -1540,9 +1560,16 @@ fr:
         submit: "Préparer mon fichier"
         free: "Gratuit : ce dépôt ne compte pas dans vos créations du jour."
         back_to_generation: "Je préfère créer un visuel avec l'IA"
+        again_title: "Essayer une autre technique"
+        again_intro: >-
+          Le même visuel, préparé pour une autre technique de l'atelier. Rien à
+          redéposer, et c'est gratuit : vous comparerez ensuite les deux rendus
+          et garderez celui qui vous convient.
+        again_image: "Votre visuel, déjà préparé en %{technique}."
       create:
         missing_image: "Ajoutez votre visuel pour que nous puissions le préparer."
     print_requests:
+      approval_required: "Validez d'abord le rendu d'impression de votre visuel : c'est lui que l'atelier recevra."
       index:
         title: "Mes demandes"
         heading: "Mes demandes d'impression"
@@ -2617,6 +2644,23 @@ fr:
     family_hint:
       vector: "Couleurs pleines, comptées une à une : chaque couleur est un écran, une découpe ou un fil."
       raster: "Dégradés et photo possibles, imprimés directement en une passe."
+    # Ce que la technique a fait de l'image du client, dit en clair à côté
+    # d'elle avant qu'il valide (décidé le 10/10/2026).
+    changes:
+      flattened:
+        one: >-
+          Redessiné en aplats d'une seule couleur d'encre : les dégradés, les
+          ombres et les textures fines deviennent une teinte unie.
+        other: >-
+          Redessiné en aplats de %{count} couleurs d'encre : les dégradés, les
+          ombres et les textures fines deviennent des zones de couleur unie.
+      traced: "Les contours sont retracés : les très petits détails et les textes fins peuvent être simplifiés."
+      width: "Imprimé sur %{width} cm de large, proportions conservées."
+      kept_whole: "Gardé tel quel, couleurs et dégradés compris : rien n'est redessiné."
+      raster_size: "Préparé en %{width} × %{height} cm à %{dpi} dpi."
+      enlarged: "Agrandi %{factor} fois pour atteindre cette taille : les détails fins seront un peu adoucis."
+      background_removed: "Le fond est retiré : la couleur du textile apparaît à la place."
+      background_kept: "Le fond est gardé : il sera imprimé lui aussi, rectangle compris."
     facts:
       size: "Taille"
       definition: "Définition"

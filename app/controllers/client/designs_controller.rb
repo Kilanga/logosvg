@@ -4,7 +4,8 @@ module Client
   # The technique is the first field, because it shapes the prompt and not only
   # the output file — see docs/SPEC.md, "Techniques d'impression".
   class DesignsController < BaseController
-    before_action :set_design, only: %i[ show image original_image garment_image reference_image variants refine choose destroy ]
+    before_action :set_design, only: %i[ show image original_image garment_image reference_image variants refine choose
+                                             approve_print destroy ]
     # A client creates through their workshop, and only once it has them —
     # see docs/SPEC.md, "Rattachement d'un client à un atelier".
     before_action :require_workshop, only: %i[ new create ]
@@ -91,6 +92,25 @@ module Client
       when "atelier" then redirect_to new_design_print_request_path(@design)
       when "graphiste" then redirect_to new_design_review_path(@design)
       else redirect_to design_path(@design), notice: t(".chosen")
+      end
+    end
+
+    # The client has looked at their picture beside what the workshop will
+    # print, and says yes. Ticked, not merely clicked: the box says what is
+    # being agreed to. Straight on to the request, since sending is why one
+    # approves — when there is a workshop to send it to.
+    def approve_print
+      authorize @design
+
+      unless params[:confirmed] == "1"
+        return redirect_to design_path(@design), alert: t(".unconfirmed")
+      end
+
+      @design.approve_print!
+      if @design.printer_id
+        redirect_to new_design_print_request_path(@design), notice: t(".approved")
+      else
+        redirect_to design_path(@design), notice: t(".approved")
       end
     end
 

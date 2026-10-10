@@ -23,6 +23,15 @@ class DesignPolicy < ApplicationPolicy
   def variants? = owner? && record.ready? && !record.upload?
   def refine? = variants?
 
+  # Saying yes to what the workshop will print, once the file is ready. Only a
+  # client's own picture asks for it, and only once.
+  def approve_print? = owner? && record.ready? && record.print_approval_required? && record.print_approved_at.nil?
+
+  # The same picture put in format for another technique: a new upload, free
+  # like the first, from the image already sent. Not before the first one is
+  # done — it is by seeing the result that one wants another.
+  def reconvert? = owner? && record.upload? && (record.ready? || record.failed?) && record.reference_image.attached?
+
   # Keeping one of the proposals of a click: a ready one, still on offer.
   def choose? = owner? && record.ready? && record.awaiting_choice?
 

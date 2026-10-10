@@ -131,7 +131,10 @@
       <div class="panel p-6">
         <h2 class="label-rule"><%= t(".who_can_print") %></h2>
 
-        <% if @compatible_printers.any? %>
+        <% if !@design.print_approved? %>
+          <%# A client's own picture leaves only once its proof is approved. %>
+          <p class="mt-4 text-sm text-muted"><%= t(".approve_first") %></p>
+        <% elsif @compatible_printers.any? %>
           <%# Each shop is one click from a complete brief: the point of the
               whole step is that the client never re-types what they already
               chose. %>

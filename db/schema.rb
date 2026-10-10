@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_09_143000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -140,6 +140,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_09_143000) do
     t.jsonb "warnings", default: [], null: false
     t.datetime "chosen_at"
     t.boolean "ai_declared", default: false, null: false
+    t.datetime "print_approved_at"
     t.index ["batch_token"], name: "index_designs_on_batch_token"
     t.index ["deleted_at"], name: "index_designs_on_deleted_at"
     t.index ["generator_job_id"], name: "index_designs_on_generator_job_id"

@@ -7,6 +7,7 @@ module Client
   class PrintRequestsController < BaseController
     before_action :set_design, only: %i[ new create ]
     before_action :set_print_request, only: %i[ show cancel ]
+    before_action :require_print_approval, only: %i[ new create ]
 
     rate_limit to: 10, within: 1.minute, only: :create,
                with: -> { redirect_to design_path(params[:design_token]), alert: t("flash.rate_limited") }
@@ -59,6 +60,16 @@ module Client
       def set_design
         @design = policy_scope(Design).find_by!(token: params[:design_token])
         @printer = chosen_printer
+      end
+
+      # A client's own picture is sent only once the client has seen what the
+      # workshop will print and approved it. Back to the proof, which is where
+      # that happens.
+      def require_print_approval
+        return if @design.print_approved?
+
+        authorize @design, :show?
+        redirect_to design_path(@design), alert: t("client.print_requests.approval_required")
       end
 
       def set_print_request

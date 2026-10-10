@@ -126,21 +126,86 @@
     </div>
 
     <%# Where it started from, when the client sent an image of their own. %>
-    <% if design.reference_image.attached? %>
+    <%# A client's own picture is shown full size in its proof, below. %>
+    <% if design.reference_image.attached? && !design.upload? %>
       <div class="flex items-center gap-3 border-t border-line px-4 py-3 text-sm text-muted">
         <%= image_tag design_reference_image_path(design), alt: "", class: "size-12 flex-none rounded-xs border border-line object-contain bg-surface" %>
-        <span><%= t(design.upload? ? "client.designs.design.from_upload" : "client.designs.design.from_reference") %></span>
+        <span><%= t("client.designs.design.from_reference") %></span>
       </div>
     <% end %>
 
     <%# Kept as the client sent it: no AI reprise, but a person can still
         rework it — the paid path, offered rather than left to be found. %>
     <% if design.upload? %>
-      <div class="border-t border-line p-4 text-sm">
-        <p class="text-muted"><%= t("client.designs.design.upload_note") %></p>
-        <%= link_to t("client.designs.design.ask_designer"), new_design_review_path(design),
-              class: "btn btn-secondary mt-3 text-sm" %>
-      </div>
+      <%# The proof, before any workshop sees it: the client's picture beside
+          what the machine will print, and what changed between the two, in
+          words. Nothing leaves until the client says yes (decided on
+          10/10/2026) — and if the technique does not suit the picture, the
+          same picture can be tried with another, for free. %>
+      <section class="border-t border-line p-4" aria-labelledby="proof_<%= design.token %>">
+        <h3 id="proof_<%= design.token %>" class="label-rule text-emulsion">
+          <%= t("client.designs.design.proof_title") %>
+        </h3>
+
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <figure>
+            <div class="screen-tint flex aspect-square items-center justify-center rounded-xs border border-line p-3">
+              <%= image_tag design_reference_image_path(design), alt: t("client.designs.design.proof_yours"),
+                    class: "max-h-full max-w-full object-contain" %>
+            </div>
+            <figcaption class="mt-2 text-sm text-muted"><%= t("client.designs.design.proof_yours") %></figcaption>
+          </figure>
+          <figure>
+            <div class="screen-tint flex aspect-square items-center justify-center rounded-xs border border-emulsion p-3">
+              <%= image_tag design_garment_image_path(design), alt: t("client.designs.design.proof_printed", technique: design.technique_label),
+                    class: "max-h-full max-w-full object-contain" %>
+            </div>
+            <figcaption class="mt-2 text-sm font-medium">
+              <%= t("client.designs.design.proof_printed", technique: design.technique_label) %>
+            </figcaption>
+          </figure>
+        </div>
+
+        <p class="label-rule mt-5"><%= t("client.designs.design.proof_changes") %></p>
+        <ul class="mt-2 space-y-1.5 text-sm">
+          <% print_changes(design).each do |change| %>
+            <li class="flex gap-2.5"><%= registration_mark css_class: "mt-0.5 flex-none text-emulsion" %><span><%= change %></span></li>
+          <% end %>
+        </ul>
+        <% if design.warnings.any? %>
+          <p class="mt-2 text-sm text-warning"><%= t("client.designs.design.proof_warnings", count: design.warnings.size) %></p>
+        <% end %>
+
+        <% if design.print_approved_at %>
+          <p class="mt-5 flex items-center gap-2.5 border-l-2 border-success bg-success-bg px-3 py-2 text-sm text-success">
+            <%= registration_mark css_class: "flex-none" %>
+            <%= t("client.designs.design.proof_approved", date: l(design.print_approved_at, format: :short)) %>
+          </p>
+        <% else %>
+          <%= form_with url: design_print_approval_path(design), class: "mt-5 rounded-xs border border-line p-4" do %>
+            <label class="flex items-start gap-2.5 text-sm">
+              <%= check_box_tag :confirmed, "1", false, required: true, id: "confirmed_#{design.token}",
+                    class: "mt-0.5 size-4 flex-none border-line text-emulsion" %>
+              <span><%= t("client.designs.design.proof_confirm") %></span>
+            </label>
+            <button type="submit" class="btn btn-primary mt-4 w-full text-sm sm:w-auto">
+              <%= t("client.designs.design.proof_submit") %>
+            </button>
+          <% end %>
+        <% end %>
+
+        <div class="mt-5 border-t border-line pt-4 text-sm">
+          <p class="text-muted"><%= t("client.designs.design.upload_note") %></p>
+          <div class="mt-3 flex flex-wrap gap-3">
+            <% if other_techniques_offered?(design) %>
+              <%= link_to t("client.designs.design.other_technique"), new_design_upload_path(depuis: design.token),
+                    class: "btn btn-secondary text-sm" %>
+            <% end %>
+            <%= link_to t("client.designs.design.ask_designer"), new_design_review_path(design),
+                  class: "btn btn-secondary text-sm" %>
+          </div>
+        </div>
+      </section>
     <% end %>
 
     <% if design.reviewed? %>

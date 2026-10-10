@@ -3,8 +3,10 @@
 class PrintRequestPolicy < ApplicationPolicy
   def show? = client? || workshop?
 
-  # Only a client sends, and only from a design that is theirs and finished.
-  def create? = user&.client? && owns_design? && record.design&.ready? && !record.design.awaiting_choice?
+  # Only a client sends, and only from a design that is theirs and finished —
+  # and, for a picture of their own, whose print rendering they approved.
+  def create? = user&.client? && owns_design? && record.design&.ready? && !record.design.awaiting_choice? &&
+                record.design.print_approved?
   def new? = create?
 
   # The client calls it off; the workshop refuses by simply not answering.

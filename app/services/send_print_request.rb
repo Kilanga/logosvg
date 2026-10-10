@@ -26,6 +26,7 @@ class SendPrintRequest
     compatibility = design.compatibility_with(@print_request.printer)
     return failure(compatibility.message) unless compatibility.compatible?
     return failure(I18n.t("print_requests.errors.design_not_ready")) unless design.ready?
+    return failure(I18n.t("print_requests.errors.design_not_approved")) unless design.print_approved?
 
     PrintRequest.transaction do
       copy_files(design)

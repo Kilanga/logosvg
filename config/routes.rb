@@ -59,6 +59,8 @@ Rails.application.routes.draw do
   post "designs/:token/retouche",  to: "client/designs#refine",   as: :design_refine
   # Garder une des propositions d'un clic ; les autres sont écartées.
   post "designs/:token/choisir",   to: "client/designs#choose",   as: :design_choice
+  # Un visuel déposé : le client valide le rendu d'impression avant tout envoi.
+  post "designs/:token/valider",   to: "client/designs#approve_print", as: :design_print_approval
 
   # --- Demandes d'impression -------------------------------------------------
   get  "designs/:design_token/demande", to: "client/print_requests#new",
