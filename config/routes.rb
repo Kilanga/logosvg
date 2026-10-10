@@ -36,8 +36,9 @@ Rails.application.routes.draw do
   get  "a/:slug",           to: "public/workshop_links#show", as: :workshop_link
   post "a/:slug/rejoindre", to: "public/workshop_links#join", as: :join_workshop
   get  "a/:slug/:code",     to: "public/workshop_links#show", as: :workshop_invite
-  # Une fiche client numérotée : un QR code, un client, une seule fois.
-  get  "f/:code",           to: "public/workshop_sheets#show", as: :workshop_sheet
+  # Les anciennes fiches client numérotées (09/10 au 10/10/2026) : retirées,
+  # leur QR code mène à l'annuaire.
+  get  "f/:code",           to: redirect("/imprimeurs")
 
   get  "designs/nouveau", to: "client/designs#new",    as: :new_design
   # Un visuel déjà fait, mis au format de l'atelier sans être redessiné.
@@ -149,19 +150,18 @@ Rails.application.routes.draw do
   post   "atelier/lien/canaux",      to: "workshop/link_channels#create",  as: :workshop_link_channels
   delete "atelier/lien/canaux/:key", to: "workshop/link_channels#destroy", as: :workshop_link_channel
 
+  # Le lien envoyé par email à un client déjà démarché, jamais à un inconnu.
+  post "atelier/lien/email",    to: "workshop/link_emails#create", as: :workshop_link_emails
+
   # Le code de l'affiche : un nouveau rend l'ancien inopérant.
   post "atelier/lien/code",     to: "workshop/links#regenerate_code", as: :workshop_link_code
 
-  # L'aide de l'atelier : le fonctionnement et ses questions, et la fiche qu'il
-  # remet à ses clients pour leur expliquer le parcours.
+  # L'aide de l'atelier : le fonctionnement et ses questions.
   get "atelier/aide",              to: "workshop/help#show",         as: :workshop_help
-  # Les fiches client à usage unique, numérotées, par lots.
-  get  "atelier/fiches",                to: "workshop/invites#index",  as: :workshop_invites
-  post "atelier/fiches",                to: "workshop/invites#create"
-  get  "atelier/fiches/lots/:batch",    to: "workshop/invites#print",  as: :print_workshop_invites
-  post "atelier/fiches/:id/annuler",    to: "workshop/invites#revoke", as: :revoke_workshop_invite
-  # L'ancienne fiche unique mène aux fiches numérotées.
-  get "atelier/aide/fiche-client", to: redirect("/atelier/fiches"), as: :workshop_client_sheet
+  # Les fiches client, numérotées puis retirées le 10/10/2026 : l'affiche les
+  # remplace, et elle se trouve avec le lien.
+  get "atelier/fiches",            to: redirect("/atelier/lien")
+  get "atelier/aide/fiche-client", to: redirect("/atelier/lien")
 
   # Les vérifications par un graphiste sur les designs faits pour l'atelier.
   get "atelier/verifications", to: "workshop/reviews#index", as: :workshop_reviews

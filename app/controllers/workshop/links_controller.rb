@@ -14,6 +14,7 @@ module Workshop
       # refuses to walk to an association nobody asked for.
       @channels = WorkshopLinkChannel.where(printer: @printer).order(:created_at, :id).to_a
       @statistics = link_statistics
+      @emails_sent_today = WorkshopLinkEmail.sent_today(@printer)
     end
 
     # SVG for the poster and for print; PNG for whatever a shop pastes into its
@@ -36,10 +37,15 @@ module Workshop
 
     # Its own layout: this page is made to come out of a printer, not to be
     # read inside the workshop console.
+    # With `canal`, the same poster carrying one named link's QR code: the
+    # flyers a shop hands out, counted apart from the counter (decided on
+    # 10/10/2026 — the poster is also what gets distributed).
     def poster
       authorize @printer, :update?
 
-      @qr = WorkshopQrCode.svg(share_url(source: WorkshopLinkVisit::QR), size: 320)
+      @channel = @printer.link_channels.find_by!(key: params[:canal]) if params[:canal].present?
+      @palette = @printer.brand_palette
+      @qr = WorkshopQrCode.svg(share_url(source: qr_source), size: 196)
       render layout: "poster"
     end
 

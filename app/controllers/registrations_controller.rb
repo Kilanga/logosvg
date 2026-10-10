@@ -57,8 +57,8 @@ class RegistrationsController < ApplicationController
     def set_workshop
       id = shop_context.invited_printer_id || shop_context.printer_id
       @workshop = Printer.listed.find_by(id: id) if id
-      # A new account has never been anyone's client: the poster or a sheet
-      # admits it. See WorkshopEntry.
+      # A new account has never been anyone's client: the poster admits it.
+      # See WorkshopEntry.
       @entry = WorkshopEntry.new(client: nil, printer: @workshop, shop_context: shop_context) if @workshop
       @invited = @entry&.admits? || false
     end
@@ -71,9 +71,9 @@ class RegistrationsController < ApplicationController
       saved = User.transaction do
         raise ActiveRecord::Rollback unless @user.save
 
-        # A sheet spent by someone else a moment ago: a request instead.
-        unless @invited && @entry.admit!(@user)
-          @invited = false
+        if @invited
+          @entry.admit!(@user)
+        else
           @affiliation = ClientAffiliation.request!(client: @user, printer: @workshop)
         end
         true

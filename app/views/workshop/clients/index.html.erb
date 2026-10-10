@@ -19,6 +19,11 @@
                 <%= affiliation.client.email_address %><% if affiliation.client.city.present? %> · <%= affiliation.client.city %><% end %>
               </span>
               <span class="mt-0.5 block text-sm text-muted"><%= t(".pending.asked_on", date: l(affiliation.created_at.to_date, format: :long)) %></span>
+              <%# A former client who came back by the shop's own poster or
+                  email: the shop is validating a return, not a stranger. %>
+              <% if affiliation.channel.present? %>
+                <span class="mt-0.5 block text-sm text-muted"><%= t(".pending.returning", source: link_source_label(affiliation.channel, @channels)) %></span>
+              <% end %>
             </span>
             <span class="flex gap-3">
               <%= button_to t(".pending.decline"), decline_workshop_client_request_path(affiliation),
@@ -53,7 +58,7 @@
                 <% else %>
                   <%= t(".clients.suspended") %>
                 <% end %>
-                <% if (number = @sheet_numbers[client.id]) %> · <%= t("help.sheet.number", number: number) %><% end %>
+                <% if (admission = @admissions[client.id]) %> · <%= t(".clients.came_by", source: admission_label(admission, @channels)) %><% end %>
               </span>
             </span>
             <%= button_to t(".clients.extend"), extend_workshop_client_path(client),

@@ -1,7 +1,7 @@
 module Public
   # `/a/:slug` — the shop's own page for its clients — and `/a/:slug/:code`, the
-  # link on its poster, its QR code and its named links. Numbered single-use
-  # sheets land here too, through `/f/:code` (WorkshopSheetsController).
+  # link on its poster, its QR code, its named links and the email it sends a
+  # client.
   #
   # Decided on 09/10/2026: a client belongs to one workshop, and only with that
   # workshop's agreement. The code is that agreement given in advance: whoever
@@ -30,18 +30,18 @@ module Public
       # the cookie a returning visitor agreed to — means a reload or a second
       # scan, not a second person.
       if new_visitor? && !crawler?
-        WorkshopLinkVisit.record!(@printer, source: @printer.link_source(params[:s]))
+        WorkshopLinkVisit.record!(@printer, source: link_source)
       end
       shop_context.remember(@printer)
 
       # The code is taken and dropped from the address at once: it must not sit
       # in a browser history, a screenshot or the Referer of the next page.
       if params[:code].present?
-        shop_context.invite!(@printer) if @printer.invite_code_matches?(params[:code])
+        shop_context.invite!(@printer, channel: link_source) if @printer.invite_code_matches?(params[:code])
         return redirect_to workshop_link_path(slug: @printer.slug)
       end
 
-      # A client with an account who scanned the poster or a sheet: in, and
+      # A client with an account who scanned the poster: in, and
       # straight to work — that is also how one moves to another shop.
       # One of the shop's clients scanning it again goes straight to work too —
       # without a single day more: only the shop extends.
@@ -66,7 +66,8 @@ module Public
       return redirect_to(new_design_path) if entry.kind == :member
       return admit_and_create if entry.admits?
 
-      if (affiliation = ClientAffiliation.request!(client: Current.user, printer: @printer))
+      if (affiliation = ClientAffiliation.request!(client: Current.user, printer: @printer,
+                                                   channel: entry.channel))
         AffiliationMailer.requested(affiliation).deliver_later
       end
       redirect_to client_dashboard_path, notice: t(".requested", name: @printer.name)
@@ -88,14 +89,12 @@ module Public
       def admit_and_create
         return redirect_to(new_design_path) if entry.kind == :member
 
-        if entry.admit!
-          redirect_to new_design_path, notice: t("public.workshop_links.show.admitted",
-                                                 name: @printer.name, date: l(Current.user.workshop_until.to_date, format: :long))
-        else
-          # The sheet was spent a moment ago, by someone else.
-          redirect_to workshop_link_path(slug: @printer.slug), alert: t("public.workshop_sheets.show.spent")
-        end
+        entry.admit!
+        redirect_to new_design_path, notice: t("public.workshop_links.show.admitted",
+                                               name: @printer.name, date: l(Current.user.workshop_until.to_date, format: :long))
       end
+
+      def link_source = @link_source ||= @printer.link_source(params[:s])
 
       def new_visitor? = shop_context.printer_id != @printer.id
 

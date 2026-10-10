@@ -63,10 +63,28 @@ class SubscriptionsTest < ApplicationSystemTestCase
     click_on I18n.t("workshop.links.show.poster")
 
     within_window(windows.last) do
-      assert_text displayed("workshop.links.poster.headline")
+      assert_text displayed("workshop.links.poster.how")
       assert_selector "svg"
       assert_text shown(printers(:rennes).name)
+      assert_text "pretatirer.fr"
     end
+  end
+
+  test "a printer emails their link to a client they spoke to" do
+    sign_in users(:printer)
+    click_on I18n.t("nav.my_link")
+
+    fill_in I18n.t("workshop.links.show.email.address"), with: "client@example.invalid"
+    fill_in I18n.t("workshop.links.show.email.message"), with: "Partez sur la sérigraphie deux couleurs."
+    click_on I18n.t("workshop.links.show.email.submit")
+
+    assert_text I18n.t("workshop.link_emails.create.sent", email: "client@example.invalid")
+    assert_text I18n.t("workshop.links.show.email.sent_today", count: 1, limit: WorkshopLinkEmail.daily_limit)
+
+    fill_in I18n.t("workshop.links.show.email.address"), with: "client@example.invalid"
+    click_on I18n.t("workshop.links.show.email.submit")
+
+    assert_text I18n.t("workshop.link_emails.create.already_sent")
   end
 
   test "statistics are what Atelier+ buys" do

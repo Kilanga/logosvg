@@ -2,15 +2,15 @@
 <% content_for :heading, t("help.workshop.heading") %>
 
 <div class="max-w-4xl space-y-12">
-  <%# The sheet for its clients leads: it is the one thing on this page a shop
-      takes away with it. %>
+  <%# The poster for its clients leads: it is the one thing on this page a
+      shop takes away with it. %>
   <section class="panel flex flex-wrap items-center justify-between gap-4 border-l-2 border-l-emulsion p-5" aria-labelledby="sheet-title">
     <div class="min-w-0 flex-1 basis-72">
       <h2 id="sheet-title" class="font-display text-lg font-bold uppercase"><%= t("help.workshop.sheet_title") %></h2>
       <p class="mt-1 text-sm text-muted"><%= t("help.workshop.sheet_body") %></p>
       <p class="mt-2 text-sm text-muted"><%= help_text(t("help.workshop.help_for_clients", url: help_url)) %></p>
     </div>
-    <%= link_to t("help.workshop.sheet_cta"), workshop_invites_path, class: "btn btn-primary text-sm" %>
+    <%= link_to t("help.workshop.sheet_cta"), workshop_link_share_path, class: "btn btn-primary text-sm" %>
   </section>
 
   <section aria-labelledby="guide-title">
