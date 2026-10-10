@@ -747,40 +747,6 @@ fr:
       mismatch: "Les deux mots de passe ne correspondent pas."
 
   mailers:
-    # L'email d'un atelier à un client déjà démarché, à sa voix et à ses
-    # couleurs. La plateforme y est citée par son adresse (décidé le 10/10/2026).
-    workshop_link:
-      invite:
-        from: "%{name} via %{site}"
-        subject: "%{name} : votre accès pour créer votre visuel"
-        greeting: "Bonjour,"
-        intro: >-
-          Suite à notre échange, voici le lien pour créer le visuel de votre
-          t-shirt. Nous l'imprimons ensuite dans notre atelier.
-        cta: "Créer mon visuel"
-        copy_link: "ou copiez ce lien :"
-        qr_alt: "QR code de %{name}"
-        qr_title: "Sur ordinateur ?"
-        qr_body: "Scannez ce code avec votre téléphone."
-        returning_title: "Déjà client ?"
-        returning_body: "Le même lien vous permet de revenir : nous validons votre retour."
-        steps:
-          - title: "Créez votre compte"
-            body: "à partir de ce lien."
-          - title: "Décrivez votre projet"
-            body: "en quelques mots : %{proposals} propositions vous sont présentées, ajustables si nécessaire."
-          - title: "Transmettez-nous votre visuel."
-            body: "Nous vous adressons un devis, puis nous l'imprimons dans notre atelier."
-        notes:
-          - title: "Vous avez déjà votre visuel ?"
-            body: "Déposez-le simplement : il est converti au format adapté à nos machines, sans être redessiné."
-          - title: "Besoin d'un graphiste ?"
-            body: "Un graphiste peut retoucher votre visuel avant impression, ou le créer sur mesure sur devis."
-        footer: >-
-          Ce message vous a été envoyé une seule fois par %{name}, via %{site},
-          à la suite de votre échange avec l'atelier. Pour lui répondre,
-          répondez simplement à cet email. Vous ne recevrez pas d'autre
-          message de %{site}.
     affiliation:
       requested:
         subject: "%{name} demande à devenir votre client"
@@ -1831,6 +1797,24 @@ fr:
         done: "Nouveau code en place. Pensez à réimprimer votre affiche et vos QR codes."
       update_notes:
         done: "Vos textes sont enregistrés."
+      # L'email du lien, envoyé depuis la messagerie de l'atelier (décidé le
+      # 10/10/2026). Texte brut : c'est tout ce qu'un lien mailto: transmet.
+      message:
+        subject: "%{name} : votre accès pour créer votre visuel"
+        greeting: "Bonjour,"
+        intro: >-
+          Suite à notre échange, voici le lien pour créer le visuel de votre
+          t-shirt. Nous l'imprimons ensuite dans notre atelier.
+        cta: "Créer mon visuel :"
+        how: "Comment ça se passe :"
+        steps:
+          - "Créez votre compte à partir de ce lien."
+          - "Décrivez votre projet en quelques mots : %{proposals} propositions vous sont présentées, ajustables si nécessaire."
+          - "Transmettez-nous votre visuel. Nous vous adressons un devis, puis nous l'imprimons dans notre atelier."
+        notes:
+          - "Vous avez déjà votre visuel ? Déposez-le simplement : il est converti au format adapté à nos machines, sans être redessiné."
+          - "Besoin d'un graphiste ? Un graphiste peut retoucher votre visuel avant impression, ou le créer sur mesure sur devis."
+          - "Déjà client ? Le même lien vous permet de revenir : nous validons votre retour."
       show:
         title: "Mon lien"
         heading: "Mon lien client"
@@ -1905,16 +1889,15 @@ fr:
           title: "Envoyer mon lien par email"
           body: >-
             À un client avec qui vous avez déjà échangé, au comptoir ou au
-            téléphone : jamais à une liste. Le message part à votre nom, à vos
-            couleurs, avec votre QR code, et sa réponse vous arrive
-            directement. Une même adresse ne le reçoit qu'une fois de votre
-            part, et %{limit} envois par jour au plus.
-          address: "Adresse email du client"
-          submit: "Envoyer le lien"
-          sent_today:
-            zero: "Aucun envoi aujourd'hui, sur %{limit}."
-            one: "1 envoi aujourd'hui, sur %{limit}."
-            other: "%{count} envois aujourd'hui, sur %{limit}."
+            téléphone. Le message est prêt : il s'ouvre dans votre messagerie,
+            vous saisissez l'adresse du client et vous l'envoyez depuis votre
+            propre adresse. Il comprend votre texte d'email, s'il est rempli.
+          open: "Préparer l'email"
+          copy: "Copier le message"
+          preview: "Aperçu du message"
+          no_app: >-
+            Rien ne s'ouvre ? Votre ordinateur n'a pas de messagerie installée :
+            copiez le message et collez-le dans votre webmail.
           not_listed: "Votre fiche doit être publiée et votre abonnement actif pour que votre lien fonctionne."
         source_removed: "%{key} (supprimé)"
         channels: "Vos liens nommés"
@@ -1973,14 +1956,6 @@ fr:
           « Graphiques d'arrière-plan » dans la fenêtre d'impression.
         channel_hint: "Affiche du lien « %{label} » : ses scans sont comptés à part."
         back: "Retour"
-
-    link_emails:
-      create:
-        sent: "Votre lien est parti à %{email}."
-        already_sent: "Cette adresse a déjà reçu votre lien."
-        limit_reached: "Vous avez atteint les %{limit} envois du jour. Vous pourrez en envoyer d'autres demain."
-        invalid_email: "Cette adresse email n'est pas valide."
-        not_listed: "Votre fiche doit être publiée et votre abonnement actif pour que votre lien fonctionne."
 
     link_channels:
       create:

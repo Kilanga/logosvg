@@ -80,25 +80,27 @@
     <% end %>
   </section>
 
-  <%# The link sent to one client, by email, in the shop's name and colours.
-      For a client the shop already spoke to — never a list. %>
+  <%# The link for one client, by email — from the shop's own mail app, with
+      the message already written (decided on 10/10/2026). Nothing goes out
+      through the platform. %>
   <section class="panel p-6" aria-labelledby="link-email">
     <h2 id="link-email" class="label-rule"><%= t(".email.title") %></h2>
-    <p class="mt-3 text-sm text-muted"><%= t(".email.body", limit: WorkshopLinkEmail.daily_limit) %></p>
+    <p class="mt-3 text-sm text-muted"><%= t(".email.body") %></p>
 
     <% if @printer.listed? %>
-      <%= form_with scope: :link_email, url: workshop_link_emails_path, class: "mt-5 space-y-4" do |form| %>
-        <div>
-          <%= form.label :email, t(".email.address"), class: "label-rule", for: "link_email_email" %>
-          <%= form.email_field :email, required: true, autocomplete: "off", id: "link_email_email",
-                class: "mt-1 min-h-touch w-full rounded-xs border border-line bg-paper px-3" %>
+      <div class="mt-5" data-controller="clipboard" data-clipboard-copied-value="<%= t('.copied') %>">
+        <label for="link_message" class="label-rule"><%= t(".email.preview") %></label>
+        <textarea id="link_message" readonly rows="12" data-clipboard-target="source"
+                  class="mt-1 w-full rounded-xs border border-line bg-paper px-3 py-2 text-sm"><%= @link_message.body %></textarea>
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+          <%= link_to t(".email.open"), @link_message.mailto, class: "btn btn-primary text-sm" %>
+          <button type="button" class="btn btn-secondary text-sm"
+                  data-clipboard-target="button" data-action="clipboard#copy">
+            <%= t(".email.copy") %>
+          </button>
         </div>
-        <div class="flex flex-wrap items-center gap-4">
-          <%= form.submit t(".email.submit"), class: "btn btn-primary text-sm",
-                disabled: @emails_sent_today >= WorkshopLinkEmail.daily_limit %>
-          <span class="text-sm text-muted"><%= t(".email.sent_today", count: @emails_sent_today, limit: WorkshopLinkEmail.daily_limit) %></span>
-        </div>
-      <% end %>
+        <p class="mt-2 text-xs text-muted"><%= t(".email.no_app") %></p>
+      </div>
     <% else %>
       <p class="mt-4 text-sm"><%= t(".email.not_listed") %></p>
     <% end %>

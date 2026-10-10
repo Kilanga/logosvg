@@ -30,7 +30,6 @@ class Printer < ApplicationRecord
   has_many :clients, class_name: "User", foreign_key: :workshop_id,
            dependent: :nullify, inverse_of: :workshop
   has_many :client_affiliations, dependent: :delete_all, inverse_of: :printer
-  has_many :link_emails, class_name: "WorkshopLinkEmail", dependent: :delete_all, inverse_of: :printer
 
   # The designer this shop recommends to its clients (decided on 09/10/2026).
   belongs_to :recommended_designer_profile, class_name: "DesignerProfile", optional: true
