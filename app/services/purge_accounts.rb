@@ -1,5 +1,5 @@
 # Deletes every account and everything accounts made: users, shops, designer
-# profiles, designs, print requests, reviews, subscriptions, sessions, invites,
+# profiles, designs, print requests, reviews, subscriptions, sessions, emails,
 # visits, and the files attached to them. Written for one occasion: on
 # 10/10/2026 the production database still held the demonstration accounts
 # (whose password is in the public repository) and test accounts only.
@@ -21,7 +21,7 @@ class PurgeAccounts
   # `blocked_terms` points there, even with nothing pointing.
   TABLES = %w[
     sessions generation_counters
-    client_affiliations workshop_invites workshop_link_channels workshop_link_visits
+    client_affiliations workshop_link_emails workshop_link_channels workshop_link_visits
     subscriptions printer_techniques
     designer_levels review_messages print_requests review_versions reviews designs
     printers designer_profiles users

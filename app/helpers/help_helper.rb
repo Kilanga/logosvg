@@ -12,6 +12,7 @@ module HelpHelper
       subscriptions = settings.subscriptions
       {
         platform: settings.platform_name,
+        site: settings.platform_site,
         quota_per_day: settings.generation.fetch(:quota_per_day),
         proposals: settings.generation.fetch(:proposals_per_request),
         max_refinements: settings.generation.fetch(:max_refinements),

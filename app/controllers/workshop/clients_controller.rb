@@ -21,9 +21,10 @@ module Workshop
       # are over has to scan again or ask again, and is no longer this shop's.
       @clients = User.client.active.attached_to(@printer.id)
                      .order(:last_name, :first_name).to_a
-      # Which numbered sheet brought each client in: the shop's follow-up.
-      @sheet_numbers = WorkshopInvite.where(printer_id: @printer.id, used_by_id: @clients.map(&:id))
-                                     .pluck(:used_by_id, :number).to_h
+      # How each client came in — the poster, the email, a named link: the
+      # shop's follow-up, and what tells it which of its supports work.
+      @admissions = ClientAffiliation.latest_admissions(printer_id: @printer.id, client_ids: @clients.map(&:id))
+      @channels = WorkshopLinkChannel.where(printer_id: @printer.id).to_a
     end
 
     def accept

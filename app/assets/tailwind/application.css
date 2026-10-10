@@ -44,6 +44,19 @@
   font-display: swap;
 }
 
+/* Archivo, wide-ranging in weight and width, set only on the shop's poster:
+   its name in big condensed capitals, like a pull from the screen (decided on
+   10/10/2026). Variable on both axes, from @fontsource-variable/archivo 5.3.0,
+   latin subset. SIL Open Font License 1.1. */
+@font-face {
+  font-family: "Archivo";
+  src: url("Archivo.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ---------------------------------------------------------------------------
    Design tokens (docs/SPEC.md, "Tokens visuels")
    --------------------------------------------------------------------------- */
@@ -74,6 +87,7 @@
 
   --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
   --font-sans: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-poster: "Archivo", "Arial Narrow", system-ui, sans-serif;
 
   /* Screen printing is about crisp registration, not soft corners. */
   --radius-none: 0px;
@@ -358,4 +372,21 @@
     color: var(--color-surface);
     border-radius: var(--radius-xs);
   }
+}
+
+/* ---------------------------------------------------------------------------
+   The shop's poster (/atelier/lien/affiche). A named page, so the rule reaches
+   nothing else the site prints: one A4 sheet, edge to edge. Its flat of colour
+   is a background, which browsers leave out of print unless told otherwise.
+   --------------------------------------------------------------------------- */
+
+@page poster {
+  size: A4 portrait;
+  margin: 0;
+}
+
+.poster {
+  page: poster;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }

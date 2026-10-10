@@ -28,7 +28,7 @@ class Printer < ApplicationRecord
   has_many :clients, class_name: "User", foreign_key: :workshop_id,
            dependent: :nullify, inverse_of: :workshop
   has_many :client_affiliations, dependent: :delete_all, inverse_of: :printer
-  has_many :invites, class_name: "WorkshopInvite", dependent: :delete_all, inverse_of: :printer
+  has_many :link_emails, class_name: "WorkshopLinkEmail", dependent: :delete_all, inverse_of: :printer
 
   # The designer this shop recommends to its clients (decided on 09/10/2026).
   belongs_to :recommended_designer_profile, class_name: "DesignerProfile", optional: true
@@ -169,18 +169,21 @@ class Printer < ApplicationRecord
     distance.present? && distance <= PROMINENCE_RADIUS_KM
   end
 
-  # Which way in a `?s=` value names: the QR code, one of this shop's own
-  # channels, or — for anything else — the plain link. A typo, or somebody
+  # Which way in a `?s=` value names: the QR code, the email the shop sent,
+  # one of this shop's own channels, or — for anything else — the plain link. A typo, or somebody
   # inventing values, must not be able to fill the visits table.
   def link_source(param)
     key = param.to_s
-    return key if key == WorkshopLinkVisit::QR
+    return key if key.in?(WorkshopLinkVisit::BUILT_IN)
     return key if key.present? && link_channels.exists?(key: key)
 
     WorkshopLinkVisit::LINK
   end
 
   def full_address = [ address, postal_code, city ].compact_blank.join(", ")
+
+  # The shop's colour, made safe to print and to write with. See BrandPalette.
+  def brand_palette = BrandPalette.new(brand_color)
 
   # The brands a shop stocks are a free list, typed as one line. Kept as an
   # array in the database so the directory can filter on it later.

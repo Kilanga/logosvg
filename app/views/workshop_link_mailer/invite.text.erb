@@ -1,0 +1,15 @@
+<%= t("mailers.workshop_link.invite.greeting") %>
+<%= t("mailers.workshop_link.invite.intro") %>
+<% if @message.present? %>
+
+<%= t("mailers.workshop_link.invite.message_title") %> :
+« <%= @message %> »
+<% end %>
+
+<%= t("mailers.workshop_link.invite.cta") %> : <%= @url %>
+
+<%= t("mailers.workshop_link.invite.returning_title") %> <%= t("mailers.workshop_link.invite.returning_body") %>
+
+<% t("mailers.workshop_link.invite.steps").each_with_index do |step, index| %>
+<%= index + 1 %>. <%= step[:title] %> <%= I18n.interpolate(step[:body], @figures) %>
+<% end %>

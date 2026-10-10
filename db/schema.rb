@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_10_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_142525) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -64,6 +64,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_120000) do
     t.datetime "decided_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "channel", limit: 40
     t.index ["client_id"], name: "index_client_affiliations_on_client_id"
     t.index ["client_id"], name: "index_client_affiliations_one_pending_per_client", unique: true, where: "(status = 0)"
     t.index ["printer_id", "status"], name: "index_client_affiliations_on_printer_id_and_status"
@@ -438,23 +439,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_120000) do
     t.index ["workshop_id"], name: "index_users_on_workshop_id"
   end
 
-  create_table "workshop_invites", force: :cascade do |t|
-    t.bigint "printer_id", null: false
-    t.integer "batch", null: false
-    t.integer "number", null: false
-    t.string "code", null: false
-    t.bigint "used_by_id"
-    t.datetime "used_at"
-    t.datetime "revoked_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["code"], name: "index_workshop_invites_on_code", unique: true
-    t.index ["printer_id", "batch"], name: "index_workshop_invites_on_printer_id_and_batch"
-    t.index ["printer_id", "number"], name: "index_workshop_invites_on_printer_id_and_number", unique: true
-    t.index ["printer_id"], name: "index_workshop_invites_on_printer_id"
-    t.index ["used_by_id"], name: "index_workshop_invites_on_used_by_id"
-  end
-
   create_table "workshop_link_channels", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "key", null: false
@@ -462,6 +446,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_120000) do
     t.bigint "printer_id", null: false
     t.datetime "updated_at", null: false
     t.index ["printer_id", "key"], name: "index_workshop_link_channels_on_printer_id_and_key", unique: true
+  end
+
+  create_table "workshop_link_emails", force: :cascade do |t|
+    t.bigint "printer_id", null: false
+    t.string "recipient_digest", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["printer_id", "created_at"], name: "index_workshop_link_emails_on_printer_id_and_created_at"
+    t.index ["printer_id", "recipient_digest"], name: "index_workshop_link_emails_on_printer_id_and_recipient_digest", unique: true
   end
 
   create_table "workshop_link_visits", force: :cascade do |t|
@@ -508,8 +501,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_120000) do
   add_foreign_key "sessions", "users"
   add_foreign_key "subscriptions", "printers"
   add_foreign_key "users", "printers", column: "workshop_id", on_delete: :nullify
-  add_foreign_key "workshop_invites", "printers", on_delete: :cascade
-  add_foreign_key "workshop_invites", "users", column: "used_by_id", on_delete: :nullify
   add_foreign_key "workshop_link_channels", "printers"
+  add_foreign_key "workshop_link_emails", "printers", on_delete: :cascade
   add_foreign_key "workshop_link_visits", "printers"
 end

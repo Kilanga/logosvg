@@ -1,0 +1,61 @@
+<% sans = "font-family:Helvetica,Arial,sans-serif;" %>
+<% display = "font-family:Archivo,'Arial Narrow',Arial,sans-serif;" %>
+
+<p style="<%= sans %>margin:0 0 20px;font-size:16px;line-height:1.55;color:#1D2433;">
+  <%= t("mailers.workshop_link.invite.greeting") %><br>
+  <%= t("mailers.workshop_link.invite.intro") %>
+</p>
+
+<%# The shop's own word, when it wrote one: what makes this email personal,
+    and the sign that the two have spoken. %>
+<% if @message.present? %>
+  <div style="margin:0 0 22px;padding:0 0 18px;border-bottom:1px solid #C8D0D4;">
+    <p style="<%= display %>margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:<%= @palette.text %>;">
+      <%= t("mailers.workshop_link.invite.message_title") %>
+    </p>
+    <p style="<%= sans %>margin:0;font-size:16px;line-height:1.5;font-style:italic;color:#1D2433;">« <%= @message %> »</p>
+  </div>
+<% end %>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;">
+  <tr>
+    <td style="background:<%= @palette.base %>;border:2px solid #1D2433;">
+      <a href="<%= @url %>"
+         style="<%= display %>display:inline-block;padding:14px 26px;font-size:17px;font-weight:800;letter-spacing:0.06em;
+                text-transform:uppercase;text-decoration:none;color:<%= @palette.on_base %>;">
+        <%= t("mailers.workshop_link.invite.cta") %>
+      </a>
+    </td>
+  </tr>
+</table>
+<p style="<%= sans %>margin:0 0 24px;font-size:13px;line-height:1.5;color:#505A67;word-break:break-all;">
+  <%= t("mailers.workshop_link.invite.copy_link") %>
+  <a href="<%= @url %>" style="color:#1D2433;font-family:Menlo,Consolas,monospace;"><%= @url.sub(%r{\Ahttps?://}, "") %></a>
+</p>
+
+<%# A phone cannot scan its own screen: the button comes first, the QR code is
+    for whoever reads this on a computer. %>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0 0 24px;">
+  <tr>
+    <td style="width:112px;padding:0 20px 0 0;vertical-align:middle;">
+      <img src="<%= attachments["qr.png"].url %>" width="112" height="112" alt="<%= t('mailers.workshop_link.invite.qr_alt', name: @printer.name) %>"
+           style="display:block;width:112px;height:112px;border:2px solid #1D2433;">
+    </td>
+    <td style="<%= sans %>vertical-align:middle;font-size:14px;line-height:1.5;color:#1D2433;">
+      <strong><%= t("mailers.workshop_link.invite.qr_title") %></strong> <%= t("mailers.workshop_link.invite.qr_body") %><br>
+      <strong><%= t("mailers.workshop_link.invite.returning_title") %></strong> <%= t("mailers.workshop_link.invite.returning_body") %>
+    </td>
+  </tr>
+</table>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-top:2px solid #1D2433;">
+  <% t("mailers.workshop_link.invite.steps").each_with_index do |step, index| %>
+    <tr>
+      <td style="<%= display %>width:28px;padding:<%= index.zero? ? 16 : 8 %>px 12px 0 0;vertical-align:baseline;
+                 font-size:22px;font-weight:900;line-height:1;color:<%= @palette.text %>;"><%= index + 1 %></td>
+      <td style="<%= sans %>padding:<%= index.zero? ? 16 : 8 %>px 0 0;vertical-align:baseline;font-size:15px;line-height:1.45;color:#1D2433;">
+        <strong><%= step[:title] %></strong> <%= I18n.interpolate(step[:body], @figures) %>
+      </td>
+    </tr>
+  <% end %>
+</table>

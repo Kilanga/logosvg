@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><%= @printer.name %></title>
+  </head>
+
+  <%# The shop's email, in the shop's colours (decided on 10/10/2026, direction
+      « Calage »): its name on a flat of its colour, a press control strip at
+      the foot. Every style inline, tables for layout: mail clients strip the
+      rest. Archivo is named first for the clients that have it; the others
+      fall back to a narrow sans. %>
+  <body style="margin:0;padding:0;background:#F2F4F3;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#F2F4F3;">
+      <tr>
+        <td align="center" style="padding:24px 12px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+                 style="width:100%;max-width:600px;background:#FFFFFF;">
+            <tr>
+              <td style="padding:36px 32px 30px;background:<%= @palette.base %>;color:<%= @palette.on_base %>;">
+                <p style="margin:0;font-family:Archivo,'Arial Narrow',Arial,sans-serif;font-size:12px;font-weight:700;
+                          letter-spacing:0.16em;text-transform:uppercase;color:<%= @palette.on_base %>;">
+                  <%= t("mailers.workshop_link.invite.eyebrow") %>
+                </p>
+                <h1 style="margin:12px 0 0;font-family:Archivo,'Arial Narrow',Arial,sans-serif;font-weight:900;
+                           font-stretch:78%;font-size:<%= @printer.name.length > 20 ? 34 : 52 %>px;line-height:0.95;
+                           text-transform:uppercase;color:<%= @palette.on_base %>;">
+                  <%= @printer.name %>
+                </h1>
+                <% if @printer.city.present? %>
+                  <p style="margin:12px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:15px;color:<%= @palette.on_base %>;">
+                    <%= @printer.city %>
+                  </p>
+                <% end %>
+              </td>
+            </tr>
+
+            <tr><td style="padding:28px 32px 32px;"><%= yield %></td></tr>
+
+            <%# Ink, the colour, two of its tints: the strip at the edge of a press sheet. %>
+            <tr>
+              <td style="padding:0;font-size:0;line-height:0;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+                  <tr>
+                    <% [ BrandPalette::INK, @palette.base, @palette.tint(0.4), @palette.tint(0.7) ].each do |swatch| %>
+                      <td style="height:8px;width:25%;background:<%= swatch %>;font-size:0;line-height:0;">&nbsp;</td>
+                    <% end %>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
+            <tr>
+              <td style="padding:16px 12px 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:#505A67;">
+                <%= t("mailers.workshop_link.invite.footer", name: @printer.name, site: @site) %>
+                <br>
+                <a href="<%= privacy_url %>" style="color:#505A67;"><%= t("legal.privacy.title") %></a>
+                &nbsp;·&nbsp;<%= @site %>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

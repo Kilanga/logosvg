@@ -3,10 +3,13 @@
 # Counted, not logged: the figure is what an Atelier+ shop looks at, and one
 # row per visitor would store personal data nobody needs.
 class WorkshopLinkVisit < ApplicationRecord
-  # The plain address, and the QR code printed on the poster. Anything else is
-  # the key of one of the shop's own `WorkshopLinkChannel`s.
+  # The plain address, the QR code printed on the poster, and the link in the
+  # email a shop sends a client. Anything else is the key of one of the shop's
+  # own `WorkshopLinkChannel`s.
   LINK = "link".freeze
   QR = "qr".freeze
+  EMAIL = "email".freeze
+  BUILT_IN = [ LINK, QR, EMAIL ].freeze
 
   belongs_to :printer
 

@@ -1,0 +1,8 @@
+<%= @printer.name.upcase %>
+<%= t("mailers.workshop_link.invite.eyebrow") %>
+
+<%= yield %>
+
+--
+<%= t("mailers.workshop_link.invite.footer", name: @printer.name, site: @site) %>
+<%= t("legal.privacy.title") %> : <%= privacy_url %>

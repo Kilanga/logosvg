@@ -9,8 +9,9 @@ class WorkshopLinkChannel < ApplicationRecord
   # keeps the statistics legible.
   LIMIT = 10
 
-  # `link` is the plain address and `qr` the poster: those two are always there.
-  RESERVED = %w[ link qr ].freeze
+  # `link` is the plain address, `qr` the poster and `email` the link a shop
+  # emails to a client: those are always there.
+  RESERVED = WorkshopLinkVisit::BUILT_IN
 
   belongs_to :printer, inverse_of: :link_channels
 

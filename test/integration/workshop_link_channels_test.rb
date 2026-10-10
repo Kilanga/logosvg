@@ -61,8 +61,8 @@ class WorkshopLinkChannelsTest < ActionDispatch::IntegrationTest
 
     get workshop_link_poster_path
 
-    assert_includes response.body, WorkshopQrCode.svg(workshop_invite_url(slug: @lyon.slug, code: @lyon.invite_code, s: "qr"), size: 320)
-    assert_not_includes response.body, WorkshopQrCode.svg(workshop_invite_url(slug: @lyon.slug, code: @lyon.invite_code), size: 320)
+    assert_includes response.body, WorkshopQrCode.svg(workshop_invite_url(slug: @lyon.slug, code: @lyon.invite_code, s: "qr"), size: 196)
+    assert_not_includes response.body, WorkshopQrCode.svg(workshop_invite_url(slug: @lyon.slug, code: @lyon.invite_code), size: 196)
   end
 
   test "the downloadable qr code carries the qr source" do

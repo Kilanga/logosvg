@@ -177,7 +177,6 @@ fr:
     dashboard: "Tableau de bord"
     my_listing: "Ma fiche"
     my_clients: "Mes clients"
-    client_sheets: "Fiches client"
     help: "Aide"
     print_requests: "Demandes"
     my_designs: "Mes designs"
@@ -746,6 +745,37 @@ fr:
       mismatch: "Les deux mots de passe ne correspondent pas."
 
   mailers:
+    # L'email d'un atelier à un client déjà démarché, à sa voix et à ses
+    # couleurs. La plateforme y est citée par son adresse (décidé le 10/10/2026).
+    workshop_link:
+      invite:
+        from: "%{name} via %{site}"
+        subject: "%{name} : votre accès pour créer votre visuel"
+        eyebrow: "Votre visuel, imprimé chez nous"
+        greeting: "Bonjour,"
+        intro: >-
+          Suite à notre échange, voici notre lien pour créer le visuel de
+          votre t-shirt. Nous l'imprimons ensuite dans notre atelier.
+        message_title: "Le mot de l'atelier"
+        cta: "Créer mon visuel"
+        copy_link: "ou copiez ce lien :"
+        qr_alt: "QR code de %{name}"
+        qr_title: "Sur ordinateur ?"
+        qr_body: "Scannez ce code avec votre téléphone."
+        returning_title: "Déjà client ?"
+        returning_body: "Le même lien : nous validons votre retour en un clic."
+        steps:
+          - title: "Créez votre compte."
+            body: "Il est rattaché à l'atelier pour %{attachment_days} jours."
+          - title: "Décrivez votre idée."
+            body: "%{proposals} propositions à chaque fois, %{max_refinements} retouches possibles."
+          - title: "Envoyez-la à l'atelier."
+            body: "Il confirme, puis vous envoie son devis."
+        footer: >-
+          Ce message vous a été envoyé une seule fois par %{name}, via %{site},
+          à la suite de votre échange avec l'atelier. Pour lui répondre,
+          répondez simplement à cet email. Vous ne recevrez pas d'autre
+          message de %{site}.
     affiliation:
       requested:
         subject: "%{name} demande à devenir votre client"
@@ -1127,8 +1157,8 @@ fr:
           quand l'atelier confirme l'une de vos demandes d'impression : c'est
           le moment de lui envoyer votre visuel.
         lapsed: >-
-          Votre rattachement à %{name} est terminé. Adressez-lui une nouvelle
-          demande, ou demandez-lui une fiche client.
+          Votre rattachement à %{name} est terminé. Rescannez son affiche ou
+          rouvrez son lien : il valide votre retour en un clic.
         change: "Changer d'atelier"
         find: "Trouver un atelier"
 
@@ -1730,10 +1760,12 @@ fr:
         pending:
           title: "Demandes à traiter"
           body: >-
-            Ces personnes vous ont trouvé sans votre lien ni votre QR code,
-            dans l'annuaire le plus souvent. Tant que vous n'avez pas accepté, leur compte ne
-            peut rien générer, et rien n'est décompté de votre forfait.
+            Ces personnes vous ont trouvé dans l'annuaire, ou sont d'anciens
+            clients revenus par votre affiche ou votre lien. Tant que vous
+            n'avez pas accepté, leur compte ne peut rien générer, et rien
+            n'est décompté de votre forfait.
           asked_on: "Demande du %{date}"
+          returning: "Ancien client, revenu par : %{source}"
           accept: "Accepter"
           decline: "Refuser"
           none: "Aucune demande en attente."
@@ -1747,12 +1779,13 @@ fr:
           extend: "Prolonger"
           until: "jusqu'au %{date}"
           suspended: "délai suspendu, vérification en cours"
+          came_by: "arrivé par : %{source}"
           confirm: >-
             %{name} ne pourra plus créer de visuels sur votre forfait. Ses
             visuels déjà créés lui restent. Continuer ?
           none: >-
-            Pas encore de client. Ils arrivent par votre lien ou votre QR code,
-            ou par une demande depuis l'annuaire.
+            Pas encore de client. Ils arrivent par votre affiche, votre lien ou
+            l'email que vous leur envoyez, ou par une demande depuis l'annuaire.
       accept:
         done: "%{name} est maintenant votre client. Un email l'en informe."
       decline:
@@ -1788,42 +1821,6 @@ fr:
         done: "%{name} est votre graphiste recommandé."
         cleared: "Vous ne recommandez plus de graphiste."
 
-    invites:
-      index:
-        title: "Fiches client"
-        heading: "Fiches client"
-        new:
-          title: "Préparer un lot de fiches"
-          body: >-
-            Chaque fiche porte son numéro et son propre QR code, valable pour
-            un seul client : il est admis d'office, ancien client compris,
-            pour %{attachment_days} jours. Imprimez le lot, ou enregistrez-le
-            en PDF pour l'envoyer.
-          count: "Nombre de fiches"
-          submit: "Préparer le lot"
-        list:
-          title: "Vos fiches"
-          available:
-            zero: "aucune fiche disponible"
-            one: "1 fiche disponible"
-            other: "%{count} fiches disponibles"
-          batch: "Lot %{batch} — %{date}"
-          print: "Imprimer les fiches disponibles"
-          used: "Utilisée par %{name} le %{date}"
-          deleted_account: "un compte supprimé"
-          revoked: "Retirée"
-          free: "Disponible"
-          revoke: "Retirer"
-          revoke_confirm: "La fiche n° %{number} n'admettra plus personne. Continuer ?"
-          none: "Aucune fiche pour le moment. Préparez un premier lot."
-      create:
-        done: "Lot %{batch} prêt. Imprimez-le ou enregistrez-le en PDF."
-      print:
-        title: "Fiches client — %{printer} — lot %{batch}"
-        nothing: "Toutes les fiches de ce lot ont servi ou ont été retirées."
-      revoke:
-        done: "La fiche n° %{number} est retirée."
-
     links:
       regenerate_code:
         done: "Nouveau code en place. Pensez à réimprimer votre affiche et vos QR codes."
@@ -1835,9 +1832,9 @@ fr:
         your_link_body: >-
           Partagez-la à vos clients : ils arrivent sur votre page, créent leur
           compte et deviennent vos clients sans attendre votre accord, avec
-          vos techniques déjà sélectionnées. Elle n'accueille qu'une fois
-          chaque client : un ancien client doit vous redemander, ou recevoir
-          une fiche client.
+          vos techniques déjà sélectionnées. Elle n'accueille d'office que les
+          nouveaux clients : un ancien client vous adresse une demande, et
+          vous validez son retour dans « Mes clients ».
         code:
           title: "Le code de votre lien"
           body_html: >-
@@ -1859,9 +1856,10 @@ fr:
         qr: "Votre QR code"
         take_it_away: "À emporter"
         take_it_away_body: >-
-          L'affiche est prête à imprimer en A4. Le QR code se télécharge à part
+          L'affiche est prête à imprimer en A4, aux couleurs de votre fiche :
+          pour le comptoir, et à distribuer. Le QR code se télécharge à part
           pour vos propres supports.
-        poster: "Affiche comptoir"
+        poster: "Mon affiche"
         qr_svg: "QR code (SVG)"
         qr_png: "QR code (PNG)"
         statistics: "Statistiques du lien"
@@ -1880,16 +1878,39 @@ fr:
         by_source: "D'où ils viennent"
         source_link: "Lien"
         source_qr: "QR code de l'affiche"
+        source_email: "Email envoyé"
+        source_request: "Demande"
+        source_sheet: "Fiche client numérotée"
+        source_unknown: "Lien ou affiche"
+        email:
+          title: "Envoyer mon lien par email"
+          body: >-
+            À un client avec qui vous avez déjà échangé, au comptoir ou au
+            téléphone : jamais à une liste. Le message part à votre nom, à vos
+            couleurs, avec votre QR code, et sa réponse vous arrive
+            directement. Une même adresse ne le reçoit qu'une fois de votre
+            part, et %{limit} envois par jour au plus.
+          address: "Adresse email du client"
+          message: "Votre mot (facultatif)"
+          message_hint: "%{max} caractères au plus. Par exemple, la technique que vous lui conseillez."
+          submit: "Envoyer le lien"
+          sent_today:
+            zero: "Aucun envoi aujourd'hui, sur %{limit}."
+            one: "1 envoi aujourd'hui, sur %{limit}."
+            other: "%{count} envois aujourd'hui, sur %{limit}."
+          not_listed: "Votre fiche doit être publiée et votre abonnement actif pour que votre lien fonctionne."
         source_removed: "%{key} (supprimé)"
         channels: "Vos liens nommés"
         channels_body: >-
           Un lien par endroit où vous le distribuez : flyer, salon, réseau
-          social. Chacun a son QR code et son compteur, pour savoir ce qui
-          amène vraiment des clients. Dix liens au plus.
+          social. Chacun a son QR code, son affiche à distribuer et son
+          compteur, pour savoir ce qui amène vraiment des clients. Dix liens
+          au plus.
         channel_label: "Nom du lien"
         channel_placeholder: "Flyer, salon de Rennes, Instagram…"
         channel_create: "Créer le lien"
         channel_delete: "Supprimer"
+        channel_poster: "Affiche"
         channel_delete_confirm: "Supprimer le lien « %{label} » ? Les flyers déjà imprimés continueront d'amener des clients, comptés comme « Lien »."
         channel_link: "Adresse du lien « %{label} »"
         statistics_locked: "Statistiques réservées à Atelier+"
@@ -1900,19 +1921,47 @@ fr:
         see_plans: "Voir les formules"
       poster:
         title: "Affiche — %{printer}"
-        eyebrow: "Impression textile"
-        headline: "Imaginez votre t-shirt, on l'imprime"
-        subhead: >-
-          Décrivez votre idée, une IA la dessine pour nos machines, et nous
-          l'imprimons dans notre atelier.
+        channel_title: "Affiche « %{label} » — %{printer}"
+        eyebrow: "Votre visuel, imprimé chez nous"
+        lead: "Créez votre visuel en quelques phrases : nous l'imprimons ici, avec nos machines."
+        qr_label: "QR code de %{printer}"
         scan: "Scannez pour commencer"
+        how: "Comment ça marche"
         steps:
-          - "Scannez le code"
-          - "Décrivez votre idée"
-          - "Nous vous envoyons un devis"
+          - title: "Scannez le QR code."
+            body: "Il ouvre notre page sur %{site}."
+          - title: "Créez votre compte."
+            body: "Il nous est rattaché pour %{attachment_days} jours, renouvelés à chaque commande confirmée."
+          - title: "Choisissez la technique."
+            body: "Seules les nôtres vous sont proposées. Un doute ? Prenez la première."
+          - title: "Décrivez votre idée."
+            body: "Une phrase suffit. Un texte entre guillemets est reproduit tel quel."
+          - title: "Gardez votre préférée."
+            body: "%{proposals} propositions à chaque fois, %{max_refinements} retouches possibles."
+          - title: "Envoyez-la-nous."
+            body: "Tailles et quantités : nous confirmons, puis nous vous envoyons notre devis."
+        returning_title: "Déjà client ?"
+        returning_body: "Scannez aussi : nous validons votre retour en un clic."
+        tips_title: "Bon à savoir"
+        tips:
+          - "%{quota_per_day} créations par jour, gratuites."
+          - "Déjà une image ? « Déposer mon visuel » la met au format de nos machines."
+          - "Questions fréquentes : %{help_url}"
         print: "Imprimer"
-        print_hint: "Cette page est prête pour une impression A4."
+        print_hint: >-
+          Prête pour une impression A4. Si la couleur n'apparaît pas, cochez
+          « Graphiques d'arrière-plan » dans la fenêtre d'impression.
+        channel_hint: "Affiche du lien « %{label} » : ses scans sont comptés à part."
         back: "Retour"
+
+    link_emails:
+      create:
+        sent: "Votre lien est parti à %{email}."
+        already_sent: "Cette adresse a déjà reçu votre lien."
+        limit_reached: "Vous avez atteint les %{limit} envois du jour. Vous pourrez en envoyer d'autres demain."
+        invalid_email: "Cette adresse email n'est pas valide."
+        message_too_long: "Votre mot dépasse %{max} caractères."
+        not_listed: "Votre fiche doit être publiée et votre abonnement actif pour que votre lien fonctionne."
 
     link_channels:
       create:
@@ -2703,7 +2752,7 @@ fr:
                   c'est lui qui accepte ses nouveaux clients. Vous recevez un
                   email dès qu'il a répondu. En attendant, vous pouvez vous
                   connecter, mais pas encore créer.
-                - "Pour aller plus vite, demandez-lui une fiche client, ou scannez son QR code si vous n'avez jamais été son client : vous êtes admis aussitôt."
+                - "Pour aller plus vite, scannez son affiche ou ouvrez le lien qu'il vous a envoyé : si vous n'avez jamais été son client, vous êtes admis aussitôt."
             - q: "Combien de temps suis-je rattaché à mon atelier ?"
               a:
                 - >-
@@ -2716,10 +2765,9 @@ fr:
                   dernière semaine.
                 - >-
                   Une fois le délai passé, vos visuels restent dans votre
-                  espace. Pour créer à nouveau, adressez une nouvelle demande à
-                  l'atelier, ou demandez-lui une fiche client. Rescanner son
-                  affiche ne suffit pas : elle n'accueille que les nouveaux
-                  clients.
+                  espace. Pour créer à nouveau, rescannez l'affiche de
+                  l'atelier ou rouvrez son lien : vous lui adressez une
+                  demande, et il valide votre retour.
             - q: "Puis-je changer d'atelier ?"
               a:
                 - >-
@@ -2852,10 +2900,10 @@ fr:
       faq_title: "Questions fréquentes"
       sheet_title: "Expliquer le parcours à vos clients"
       sheet_body: >-
-        Des fiches d'une page, numérotées, avec les étapes et un QR code
-        valable pour un seul client. Préparez-en un lot, imprimez-le ou
-        enregistrez-le en PDF, et remettez une fiche par client.
-      sheet_cta: "Mes fiches client"
+        Votre affiche porte les six étapes et votre QR code. Posez-la sur le
+        comptoir, distribuez-la, ou envoyez votre lien par email à un client
+        avec qui vous avez échangé.
+      sheet_cta: "Mon affiche et mon lien"
       help_for_clients: "Vos clients ont aussi leurs questions fréquentes, à leur indiquer : %{url}"
       steps:
         - title: "Votre fiche dans l'annuaire"
@@ -2876,10 +2924,11 @@ fr:
               qui n'a jamais été le vôtre, une seule fois : un ancien client
               qui les rescanne doit vous redemander.
             - >-
-              Les fiches client numérotées portent chacune leur propre QR code,
-              valable pour une seule personne, ancien client compris. Vous
-              voyez quelle fiche a servi, à qui et quand, dans « Fiches
-              client ».
+              Un ancien client qui rescanne votre affiche vous adresse une
+              demande : vous validez son retour en un clic dans « Mes
+              clients ». Vous y voyez aussi par où chaque client est arrivé :
+              l'affiche, votre lien, l'email que vous lui avez envoyé, ou l'un
+              de vos liens nommés.
             - >-
               Un client qui vous trouve dans l'annuaire n'a pas ce code : il
               vous adresse une demande, que vous acceptez ou refusez dans
@@ -2966,13 +3015,14 @@ fr:
                   Dans « Mon lien », changez de code. L'ancien lien mène
                   toujours à votre page, mais il faut alors vous demander.
                   Réimprimez votre affiche et vos QR codes.
-            - q: "À quoi servent les fiches client numérotées ?"
+            - q: "Puis-je envoyer mon lien par email à un client ?"
               a:
                 - >-
-                  Chaque fiche porte son propre QR code, qui n'admet qu'une
-                  personne, une seule fois. Vous savez ainsi à qui vous l'avez
-                  donnée, et vous pouvez réadmettre un ancien client sans
-                  attendre sa demande. Une fiche perdue se retire en un clic.
+                  Oui, depuis « Mon lien », à un client avec qui vous avez déjà
+                  échangé : c'est un service, pas de la prospection. Le message
+                  part de %{platform} à votre nom, et sa réponse vous arrive
+                  directement. Une même adresse ne le reçoit qu'une fois de
+                  votre part, et le nombre d'envois par jour est limité.
             - q: "Puis-je recommander un graphiste à mes clients ?"
               a:
                 - >-
@@ -3156,35 +3206,6 @@ fr:
                   éléments interdits) ; un PNG l'est en type, en dimensions et
                   en résolution.
 
-    # --- Fiche client : /atelier/aide/fiche-client -------------------------------
-    sheet:
-      title: "Fiche client — %{printer}"
-      number: "Fiche n° %{number}"
-      back: "Retour"
-      print: "Imprimer"
-      ready: "Cette page est prête pour une impression A4, ou à enregistrer en PDF."
-      eyebrow: "Votre visuel, imprimé chez nous"
-      headline: "Comment ça marche"
-      scan: "Scannez pour commencer"
-      steps:
-        - title: "Scannez le QR code"
-          body: "Il ouvre notre page sur %{platform}."
-        - title: "Créez votre compte"
-          body: "Il nous est rattaché tout de suite, pour %{attachment_days} jours, renouvelés à chaque commande confirmée."
-        - title: "Choisissez la technique"
-          body: "Seules nos techniques vous sont proposées. Un doute ? Prenez la première, ou demandez-nous."
-        - title: "Décrivez votre idée"
-          body: "Une phrase suffit. Un texte à écrire ? Entre guillemets, il est reproduit tel quel."
-        - title: "Gardez votre préférée"
-          body: "%{proposals} propositions à chaque fois. Vous pouvez la retoucher %{max_refinements} fois."
-        - title: "Envoyez-la-nous"
-          body: "Indiquez tailles et quantités. Nous confirmons, puis nous vous envoyons notre devis."
-      tips_title: "Bon à savoir"
-      tips:
-        - "%{quota_per_day} créations par jour, gratuites."
-        - "Déjà une image ? « Déposer mon visuel » la met au format de nos machines."
-        - "Questions fréquentes : %{help_url}"
-
   public:
     contact:
       show:
@@ -3204,12 +3225,6 @@ fr:
           Un désaccord avec un atelier ou un graphiste, un problème non
           résolu avec une commande : décrivez la situation, nous revenons
           vers vous.
-
-    workshop_sheets:
-      show:
-        spent: >-
-          Cette fiche a déjà servi, ou l'atelier l'a retirée. Vous pouvez lui
-          adresser une demande depuis sa page.
 
     workshop_links:
       show:
@@ -3252,9 +3267,9 @@ fr:
           not_a_client: "Cette page s'adresse aux clients de l'atelier."
           member_suspended: "Vous êtes client de %{name}. Votre délai est suspendu pendant la vérification de votre visuel."
           former: >-
-            Vous avez déjà été client de %{name}. Son affiche n'accueille que
-            les nouveaux clients : adressez-lui une demande, ou demandez-lui
-            une fiche client.
+            Vous avez déjà été client de %{name}. Son affiche admet d'office les
+            nouveaux clients : adressez-lui une demande, il valide votre retour
+            en un clic.
           join: "Rejoindre cet atelier"
           request: "Demander à rejoindre cet atelier"
       join:

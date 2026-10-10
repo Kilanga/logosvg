@@ -10,13 +10,18 @@ class ClientAffiliation < ApplicationRecord
   # `invitation`: the code on the poster, the QR code or a named link — admits
   #   only a client who has never been this shop's.
   # `request`: the directory, a link without its code, or a former client.
-  # `sheet`: a numbered single-use sheet (WorkshopInvite), the shop's
-  #   agreement given to one person.
+  # `sheet`: a numbered single-use sheet, from 09/10 to 10/10/2026. The
+  #   sheets are gone; the value stays for the rows they admitted.
+  #
+  # `channel` says which of the shop's supports it was: the values of
+  # `workshop_link_visits.source` — `qr`, `link`, `email`, or the key of one of
+  # the shop's named links. Empty for the directory.
   enum :source, { invitation: 0, request: 1, sheet: 2 }, prefix: :from, validate: true
 
   belongs_to :client, class_name: "User"
   belongs_to :printer
 
+  validates :channel, length: { maximum: 40 }
   validate :client_is_a_client
 
   scope :newest_first, -> { order(created_at: :desc, id: :desc) }
@@ -28,28 +33,27 @@ class ClientAffiliation < ApplicationRecord
     client.nil? || !accepted.exists?(client: client, printer: printer)
   end
 
-  # In at once, by the shop's code or one of its sheets, leaving any other
-  # shop. A sheet is spent in the same transaction: if another sign-up spent
-  # it first, nothing happens and this returns false. Already this shop's
-  # client: nothing to do — only the shop extends a client's period.
-  def self.admit!(client:, printer:, source: :invitation, invite: nil)
+  # In at once, by the shop's code, leaving any other shop. Already this
+  # shop's client: nothing to do — only the shop extends a client's period.
+  def self.admit!(client:, printer:, channel: nil)
     return true if client.active_workshop_id == printer.id
 
     transaction do
-      raise ActiveRecord::Rollback if invite && !invite.consume!(client)
-
       where(client: client, status: :pending).update_all(status: statuses[:cancelled], decided_at: Time.current, updated_at: Time.current)
-      create!(client: client, printer: printer, source: source, status: :accepted, decided_at: Time.current)
+      create!(client: client, printer: printer, source: :invitation, channel: channel,
+              status: :accepted, decided_at: Time.current)
       client.attach_to!(printer)
       true
-    end || false
+    end
   end
 
   # A request to the workshop. Asking another shop replaces the one still open:
   # a client waits on one answer at a time. Nil when there is nothing to ask —
   # already that shop's client, or already waiting on it. A client whose period
   # with a shop has run out asks it again like anyone else.
-  def self.request!(client:, printer:)
+  # `channel` is set when a former client came back by one of the shop's
+  # supports: the shop sees where the request came from.
+  def self.request!(client:, printer:, channel: nil)
     return nil if client.active_workshop_id == printer.id
 
     transaction do
@@ -57,7 +61,7 @@ class ClientAffiliation < ApplicationRecord
       return nil if open&.printer_id == printer.id
 
       open&.update!(status: :cancelled, decided_at: Time.current)
-      create!(client: client, printer: printer, source: :request)
+      create!(client: client, printer: printer, source: :request, channel: channel)
     end
   end
 
@@ -69,6 +73,13 @@ class ClientAffiliation < ApplicationRecord
   end
 
   def decline! = update!(status: :declined, decided_at: Time.current)
+
+  # For each of `client_ids`, the row that last brought them to `printer`:
+  # the shop's list says how each client came.
+  def self.latest_admissions(printer_id:, client_ids:)
+    accepted.where(printer_id: printer_id, client_id: client_ids)
+            .order(:decided_at, :id).to_a.index_by(&:client_id)
+  end
 
   private
     def client_is_a_client

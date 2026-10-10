@@ -1,9 +1,10 @@
-# How a client may enter a workshop on this visit (decided on 09/10/2026):
+# How a client may enter a workshop on this visit (decided on 09/10/2026, the
+# numbered sheets withdrawn on 10/10/2026):
 #
 #   :member  — already the shop's client, nothing to do;
-#   :sheet   — a numbered single-use sheet from the shop: admitted, sheet spent;
-#   :poster  — the shop's poster, link or QR code: admitted, but only a client
-#              who has never been this shop's — a former one asks again;
+#   :poster  — the shop's code, by its poster, QR code, a named link or the
+#              email it sent: admitted, but only a client who has never been
+#              this shop's — a former one asks again, and the shop validates;
 #   :request — everything else: the shop decides.
 #
 # Only the shop extends a client's thirty days (a confirmed print request, or
@@ -18,24 +19,21 @@ class WorkshopEntry
 
   def kind
     @kind ||= if @client&.active_workshop_id == @printer.id then :member
-    elsif sheet then :sheet
     elsif @shop_context.invited_by?(@printer) && ClientAffiliation.first_time?(client: @client, printer: @printer)
       :poster
     else :request
     end
   end
 
-  def admits? = kind.in?(%i[ sheet poster ])
+  def admits? = kind == :poster
 
-  # In, or false if the sheet was spent by someone else in the meantime.
+  # The way in this visit came by — kept on the client's row, so the shop
+  # knows which of its supports brought each client.
+  def channel = @shop_context.channel_for(@printer)
+
   def admit!(client = @client)
-    admitted = ClientAffiliation.admit!(client: client, printer: @printer,
-                                        source: kind == :sheet ? :sheet : :invitation,
-                                        invite: (sheet if kind == :sheet))
-    @shop_context.forget_invitations! if admitted
-    admitted
+    ClientAffiliation.admit!(client: client, printer: @printer, channel: channel)
+    @shop_context.forget_invitations!
+    true
   end
-
-  private
-    def sheet = defined?(@sheet) ? @sheet : (@sheet = @shop_context.sheet_for(@printer))
 end

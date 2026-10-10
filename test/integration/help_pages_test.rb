@@ -31,16 +31,18 @@ class HelpPagesTest < ActionDispatch::IntegrationTest
     assert_select "ol li h3", count: 6
     assert_select "details summary", minimum: 10
     assert_match "100 générations par mois", response.body
-    assert_select "a[href=?]", workshop_invites_path
+    assert_select "a[href=?]", workshop_link_share_path
     assert_no_match(/%\{/, response.body)
   end
 
-  test "the former single sheet now leads to the numbered sheets" do
+  test "the former client sheets now lead to the poster and the link" do
     sign_in_as users(:printer)
 
     get "/atelier/aide/fiche-client"
+    assert_redirected_to "/atelier/lien"
 
-    assert_redirected_to "/atelier/fiches"
+    get "/atelier/fiches"
+    assert_redirected_to "/atelier/lien"
   end
 
   test "only a workshop reaches its help" do
