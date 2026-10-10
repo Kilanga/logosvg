@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_10_173236) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_204325) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -450,15 +450,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_173236) do
     t.index ["printer_id", "key"], name: "index_workshop_link_channels_on_printer_id_and_key", unique: true
   end
 
-  create_table "workshop_link_emails", force: :cascade do |t|
-    t.bigint "printer_id", null: false
-    t.string "recipient_digest", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["printer_id", "created_at"], name: "index_workshop_link_emails_on_printer_id_and_created_at"
-    t.index ["printer_id", "recipient_digest"], name: "index_workshop_link_emails_on_printer_id_and_recipient_digest", unique: true
-  end
-
   create_table "workshop_link_visits", force: :cascade do |t|
     t.integer "count", default: 0, null: false
     t.datetime "created_at", null: false
@@ -504,6 +495,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_173236) do
   add_foreign_key "subscriptions", "printers"
   add_foreign_key "users", "printers", column: "workshop_id", on_delete: :nullify
   add_foreign_key "workshop_link_channels", "printers"
-  add_foreign_key "workshop_link_emails", "printers", on_delete: :cascade
   add_foreign_key "workshop_link_visits", "printers"
 end

@@ -70,20 +70,13 @@ class SubscriptionsTest < ApplicationSystemTestCase
     end
   end
 
-  test "a printer emails their link to a client they spoke to" do
+  test "a printer finds the email of their link ready for their mail app" do
     sign_in users(:printer)
     click_on I18n.t("nav.my_link")
 
-    fill_in I18n.t("workshop.links.show.email.address"), with: "client@example.invalid"
-    click_on I18n.t("workshop.links.show.email.submit")
-
-    assert_text I18n.t("workshop.link_emails.create.sent", email: "client@example.invalid")
-    assert_text I18n.t("workshop.links.show.email.sent_today", count: 1, limit: WorkshopLinkEmail.daily_limit)
-
-    fill_in I18n.t("workshop.links.show.email.address"), with: "client@example.invalid"
-    click_on I18n.t("workshop.links.show.email.submit")
-
-    assert_text I18n.t("workshop.link_emails.create.already_sent")
+    assert_link I18n.t("workshop.links.show.email.open"), href: /\Amailto:\?subject=/
+    assert_field I18n.t("workshop.links.show.email.preview"), with: /s=email/
+    assert_button I18n.t("workshop.links.show.email.copy")
   end
 
   test "statistics are what Atelier+ buys" do

@@ -1,51 +1,25 @@
 require "test_helper"
 
-# A shop emails its link to a client it already spoke to, and prints its poster
-# in its own colours (decided on 10/10/2026).
-class WorkshopLinkEmailsTest < ActionDispatch::IntegrationTest
+# A shop prepares the email of its link in its own mail app, and prints its
+# poster in its own colours (decided on 10/10/2026).
+class WorkshopPosterAndMessageTest < ActionDispatch::IntegrationTest
   setup do
     @rennes = printers(:rennes)
   end
 
-  test "a shop sends its link from « Mon lien »" do
+  test "« Mon lien » prepares the email in the shop's own mail app" do
     sign_in_as users(:printer)
 
     get workshop_link_share_path
-    assert_select "form[action=?]", workshop_link_emails_path
 
-    assert_enqueued_emails 1 do
-      post workshop_link_emails_path, params: { link_email: { email: "client@example.invalid" } }
-    end
-    assert_redirected_to workshop_link_share_path
-    assert_equal "Votre lien est parti à client@example.invalid.", flash[:notice]
-
-    follow_redirect!
-    assert_match "1 envoi aujourd&#39;hui", response.body
-  end
-
-  test "the same address twice is refused, and said so" do
-    sign_in_as users(:printer)
-    post workshop_link_emails_path, params: { link_email: { email: "client@example.invalid" } }
-
-    assert_no_enqueued_emails do
-      post workshop_link_emails_path, params: { link_email: { email: "client@example.invalid" } }
-    end
-    assert_equal "Cette adresse a déjà reçu votre lien.", flash[:alert]
-  end
-
-  test "only a shop sends its link" do
-    sign_in_as users(:client)
-
-    assert_no_enqueued_emails do
-      post workshop_link_emails_path, params: { link_email: { email: "client@example.invalid" } }
-    end
-    assert_response :redirect
-    assert_empty WorkshopLinkEmail.all
+    message = WorkshopLinkMessage.new(@rennes, url: workshop_invite_url(slug: @rennes.slug, code: @rennes.invite_code, s: "email"))
+    assert_select "a[href=?]", message.mailto, text: "Préparer l'email"
+    assert_select "textarea#link_message", text: message.body
   end
 
   # --- The shop's own texts ---------------------------------------------------------
 
-  test "a shop saves its texts, and they show on the poster and in the email" do
+  test "a shop saves its texts, and they show on the poster and in the message" do
     sign_in_as users(:printer)
 
     patch workshop_link_notes_path, params: { printer: { poster_note: "  Sérigraphie artisanale\n depuis 1998 ",
@@ -59,8 +33,8 @@ class WorkshopLinkEmailsTest < ActionDispatch::IntegrationTest
     get workshop_link_poster_path
     assert_select "header p", text: "Sérigraphie artisanale depuis 1998"
 
-    html = WorkshopLinkMailer.invite(@rennes, "client@example.invalid").html_part.body.to_s
-    assert_match "Passez nous voir le samedi.", html
+    get workshop_link_share_path
+    assert_select "textarea#link_message", text: /Passez nous voir le samedi\./
   end
 
   test "an empty text means none, and an overlong one is refused" do

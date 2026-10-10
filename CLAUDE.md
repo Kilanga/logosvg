@@ -276,7 +276,6 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 | `reviews.dispute_alert_count` / `dispute_alert_days` | `2` / `90` | **décidé** (08/10/2026) — litiges perdus |
 | `consent_text_version`             | `2026-09-v1`      | version du texte de consentement       |
 | `platform_site`                    | `pretatirer.fr`   | **décidé** (10/10/2026) — nom de la plateforme sur l'affiche et l'email d'atelier |
-| `clients.link_emails_per_day`      | `20`              | plafond d'envois du lien par email, par atelier et par jour |
 
 Décisions déjà tranchées par le cahier des charges : le client télécharge
 **le PNG filigrané, jamais le SVG** ; les prix des niveaux de revue sont fixés
