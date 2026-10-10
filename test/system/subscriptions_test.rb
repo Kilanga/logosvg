@@ -75,7 +75,6 @@ class SubscriptionsTest < ApplicationSystemTestCase
     click_on I18n.t("nav.my_link")
 
     fill_in I18n.t("workshop.links.show.email.address"), with: "client@example.invalid"
-    fill_in I18n.t("workshop.links.show.email.message"), with: "Partez sur la sérigraphie deux couleurs."
     click_on I18n.t("workshop.links.show.email.submit")
 
     assert_text I18n.t("workshop.link_emails.create.sent", email: "client@example.invalid")

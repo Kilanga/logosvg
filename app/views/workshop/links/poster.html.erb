@@ -4,25 +4,29 @@
 <%# The shop's poster, for the counter and for handing out (decided on
     10/10/2026, direction « Calage »): the shop's name pulled big on a flat of
     its own colour, registration marks, and the QR code on a card set a few
-    millimetres off register. The colour comes through BrandPalette, which
-    picks what may be written on it; the QR code stays ink on white. %>
+    millimetres off register. No tagline: few shops have one, and one written
+    for them would read as nobody's. The colour comes through BrandPalette,
+    which picks what may be written on it; the QR code stays ink on white. %>
 <% site = Rails.application.config.tshirt.platform_site %>
-<% values = help_values.merge(help_url: help_url.sub(%r{\Ahttps?://}, "")) %>
+<% values = help_values %>
 <article class="poster relative mx-auto flex h-[297mm] w-[210mm] flex-col overflow-hidden bg-surface text-ink print:mx-0">
-  <header class="relative h-[114mm] flex-none px-[15mm] pt-[17mm]"
+  <header class="relative h-[114mm] flex-none px-[15mm] pt-[22mm]"
           style="background-color: <%= @palette.base %>; color: <%= @palette.on_base %>;">
     <% [ "left-[6mm] top-[6mm]", "right-[6mm] top-[6mm]", "bottom-[6mm] left-[6mm]" ].each do |corner| %>
       <svg class="absolute <%= corner %> size-[7.5mm]" viewBox="0 0 28 28" fill="none" stroke="currentColor"
            stroke-width="1.2" aria-hidden="true"><circle cx="14" cy="14" r="7"/><path d="M14 0v28M0 14h28"/></svg>
     <% end %>
 
-    <p class="font-poster text-[15px] font-semibold uppercase tracking-[0.16em]"><%= t(".eyebrow") %></p>
-    <h1 class="mt-[5mm] max-w-[118mm] font-poster font-black uppercase leading-[0.86] tracking-[-0.01em] [font-stretch:78%] <%= poster_name_size(@printer.name) %>">
+    <h1 class="max-w-[118mm] font-poster font-black uppercase leading-[0.86] tracking-[-0.01em] [font-stretch:78%] <%= poster_name_size(@printer.name) %>">
       <%= @printer.name %>
     </h1>
-    <p class="mt-[5mm] max-w-[95mm] text-[17px] leading-snug">
-      <% if @printer.city.present? %><%= @printer.city %>. <% end %><%= t(".lead") %>
-    </p>
+    <% if @printer.city.present? %>
+      <p class="mt-[6mm] font-poster text-[17px] font-semibold uppercase tracking-[0.12em]"><%= @printer.city %></p>
+    <% end %>
+    <%# The shop's own words, when it wrote some — never ours in its place. %>
+    <% if @printer.poster_note.present? %>
+      <p class="mt-[4mm] max-w-[100mm] text-[17px] leading-snug"><%= @printer.poster_note %></p>
+    <% end %>
   </header>
 
   <%# Off register on purpose: the ink shadow is the second pass that missed. %>
@@ -37,13 +41,13 @@
   <div class="flex flex-1 gap-[10mm] px-[15mm] pt-[11mm]">
     <div class="min-w-0 flex-1">
       <h2 class="font-poster text-[34px] font-extrabold uppercase leading-none [font-stretch:85%]"><%= t(".how") %></h2>
-      <ol class="mt-[6mm] space-y-[4mm]">
+      <ol class="mt-[7mm] space-y-[6mm]">
         <% t(".steps").each_with_index do |step, index| %>
-          <li class="flex items-baseline gap-4">
-            <span class="w-[9mm] flex-none font-poster text-[30px] font-black leading-none"
+          <li class="flex items-center gap-4">
+            <span class="w-[10mm] flex-none font-poster text-[36px] font-black leading-none"
                   style="color: <%= @palette.text %>;"><%= index + 1 %></span>
-            <span class="text-[15px] leading-snug">
-              <strong class="font-bold"><%= I18n.interpolate(step[:title], values) %></strong>
+            <span class="text-[17px] leading-snug">
+              <strong class="font-bold"><%= step[:title] %></strong>
               <%= I18n.interpolate(step[:body], values) %>
             </span>
           </li>
@@ -51,28 +55,19 @@
       </ol>
     </div>
 
-    <div class="flex w-[62mm] flex-none flex-col gap-[6mm] pt-[45mm]">
-      <div class="space-y-1.5">
-        <p class="font-poster text-[13px] font-extrabold uppercase tracking-[0.12em]"><%= t(".returning_title") %></p>
-        <p class="text-sm leading-snug"><%= t(".returning_body") %></p>
-      </div>
-      <div class="space-y-1.5">
-        <p class="font-poster text-[13px] font-extrabold uppercase tracking-[0.12em]"><%= t(".tips_title") %></p>
-        <% t(".tips").each do |tip| %>
-          <p class="text-sm leading-snug"><%= I18n.interpolate(tip, values) %></p>
-        <% end %>
-      </div>
+    <div class="flex w-[62mm] flex-none flex-col gap-[5mm] pt-[40mm]">
+      <% t(".notes").each do |note| %>
+        <div class="space-y-1.5">
+          <p class="font-poster text-[13px] font-extrabold uppercase tracking-[0.12em]"><%= note[:title] %></p>
+          <% note[:lines].each do |line| %>
+            <p class="text-sm leading-snug"><%= I18n.interpolate(line, values) %></p>
+          <% end %>
+        </div>
+      <% end %>
     </div>
   </div>
 
   <footer class="flex flex-none items-center justify-between gap-5 px-[15mm] pb-[12mm]">
-    <%# A press control strip: ink, the colour, two of its tints, paper. %>
-    <span class="flex" aria-hidden="true">
-      <% [ BrandPalette::INK, @palette.base, @palette.tint(0.4), @palette.tint(0.7) ].each do |swatch| %>
-        <span class="h-4 w-[7mm]" style="background-color: <%= swatch %>;"></span>
-      <% end %>
-      <span class="h-4 w-[7mm] border border-line bg-surface"></span>
-    </span>
     <p class="min-w-0 truncate font-mono text-xs text-muted">
       <%= [ @printer.address, [ @printer.postal_code, @printer.city ].compact_blank.join(" "), @printer.phone ].compact_blank.join(" · ") %>
     </p>

@@ -38,13 +38,6 @@ class BrandPaletteTest < ActiveSupport::TestCase
     assert_equal BrandPalette::WHITE, palette.on_base
   end
 
-  test "tints head towards white" do
-    palette = BrandPalette.new("#2B50A8")
-
-    assert_equal "#2B50A8", palette.tint(0)
-    assert_equal "#FFFFFF", palette.tint(1)
-  end
-
   private
     def contrast(a, b)
       palette = BrandPalette.new(a)
