@@ -1,5 +1,9 @@
 <%= t("mailers.workshop_link.invite.greeting") %>
 <%= t("mailers.workshop_link.invite.intro") %>
+<% if @printer.link_email_note.present? %>
+
+<%= @printer.link_email_note %>
+<% end %>
 
 <%= t("mailers.workshop_link.invite.cta") %> : <%= @url %>
 

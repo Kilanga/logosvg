@@ -381,6 +381,8 @@ fr:
         contact_phone: "Votre téléphone"
         contact_city: "Votre ville"
       printer:
+        poster_note: "Texte de l'affiche"
+        link_email_note: "Texte de l'email"
         name: "Nom de l'atelier"
         description: "Présentation"
         address: "Adresse"
@@ -1827,6 +1829,8 @@ fr:
     links:
       regenerate_code:
         done: "Nouveau code en place. Pensez à réimprimer votre affiche et vos QR codes."
+      update_notes:
+        done: "Vos textes sont enregistrés."
       show:
         title: "Mon lien"
         heading: "Mon lien client"
@@ -1885,6 +1889,18 @@ fr:
         source_request: "Demande"
         source_sheet: "Fiche client numérotée"
         source_unknown: "Lien ou affiche"
+        notes:
+          title: "Vos textes"
+          body: >-
+            Facultatifs. Ils figurent sur toutes vos affiches et dans tous les
+            emails de votre lien, jusqu'à ce que vous les changiez. Sans texte,
+            l'affiche porte votre nom et votre ville, l'email notre message
+            habituel.
+          poster: "Texte de l'affiche"
+          poster_hint: "%{max} caractères au plus. Il s'affiche sous votre nom et votre ville."
+          email: "Texte de l'email"
+          email_hint: "%{max} caractères au plus. Il s'affiche après la salutation."
+          submit: "Enregistrer mes textes"
         email:
           title: "Envoyer mon lien par email"
           body: >-

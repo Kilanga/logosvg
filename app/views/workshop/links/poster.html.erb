@@ -23,6 +23,10 @@
     <% if @printer.city.present? %>
       <p class="mt-[6mm] font-poster text-[17px] font-semibold uppercase tracking-[0.12em]"><%= @printer.city %></p>
     <% end %>
+    <%# The shop's own words, when it wrote some — never ours in its place. %>
+    <% if @printer.poster_note.present? %>
+      <p class="mt-[4mm] max-w-[100mm] text-[17px] leading-snug"><%= @printer.poster_note %></p>
+    <% end %>
   </header>
 
   <%# Off register on purpose: the ink shadow is the second pass that missed. %>
