@@ -275,6 +275,8 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 | `reviews.acceptance_reminder_days` | `[3, 1]`          | **décidé** (08/10/2026) — rappels avant validation auto |
 | `reviews.dispute_alert_count` / `dispute_alert_days` | `2` / `90` | **décidé** (08/10/2026) — litiges perdus |
 | `consent_text_version`             | `2026-09-v1`      | version du texte de consentement       |
+| `platform_site`                    | `pretatirer.fr`   | **décidé** (10/10/2026) — nom de la plateforme sur l'affiche et l'email d'atelier |
+| `clients.link_emails_per_day`      | `20`              | plafond d'envois du lien par email, par atelier et par jour |
 
 Décisions déjà tranchées par le cahier des charges : le client télécharge
 **le PNG filigrané, jamais le SVG** ; les prix des niveaux de revue sont fixés
@@ -515,6 +517,15 @@ par `PrintTechniques` ; chaque atelier peut ensuite les habiller des siens. Ne
 jamais recopier la liste des techniques dans `fr.yml` ni dans un enum Rails.
 La lecture ne fait **jamais** d'appel réseau : un job rafraîchit le cache, un
 cache froid retombe sur `config/print_techniques.yml`.
+
+**Un `<style>` en ligne ne s'applique pas.** La CSP donne un nonce aux seuls
+scripts (`content_security_policy_nonce_directives = %w[ script-src ]`) et
+`style-src` reste à `'self'` : un bloc `<style>` dans une vue ou un layout est
+écarté par le navigateur, sans erreur visible. L'affiche en a fait les frais —
+son `@page` et son `.no-print` n'ont jamais agi, et l'impression sortait sur
+deux pages avec la barre d'outils. Les règles vont dans
+`app/assets/tailwind/application.css` (`@page poster`, page nommée) ; les
+attributs `style="…"`, eux, restent permis (`style-src-attr`).
 
 **Le texte rendu n'est pas le texte écrit.** Les titres sont en capitales via
 `text-transform`, et un navigateur renvoie le texte tel qu'il est *rendu*. Dans
