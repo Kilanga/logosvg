@@ -272,6 +272,8 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 | `price_listing_cents` / `price_atelier_plus_cents` | `2900` / `5900` HT | **décidé** — Atelier+ inclut le Référencement |
 | `monthly_generations`              | `listing: 100`, `atelier_plus: null` | **décidé** — par atelier et par mois |
 | `trial_period_days`                | `30`              | **décidé** (06/10/2026)                |
+| `emails.daily_limit` / `alert_ratio` | `300` / `0.8`  | **décidé** (10/10/2026) — forfait gratuit Brevo, alerte à 80 % |
+| `reviews.notify_designers_max`     | `10`              | **décidé** (10/10/2026) — graphistes prévenus par email |
 | `reviews.acceptance_reminder_days` | `[3, 1]`          | **décidé** (08/10/2026) — rappels avant validation auto |
 | `reviews.dispute_alert_count` / `dispute_alert_days` | `2` / `90` | **décidé** (08/10/2026) — litiges perdus |
 | `consent_text_version`             | `2026-09-v1`      | version du texte de consentement       |

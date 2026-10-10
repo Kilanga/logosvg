@@ -83,6 +83,10 @@ shared:
     # Décidé le 09/10/2026 : une vérification qu'aucun graphiste n'a prise
     # dans ce délai est annulée et remboursée en entier.
     unclaimed_refund_hours: 48
+    # Décidé le 10/10/2026 : une vérification ouverte est annoncée par email à
+    # 10 graphistes au plus (le recommandé de l'atelier d'abord) ; tous la
+    # voient dans leur studio. Chaque adresse coûte un des 300 envois Brevo.
+    notify_designers_max: 10
     # ⚠ DÉCISION OUVERTE : seuil d'alerte du taux de renvoi sur 30 jours.
     return_rate_alert_threshold: 0.25
     # Décidé le 06/10/2026 : auto-facturation par la plateforme, sous mandat
@@ -159,6 +163,14 @@ shared:
     #   La CNIL recommande de redemander le consentement au bout de 6 mois au plus.
     attribution_cookie_days: 30
     consent_cookie_months: 6
+
+  # --- Emails -------------------------------------------------------------
+  # Décidé le 10/10/2026 : on reste sur le forfait gratuit Brevo, 300 emails
+  # par jour pour tout le site, comptés par destinataire. Le tableau de bord
+  # de l'administration alerte à 80 %.
+  emails:
+    daily_limit: 300
+    alert_ratio: 0.8
 
 development:
   support_email: "dev@example.invalid"

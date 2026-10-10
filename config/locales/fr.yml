@@ -2455,6 +2455,13 @@ fr:
         designers: "Profils de graphiste"
         disputes: "Vérifications à trancher"
         nothing_waiting: "Rien ne vous attend."
+        emails: "Emails du jour"
+        emails_count: "%{count} / %{limit}"
+        emails_body: "Envois Brevo d'aujourd'hui, comptés par destinataire. Au-delà de la limite, les emails attendent le lendemain."
+        emails_near_limit: "Plus de %{percent} % de la limite du jour : les prochains emails risquent d'attendre demain."
+        emails_failed:
+          one: "1 email n'a pas pu partir ces 7 derniers jours."
+          other: "%{count} emails n'ont pas pu partir ces 7 derniers jours."
         return_rates: "Taux de renvoi"
         return_rate_body: "Renvoie ses demandes plus souvent que le seuil fixé, sur 30 jours."
         no_return_alert: "Aucun graphiste ne dépasse le seuil de %{threshold} sur 30 jours."

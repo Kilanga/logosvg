@@ -34,6 +34,18 @@ class AdminTest < ActionDispatch::IntegrationTest
     assert_select "body", text: /#{Regexp.escape(I18n.t('admin.dashboards.show.waiting_on_you'))}/i
   end
 
+  test "the dashboard shows today's emails against the Brevo limit, and warns near it" do
+    MailDeliveryDay.record_sent!(250)
+    MailDeliveryDay.record_failed!
+    sign_in_as users(:admin)
+
+    get admin_dashboard_path
+
+    assert_select "#emails-title + div", text: %r{250 / 300}
+    assert_match "Plus de 80 %", response.body
+    assert_match "1 email n&#39;a pas pu partir", response.body
+  end
+
   # --- Settling a dispute, end to end ---------------------------------------
   #
   # The completion criterion of step 9.

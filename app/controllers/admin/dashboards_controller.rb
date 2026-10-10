@@ -26,6 +26,11 @@ module Admin
       @disputing = DesignerProfile.listed
                                   .where(id: @lost_disputes.select { |_, count| count >= dispute_alert_count }.keys)
                                   .order(:display_name)
+
+      # The Brevo plan's 300 a day, all the site's emails included (decided on
+      # 10/10/2026): how far today has gone, and what could not leave at all.
+      @mail_today = MailDeliveryDay.today
+      @mail_failed = MailDeliveryDay.where(day: 6.days.ago.to_date..).sum(:failed_count)
     end
 
     private

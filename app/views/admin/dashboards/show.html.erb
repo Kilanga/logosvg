@@ -24,6 +24,27 @@
     <% end %>
   </section>
 
+  <%# The Brevo plan's 300 emails a day, for the whole site (decided on
+      10/10/2026). Near the limit, the next emails wait for tomorrow; one that
+      could not leave at all is counted here. %>
+  <section aria-labelledby="emails-title">
+    <h2 id="emails-title" class="label-rule border-b border-line pb-3"><%= t(".emails") %></h2>
+    <div class="panel mt-4 flex flex-wrap items-center gap-4 p-4 <%= 'border-l-2 border-l-warning' if @mail_today.near_limit? || @mail_failed.positive? %>">
+      <p class="font-display text-4xl font-bold <%= @mail_today.near_limit? ? 'text-warning' : 'text-ink' %>">
+        <%= t(".emails_count", count: @mail_today.recipients_count, limit: MailDeliveryDay.daily_limit) %>
+      </p>
+      <div class="min-w-0 flex-1 basis-64 space-y-1 text-sm">
+        <p class="text-muted"><%= t(".emails_body") %></p>
+        <% if @mail_today.near_limit? %>
+          <p class="text-warning"><%= t(".emails_near_limit", percent: (MailDeliveryDay.alert_ratio * 100).round) %></p>
+        <% end %>
+        <% if @mail_failed.positive? %>
+          <p class="text-warning"><%= t(".emails_failed", count: @mail_failed) %></p>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
   <%# Designers whose disputes keep ending with the client refunded (decided
       on 08/10/2026). A signal for the administration, never shown publicly. %>
   <% if @disputing.any? %>

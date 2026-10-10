@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_10_204325) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_210142) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -164,6 +164,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_204325) do
     t.bigint "user_id", null: false
     t.index ["user_id", "day"], name: "index_generation_counters_on_user_id_and_day", unique: true
     t.index ["user_id"], name: "index_generation_counters_on_user_id"
+  end
+
+  create_table "mail_delivery_days", force: :cascade do |t|
+    t.date "day", null: false
+    t.integer "recipients_count", default: 0, null: false
+    t.integer "failed_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["day"], name: "index_mail_delivery_days_on_day", unique: true
   end
 
   create_table "print_requests", force: :cascade do |t|
