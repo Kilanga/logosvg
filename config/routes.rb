@@ -153,6 +153,9 @@ Rails.application.routes.draw do
   # Le lien envoyé par email à un client déjà démarché, jamais à un inconnu.
   post "atelier/lien/email",    to: "workshop/link_emails#create", as: :workshop_link_emails
 
+  # Les textes de l'atelier, sur son affiche et dans l'email de son lien.
+  patch "atelier/lien/textes",  to: "workshop/links#update_notes", as: :workshop_link_notes
+
   # Le code de l'affiche : un nouveau rend l'ancien inopérant.
   post "atelier/lien/code",     to: "workshop/links#regenerate_code", as: :workshop_link_code
 

@@ -13,16 +13,14 @@ class SendWorkshopLink
 
   def self.call(...) = new(...).call
 
-  def initialize(printer:, email:, message: nil)
+  def initialize(printer:, email:)
     @printer = printer
     @email = email.to_s.strip.downcase
-    @message = message.to_s.strip.presence
   end
 
   def call
     return failure(:not_listed) unless @printer.listed?
     return failure(:invalid_email) unless @email.match?(URI::MailTo::EMAIL_REGEXP)
-    return failure(:message_too_long) if @message && @message.length > WorkshopLinkEmail::MESSAGE_MAX
 
     digest = WorkshopLinkEmail.digest(@email)
     error = @printer.with_lock do
@@ -35,7 +33,7 @@ class SendWorkshopLink
     end
     return failure(error) if error
 
-    WorkshopLinkMailer.invite(@printer, @email, @message).deliver_later
+    WorkshopLinkMailer.invite(@printer, @email).deliver_later
     Result.new(error: nil)
   end
 

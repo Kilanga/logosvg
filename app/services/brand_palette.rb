@@ -37,10 +37,6 @@ class BrandPalette
     end
   end
 
-  # The colour cut with white: `0.7` keeps 30% of it. For the control strip at
-  # the foot of the poster, never for anything that carries text.
-  def tint(amount) = hex(mix(@base, rgb(WHITE), amount))
-
   private
     # The colour itself, or — when neither white nor ink reads on it — the
     # nearest darker shade on which white does.

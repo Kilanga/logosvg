@@ -9,6 +9,8 @@ class Printer < ApplicationRecord
   SHIPPING_ZONES = %w[ france europe worldwide ].freeze
   POSTAL_CODE = /\A\d{5}\z/
   HEX_COLOUR = /\A#\h{6}\z/
+  POSTER_NOTE_MAX = 140
+  LINK_EMAIL_NOTE_MAX = 400
 
   belongs_to :user
   # Primary first, then alphabetical: the public page leads with the technique
@@ -51,8 +53,13 @@ class Printer < ApplicationRecord
 
   normalizes :orders_email, with: ->(e) { e.strip.downcase }
   normalizes :website, with: ->(w) { w.strip.presence }
+  # The shop's own words on its poster and in its link email: one paragraph
+  # each, or nothing.
+  normalizes :poster_note, :link_email_note, with: ->(text) { text.squish.presence }
 
   validates :name, presence: true, length: { maximum: 120 }
+  validates :poster_note, length: { maximum: POSTER_NOTE_MAX }
+  validates :link_email_note, length: { maximum: LINK_EMAIL_NOTE_MAX }
   validates :invite_code, presence: true, uniqueness: true
   validates :slug, presence: true, uniqueness: true,
                    format: { with: /\A[a-z0-9-]+\z/ }

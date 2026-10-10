@@ -12,13 +12,13 @@ module Workshop
       authorize @printer, :update?
 
       email = params.dig(:link_email, :email).to_s.strip
-      result = SendWorkshopLink.call(printer: @printer, email: email, message: params.dig(:link_email, :message))
+      result = SendWorkshopLink.call(printer: @printer, email: email)
 
       if result.success?
         redirect_to workshop_link_share_path, notice: t(".sent", email: email)
       else
         redirect_to workshop_link_share_path,
-                    alert: t(".#{result.error}", limit: WorkshopLinkEmail.daily_limit, max: WorkshopLinkEmail::MESSAGE_MAX)
+                    alert: t(".#{result.error}", limit: WorkshopLinkEmail.daily_limit)
       end
     end
 

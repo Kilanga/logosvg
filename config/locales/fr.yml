@@ -381,6 +381,8 @@ fr:
         contact_phone: "Votre téléphone"
         contact_city: "Votre ville"
       printer:
+        poster_note: "Texte de l'affiche"
+        link_email_note: "Texte de l'email"
         name: "Nom de l'atelier"
         description: "Présentation"
         address: "Adresse"
@@ -751,26 +753,29 @@ fr:
       invite:
         from: "%{name} via %{site}"
         subject: "%{name} : votre accès pour créer votre visuel"
-        eyebrow: "Votre visuel, imprimé chez nous"
         greeting: "Bonjour,"
         intro: >-
-          Suite à notre échange, voici notre lien pour créer le visuel de
-          votre t-shirt. Nous l'imprimons ensuite dans notre atelier.
-        message_title: "Le mot de l'atelier"
+          Suite à notre échange, voici le lien pour créer le visuel de votre
+          t-shirt. Nous l'imprimons ensuite dans notre atelier.
         cta: "Créer mon visuel"
         copy_link: "ou copiez ce lien :"
         qr_alt: "QR code de %{name}"
         qr_title: "Sur ordinateur ?"
         qr_body: "Scannez ce code avec votre téléphone."
         returning_title: "Déjà client ?"
-        returning_body: "Le même lien : nous validons votre retour en un clic."
+        returning_body: "Le même lien vous permet de revenir : nous validons votre retour."
         steps:
-          - title: "Créez votre compte."
-            body: "Il est rattaché à l'atelier pour %{attachment_days} jours."
-          - title: "Décrivez votre idée."
-            body: "%{proposals} propositions à chaque fois, %{max_refinements} retouches possibles."
-          - title: "Envoyez-la à l'atelier."
-            body: "Il confirme, puis vous envoie son devis."
+          - title: "Créez votre compte"
+            body: "à partir de ce lien."
+          - title: "Décrivez votre projet"
+            body: "en quelques mots : %{proposals} propositions vous sont présentées, ajustables si nécessaire."
+          - title: "Transmettez-nous votre visuel."
+            body: "Nous vous adressons un devis, puis nous l'imprimons dans notre atelier."
+        notes:
+          - title: "Vous avez déjà votre visuel ?"
+            body: "Déposez-le simplement : il est converti au format adapté à nos machines, sans être redessiné."
+          - title: "Besoin d'un graphiste ?"
+            body: "Un graphiste peut retoucher votre visuel avant impression, ou le créer sur mesure sur devis."
         footer: >-
           Ce message vous a été envoyé une seule fois par %{name}, via %{site},
           à la suite de votre échange avec l'atelier. Pour lui répondre,
@@ -1824,6 +1829,8 @@ fr:
     links:
       regenerate_code:
         done: "Nouveau code en place. Pensez à réimprimer votre affiche et vos QR codes."
+      update_notes:
+        done: "Vos textes sont enregistrés."
       show:
         title: "Mon lien"
         heading: "Mon lien client"
@@ -1882,6 +1889,18 @@ fr:
         source_request: "Demande"
         source_sheet: "Fiche client numérotée"
         source_unknown: "Lien ou affiche"
+        notes:
+          title: "Vos textes"
+          body: >-
+            Facultatifs. Ils figurent sur toutes vos affiches et dans tous les
+            emails de votre lien, jusqu'à ce que vous les changiez. Sans texte,
+            l'affiche porte votre nom et votre ville, l'email notre message
+            habituel.
+          poster: "Texte de l'affiche"
+          poster_hint: "%{max} caractères au plus. Il s'affiche sous votre nom et votre ville."
+          email: "Texte de l'email"
+          email_hint: "%{max} caractères au plus. Il s'affiche après la salutation."
+          submit: "Enregistrer mes textes"
         email:
           title: "Envoyer mon lien par email"
           body: >-
@@ -1891,8 +1910,6 @@ fr:
             directement. Une même adresse ne le reçoit qu'une fois de votre
             part, et %{limit} envois par jour au plus.
           address: "Adresse email du client"
-          message: "Votre mot (facultatif)"
-          message_hint: "%{max} caractères au plus. Par exemple, la technique que vous lui conseillez."
           submit: "Envoyer le lien"
           sent_today:
             zero: "Aucun envoi aujourd'hui, sur %{limit}."
@@ -1922,31 +1939,34 @@ fr:
       poster:
         title: "Affiche — %{printer}"
         channel_title: "Affiche « %{label} » — %{printer}"
-        eyebrow: "Votre visuel, imprimé chez nous"
-        lead: "Créez votre visuel en quelques phrases : nous l'imprimons ici, avec nos machines."
         qr_label: "QR code de %{printer}"
         scan: "Scannez pour commencer"
-        how: "Comment ça marche"
+        how: "Comment ça se passe"
         steps:
-          - title: "Scannez le QR code."
-            body: "Il ouvre notre page sur %{site}."
-          - title: "Créez votre compte."
-            body: "Il nous est rattaché pour %{attachment_days} jours, renouvelés à chaque commande confirmée."
-          - title: "Choisissez la technique."
-            body: "Seules les nôtres vous sont proposées. Un doute ? Prenez la première."
-          - title: "Décrivez votre idée."
-            body: "Une phrase suffit. Un texte entre guillemets est reproduit tel quel."
-          - title: "Gardez votre préférée."
-            body: "%{proposals} propositions à chaque fois, %{max_refinements} retouches possibles."
-          - title: "Envoyez-la-nous."
-            body: "Tailles et quantités : nous confirmons, puis nous vous envoyons notre devis."
-        returning_title: "Déjà client ?"
-        returning_body: "Scannez aussi : nous validons votre retour en un clic."
-        tips_title: "Bon à savoir"
-        tips:
-          - "%{quota_per_day} créations par jour, gratuites."
-          - "Déjà une image ? « Déposer mon visuel » la met au format de nos machines."
-          - "Questions fréquentes : %{help_url}"
+          - title: "Scannez le QR code"
+            body: "et créez votre compte."
+          - title: "Choisissez la technique d'impression"
+            body: "parmi celles que nous proposons."
+          - title: "Décrivez votre projet"
+            body: "en quelques mots : %{proposals} propositions vous sont présentées."
+          - title: "Choisissez votre visuel"
+            body: "et ajustez-le si nécessaire."
+          - title: "Transmettez-le-nous"
+            body: "avec les tailles et les quantités. Nous vous adressons un devis, puis nous l'imprimons dans notre atelier."
+        notes:
+          - title: "Déjà votre visuel ?"
+            lines:
+              - "Déposez-le : il est converti au format adapté à nos machines, sans être redessiné."
+          - title: "Besoin d'un graphiste ?"
+            lines:
+              - "Un graphiste peut retoucher votre visuel avant impression, ou le créer sur mesure sur devis."
+          - title: "Déjà client ?"
+            lines:
+              - "Scannez ce code : nous validons votre retour."
+          - title: "Bon à savoir"
+            lines:
+              - "Jusqu'à %{quota_per_day} créations par jour, sans frais."
+              - "Pour toute question, notre équipe vous répond."
         print: "Imprimer"
         print_hint: >-
           Prête pour une impression A4. Si la couleur n'apparaît pas, cochez
@@ -1960,7 +1980,6 @@ fr:
         already_sent: "Cette adresse a déjà reçu votre lien."
         limit_reached: "Vous avez atteint les %{limit} envois du jour. Vous pourrez en envoyer d'autres demain."
         invalid_email: "Cette adresse email n'est pas valide."
-        message_too_long: "Votre mot dépasse %{max} caractères."
         not_listed: "Votre fiche doit être publiée et votre abonnement actif pour que votre lien fonctionne."
 
     link_channels:

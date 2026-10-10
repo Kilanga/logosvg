@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_10_142525) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_173236) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -265,6 +265,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_142525) do
     t.string "website"
     t.string "invite_code", null: false
     t.bigint "recommended_designer_profile_id"
+    t.string "poster_note", limit: 140
+    t.string "link_email_note", limit: 400
     t.index ["city"], name: "index_printers_on_city"
     t.index ["featured"], name: "index_printers_on_featured"
     t.index ["invite_code"], name: "index_printers_on_invite_code", unique: true

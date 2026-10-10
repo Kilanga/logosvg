@@ -8,8 +8,6 @@
 # recognise the same address next time, and nothing anyone reading the table
 # could turn back into an address — or match against another list.
 class WorkshopLinkEmail < ApplicationRecord
-  MESSAGE_MAX = 300
-
   belongs_to :printer, inverse_of: :link_emails
 
   validates :recipient_digest, presence: true

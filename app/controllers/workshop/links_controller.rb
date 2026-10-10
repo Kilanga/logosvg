@@ -49,6 +49,18 @@ module Workshop
       render layout: "poster"
     end
 
+    # The shop's own words on its poster and in its link email (decided on
+    # 10/10/2026). Both optional, both reused until changed.
+    def update_notes
+      authorize @printer, :update?
+
+      if @printer.update(params.expect(printer: [ :poster_note, :link_email_note ]))
+        redirect_to workshop_link_share_path(anchor: "link-notes"), notice: t(".done")
+      else
+        redirect_to workshop_link_share_path(anchor: "link-notes"), alert: @printer.errors.full_messages.to_sentence
+      end
+    end
+
     # A new code for the poster, the QR code and every named link: the old
     # ones stop admitting anyone and lead to the shop's page, where a visitor
     # can only ask. Printed posters have to be printed again.

@@ -8,9 +8,8 @@
 class WorkshopLinkMailer < ApplicationMailer
   layout "workshop_link_mailer"
 
-  def invite(printer, email, message)
+  def invite(printer, email)
     @printer = Printer.find(printer.id)
-    @message = message
     @palette = @printer.brand_palette
     @site = Rails.application.config.tshirt.platform_site
     @url = workshop_invite_url(slug: @printer.slug, code: @printer.invite_code, s: WorkshopLinkVisit::EMAIL)
@@ -28,9 +27,7 @@ class WorkshopLinkMailer < ApplicationMailer
     # The numbers the steps quote, from the same settings as everywhere else.
     def figures
       settings = Rails.application.config.tshirt
-      { attachment_days: settings.clients.fetch(:attachment_days),
-        proposals: settings.generation.fetch(:proposals_per_request),
-        max_refinements: settings.generation.fetch(:max_refinements) }
+      { proposals: settings.generation.fetch(:proposals_per_request) }
     end
 
     # The address of the platform's own sender, without the name it carries.
