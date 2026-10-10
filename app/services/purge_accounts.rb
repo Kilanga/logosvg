@@ -27,11 +27,6 @@ class PurgeAccounts
     printers designer_profiles users
   ].freeze
 
-  CIRCULAR = {
-    "designs" => %w[source_review_id parent_id root_id],
-    "users" => %w[workshop_id],
-    "printers" => %w[recommended_designer_profile_id]
-  }.freeze
 
   MODELS = %w[User Printer DesignerProfile Design ReviewVersion PrintRequest].freeze
 
@@ -67,9 +62,9 @@ class PurgeAccounts
       ActiveRecord::Base.transaction do
         BlockedTerm.where.not(created_by_id: nil).update_all(created_by_id: nil)
         attachments.delete_all
-        CIRCULAR.each do |table, columns|
-          connection.execute("UPDATE #{table} SET #{columns.map { |column| "#{column} = NULL" }.join(', ')}")
-        end
+        Design.update_all(source_review_id: nil, parent_id: nil, root_id: nil)
+        User.update_all(workshop_id: nil)
+        Printer.update_all(recommended_designer_profile_id: nil)
         TABLES.each { |table| connection.execute("DELETE FROM #{connection.quote_table_name(table)}") }
       end
 
