@@ -382,6 +382,19 @@ class ReviewsTest < ActionDispatch::IntegrationTest
 
   # --- Custom work, arranged outside the platform (decided 06/10/2026) -----
 
+  test "an open review is announced to a few designers, the shop's recommended one first" do
+    settings = Rails.application.config.tshirt.reviews
+    previous = settings[:notify_designers_max]
+    settings[:notify_designers_max] = 1
+    printers(:rennes).update_columns(recommended_designer_profile_id: designer_profiles(:maya).id)
+
+    mail = ReviewMailer.notify_designers(reviews(:queued))
+
+    assert_equal [ users(:designer_maya).email_address ], [ mail.to, mail.bcc ].flatten.compact
+  ensure
+    settings[:notify_designers_max] = previous
+  end
+
   test "a custom request costs nothing here and goes straight to the designers" do
     sign_in_as users(:client)
 

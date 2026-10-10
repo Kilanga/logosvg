@@ -174,12 +174,23 @@ class ReviewMailer < ApplicationMailer
       Printer.where(id: Design.where(id: review.design_id).select(:printer_id)).pick(:orders_email)
     end
 
+    # Every designer who takes the level can see the job in their studio; the
+    # email is only a nudge, and each address costs one of the 300 Brevo sends
+    # of the day (decided on 10/10/2026). So at most `notify_designers_max`,
+    # the shop's recommended designer first, the others drawn at random so no
+    # one is always left out.
     def addresses_for(review)
       if review.chosen? && review.designer_profile
         [ review.designer_profile.user.email_address ]
       else
-        DesignerProfile.listed.accepting.offering(review.review_level)
-                       .includes(:user).map { |profile| profile.user.email_address }
+        candidates = DesignerProfile.listed.accepting.offering(review.review_level).includes(:user).to_a
+        recommended_id = Printer.where(id: Design.where(id: review.design_id).select(:printer_id))
+                                .pick(:recommended_designer_profile_id)
+        first, others = candidates.partition { |profile| profile.id == recommended_id }
+
+        (first + others.shuffle).first(notify_designers_max).map { |profile| profile.user.email_address }
       end
     end
+
+    def notify_designers_max = Rails.application.config.tshirt.reviews.fetch(:notify_designers_max)
 end
