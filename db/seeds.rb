@@ -7,6 +7,14 @@
 # sublimation as an SVG in CMYK, because that is what its workflow expects.
 # Filtering by technique must show a different list each time.
 
+# Never in production: these accounts share one password, and it is in the
+# public repository. `db:prepare` runs this file on an empty database, so the
+# guard returns rather than aborts — a fresh deploy must still boot.
+if Rails.env.production?
+  puts "Seeds ignorées en production."
+  return
+end
+
 PASSWORD = "motdepasse-demo".freeze
 
 def account!(email, **attributes)
