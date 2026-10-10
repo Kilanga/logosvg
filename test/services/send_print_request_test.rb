@@ -68,6 +68,21 @@ class SendPrintRequestTest < ActiveSupport::TestCase
 
   # The directory already said so on screen; sending anyway would waste both
   # sides' time.
+  # The controller and the policy already stop it; the object that sends is
+  # the last to say no, since a workshop must never get an unapproved proof.
+  test "a client's own picture whose rendering was not approved is never mailed" do
+    @design.update_columns(mode: "upload")
+    request = build_request
+
+    assert_no_emails do
+      result = SendPrintRequest.call(print_request: request)
+
+      assert_not result.success?
+      assert_equal I18n.t("print_requests.errors.design_not_approved"), result.error
+    end
+    assert_not_predicate request, :persisted?
+  end
+
   test "a shop that cannot do the job is never mailed" do
     request = build_request(printer: printers(:lyon))
 

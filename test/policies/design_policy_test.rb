@@ -75,4 +75,28 @@ class DesignPolicyTest < ActiveSupport::TestCase
     assert_not DesignPolicy.new(users(:client), proposal).choose?
     assert DesignPolicy.new(users(:client), proposal).refine?
   end
+
+  # Decided on 10/10/2026: a client's own picture leaves only once its print
+  # rendering is approved — by its owner, once, when it is ready.
+  test "a picture of the client's own is approved before it is sent, once" do
+    design = designs(:fox_screen)
+    design.mode = "upload"
+
+    assert DesignPolicy.new(users(:client), design).approve_print?
+    assert_not DesignPolicy.new(users(:printer), design).approve_print?
+    assert_not PrintRequestPolicy.new(users(:client), PrintRequest.new(design: design)).create?
+
+    design.print_approved_at = Time.current
+    assert_not DesignPolicy.new(users(:client), design).approve_print?
+    assert PrintRequestPolicy.new(users(:client), PrintRequest.new(design: design)).create?
+
+    design.status = "generating"
+    design.print_approved_at = nil
+    assert_not DesignPolicy.new(users(:client), design).approve_print?
+  end
+
+  test "what the platform drew asks for no approval" do
+    assert_not DesignPolicy.new(users(:client), designs(:fox_screen)).approve_print?
+    assert_predicate designs(:fox_screen), :print_approved?
+  end
 end

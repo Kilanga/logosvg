@@ -99,6 +99,18 @@ class Design < ApplicationRecord
 
   def upload? = mode == "upload"
 
+  # A client's own picture is not redrawn, but it is changed: flattened into a
+  # few inks for a screen, a thread or a flex, kept whole at 300 dpi for a
+  # digital print, its background taken out. The client sees the result beside
+  # their image and says yes before any workshop receives it (decided on
+  # 10/10/2026). What the platform drew needs no such step: the client never saw
+  # anything but the result.
+  def print_approval_required? = upload?
+
+  def print_approved? = !print_approval_required? || print_approved_at.present?
+
+  def approve_print! = update!(print_approved_at: Time.current)
+
   # Whether the picture comes out of a generative model, and so carries the AI
   # mark in its files and the mention on its previews. Always, for what the
   # platform drew; for a client's own image — and a designer's rework of one —

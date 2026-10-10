@@ -115,7 +115,47 @@ module DesignsHelper
     }.compact
   end
 
+  # What happened to a client's own picture on its way to the workshop's
+  # format, said plainly, beside the picture and its result. The technique is
+  # what decides: a screen, a thread or a flex take it into a few flat inks, a
+  # digital print keeps it whole. Read from what the service recorded, never
+  # guessed.
+  def print_changes(design)
+    stats = design.stats || {}
+    changes = design.vector? ? vector_changes(design, stats) : raster_changes(stats)
+    changes << t(design.remove_background? ? "designs.changes.background_removed" : "designs.changes.background_kept")
+    changes
+  end
+
+  # Whether trying the picture with another technique means anything: not at a
+  # shop that prints only one way. Counted rather than loaded — the panel is
+  # also rendered from a broadcast, where nothing is preloaded.
+  def other_techniques_offered?(design)
+    design.printer_id.nil? || PrinterTechnique.where(printer_id: design.printer_id).count > 1
+  end
+
   private
+    def vector_changes(design, stats)
+      [
+        t("designs.changes.flattened", count: design.inks_count.to_i),
+        t("designs.changes.traced"),
+        t("designs.changes.width", width: (stats["print_width_cm"] || design.print_width_cm).to_i)
+      ]
+    end
+
+    def raster_changes(stats)
+      changes = [ t("designs.changes.kept_whole") ]
+      if stats["print_width_cm"] && stats["print_height_cm"]
+        changes << t("designs.changes.raster_size", width: stats["print_width_cm"].to_i,
+                                                    height: stats["print_height_cm"].to_i, dpi: stats["dpi"])
+      end
+      if stats["upscale"].to_f > 1.05
+        changes << t("designs.changes.enlarged", factor: number_with_precision(stats["upscale"], precision: 1,
+                                                                               strip_insignificant_zeros: true))
+      end
+      changes
+    end
+
     def print_size(stats)
       width = stats["print_width_cm"]
       height = stats["print_height_cm"]

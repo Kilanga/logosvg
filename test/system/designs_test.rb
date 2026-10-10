@@ -110,6 +110,17 @@ class DesignsTest < ApplicationSystemTestCase
     assert_text displayed("client.designs.design.upload_note")
     assert_no_text displayed("designs.ai_label")
     assert_no_button I18n.t("client.designs.design.variants")
+
+    # The proof before any workshop: the picture beside the print rendering,
+    # what changed, and a yes that has to be ticked (decided on 10/10/2026).
+    assert_text displayed("client.designs.design.proof_title")
+    assert_text I18n.t("designs.changes.kept_whole")
+    assert_no_link I18n.t("client.designs.show.send_to")
+    check "confirmed_#{design.token}"
+    click_on I18n.t("client.designs.design.proof_submit")
+
+    assert_selector "h1", text: displayed("client.print_requests.new.heading", printer: printers(:lyon).name)
+    assert_not_nil design.reload.print_approved_at
   ensure
     FileUtils.rm_f(picture) if picture
   end
