@@ -150,9 +150,6 @@ Rails.application.routes.draw do
   post   "atelier/lien/canaux",      to: "workshop/link_channels#create",  as: :workshop_link_channels
   delete "atelier/lien/canaux/:key", to: "workshop/link_channels#destroy", as: :workshop_link_channel
 
-  # Le lien envoyé par email à un client déjà démarché, jamais à un inconnu.
-  post "atelier/lien/email",    to: "workshop/link_emails#create", as: :workshop_link_emails
-
   # Les textes de l'atelier, sur son affiche et dans l'email de son lien.
   patch "atelier/lien/textes",  to: "workshop/links#update_notes", as: :workshop_link_notes
 

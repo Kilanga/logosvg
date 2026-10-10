@@ -144,12 +144,6 @@ shared:
   # QR code de l'atelier, ou lui adresse une nouvelle demande.
   clients:
     attachment_days: 30
-    # Décidé le 10/10/2026 : un atelier envoie son lien par email à un client
-    # déjà démarché, jamais à une liste. Une même adresse ne le reçoit qu'une
-    # fois de chaque atelier.
-    # ⚠ DÉCISION OUVERTE : plafond d'envois par atelier et par jour. Le compte
-    #   Brevo de la plateforme en permet 300 par jour, tous emails confondus.
-    link_emails_per_day: 20
 
   # --- Anti-abus -----------------------------------------------------------
   rate_limits:

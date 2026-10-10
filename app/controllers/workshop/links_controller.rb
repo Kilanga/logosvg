@@ -14,7 +14,7 @@ module Workshop
       # refuses to walk to an association nobody asked for.
       @channels = WorkshopLinkChannel.where(printer: @printer).order(:created_at, :id).to_a
       @statistics = link_statistics
-      @emails_sent_today = WorkshopLinkEmail.sent_today(@printer)
+      @link_message = WorkshopLinkMessage.new(@printer, url: share_url(source: WorkshopLinkVisit::EMAIL))
     end
 
     # SVG for the poster and for print; PNG for whatever a shop pastes into its
