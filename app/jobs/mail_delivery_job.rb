@@ -1,3 +1,9 @@
+# Net::SMTP is not loaded at boot in production: the mail gem requires it only
+# when it first delivers, and without the development and test gems nothing
+# else does. Eager loading this class then failed on Net::SMTPServerBusy and
+# the web container never came up (deploy of 11/10/2026).
+require "net/smtp"
+
 # Delivers the emails sent with `deliver_later` (decided on 10/10/2026).
 #
 # The default job tries once: if Brevo refuses — its 300 a day are spent, the
