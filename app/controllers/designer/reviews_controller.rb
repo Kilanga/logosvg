@@ -2,6 +2,7 @@ module Designer
   # The designer's queue, and what they do with a review they have taken.
   class ReviewsController < BaseController
     before_action :set_review, except: :index
+    require_verified_email only: :claim
 
     def index
       authorize Review

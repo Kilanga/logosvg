@@ -1,0 +1,7 @@
+<%= t("mailers.account.verify_email.greeting", name: @user.first_name) %>
+
+<%= t("mailers.account.verify_email.body") %>
+
+<%= email_verification_url(@token) %>
+
+<%= t("mailers.account.verify_email.ignore") %>

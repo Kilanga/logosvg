@@ -4,6 +4,7 @@ module Client
   class ReviewsController < BaseController
     before_action :set_design, only: %i[ new create ]
     before_action :set_review, except: %i[ index new create ]
+    require_verified_email only: %i[ new create ]
 
     rate_limit to: 10, within: 1.minute, only: %i[ create message ],
                with: -> { redirect_to client_reviews_path, alert: t("flash.rate_limited") }

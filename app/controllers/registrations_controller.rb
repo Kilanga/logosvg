@@ -44,6 +44,7 @@ class RegistrationsController < ApplicationController
     end
 
     if save_with_workshop
+      AccountMailer.verify_email(@user).deliver_later
       start_new_session_for @user
       redirect_to space_path_for(@user), notice: welcome_message
     else
@@ -68,19 +69,18 @@ class RegistrationsController < ApplicationController
     def save_with_workshop
       return @user.save unless @user.client?
 
-      saved = User.transaction do
+      # The workshop hears of a request only once the address is verified
+      # (decided on 11/10/2026). See EmailVerificationsController.
+      User.transaction do
         raise ActiveRecord::Rollback unless @user.save
 
         if @invited
           @entry.admit!(@user)
         else
-          @affiliation = ClientAffiliation.request!(client: @user, printer: @workshop)
+          ClientAffiliation.request!(client: @user, printer: @workshop)
         end
         true
       end
-
-      AffiliationMailer.requested(@affiliation).deliver_later if saved && @affiliation
-      saved
     end
 
     def welcome_message

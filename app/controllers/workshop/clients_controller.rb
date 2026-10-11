@@ -15,7 +15,7 @@ module Workshop
     def index
       authorize @printer, :update?
 
-      @pending = ClientAffiliation.pending.where(printer_id: @printer.id)
+      @pending = ClientAffiliation.pending.from_verified_clients.where(printer_id: @printer.id)
                                   .includes(:client).order(:created_at).to_a
       # Only those whose period is still running: a client whose thirty days
       # are over has to scan again or ask again, and is no longer this shop's.
@@ -77,7 +77,7 @@ module Workshop
       # Another shop's request is a 404, not a refusal: it is not this shop's
       # to see.
       def pending_affiliation
-        ClientAffiliation.pending.includes(:client).where(printer_id: @printer.id).find(params[:id])
+        ClientAffiliation.pending.from_verified_clients.includes(:client).where(printer_id: @printer.id).find(params[:id])
       end
   end
 end

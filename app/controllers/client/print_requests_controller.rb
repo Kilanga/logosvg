@@ -8,6 +8,7 @@ module Client
     before_action :set_design, only: %i[ new create ]
     before_action :set_print_request, only: %i[ show cancel ]
     before_action :require_print_approval, only: %i[ new create ]
+    require_verified_email only: %i[ new create ]
 
     rate_limit to: 10, within: 1.minute, only: :create,
                with: -> { redirect_to design_path(params[:design_token]), alert: t("flash.rate_limited") }

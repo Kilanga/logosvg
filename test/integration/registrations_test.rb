@@ -102,8 +102,11 @@ class RegistrationsTest < ActionDispatch::IntegrationTest
 
     assert_select "input[name=?][value=?][checked]", "user[role]", "client"
 
-    assert_no_enqueued_emails do
-      post registration_path, params: valid_params
+    # Only the address to confirm: an admitted client asks the shop nothing.
+    assert_enqueued_emails 1 do
+      assert_enqueued_email_with AccountMailer, :verify_email, args: ->(args) { args.first.is_a?(User) } do
+        post registration_path, params: valid_params
+      end
     end
 
     user = User.find_by!(email_address: "nouvelle@example.invalid")
@@ -116,8 +119,12 @@ class RegistrationsTest < ActionDispatch::IntegrationTest
     printer = printers(:lyon)
     get workshop_link_path(slug: printer.slug)
 
-    assert_enqueued_email_with AffiliationMailer, :requested, args: ->(args) { args.first.is_a?(ClientAffiliation) } do
-      post registration_path, params: valid_params
+    # The shop is written to once the address is confirmed, not before. See
+    # EmailVerificationsTest.
+    assert_enqueued_emails 1 do
+      assert_enqueued_email_with AccountMailer, :verify_email, args: ->(args) { args.first.is_a?(User) } do
+        post registration_path, params: valid_params
+      end
     end
 
     user = User.find_by!(email_address: "nouvelle@example.invalid")

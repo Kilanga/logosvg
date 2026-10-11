@@ -7,6 +7,7 @@ module Designer
     skip_after_action :verify_policy_scoped
 
     before_action :set_profile
+    require_verified_email only: :onboard
 
     def show
       authorize @profile, :show?

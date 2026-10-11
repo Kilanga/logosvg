@@ -8,6 +8,7 @@ module Workshop
     skip_after_action :verify_policy_scoped
 
     before_action :set_printer
+    require_verified_email only: :create
 
     def show
       authorize @printer, :update?

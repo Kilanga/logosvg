@@ -9,6 +9,9 @@ module Client
     # A client creates through their workshop, and only once it has them —
     # see docs/SPEC.md, "Rattachement d'un client à un atelier".
     before_action :require_workshop, only: %i[ new create ]
+    # The form too: filling it in only to be refused at the end would waste
+    # the client's time. Also guards UploadsController, which inherits this.
+    require_verified_email only: %i[ new create variants refine ]
 
     rate_limit to: 10, within: 1.minute, only: %i[ create variants refine ],
                with: -> { redirect_to new_design_path, alert: t("flash.rate_limited") }

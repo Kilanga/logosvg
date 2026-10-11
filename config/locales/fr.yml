@@ -718,10 +718,38 @@ fr:
         l'annuaire.
       find_workshop: "Trouver un atelier"
     create:
-      welcome: "Bienvenue, %{name}. Votre compte est créé."
+      welcome: >-
+        Bienvenue, %{name}. Votre compte est créé : confirmez votre adresse
+        avec le lien que nous venons de vous envoyer.
       welcome_pending: >-
-        Bienvenue, %{name}. Votre demande est envoyée à %{workshop} : vous
-        recevrez un email dès que l'atelier l'aura acceptée.
+        Bienvenue, %{name}. Confirmez votre adresse avec le lien que nous
+        venons de vous envoyer : votre demande partira alors à %{workshop}, et
+        vous recevrez un email dès que l'atelier l'aura acceptée.
+
+  email_verifications:
+    required: >-
+      Confirmez d'abord votre adresse email : le lien est dans l'email que nous
+      vous avons envoyé.
+    banner:
+      body_html: >-
+        <strong>Confirmez votre adresse.</strong> Un lien a été envoyé à
+        %{email}. En attendant, vous pouvez parcourir votre espace, mais pas
+        créer, envoyer ni payer.
+      resend: "Renvoyer l'email"
+    show:
+      eyebrow: "Adresse email"
+      title: "Confirmer votre adresse"
+      subtitle: "Confirmez que %{email} est bien votre adresse."
+      submit: "Confirmer mon adresse"
+      invalid_link: >-
+        Ce lien n'est plus valable : il a déjà servi ou il a expiré. Connectez-vous
+        pour en recevoir un nouveau.
+    update:
+      verified: "Votre adresse est confirmée."
+      verified_sign_in: "Votre adresse est confirmée. Connectez-vous pour continuer."
+    create:
+      sent: "Un nouveau lien vient d'être envoyé à %{email}."
+      already: "Votre adresse est déjà confirmée."
 
   passwords:
     new:
@@ -747,6 +775,21 @@ fr:
       mismatch: "Les deux mots de passe ne correspondent pas."
 
   mailers:
+    account:
+      verify_email:
+        subject: "Confirmez votre adresse email"
+        eyebrow: "Adresse email"
+        greeting: "Bonjour %{name},"
+        body: >-
+          Votre compte Prêt-à-tirer est ouvert. Confirmez votre adresse pour
+          pouvoir créer, envoyer vos fichiers à un atelier et payer sur le
+          site. Ce lien est valable trois jours.
+        action: "Confirmer mon adresse"
+        ignore: >-
+          Si vous n'avez pas créé de compte sur pretatirer.fr, ignorez cet
+          email : sans confirmation, ce compte ne pourra rien créer ni
+          envoyer.
+
     affiliation:
       requested:
         subject: "%{name} demande à devenir votre client"

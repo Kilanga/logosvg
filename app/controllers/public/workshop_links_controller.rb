@@ -15,6 +15,7 @@ module Public
 
     # Joining is something an account does.
     before_action :require_authentication, only: :join
+    require_verified_email only: :join
     before_action :set_printer
 
     # What a link preview, a search engine or a monitoring script calls itself.
