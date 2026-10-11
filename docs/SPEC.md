@@ -553,6 +553,7 @@ Chaque donnée est limitée à son propriétaire, chaque action coûteuse est pl
 - Chaque espace vérifie le rôle ; l'admin n'utilise pas les espaces des autres rôles.
 - Identifiants publics non devinables pour les designs, les revues et les demandes (UUID ou `to_param` dédié).
 - `confirmation_token` généré par `has_secure_token`, valable 30 jours, inutilisable après une annulation.
+- **Adresse email vérifiée** (décidé le 11/10/2026). À l'inscription, un email porte un lien valable 3 jours, lié à l'adresse et à usage unique (`generates_token_for :email_verification`). Le lien ouvre une page ; seul son bouton vérifie (`users.email_verified_at`), à cause des antivirus de messagerie. En attendant, le compte se connecte et voit son espace, avec un bandeau et « Renvoyer l'email » (3 envois par 10 minutes), mais ne peut ni créer (formulaire compris), ni déposer, ni envoyer à un atelier, ni commander une vérification, ni s'abonner, ni soumettre sa fiche, ni prendre une revue, ni ouvrir ses versements, ni demander à rejoindre un atelier (`RequireVerifiedEmail`). La demande faite à l'inscription n'est montrée à l'atelier, et ne lui est envoyée par email, qu'une fois l'adresse vérifiée. Les comptes ouverts avant la règle et ceux créés par `admin:create` sont tenus pour vérifiés.
 
 ### Anti-abus
 

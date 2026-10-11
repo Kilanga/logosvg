@@ -28,6 +28,13 @@ Rails.application.routes.draw do
 
   resources :passwords, path: "mot-de-passe", param: :token, only: %i[ new create edit update ]
 
+  # La vérification de l'adresse email (décidée le 11/10/2026). Le lien de
+  # l'email ouvre une page ; seul son bouton vérifie, comme pour la
+  # confirmation d'une demande d'impression.
+  post  "verifier-email",        to: "email_verifications#create", as: :email_verifications
+  get   "verifier-email/:token", to: "email_verifications#show",   as: :email_verification
+  patch "verifier-email/:token", to: "email_verifications#update"
+
   # --- Designs ---------------------------------------------------------------
   # La page de l'atelier pour ses clients. Avec son code (affiche, QR code,
   # liens nommés), le client est admis d'office ; sans, il demande à l'atelier,

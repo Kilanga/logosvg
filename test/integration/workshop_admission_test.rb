@@ -156,7 +156,8 @@ class WorkshopAdmissionTest < ActionDispatch::IntegrationTest
   private
     def new_client(email)
       User.create!(email_address: email, password: "motdepasse-test", first_name: "Paul",
-                   last_name: "Inconnu", role: "client", terms_accepted_at: Time.current)
+                   last_name: "Inconnu", role: "client", terms_accepted_at: Time.current,
+                   email_verified_at: Time.current)
     end
 
     def signup(email)

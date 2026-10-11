@@ -25,6 +25,10 @@ class ClientAffiliation < ApplicationRecord
   validate :client_is_a_client
 
   scope :newest_first, -> { order(created_at: :desc, id: :desc) }
+  # What a workshop is shown to answer: a request from an address not yet
+  # verified waits, and reaches the shop, by email too, once it is (decided on
+  # 11/10/2026). See EmailVerificationsController.
+  scope :from_verified_clients, -> { joins(:client).where.not(users: { email_verified_at: nil }) }
 
   # The poster admits once (decided on 09/10/2026): a client who has been this
   # shop's before — whose thirty days have run out — asks again, so that

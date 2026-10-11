@@ -25,7 +25,7 @@ namespace :admin do
     first_name = ENV.fetch("FIRST_NAME", "Admin")
     last_name = ENV.fetch("LAST_NAME", "Prêt-à-tirer")
     user = User.new(email_address: email, password: password, first_name: first_name, last_name: last_name,
-                    role: "admin", terms_accepted_at: Time.current)
+                    role: "admin", terms_accepted_at: Time.current, email_verified_at: Time.current)
 
     if user.save
       puts "Administrateur créé : #{user.email_address}"

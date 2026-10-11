@@ -12,6 +12,7 @@ client:
   city: Nantes
   role: client
   terms_accepted_at: <%= 2.months.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 printer:
   email_address: atelier@example.invalid
@@ -21,6 +22,7 @@ printer:
   city: Rennes
   role: printer
   terms_accepted_at: <%= 6.months.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 printer_lyon:
   email_address: lyon@example.invalid
@@ -30,6 +32,7 @@ printer_lyon:
   city: Lyon
   role: printer
   terms_accepted_at: <%= 4.months.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 printer_nantes:
   email_address: nantes@example.invalid
@@ -39,6 +42,7 @@ printer_nantes:
   city: Nantes
   role: printer
   terms_accepted_at: <%= 5.months.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 printer_draft:
   email_address: brouillon@example.invalid
@@ -48,6 +52,7 @@ printer_draft:
   city: Tours
   role: printer
   terms_accepted_at: <%= 1.month.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 printer_waiting:
   email_address: attente@example.invalid
@@ -57,6 +62,7 @@ printer_waiting:
   city: Lille
   role: printer
   terms_accepted_at: <%= 2.weeks.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 designer:
   email_address: graphiste@example.invalid
@@ -66,6 +72,7 @@ designer:
   city: Lyon
   role: designer
   terms_accepted_at: <%= 3.months.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 <%# Quatre autres graphistes, un par situation d'indisponibilité. %>
 designer_away:
@@ -76,6 +83,7 @@ designer_away:
   city: Bordeaux
   role: designer
   terms_accepted_at: <%= 2.months.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 designer_pending:
   email_address: nour@example.invalid
@@ -85,6 +93,7 @@ designer_pending:
   city: Lille
   role: designer
   terms_accepted_at: <%= 1.month.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 designer_unpaid:
   email_address: leo@example.invalid
@@ -94,6 +103,7 @@ designer_unpaid:
   city: Toulouse
   role: designer
   terms_accepted_at: <%= 3.weeks.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 designer_suspended:
   email_address: alex@example.invalid
@@ -103,6 +113,7 @@ designer_suspended:
   city: Nice
   role: designer
   terms_accepted_at: <%= 5.months.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 designer_blank:
   email_address: nouveau-graphiste@example.invalid
@@ -111,6 +122,7 @@ designer_blank:
   last_name: Morel
   role: designer
   terms_accepted_at: <%= 2.days.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 <%# Un second graphiste pleinement disponible, pour les tests de changement de
     graphiste après un renvoi : Inès seule ne suffit pas à vérifier qu'un
@@ -123,6 +135,7 @@ designer_maya:
   city: Nantes
   role: designer
   terms_accepted_at: <%= 2.months.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 admin:
   email_address: admin@example.invalid
@@ -132,6 +145,7 @@ admin:
   city: Paris
   role: admin
   terms_accepted_at: <%= 1.year.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
 
 deleted_client:
   email_address: parti@example.invalid
@@ -140,4 +154,5 @@ deleted_client:
   last_name: Fabre
   role: client
   terms_accepted_at: <%= 1.year.ago.to_fs(:db) %>
+  email_verified_at: <%= 2.months.ago.to_fs(:db) %>
   deleted_at: <%= 1.week.ago.to_fs(:db) %>

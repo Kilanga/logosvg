@@ -45,6 +45,7 @@
           <h1 class="mt-1 text-2xl font-bold lg:text-3xl"><%= yield(:heading) %></h1>
         </header>
 
+        <%= render "layouts/email_verification_banner" %>
         <%= render "layouts/flash" %>
 
         <main id="contenu" tabindex="-1" class="px-5 py-8 lg:px-8">

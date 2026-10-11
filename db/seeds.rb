@@ -21,6 +21,7 @@ def account!(email, **attributes)
   User.find_or_create_by!(email_address: email) do |user|
     user.password = PASSWORD
     user.terms_accepted_at = Time.current
+    user.email_verified_at = Time.current
     user.assign_attributes(attributes)
   end
 end

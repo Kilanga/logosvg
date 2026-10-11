@@ -3,6 +3,7 @@ module Workshop
   # submitted to the administration for publication.
   class ProfilesController < BaseController
     before_action :set_printer
+    require_verified_email only: :submit
 
     def edit
       authorize @printer, :edit?

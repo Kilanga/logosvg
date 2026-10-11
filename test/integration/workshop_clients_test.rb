@@ -10,7 +10,7 @@ class WorkshopClientsTest < ActionDispatch::IntegrationTest
     @lyon = printers(:lyon)
     @stranger = User.create!(email_address: "inconnu@example.invalid", password: "motdepasse-test",
                              first_name: "Paul", last_name: "Inconnu", role: "client",
-                             terms_accepted_at: Time.current)
+                             terms_accepted_at: Time.current, email_verified_at: Time.current)
   end
 
   # --- The shop's page --------------------------------------------------------

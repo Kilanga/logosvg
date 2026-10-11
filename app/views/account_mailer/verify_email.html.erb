@@ -1,0 +1,23 @@
+<div style="font-family:Helvetica,Arial,sans-serif;color:#1D2433;">
+  <p style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#1F5F7A;margin:0 0 8px;">
+    <%= t("mailers.account.verify_email.eyebrow") %>
+  </p>
+
+  <h1 style="font-size:24px;margin:0 0 16px;">
+    <%= t("mailers.account.verify_email.greeting", name: @user.first_name) %>
+  </h1>
+
+  <p style="margin:0 0 24px;line-height:1.5;"><%= t("mailers.account.verify_email.body") %></p>
+
+  <p style="margin:0 0 32px;">
+    <a href="<%= email_verification_url(@token) %>"
+       style="display:inline-block;background:#1F5F7A;color:#FFFFFF;padding:14px 24px;
+              text-decoration:none;font-weight:600;border-radius:2px;">
+      <%= t("mailers.account.verify_email.action") %>
+    </a>
+  </p>
+
+  <p style="margin:0;padding-top:16px;border-top:1px solid #C8D0D4;line-height:1.5;color:#505A67;">
+    <%= t("mailers.account.verify_email.ignore") %>
+  </p>
+</div>

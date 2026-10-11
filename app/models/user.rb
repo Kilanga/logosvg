@@ -13,6 +13,14 @@ class User < ApplicationRecord
   MINIMUM_PASSWORD_LENGTH = 8
 
   has_secure_password
+
+  # The link in the verification email (decided on 11/10/2026). Tied to the
+  # address and to the verification itself: once used, or once the address
+  # changes, the same link verifies nothing.
+  EMAIL_VERIFICATION_PERIOD = 3.days
+  generates_token_for :email_verification, expires_in: EMAIL_VERIFICATION_PERIOD do
+    [ email_address, email_verified_at ]
+  end
   validates :password, length: { minimum: MINIMUM_PASSWORD_LENGTH }, allow_nil: true
   has_many :sessions, dependent: :destroy
 
@@ -55,6 +63,17 @@ class User < ApplicationRecord
   scope :deleted, -> { where.not(deleted_at: nil) }
 
   def active? = deleted_at.nil?
+
+  # Until the link in the welcome email is followed, the account signs in and
+  # looks around, but generates, sends, pays and subscribes nothing: each of
+  # those writes to someone or costs something. See RequireVerifiedEmail.
+  def email_verified? = email_verified_at.present?
+
+  def verify_email!
+    return false if email_verified?
+
+    update!(email_verified_at: Time.current)
+  end
 
   def full_name = [ first_name, last_name ].compact_blank.join(" ")
 

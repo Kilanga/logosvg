@@ -1,0 +1,8 @@
+<% content_for :title, t(".title") %>
+
+<%= render layout: "shared/auth_frame",
+      locals: { eyebrow: t(".eyebrow"), title: t(".title"),
+                subtitle: t(".subtitle", email: @user.email_address) } do %>
+  <%= button_to t("email_verifications.show.submit"), email_verification_path(params[:token]),
+        method: :patch, class: "btn btn-primary w-full" %>
+<% end %>
