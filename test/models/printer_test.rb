@@ -174,6 +174,21 @@ class PrinterTest < ActiveSupport::TestCase
     assert_equal "screen_printing", printer.primary_technique.technique
   end
 
+  test "a draft says what it lacks before it is submitted" do
+    printer = printers(:brouillon)
+    printer.update!(description: "", address: "2 rue du Change", postal_code: "37000", city: "Tours")
+
+    problems = printer.submission_problems
+
+    assert(problems.any? { |m| m.start_with?(Printer.human_attribute_name(:description)) })
+    assert(problems.any? { |m| m.start_with?(Printer.human_attribute_name(:techniques)) })
+    assert_predicate printer.reload, :draft?
+  end
+
+  test "a complete listing has no submission problem, and a published one none to report" do
+    assert_empty printers(:rennes).submission_problems
+  end
+
   test "a listing with no technique cannot leave the draft" do
     printer = printers(:brouillon)
     printer.assign_attributes(address: "2 rue du Change", postal_code: "37000",

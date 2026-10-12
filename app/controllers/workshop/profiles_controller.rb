@@ -7,6 +7,9 @@ module Workshop
 
     def edit
       authorize @printer, :edit?
+      # Before the empty technique rows are built: those are offers, not
+      # techniques the shop declared.
+      @submission_problems = @printer.persisted? ? @printer.submission_problems : []
       build_missing_techniques
     end
 
@@ -26,13 +29,24 @@ module Workshop
 
     # Hands the listing to the administration. Publication is never the
     # printer's own decision — see docs/SPEC.md, "Validation manuelle".
+    #
+    # A refusal always says why: a listing already in the administration's
+    # hands is not "incomplete", and an incomplete one names what is missing.
     def submit
+      authorize @printer, :edit?
+
+      unless @printer.draft?
+        return redirect_to edit_workshop_profile_path,
+                           alert: t(".not_draft.#{@printer.status}")
+      end
+
       authorize @printer, :submit?
 
       if @printer.update(status: :pending_review)
         redirect_to workshop_dashboard_path, notice: t(".submitted")
       else
-        redirect_to edit_workshop_profile_path, alert: t(".incomplete")
+        redirect_to edit_workshop_profile_path,
+                    alert: t(".incomplete", missing: @printer.errors.full_messages.uniq.to_sentence)
       end
     end
 

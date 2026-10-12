@@ -63,6 +63,10 @@ class WorkshopProfilesTest < ActionDispatch::IntegrationTest
     post submit_workshop_profile_path
 
     assert_predicate printers(:brouillon).reload, :draft?
+    # Reported on 12/10/2026: the refusal must say what is missing.
+    address = Printer.human_attribute_name(:address)
+    assert_match address, flash[:alert]
+    assert_match Printer.human_attribute_name(:techniques), flash[:alert]
   end
 
   test "a listing with no technique cannot be submitted, however complete the rest" do
@@ -121,7 +125,8 @@ class WorkshopProfilesTest < ActionDispatch::IntegrationTest
 
     post submit_workshop_profile_path
 
-    assert_response :redirect
+    assert_redirected_to edit_workshop_profile_path
+    assert_equal I18n.t("workshop.profiles.submit.not_draft.pending_review"), flash[:alert]
     assert_predicate printers(:attente).reload, :pending_review?
   end
 
@@ -141,6 +146,19 @@ class WorkshopProfilesTest < ActionDispatch::IntegrationTest
     patch workshop_profile_path, params: { printer: { city: "Saint-Malo" } }
 
     assert_predicate printers(:rennes).reload.primary_technique, :present?
+  end
+
+  # Reported on 12/10/2026: a draft without its description could not be
+  # submitted, and nothing on the page said so.
+  test "the submit panel lists what is missing and holds the button" do
+    printer = printers(:brouillon)
+    printer.update!(address: "2 rue du Change", postal_code: "37000", city: "Tours", description: "")
+    sign_in_as users(:printer_draft)
+
+    get edit_workshop_profile_path
+
+    assert_select "#submission_problems li", text: /#{Regexp.escape(Printer.human_attribute_name(:description))}/
+    assert_select "form[action=?] button[disabled]", submit_workshop_profile_path
   end
 
   # Reported on 12/10/2026: the form said "une erreur" and nothing else.

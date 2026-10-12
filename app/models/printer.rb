@@ -216,6 +216,19 @@ class Printer < ApplicationRecord
 
   def technique_keys = live_techniques.map(&:technique)
 
+  # What still stands between a draft and the administration, as the messages
+  # a printer would get on submitting — said before they click, not after.
+  # Runs the submission's validations without touching the record's state.
+  def submission_problems
+    return [] unless draft?
+
+    probe = dup
+    probe.status = :pending_review
+    techniques.each { |row| probe.techniques.build(row.attributes.except("id", "printer_id")) unless row.marked_for_destruction? }
+    probe.valid?
+    probe.errors.full_messages.uniq - probe.errors.full_messages_for(:slug) - probe.errors.full_messages_for(:invite_code)
+  end
+
   # A poster that leaked, or a former employee who kept the link: a new code
   # stops the old one from admitting anyone. It still leads to the shop's page,
   # where a visitor can only ask.
