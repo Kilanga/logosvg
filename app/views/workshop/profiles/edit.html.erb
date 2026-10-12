@@ -33,7 +33,11 @@
         </div>
       <% end %>
       <%= button_to t(".submit_action"), submit_workshop_profile_path,
-            class: "btn btn-primary mt-5", disabled: @submission_problems.present? %>
+            class: "btn btn-primary mt-5", disabled: @submission_problems.present?,
+            aria: { describedby: ("submit_locked" if @submission_problems.present?) } %>
+      <% if @submission_problems.present? %>
+        <p id="submit_locked" class="mt-2 text-sm text-muted"><%= t(".submit_locked") %></p>
+      <% end %>
     </div>
   <% end %>
 

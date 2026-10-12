@@ -264,6 +264,16 @@
     border-color: var(--color-ink);
   }
 
+  /* A disabled button must look it: left in the primary colour, it reads as
+     a button that does nothing when clicked (reported on 12/10/2026). */
+  .btn:disabled,
+  .btn:disabled:hover {
+    background-color: var(--color-line);
+    border-color: var(--color-line);
+    color: var(--color-ink);
+    cursor: not-allowed;
+  }
+
   /* Status pills: paired tokens only, so contrast is always at least 4.5:1. */
   .pill {
     display: inline-flex;
