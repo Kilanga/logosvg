@@ -165,6 +165,15 @@ class PrinterTest < ActiveSupport::TestCase
     assert_not printer.valid?
   end
 
+  test "a shop with a single technique needs no primary ticked" do
+    printer = printers(:rennes)
+    assert_equal 1, printer.techniques.size
+    printer.techniques.each { |t| t.primary = false }
+
+    assert_predicate printer, :valid?
+    assert_equal "screen_printing", printer.primary_technique.technique
+  end
+
   test "a listing with no technique cannot leave the draft" do
     printer = printers(:brouillon)
     printer.assign_attributes(address: "2 rue du Change", postal_code: "37000",

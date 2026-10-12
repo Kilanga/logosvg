@@ -1,0 +1,15 @@
+<%# The summary at the top of a form. It names every problem, not just how
+    many there are: an error that belongs to no visible field (a rule on the
+    whole record, a section with no single input) is otherwise invisible. %>
+<% if record.errors.any? %>
+  <div class="border-l-2 border-warning bg-warning-bg px-4 py-3" role="alert">
+    <p class="font-semibold text-warning">
+      <%= t("errors.template.header", count: record.errors.count) %>
+    </p>
+    <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-warning">
+      <% record.errors.full_messages.uniq.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

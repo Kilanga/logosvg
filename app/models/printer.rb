@@ -43,6 +43,7 @@ class Printer < ApplicationRecord
 
   before_validation :assign_slug, on: :create
   before_validation :assign_invite_code, on: :create
+  before_validation :default_primary_technique
 
   # Geocoded on every address change, from a background job: the form must not
   # wait on a third party, and a shop that moves must not keep its old pin.
@@ -240,6 +241,18 @@ class Printer < ApplicationRecord
     # printer just unchecked must not keep the listing alive, nor hold the
     # primary flag.
     def live_techniques = techniques.reject(&:marked_for_destruction?)
+
+    # A shop that practises a single technique has nothing to choose: that one
+    # is what a client who does not know gets. Asking the printer to tick it
+    # anyway only produced an error they could not see the reason for. With
+    # several, the choice is theirs and stays a validation error.
+    def default_primary_technique
+      live = live_techniques
+      return unless live.one? && live.none?(&:primary?)
+
+      techniques.each { |row| row.primary = false }
+      live.first.primary = true
+    end
 
     def declares_at_least_one_technique
       errors.add(:techniques, :blank) if live_techniques.empty?

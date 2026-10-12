@@ -12,16 +12,7 @@
   <% else %>
   <%= form_with model: @review, url: design_reviews_path(@design), class: "space-y-10",
                 data: { turbo: false } do |form| %>
-    <% if @review.errors.any? %>
-      <div class="border-l-2 border-warning bg-warning-bg px-4 py-3">
-        <p class="font-semibold text-warning">
-          <%= t("errors.template.header", count: @review.errors.count) %>
-        </p>
-        <% if @review.errors[:base].any? %>
-          <p class="mt-1 text-sm text-warning"><%= @review.errors[:base].to_sentence %></p>
-        <% end %>
-      </div>
-    <% end %>
+    <%= render "shared/form_errors", record: @review %>
 
     <%# 01 — What they are buying. The level decides the price, the deadline
         and how many goes are included, so it leads. %>

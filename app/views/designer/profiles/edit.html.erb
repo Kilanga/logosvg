@@ -15,14 +15,7 @@
 
   <%= form_with model: @profile, url: designer_profile_path, method: :patch,
         class: "mt-8 space-y-10" do |form| %>
-    <% if @profile.errors.any? %>
-      <div class="border-l-2 border-warning bg-warning-bg px-4 py-3">
-        <p class="font-semibold text-warning">
-          <%= t("errors.template.header", count: @profile.errors.count) %>
-        </p>
-        <p class="mt-1 text-sm text-warning"><%= t("errors.template.body") %></p>
-      </div>
-    <% end %>
+    <%= render "shared/form_errors", record: @profile %>
 
     <fieldset>
       <div class="flex items-baseline gap-4 border-b border-line pb-3">

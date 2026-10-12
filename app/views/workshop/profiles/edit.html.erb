@@ -14,14 +14,7 @@
   </div>
 
   <%= form_with model: @printer, url: workshop_profile_path, method: :patch, class: "mt-8 space-y-10" do |form| %>
-    <% if @printer.errors.any? %>
-      <div class="border-l-2 border-warning bg-warning-bg px-4 py-3">
-        <p class="font-semibold text-warning">
-          <%= t("errors.template.header", count: @printer.errors.count) %>
-        </p>
-        <p class="mt-1 text-sm text-warning"><%= t("errors.template.body") %></p>
-      </div>
-    <% end %>
+    <%= render "shared/form_errors", record: @printer %>
 
     <%= render "section", number: "01", title: t(".sections.identity") do %>
       <%= render "shared/field", form: form, field: :name,
@@ -76,6 +69,13 @@
     <% end %>
 
     <%= render "section", number: "04", title: t(".sections.techniques"), hint: t(".techniques_hint") do %>
+      <%# The section has no single input to hang its errors on: they are
+          said here, where the printer has to act on them. %>
+      <% if @printer.errors[:techniques].any? %>
+        <p id="techniques_error" class="border-l-2 border-warning bg-warning-bg px-4 py-3 text-sm text-warning">
+          <%= @printer.errors.full_messages_for(:techniques).to_sentence %>
+        </p>
+      <% end %>
       <%= form.fields_for :techniques do |technique_form| %>
         <%= render "technique_fields", form: technique_form %>
       <% end %>
