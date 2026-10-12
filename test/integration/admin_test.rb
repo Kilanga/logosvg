@@ -250,4 +250,25 @@ class AdminTest < ActionDispatch::IntegrationTest
   ensure
     ENV.delete("GENERATOR_URL")
   end
+
+  # Reported on 12/10/2026 as "an error about the host": the page now says
+  # which of the usual causes it is, in words, with the address it tried.
+  test "each generator failure is named in words" do
+    ENV["GENERATOR_URL"] = "http://nono.example.ts.net:5000"
+    sign_in_as users(:admin)
+
+    { Socket::ResolutionError.new("getaddrinfo: Name or service not known") => :unresolved,
+      Errno::ECONNREFUSED => :refused,
+      Net::OpenTimeout => :timeout }.each do |error, reason|
+      WebMock.reset!
+      stub_request(:get, "http://nono.example.ts.net:5000/health").to_raise(error)
+
+      get admin_status_path
+
+      expected = I18n.t("admin.status.generator.#{reason}", host: "nono.example.ts.net")
+      assert_select "li p", text: expected
+    end
+  ensure
+    ENV.delete("GENERATOR_URL")
+  end
 end

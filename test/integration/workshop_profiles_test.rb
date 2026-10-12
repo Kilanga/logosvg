@@ -143,6 +143,41 @@ class WorkshopProfilesTest < ActionDispatch::IntegrationTest
     assert_predicate printers(:rennes).reload.primary_technique, :present?
   end
 
+  # Reported on 12/10/2026: the form said "une erreur" and nothing else.
+  test "a single technique is the primary one without being ticked" do
+    sign_in_as users(:printer_draft)
+
+    patch workshop_profile_path, params: {
+      printer: complete_listing.merge(
+        techniques_attributes: { "0" => {
+          technique: "dtf", output_format: "png", color_space: "rgb", _destroy: "0"
+        } }
+      )
+    }
+
+    assert_redirected_to edit_workshop_profile_path
+    assert_equal "dtf", printers(:brouillon).reload.primary_technique.technique
+  end
+
+  test "with several techniques and none primary, the form says what to do" do
+    sign_in_as users(:printer_draft)
+
+    patch workshop_profile_path, params: {
+      printer: complete_listing.merge(
+        techniques_attributes: {
+          "0" => { technique: "dtf", output_format: "png", color_space: "rgb", _destroy: "0" },
+          "1" => { technique: "screen_printing", max_colors: "4", output_format: "svg",
+                   color_space: "rgb", _destroy: "0" }
+        }
+      )
+    }
+
+    assert_response :unprocessable_entity
+    message = I18n.t("activerecord.errors.models.printer.attributes.techniques.no_primary")
+    assert_select "[role=alert] li", text: /#{Regexp.escape(message)}/
+    assert_select "#techniques_error", text: /#{Regexp.escape(message)}/
+  end
+
   private
     def complete_listing
       {

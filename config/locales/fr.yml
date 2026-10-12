@@ -138,7 +138,6 @@ fr:
       header:
         one: "Ce formulaire n'a pas pu être enregistré : une erreur."
         other: "Ce formulaire n'a pas pu être enregistré : %{count} erreurs."
-      body: "Vérifiez les champs suivants :"
 
   helpers:
     submit:
@@ -293,7 +292,7 @@ fr:
           attributes:
             techniques:
               blank: "sont obligatoires : indiquez au moins une technique d'impression"
-              no_primary: "doivent désigner une technique principale"
+              no_primary: "doivent désigner une technique principale : dans la section « Techniques d'impression », cochez « Technique retenue quand le client ne sait pas laquelle choisir » sous l'une des techniques que vous pratiquez"
               several_primaries: "ne peuvent désigner qu'une seule technique principale"
         printer_technique:
           attributes:
@@ -2628,6 +2627,19 @@ fr:
     # et la seconde écrase silencieusement la première, imbriquée ou non.
     status:
       not_configured: "Adresse non configurée"
+      generator:
+        unresolved: >-
+          Le serveur ne trouve pas l'adresse « %{host} » : le nom ne se résout
+          pas depuis le serveur (réseau privé Tailscale arrêté ou déconnecté sur
+          le serveur, ou nom à corriger dans GENERATOR_URL).
+        refused: >-
+          « %{host} » répond mais refuse la connexion : la machine à GPU est
+          joignable, le service de génération n'y tourne pas (lancer ALLUMER-IA).
+        timeout: >-
+          « %{host} » ne répond pas : machine à GPU éteinte, en veille ou hors
+          du réseau privé.
+        unreadable: "« %{host} » a répondu, mais pas comme le service de génération."
+        other: "« %{host} » : %{error}"
       failed_jobs:
         one: "%{count} tâche en échec"
         other: "%{count} tâches en échec"
