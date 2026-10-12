@@ -80,7 +80,9 @@ class PrintersTest < ApplicationSystemTestCase
       choose "primary_screen_printing"
     end
 
-    click_on I18n.t("workshop.profiles.edit.save")
+    # Saved from the submission panel at the top of the page: the button
+    # there submits the listing form below (asked on 12/10/2026).
+    find("#save_from_panel").click
 
     assert_text displayed("workshop.profiles.update.saved")
 

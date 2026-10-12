@@ -160,6 +160,9 @@ class WorkshopProfilesTest < ActionDispatch::IntegrationTest
     assert_select "#submission_problems li", text: /#{Regexp.escape(Printer.human_attribute_name(:description))}/
     assert_select "form[action=?] button[disabled]", submit_workshop_profile_path
     assert_select "#submit_locked", text: I18n.t("workshop.profiles.edit.submit_locked")
+    # The panel's own save button submits the listing form further down.
+    assert_select "button#save_from_panel[type=submit][form=listing_form]"
+    assert_select "form#listing_form[action=?]", workshop_profile_path
     # Asked on 12/10/2026: the panel comes before the listing form, not after.
     assert_operator response.body.index("submission_problems"),
                     :<, response.body.index(%(action="#{workshop_profile_path}"))
