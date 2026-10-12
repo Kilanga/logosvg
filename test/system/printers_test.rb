@@ -122,6 +122,26 @@ class PrintersTest < ApplicationSystemTestCase
     assert_text shown(printers(:brouillon).name)
   end
 
+  # Reported on 12/10/2026: on a long page the sign-out button sat at the very
+  # bottom of the document. The sidebar is now pinned to the viewport.
+  test "the sign-out button stays in view at the bottom of a long page" do
+    sign_in users(:printer_draft)
+    visit edit_workshop_profile_path
+    assert_selector "h1", text: displayed("workshop.profiles.edit.heading")
+
+    page.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+    assert page.evaluate_script("window.scrollY") > 0, "the page should be long enough to scroll"
+
+    button = find_button(I18n.t("nav.sign_out"))
+    top, bottom = page.evaluate_script(
+      "(function(e){ var r = e.getBoundingClientRect(); return [r.top, r.bottom]; })(arguments[0])", button
+    )
+    viewport = page.evaluate_script("window.innerHeight")
+
+    assert_operator top, :>=, 0
+    assert_operator bottom, :<=, viewport
+  end
+
   private
     def sign_in(user)
       visit new_session_path

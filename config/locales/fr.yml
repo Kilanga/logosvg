@@ -2011,7 +2011,7 @@ fr:
         heading: "Ma fiche d'atelier"
         preview: "Aperçu public"
         save: "Enregistrer"
-        description_hint: "Ce que vous imprimez, depuis quand, ce qui vous distingue. C'est le premier texte que lira un client."
+        description_hint: "Ce que vous imprimez, depuis quand, ce qui vous distingue. C'est le premier texte que lira un client. Obligatoire pour soumettre la fiche."
         where_hint: "L'adresse place votre atelier sur la carte de l'annuaire. Elle est mise à jour automatiquement à chaque modification."
         orders_email_hint: "C'est à cette adresse que les demandes d'impression arriveront, avec les fichiers joints."
         techniques_hint: >-
@@ -2047,11 +2047,16 @@ fr:
         submit_title: "Prêt à être publié ?"
         submit_body: "Votre fiche sera relue par notre équipe avant d'apparaître dans l'annuaire. Vous pourrez continuer à la modifier pendant ce temps."
         submit_action: "Soumettre à validation"
+        submit_missing: "Avant de soumettre votre fiche, complétez et enregistrez :"
       update:
         saved: "Fiche enregistrée."
       submit:
         submitted: "Votre fiche est soumise à validation."
-        incomplete: "Votre fiche ne peut pas être soumise en l'état."
+        incomplete: "Votre fiche ne peut pas encore être soumise : %{missing}. Complétez-la, enregistrez, puis soumettez-la de nouveau."
+        not_draft:
+          pending_review: "Votre fiche est déjà en attente de validation par l'administration : inutile de la soumettre de nouveau. Vous pouvez continuer à la modifier en attendant."
+          published: "Votre fiche est déjà publiée : il n'y a rien à soumettre."
+          suspended: "Votre fiche est suspendue par l'administration : elle ne peut pas être soumise. Écrivez-nous pour connaître la raison et la marche à suivre."
 
     print_requests:
       index:
