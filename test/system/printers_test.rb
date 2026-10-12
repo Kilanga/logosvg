@@ -124,22 +124,31 @@ class PrintersTest < ApplicationSystemTestCase
 
   # Reported on 12/10/2026: on a long page the sign-out button sat at the very
   # bottom of the document. The sidebar is now pinned to the viewport.
-  test "the sign-out button stays in view at the bottom of a long page" do
+  test "the sign-out button stays in view on a long page" do
     sign_in users(:printer_draft)
     visit edit_workshop_profile_path
     assert_selector "h1", text: displayed("workshop.profiles.edit.heading")
 
-    page.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-    assert page.evaluate_script("window.scrollY") > 0, "the page should be long enough to scroll"
-
-    button = find_button(I18n.t("nav.sign_out"))
-    top, bottom = page.evaluate_script(
-      "(function(e){ var r = e.getBoundingClientRect(); return [r.top, r.bottom]; })(arguments[0])", button
-    )
     viewport = page.evaluate_script("window.innerHeight")
+    assert_operator page.evaluate_script("document.documentElement.scrollHeight"), :>, viewport * 2,
+                    "the page should be long enough to scroll"
 
-    assert_operator top, :>=, 0
-    assert_operator bottom, :<=, viewport
+    # At the top, then at the bottom. Unpinned, the button sits at the foot
+    # of the document: out of view at the top, and only "visible" at the bottom
+    # because the document ends there.
+    [ 0, "document.documentElement.scrollHeight" ].each do |position|
+      # `instant`: the stylesheet asks for smooth scrolling, and the position
+      # would otherwise be read before the animation has moved.
+      page.execute_script("window.scrollTo({ top: #{position}, behavior: 'instant' })")
+
+      top, bottom = page.evaluate_script(
+        "(function(e){ var r = e.getBoundingClientRect(); return [r.top, r.bottom]; })(arguments[0])",
+        find_button(I18n.t("nav.sign_out"))
+      )
+
+      assert_operator top, :>=, 0
+      assert_operator bottom, :<=, viewport
+    end
   end
 
   private
