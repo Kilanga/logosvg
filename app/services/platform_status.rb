@@ -18,9 +18,19 @@ class PlatformStatus
   private
     # The one call in the application that reaches the service without a key:
     # `/health` is public by the microservice's own contract.
+    #
+    # Short timeouts: this runs while the administrator waits for the page, and
+    # Net::HTTP's default would hold it a full minute when the GPU machine is
+    # asleep. Each failure says, in words, which of the three usual causes it is
+    # — a name the server cannot resolve, a machine that refuses, a machine that
+    # does not answer — with the address it tried.
     def generator
-      body = Net::HTTP.get_response(URI.join(generator_url, "/health"))
-      status = JSON.parse(body.body)["status"]
+      uri = URI.join(generator_url, "/health")
+      response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
+                                 open_timeout: HEALTH_TIMEOUT, read_timeout: HEALTH_TIMEOUT) do |http|
+        http.request(Net::HTTP::Get.new(uri))
+      end
+      status = JSON.parse(response.body)["status"]
 
       if status == "ok"
         Check.new(key: :generator, state: :ok, detail: generator_url)
@@ -30,7 +40,27 @@ class PlatformStatus
     rescue URI::InvalidURIError, TypeError, ArgumentError
       Check.new(key: :generator, state: :down, detail: I18n.t("admin.status.not_configured"))
     rescue StandardError => e
-      Check.new(key: :generator, state: :down, detail: e.class.to_s)
+      Check.new(key: :generator, state: :down, detail: generator_failure(e))
+    end
+
+    HEALTH_TIMEOUT = 5
+
+    def generator_failure(error)
+      reason = case error
+      when SocketError then :unresolved            # Socket::ResolutionError included
+      when Errno::ECONNREFUSED then :refused
+      when Net::OpenTimeout, Net::ReadTimeout, Errno::EHOSTUNREACH, Errno::ENETUNREACH then :timeout
+      when JSON::ParserError then :unreadable
+      end
+      host = URI.parse(generator_url).host
+
+      if reason
+        I18n.t("admin.status.generator.#{reason}", host: host)
+      else
+        I18n.t("admin.status.generator.other", host: host, error: "#{error.class}: #{error.message}")
+      end
+    rescue StandardError
+      error.class.to_s
     end
 
     def generator_url
