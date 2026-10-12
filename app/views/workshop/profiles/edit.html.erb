@@ -13,6 +13,30 @@
     <% end %>
   </div>
 
+  <%# At the top (asked on 12/10/2026): what the draft still lacks is the
+      first thing a printer sees, not something found after scrolling. %>
+  <% if @printer.persisted? && @printer.draft? %>
+    <div class="panel mt-8 p-6">
+      <p class="label-rule flex items-center gap-2.5 text-emulsion">
+        <%= registration_mark %><%= t(".submit_title") %>
+      </p>
+      <p class="mt-3 text-muted"><%= t(".submit_body") %></p>
+      <%# Said before the click: what is still missing, field by field. %>
+      <% if @submission_problems.present? %>
+        <div id="submission_problems" class="mt-4 border-l-2 border-warning bg-warning-bg px-4 py-3 text-sm text-warning">
+          <p class="font-semibold"><%= t(".submit_missing") %></p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <% @submission_problems.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+      <%= button_to t(".submit_action"), submit_workshop_profile_path,
+            class: "btn btn-primary mt-5", disabled: @submission_problems.present? %>
+    </div>
+  <% end %>
+
   <%= form_with model: @printer, url: workshop_profile_path, method: :patch, class: "mt-8 space-y-10" do |form| %>
     <%= render "shared/form_errors", record: @printer %>
 
@@ -180,25 +204,4 @@
     </div>
   <% end %>
 
-  <% if @printer.persisted? && @printer.draft? %>
-    <div class="panel mt-8 p-6">
-      <p class="label-rule flex items-center gap-2.5 text-emulsion">
-        <%= registration_mark %><%= t(".submit_title") %>
-      </p>
-      <p class="mt-3 text-muted"><%= t(".submit_body") %></p>
-      <%# Said before the click: what is still missing, field by field. %>
-      <% if @submission_problems.present? %>
-        <div id="submission_problems" class="mt-4 border-l-2 border-warning bg-warning-bg px-4 py-3 text-sm text-warning">
-          <p class="font-semibold"><%= t(".submit_missing") %></p>
-          <ul class="mt-2 list-disc space-y-1 pl-5">
-            <% @submission_problems.each do |message| %>
-              <li><%= message %></li>
-            <% end %>
-          </ul>
-        </div>
-      <% end %>
-      <%= button_to t(".submit_action"), submit_workshop_profile_path,
-            class: "btn btn-primary mt-5", disabled: @submission_problems.present? %>
-    </div>
-  <% end %>
 </div>
