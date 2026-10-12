@@ -159,6 +159,9 @@ class WorkshopProfilesTest < ActionDispatch::IntegrationTest
 
     assert_select "#submission_problems li", text: /#{Regexp.escape(Printer.human_attribute_name(:description))}/
     assert_select "form[action=?] button[disabled]", submit_workshop_profile_path
+    # Asked on 12/10/2026: the panel comes before the listing form, not after.
+    assert_operator response.body.index("submission_problems"),
+                    :<, response.body.index(%(action="#{workshop_profile_path}"))
   end
 
   # Reported on 12/10/2026: the form said "une erreur" and nothing else.

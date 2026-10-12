@@ -2047,7 +2047,7 @@ fr:
         submit_title: "Prêt à être publié ?"
         submit_body: "Votre fiche sera relue par notre équipe avant d'apparaître dans l'annuaire. Vous pourrez continuer à la modifier pendant ce temps."
         submit_action: "Soumettre à validation"
-        submit_missing: "Avant de soumettre votre fiche, complétez et enregistrez :"
+        submit_missing: "Avant de soumettre votre fiche, complétez les points suivants puis enregistrez (bouton en bas de page) :"
       update:
         saved: "Fiche enregistrée."
       submit:
