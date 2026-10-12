@@ -5,7 +5,9 @@
   <% unless @designer.active? %>
     <div class="mb-6 border-l-2 border-warning bg-warning-bg px-4 py-3">
       <p class="font-semibold text-warning"><%= t(".preview_only") %></p>
-      <p class="mt-1 text-sm text-warning"><%= t(".preview_only_body") %></p>
+      <p class="mt-1 text-sm text-warning">
+        <%= Current.user&.admin? ? t(".admin_preview_body") : t(".preview_only_body") %>
+      </p>
     </div>
   <% end %>
 

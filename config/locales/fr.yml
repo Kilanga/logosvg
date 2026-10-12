@@ -3369,6 +3369,7 @@ fr:
       show:
         preview_only: "Aperçu privé"
         preview_only_body: "Ce profil n'est pas encore publié : vous seul pouvez le voir."
+        admin_preview_body: "Relecture administrateur : ce profil n'est pas publié et n'apparaît pas dans la liste des graphistes."
         about: "Présentation"
         portfolio: "Portfolio"
         levels: "Ce que propose ce graphiste"
@@ -3445,6 +3446,7 @@ fr:
           accepts_client_textile: "Accepte mon textile"
       show:
         preview: "Aperçu de votre fiche, actuellement %{status}. Les visiteurs ne la voient pas encore."
+        admin_preview: "Relecture administrateur : cette fiche est actuellement %{status} et n'apparaît pas dans l'annuaire."
         create_here: "Créer mon visuel avec cet atelier"
         about: "Présentation"
         techniques: "Techniques"

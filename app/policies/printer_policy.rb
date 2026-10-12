@@ -1,7 +1,9 @@
 class PrinterPolicy < ApplicationPolicy
   # A listing is public once it is listed. Its owner sees it before that, which
-  # is what "aperçu public" on the edit screen means.
-  def show? = record.listed? || owner?
+  # is what "aperçu public" on the edit screen means; so does the
+  # administration, which cannot decide on a listing it cannot read (reported
+  # on 12/10/2026 — the "Relire" link of the admin queue led nowhere).
+  def show? = record.listed? || owner? || user&.admin?
 
   def edit?   = owner?
   def update? = owner?
