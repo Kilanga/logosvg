@@ -2036,6 +2036,8 @@ fr:
           pending_review: "En attente d'une décision de l'administration."
           published: "Visible dans l'annuaire."
           suspended: "Retirée de l'annuaire."
+          no_subscription: "Publiée, mais invisible tant que vous n'avez pas d'abonnement."
+          subscription_inactive: "Publiée, mais invisible : votre abonnement n'est pas actif."
         sections:
           identity: "Identité"
           where: "Adresse"
@@ -2725,6 +2727,9 @@ fr:
           one: "1 autre fiche"
           other: "%{count} autres fiches"
       row:
+        hidden:
+          no_subscription: "Invisible : sans abonnement"
+          subscription_inactive: "Invisible : abonnement inactif"
         review: "Relire la fiche"
         publish: "Publier"
         suspend: "Suspendre"
@@ -3445,8 +3450,18 @@ fr:
           provides_textile: "Fournit le textile"
           accepts_client_textile: "Accepte mon textile"
       show:
-        preview: "Aperçu de votre fiche, actuellement %{status}. Les visiteurs ne la voient pas encore."
-        admin_preview: "Relecture administrateur : cette fiche est actuellement %{status} et n'apparaît pas dans l'annuaire."
+        hidden:
+          draft: "Aperçu de votre fiche, en brouillon : les visiteurs ne la voient pas encore."
+          pending_review: "Aperçu de votre fiche, en attente de validation : les visiteurs ne la voient pas encore."
+          suspended: "Aperçu de votre fiche, suspendue par l'administration : elle n'apparaît plus dans l'annuaire."
+          no_subscription: "Aperçu de votre fiche : elle est publiée, mais vous n'avez pas d'abonnement. Elle n'apparaît dans l'annuaire qu'une fois l'abonnement souscrit."
+          subscription_inactive: "Aperçu de votre fiche : elle est publiée, mais votre abonnement n'est pas actif (paiement en échec ou abonnement résilié). Elle n'apparaît plus dans l'annuaire."
+        admin_hidden:
+          draft: "Relecture administrateur : cette fiche est en brouillon, elle n'apparaît pas dans l'annuaire."
+          pending_review: "Relecture administrateur : cette fiche attend votre validation, elle n'apparaît pas dans l'annuaire."
+          suspended: "Relecture administrateur : cette fiche est suspendue, elle n'apparaît pas dans l'annuaire."
+          no_subscription: "Relecture administrateur : cette fiche est publiée, mais l'atelier n'a pas d'abonnement. Elle n'apparaîtra dans l'annuaire qu'une fois l'abonnement souscrit."
+          subscription_inactive: "Relecture administrateur : cette fiche est publiée, mais l'abonnement de l'atelier n'est pas actif (paiement en échec ou résilié). Elle n'apparaît pas dans l'annuaire."
         create_here: "Créer mon visuel avec cet atelier"
         about: "Présentation"
         techniques: "Techniques"

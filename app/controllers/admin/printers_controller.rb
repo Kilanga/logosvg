@@ -4,7 +4,7 @@ module Admin
     def index
       @query = params[:q].to_s.strip
       @printers = policy_scope(Printer, policy_scope_class: PrinterPolicy::AdminScope)
-                    .includes(:user, :techniques)
+                    .includes(:user, :techniques, :subscription)
                     .order(Arel.sql("CASE status WHEN 1 THEN 0 ELSE 1 END"), updated_at: :desc)
       @printers = @printers.matching(@query) if @query.present?
     end

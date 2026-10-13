@@ -207,6 +207,17 @@ class Printer < ApplicationRecord
   # lapsed subscription would keep being reachable by anyone holding the link.
   def listed? = published? && read_association(:subscription)&.visible?.present?
 
+  # Why a listing is not in the directory, in one word the screens can
+  # translate. Publication and payment are two separate conditions (see
+  # `listed`), and "publiée" alone made a shop without a subscription look
+  # visible when nobody could see it (reported on 13/10/2026).
+  def hidden_reason
+    return nil if listed?
+    return status.to_sym unless published?
+
+    read_association(:subscription) ? :subscription_inactive : :no_subscription
+  end
+
   # What this shop would use for a client who answers "I don't know".
   def primary_technique = live_techniques.find(&:primary?)
 

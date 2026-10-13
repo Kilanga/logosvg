@@ -5,7 +5,7 @@
   <div class="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-5">
     <p class="flex items-center gap-3">
       <%= printer_status_pill(@printer) %>
-      <span class="text-sm text-muted"><%= t(".status_hint.#{@printer.new_record? ? 'draft' : @printer.status}") %></span>
+      <span class="text-sm text-muted"><%= t(".status_hint.#{@printer.new_record? ? 'draft' : (@printer.hidden_reason || @printer.status)}") %></span>
     </p>
 
     <% if @printer.persisted? %>
