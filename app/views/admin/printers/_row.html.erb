@@ -6,6 +6,12 @@
     <div class="flex flex-wrap items-baseline gap-3">
       <span class="font-display text-lg font-bold uppercase"><%= printer.name %></span>
       <%= printer_status_pill(printer) %>
+      <%# Published is not visible: the directory also wants a live
+          subscription, and the queue says so instead of letting "Publiée"
+          read as "in the directory". %>
+      <% if printer.published? && (reason = printer.hidden_reason) %>
+        <span class="pill pill-warning"><%= t(".hidden.#{reason}") %></span>
+      <% end %>
     </div>
     <p class="mt-1 text-sm text-muted">
       <%= [ printer.postal_code, printer.city ].compact_blank.join(" ") %>

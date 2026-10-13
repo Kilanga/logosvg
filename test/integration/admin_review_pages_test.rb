@@ -22,8 +22,30 @@ class AdminReviewPagesTest < ActionDispatch::IntegrationTest
     get printer_path(printers(:attente))
 
     assert_response :success
-    assert_select "p", text: /#{Regexp.escape(I18n.t("public.printers.show.admin_preview",
-                                                       status: I18n.t("enums.printer.status.pending_review").downcase))}/
+    assert_select "p", text: I18n.t("public.printers.show.admin_hidden.pending_review")
+  end
+
+  # Reported on 13/10/2026: "publiée" read as "in the directory", but the
+  # directory also wants a live subscription. The page says which is missing.
+  test "a published listing without a subscription says why it is not in the directory" do
+    printer = printers(:brouillon)
+    printer.update_columns(status: Printer.statuses[:published])
+    assert_nil printer.reload.subscription
+
+    get printer_path(printer)
+    assert_select "p", text: I18n.t("public.printers.show.admin_hidden.no_subscription")
+
+    get admin_printers_path
+    assert_select "li", text: /#{Regexp.escape(I18n.t("admin.printers.row.hidden.no_subscription"))}/
+  end
+
+  test "a published listing whose subscription lapsed says so" do
+    printer = printers(:brouillon)
+    printer.update_columns(status: Printer.statuses[:published])
+    printer.create_subscription!(plan: "listing", status: "canceled")
+
+    get printer_path(printer)
+    assert_select "p", text: I18n.t("public.printers.show.admin_hidden.subscription_inactive")
   end
 
   test "a draft and a suspended listing open for an administrator too" do

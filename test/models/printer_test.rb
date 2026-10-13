@@ -174,6 +174,19 @@ class PrinterTest < ActiveSupport::TestCase
     assert_equal "screen_printing", printer.primary_technique.technique
   end
 
+  test "an unlisted shop says why: its state, or the subscription it lacks" do
+    assert_nil printers(:rennes).hidden_reason
+    assert_equal :draft, printers(:brouillon).hidden_reason
+    assert_equal :pending_review, printers(:attente).hidden_reason
+
+    printer = printers(:brouillon)
+    printer.status = :published
+    assert_equal :no_subscription, printer.hidden_reason
+
+    printer.build_subscription(plan: "listing", status: "canceled")
+    assert_equal :subscription_inactive, printer.hidden_reason
+  end
+
   test "a draft says what it lacks before it is submitted" do
     printer = printers(:brouillon)
     printer.update!(description: "", address: "2 rue du Change", postal_code: "37000", city: "Tours")
