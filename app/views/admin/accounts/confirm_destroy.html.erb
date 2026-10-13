@@ -1,0 +1,30 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-2xl space-y-6">
+  <%= link_to t(".back"), admin_accounts_path, class: "text-sm text-muted underline underline-offset-4" %>
+
+  <div class="panel p-6">
+    <p class="label-rule flex items-center gap-2.5 text-warning"><%= registration_mark %><%= t(".irreversible") %></p>
+
+    <dl class="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
+      <dt class="text-muted"><%= t(".email") %></dt>
+      <dd class="break-all font-medium"><%= @account.email_address %></dd>
+      <dt class="text-muted"><%= t(".name") %></dt>
+      <dd><%= @account.full_name %></dd>
+      <dt class="text-muted"><%= t(".role") %></dt>
+      <dd><%= t("roles.#{@account.role}") %></dd>
+    </dl>
+
+    <p class="mt-5 text-muted"><%= t(".body") %></p>
+
+    <%= form_with url: admin_account_path(@account), method: :delete, class: "mt-6 space-y-4" do %>
+      <div>
+        <%= label_tag :confirmation, t(".confirmation_label", email: @account.email_address), class: "label-rule block" %>
+        <%= text_field_tag :confirmation, nil, autocomplete: "off", autocapitalize: "none", spellcheck: false,
+              required: true, class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+      </div>
+      <%= submit_tag t(".submit"), class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>

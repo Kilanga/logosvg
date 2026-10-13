@@ -54,27 +54,12 @@ class PurgeStaleDataJob < ApplicationJob
     # person, and that is what goes: name, address, telephone, password.
     def purge_closed_accounts
       User.deleted.where(deleted_at: ...settings[:deleted_account_purge_days].days.ago)
-          .where.not("email_address LIKE ?", ANONYMISED_EMAIL_PATTERN)
+          .where.not("email_address LIKE ?", AnonymiseAccount::EMAIL_PATTERN)
           .find_each { |user| anonymise(user) }
     end
 
-    # Already emptied: the sweep runs every day and must not keep rewriting the
-    # same rows.
-    ANONYMISED_EMAIL_PATTERN = "compte-supprime-%@invalid".freeze
-
     def anonymise(user)
-      User.transaction do
-        Session.where(user_id: user.id).destroy_all
-        Design.where(user_id: user.id).strict_loading(false).find_each(&:destroy)
-
-        user.update_columns(
-          email_address: "compte-supprime-#{user.id}@invalid",
-          first_name: I18n.t("privacy.anonymised"), last_name: "—",
-          phone: nil, city: nil,
-          password_digest: BCrypt::Password.create(SecureRandom.hex(32)),
-          updated_at: Time.current
-        )
-      end
+      AnonymiseAccount.call(user)
     rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::InvalidForeignKey => e
       # Left alone rather than half-purged: a record that will not let go is
       # one a human should look at.

@@ -220,6 +220,11 @@ Rails.application.routes.draw do
   get   "admin/graphistes",     to: "admin/designers#index",  as: :admin_designers
   patch "admin/graphistes/:id", to: "admin/designers#update", as: :admin_designer
 
+  # Les comptes, et leur suppression confirmée en tapant l'adresse.
+  get    "admin/comptes",                 to: "admin/accounts#index",           as: :admin_accounts
+  get    "admin/comptes/:id/suppression", to: "admin/accounts#confirm_destroy", as: :confirm_destroy_admin_account
+  delete "admin/comptes/:id",             to: "admin/accounts#destroy",         as: :admin_account
+
   # Revues et litiges : l'admin ne rejoue pas la conversation, il tranche.
   get  "admin/verifications",        to: "admin/reviews#index", as: :admin_reviews
   get  "admin/verifications/:token", to: "admin/reviews#show",  as: :admin_review
