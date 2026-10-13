@@ -60,6 +60,10 @@ class User < ApplicationRecord
   validates :terms_accepted_at, presence: true
 
   scope :active, -> { where(deleted_at: nil) }
+  scope :matching, ->(term) {
+    pattern = "%#{sanitize_sql_like(term.to_s.strip)}%"
+    where("email_address ILIKE :q OR first_name ILIKE :q OR last_name ILIKE :q", q: pattern)
+  }
   scope :deleted, -> { where.not(deleted_at: nil) }
 
   def active? = deleted_at.nil?

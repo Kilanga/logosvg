@@ -8,4 +8,17 @@ class UserPolicy < ApplicationPolicy
   # — not even an administrator, who has no screen for it.
   def update? = user.present? && user.id == record.id
   def edit? = update?
+
+  # Deleting is the administration's, from /admin/comptes (asked on
+  # 13/10/2026) — never its own account, which would lock it out.
+  def destroy? = user&.admin? && user.id != record.id
+  def confirm_destroy? = destroy?
+
+  class AdminScope < ApplicationPolicy::Scope
+    def resolve
+      raise Pundit::NotAuthorizedError unless user&.admin?
+
+      scope.all
+    end
+  end
 end

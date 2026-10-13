@@ -165,6 +165,7 @@ fr:
     home: "Accueil"
     printers: "Imprimeurs"
     designers: "Graphistes"
+    accounts: "Comptes"
     create: "Créer un design"
     sign_in: "Se connecter"
     sign_up: "Créer un compte"
@@ -2674,6 +2675,49 @@ fr:
         footer: >-
           Une file qui n'est pas traitée est la panne la plus discrète : les
           pages s'affichent et les générations n'aboutissent jamais.
+
+    accounts:
+      index:
+        title: "Comptes"
+        heading: "Comptes"
+        search_label: "Rechercher un compte"
+        search_placeholder: "Adresse email ou nom"
+        search_submit: "Rechercher"
+        search_clear: "Tout afficher"
+        no_match: "Aucun compte ne correspond à « %{query} »."
+        empty: "Aucun compte."
+        count:
+          one: "%{count} compte (les %{limit} plus récents au plus)"
+          other: "%{count} comptes (les %{limit} plus récents au plus)"
+        closed: "Fermé"
+        unverified: "Adresse non confirmée"
+        created: "inscrit le %{date}"
+        delete: "Supprimer le compte"
+      confirm_destroy:
+        title: "Supprimer un compte"
+        heading: "Supprimer un compte"
+        back: "Retour aux comptes"
+        irreversible: "Action définitive"
+        email: "Adresse"
+        name: "Nom"
+        role: "Rôle"
+        body: >-
+          Le compte, son profil d'atelier ou de graphiste et ses designs sont
+          supprimés, et l'adresse redevient libre pour une nouvelle inscription.
+          Si une demande d'impression ou une vérification le mentionne encore,
+          ces documents sont conservés pour l'atelier et le graphiste : le compte
+          est alors vidé de ses données personnelles et sa fiche retirée, au lieu
+          d'être effacé.
+        confirmation_label: "Pour confirmer, saisissez l'adresse du compte : %{email}"
+        submit: "Supprimer définitivement"
+      destroy:
+        deleted: "Le compte %{email} a été supprimé."
+        anonymised: "Le compte %{email} a été vidé de ses données personnelles : des demandes d'impression ou des vérifications le mentionnent et sont conservées."
+        refused:
+          confirmation: "L'adresse saisie ne correspond pas à %{email}. Rien n'a été supprimé."
+          self: "Vous ne pouvez pas supprimer votre propre compte."
+          billing: "L'abonnement Stripe de cet atelier est toujours en cours : résiliez-le d'abord dans Stripe, sinon Stripe continuerait de facturer un atelier supprimé."
+          records: "Ce compte n'a pas pu être supprimé : certains de ses enregistrements refusent de partir. Rien n'a été modifié."
 
     designers:
       index:

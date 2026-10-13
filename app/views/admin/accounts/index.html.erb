@@ -1,0 +1,49 @@
+<% content_for :title, t(".title") %>
+<% content_for :heading, t(".heading") %>
+
+<div class="max-w-5xl space-y-8">
+  <%= form_with url: admin_accounts_path, method: :get, class: "flex flex-wrap items-end gap-3" do %>
+    <div class="min-w-0 flex-1 sm:max-w-xs">
+      <%= label_tag :q, t(".search_label"), class: "label-rule block" %>
+      <%= search_field_tag :q, @query, placeholder: t(".search_placeholder"),
+            class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
+    </div>
+    <button type="submit" class="btn btn-secondary text-sm"><%= t(".search_submit") %></button>
+    <% if @query.present? %>
+      <%= link_to t(".search_clear"), admin_accounts_path, class: "text-sm text-muted underline underline-offset-4" %>
+    <% end %>
+  <% end %>
+
+  <% if @accounts.empty? %>
+    <p class="text-muted"><%= @query.present? ? t(".no_match", query: @query) : t(".empty") %></p>
+  <% else %>
+    <p class="label-rule border-b border-line pb-3">
+      <%= t(".count", count: @accounts.size, limit: Admin::AccountsController::LIMIT) %>
+    </p>
+    <ul class="divide-y divide-line">
+      <% @accounts.each do |account| %>
+        <li id="<%= dom_id(account) %>" class="flex flex-wrap items-center gap-x-6 gap-y-3 py-4">
+          <div class="min-w-0 flex-1">
+            <p class="flex flex-wrap items-baseline gap-3">
+              <span class="break-all font-medium"><%= account.email_address %></span>
+              <span class="pill border border-line text-muted"><%= t("roles.#{account.role}") %></span>
+              <% if account.deleted_at %>
+                <span class="pill pill-warning"><%= t(".closed") %></span>
+              <% elsif !account.email_verified? %>
+                <span class="pill border border-line text-muted"><%= t(".unverified") %></span>
+              <% end %>
+            </p>
+            <p class="mt-1 text-sm text-muted">
+              <%= account.full_name %> · <%= t(".created", date: l(account.created_at.to_date, format: :long)) %>
+            </p>
+          </div>
+
+          <% if policy(account).destroy? %>
+            <%= link_to t(".delete"), confirm_destroy_admin_account_path(account),
+                  class: "btn btn-secondary text-sm" %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

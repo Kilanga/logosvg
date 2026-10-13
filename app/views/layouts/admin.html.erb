@@ -14,6 +14,10 @@
         path: admin_designers_path,
         current: current_page?(admin_designers_path) %>
   <%= render "layouts/space_link",
+        label: t("nav.accounts"),
+        path: admin_accounts_path,
+        current: current_page?(admin_accounts_path) %>
+  <%= render "layouts/space_link",
         label: t("nav.reviews"),
         path: admin_reviews_path,
         current: current_page?(admin_reviews_path) %>
