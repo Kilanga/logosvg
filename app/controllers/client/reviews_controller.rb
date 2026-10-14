@@ -3,6 +3,7 @@ module Client
   # the review afterwards.
   class ReviewsController < BaseController
     before_action :set_design, only: %i[ new create ]
+    before_action :require_chosen_design, only: %i[ new create ]
     before_action :set_review, except: %i[ index new create ]
     require_verified_email only: %i[ new create ]
 
@@ -194,6 +195,18 @@ module Client
     private
       def set_design
         @design = policy_scope(Design).find_by!(token: params[:design_token])
+      end
+
+      # The design is theirs, but not yet one to have checked: still drawing, or
+      # one of several proposals not yet chosen. Said in words and sent back to
+      # the design, rather than « Vous n'avez pas accès à cette page » (reported
+      # on 14/10/2026).
+      def require_chosen_design
+        return if @design.ready? && !@design.awaiting_choice?
+
+        skip_authorization
+        reason = @design.awaiting_choice? ? :choose_first : :not_ready
+        redirect_to design_path(@design), alert: t("client.reviews.new.#{reason}")
       end
 
       def set_review

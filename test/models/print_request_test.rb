@@ -229,7 +229,10 @@ class PrintRequestTest < ActiveSupport::TestCase
     request = build_request(consented_at: nil, consent_text_version: nil)
 
     assert_not request.valid?
-    assert request.errors.include?(:consented_at)
+    assert request.errors.of_kind?(:base, :no_consent)
+    # One message for one box, in words (reported on 14/10/2026).
+    assert_equal [ I18n.t("activerecord.errors.models.print_request.attributes.base.no_consent") ],
+                 request.errors.full_messages
   end
 
   test "a request needs someone to answer" do

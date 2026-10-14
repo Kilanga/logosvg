@@ -77,6 +77,18 @@
                 class: "mt-2 block w-full text-sm" %>
         </div>
       </div>
+
+      <%# The model has carried it since the poster; the form never offered it
+          (reported on 14/10/2026). The poster uses it for every shop, the
+          creation screen only with Atelier+. %>
+      <div>
+        <%= form.label :brand_color, t("activerecord.attributes.printer.brand_color"), class: "label-rule block" %>
+        <div class="mt-2 flex items-center gap-3">
+          <%= form.color_field :brand_color, value: @printer.brand_color.presence || BrandPalette::FALLBACK,
+                class: "h-11 w-16 cursor-pointer rounded-xs border border-line bg-surface p-1" %>
+          <span class="text-sm text-muted"><%= t("workshop.profiles.edit.brand_color_hint") %></span>
+        </div>
+      </div>
     <% end %>
 
     <%= render "section", number: "02", title: t(".sections.where"), hint: t(".where_hint") do %>

@@ -310,10 +310,8 @@ fr:
                 other: "n'atteignent pas la commande minimale de cet atelier : %{count} exemplaires"
             desired_on:
               in_the_past: "ne peut pas être une date passée"
-            consented_at:
-              blank: "est obligatoire : cochez la case pour transmettre vos coordonnées"
-            consent_text_version:
-              blank: "est obligatoire : cochez la case pour transmettre vos coordonnées"
+            base:
+              no_consent: "Cochez la case qui autorise l'envoi de vos coordonnées à l'atelier : sans elle, il ne peut pas vous recontacter."
         workshop_link_channel:
           attributes:
             label:
@@ -1233,6 +1231,8 @@ fr:
           que l'atelier sortira sans retouche.
         browse_designs: "Voir mes designs"
       new:
+        choose_first: "Choisissez d'abord la proposition à garder : c'est elle que le graphiste vérifiera."
+        not_ready: "Ce design n'est pas encore prêt : la vérification se demande une fois le visuel terminé."
         recommended: "Recommandé par votre atelier"
         shop_copy: >-
           %{name}, l'atelier pour lequel ce visuel a été créé, suit cette
@@ -2016,6 +2016,7 @@ fr:
         preview: "Aperçu public"
         save: "Enregistrer"
         description_hint: "Ce que vous imprimez, depuis quand, ce qui vous distingue. C'est le premier texte que lira un client. Obligatoire pour soumettre la fiche."
+        brand_color_hint: "La couleur de votre affiche. Avec Atelier+, elle habille aussi l'écran de création de vos clients. Trop claire pour du texte blanc, elle est foncée juste ce qu'il faut."
         where_hint: "L'adresse place votre atelier sur la carte de l'annuaire. Elle est mise à jour automatiquement à chaque modification."
         orders_email_hint: "C'est à cette adresse que les demandes d'impression arriveront, avec les fichiers joints."
         techniques_hint: >-
@@ -3014,7 +3015,7 @@ fr:
       faq_title: "Questions fréquentes"
       sheet_title: "Expliquer le parcours à vos clients"
       sheet_body: >-
-        Votre affiche porte les six étapes et votre QR code. Posez-la sur le
+        Votre affiche porte les cinq étapes et votre QR code. Posez-la sur le
         comptoir, distribuez-la, ou envoyez votre lien par email à un client
         avec qui vous avez échangé.
       sheet_cta: "Mon affiche et mon lien"

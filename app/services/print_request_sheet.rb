@@ -60,7 +60,9 @@ class PrintRequestSheet
         line(:asked_for, @design.prompt),
         line(:prompt_used, @design.prompt_used),
         line(:instruction, @design.instruction),
-        line(:style, I18n.t("enums.design.style.#{@design.style}")),
+        # A client's own picture was drawn by nobody here: it has no style
+        # (reported on 14/10/2026 — « Style : Illustration » on an upload).
+        line(:style, (I18n.t("enums.design.style.#{@design.style}") unless @design.upload?)),
         line(:seed, @design.seed)
       ]
     end

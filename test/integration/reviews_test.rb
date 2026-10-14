@@ -50,6 +50,28 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # Reported on 14/10/2026: « Vous n'avez pas accès à cette page » for the
+  # client's own design, while its proposals were still to be chosen.
+  test "a proposal not yet chosen sends the owner back to choose, in words" do
+    design = designs(:fox_screen)
+    design.update_columns(batch_token: "lot-test", chosen_at: nil)
+    sign_in_as users(:client)
+
+    get new_design_review_path(design)
+
+    assert_redirected_to design_path(design)
+    assert_equal I18n.t("client.reviews.new.choose_first"), flash[:alert]
+  end
+
+  test "a design still drawing is not one to have checked yet" do
+    sign_in_as users(:client)
+
+    get new_design_review_path(designs(:pending_design))
+
+    assert_redirected_to design_path(designs(:pending_design))
+    assert_equal I18n.t("client.reviews.new.not_ready"), flash[:alert]
+  end
+
   # The price is copied at purchase: a level that changes next month must not
   # rewrite what was paid.
   test "the price and the allowance are copied onto the review" do

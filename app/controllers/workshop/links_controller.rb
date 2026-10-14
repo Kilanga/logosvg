@@ -9,12 +9,7 @@ module Workshop
 
     def show
       authorize @printer, :update?
-      # Queried on its own: `@printer` comes from `current_printer`, which
-      # preloads only what every workshop screen reads, and `strict_loading`
-      # refuses to walk to an association nobody asked for.
-      @channels = WorkshopLinkChannel.where(printer: @printer).order(:created_at, :id).to_a
-      @statistics = link_statistics
-      @link_message = WorkshopLinkMessage.new(@printer, url: share_url(source: WorkshopLinkVisit::EMAIL))
+      load_page
     end
 
     # SVG for the poster and for print; PNG for whatever a shop pastes into its
@@ -57,7 +52,11 @@ module Workshop
       if @printer.update(params.expect(printer: [ :poster_note, :link_email_note ]))
         redirect_to workshop_link_share_path(anchor: "link-notes"), notice: t(".done")
       else
-        redirect_to workshop_link_share_path(anchor: "link-notes"), alert: @printer.errors.full_messages.to_sentence
+        # The page again, with what was typed still in the fields (reported on
+        # 14/10/2026: a text one character too long was lost on refusal).
+        load_page
+        flash.now[:alert] = @printer.errors.full_messages.to_sentence
+        render :show, status: :unprocessable_entity
       end
     end
 
@@ -73,6 +72,15 @@ module Workshop
 
     private
       def set_printer = @printer = current_printer
+
+      # Queried on its own: `@printer` comes from `current_printer`, which
+      # preloads only what every workshop screen reads, and `strict_loading`
+      # refuses to walk to an association nobody asked for.
+      def load_page
+        @channels = WorkshopLinkChannel.where(printer: @printer).order(:created_at, :id).to_a
+        @statistics = link_statistics
+        @link_message = WorkshopLinkMessage.new(@printer, url: share_url(source: WorkshopLinkVisit::EMAIL))
+      end
 
       # There is no link to share until the listing exists and is public.
       def require_listing

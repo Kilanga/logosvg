@@ -22,6 +22,15 @@ class PrintRequestSheetTest < ActiveSupport::TestCase
     assert_nil lines[t("palette")]
   end
 
+  # Reported on 14/10/2026: « Style : Illustration » on a client's own picture.
+  test "an uploaded picture has no style on its sheet" do
+    request = print_requests(:waiting)
+    assert labels_and_values(request)[t("style")], "a drawn design keeps its style"
+    request.design.update_columns(mode: "upload")
+
+    assert_nil labels_and_values(request.reload)[t("style")]
+  end
+
   # What lets the same image be generated again months later.
   test "the sheet carries what would let the image be made again" do
     lines = labels_and_values(print_requests(:waiting))
