@@ -53,8 +53,10 @@ class DesignsTest < ApplicationSystemTestCase
     within("#design_#{design.token}") { click_on I18n.t("client.designs.proposal.choose") }
     assert_text displayed("client.designs.show.selected", number: 1)
     click_on I18n.t("client.designs.show.send_to_workshop")
-    assert_current_path new_design_print_request_path(design)
-    visit design_path(design)
+    # The design's own page, its detailed preview first (reported on
+    # 14/10/2026), and the send links there.
+    assert_text displayed("client.designs.choose.check_then_send")
+    assert_current_path design_path(design)
 
     # Vector output is counted in screens, and each ink is one.
     assert_text displayed("client.designs.design.screens", count: 2)
@@ -293,11 +295,20 @@ class DesignsTest < ApplicationSystemTestCase
 
     within("#design_#{second.token}") { click_on I18n.t("client.designs.proposal.choose") }
     assert_text displayed("client.designs.show.selected", number: 2)
+
+    # The pick survives a reload (reported on 14/10/2026).
+    assert_current_path(/proposition=#{second.token}/)
+    visit current_url
+    assert_text displayed("client.designs.show.selected", number: 2)
+    assert_selector "[data-proposals-target=card][data-token=#{second.token}][aria-current=true]"
+
     fill_in "instruction_proposals", with: "ajoute des lunettes"
     click_on I18n.t("client.designs.design.refine_submit")
 
-    # The new proposals' page — waited for, not assumed.
-    assert_no_current_path design_path(first_proposal)
+    # The new proposals' page — waited for, not assumed. The query is ignored:
+    # the page being left carries ?proposition=…, which a path-with-query
+    # comparison would take for having already left.
+    assert_no_current_path design_path(first_proposal), ignore_query: true
     assert_text displayed("client.designs.show.proposals_title")
     assert_equal 3, Design.where(parent: second).count
     assert_not second.reload.awaiting_choice?

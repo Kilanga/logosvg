@@ -1,0 +1,35 @@
+<%# What the client asked, step by step, as a conversation (docs/SPEC.md,
+    « Retouche » — reported missing on 14/10/2026). The client's words on the
+    right, each new version answering on the left; the last answer is the page
+    itself. %>
+<section id="conversation" class="mb-8 max-w-3xl" aria-label="<%= t("client.designs.conversation.label") %>">
+  <ol class="space-y-3">
+    <% conversation.each_with_index do |step, index| %>
+      <li class="flex justify-end">
+        <p class="max-w-[85%] rounded-xs bg-ink px-4 py-2.5 text-sm text-paper">
+          <span class="label-rule block text-paper/60">
+            <%= t(index.zero? ? "client.designs.conversation.first" : "client.designs.conversation.you") %>
+          </span>
+          <% if index.zero? %>
+            <%= step.prompt %>
+          <% elsif step.instruction.present? %>
+            <%= step.instruction %>
+          <% else %>
+            <%= t("client.designs.conversation.variants") %>
+          <% end %>
+        </p>
+      </li>
+      <% unless index == conversation.size - 1 %>
+        <li class="flex">
+          <%= link_to t("client.designs.conversation.version", number: index + 1), design_path(step.token),
+                class: "rounded-xs border border-line bg-surface px-4 py-2.5 text-sm underline underline-offset-4 hover:border-emulsion" %>
+        </li>
+      <% end %>
+    <% end %>
+    <li class="flex">
+      <p class="rounded-xs border border-emulsion bg-surface px-4 py-2.5 text-sm text-emulsion">
+        <%= t("client.designs.conversation.current", number: conversation.size) %>
+      </p>
+    </li>
+  </ol>
+</section>

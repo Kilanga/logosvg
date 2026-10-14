@@ -9,11 +9,11 @@ class Geocoding
   # on that would mislead more than showing none.
   MINIMUM_SCORE = 0.4
 
-  Result = Data.define(:latitude, :longitude, :label, :score) do
+  Result = Data.define(:latitude, :longitude, :label, :score, :city) do
     def found? = latitude.present? && longitude.present?
   end
 
-  NOT_FOUND = Result.new(latitude: nil, longitude: nil, label: nil, score: nil)
+  NOT_FOUND = Result.new(latitude: nil, longitude: nil, label: nil, score: nil, city: nil)
 
   def self.call(address) = new(address).call
 
@@ -39,7 +39,8 @@ class Geocoding
       latitude: match.latitude,
       longitude: match.longitude,
       label: properties["label"],
-      score: score
+      score: score,
+      city: properties["city"]
     )
   rescue Geocoder::Error, Timeout::Error, SocketError, SystemCallError => e
     Rails.logger.warn("[geocoding] #{e.class}: #{e.message}")

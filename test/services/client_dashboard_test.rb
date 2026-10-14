@@ -103,6 +103,37 @@ class ClientDashboardTest < ActiveSupport::TestCase
     assert_empty actions.select { |a| a.record == designs(:fox_dtf) }
   end
 
+  # Reported on 14/10/2026: one idea retouched gave two « Design prêt, jamais
+  # envoyé » and several entries in « Derniers designs ».
+  test "a retouched idea counts once, by its newest version" do
+    client = users(:client)
+    root = designs(:fox_screen)
+    PrintRequest.where(design_id: root.id).delete_all
+    Review.where(design_id: root.id).delete_all
+    child = Design.create!(root.attributes.except("id", "token", "created_at", "updated_at", "batch_token", "chosen_at")
+                               .merge("parent_id" => root.id, "root_id" => root.id, "status" => "ready"))
+
+    dashboard = ClientDashboard.call(client: client)
+
+    unsent = dashboard[:actions].select { |a| a.kind == :design_unsent }.map(&:record)
+    assert_includes unsent.map(&:id), child.id
+    assert_not_includes unsent.map(&:id), root.id
+
+    lineage_entries = dashboard[:designs].select { |d| (d.root_id || d.id) == root.id }
+    assert_equal [ child.id ], lineage_entries.map(&:id)
+  end
+
+  test "an idea sent from any of its versions is no longer waiting" do
+    root = designs(:fox_screen)
+    assert PrintRequest.exists?(design_id: root.id)
+    Design.create!(root.attributes.except("id", "token", "created_at", "updated_at", "batch_token", "chosen_at")
+                       .merge("parent_id" => root.id, "root_id" => root.id, "status" => "ready"))
+
+    unsent = ClientDashboard.call(client: users(:client))[:actions].select { |a| a.kind == :design_unsent }
+
+    assert(unsent.none? { |a| (a.record.root_id || a.record.id) == root.id })
+  end
+
   private
     def actions = ClientDashboard.call(client: users(:client))[:actions]
 

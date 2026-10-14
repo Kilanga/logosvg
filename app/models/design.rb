@@ -181,6 +181,20 @@ class Design < ApplicationRecord
   # fond, un chargement paresseux qui lève en développement.
   def lineage_root_id = root_id || id
 
+  # The path from the first design of the idea to this one, oldest first: what
+  # the client asked at each step. One query over the lineage, walked here.
+  def conversation
+    rows = Design.where(id: lineage_root_id).or(Design.where(root_id: lineage_root_id))
+                 .select(:id, :parent_id, :token, :prompt, :instruction, :created_at).index_by(&:id)
+    path = []
+    current = rows[id] || self
+    while current
+      path.unshift(current)
+      current = rows[current.parent_id]
+    end
+    path
+  end
+
   def soft_delete! = update!(deleted_at: Time.current)
 
   def active? = deleted_at.nil?

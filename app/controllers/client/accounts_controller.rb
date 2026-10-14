@@ -51,9 +51,9 @@ module Client
       @user = Current.user
       authorize @user, :update?
 
-      send_data JSON.pretty_generate(AccountExport.call(user: @user, host: request.host_with_port)),
-                type: "application/json", disposition: "attachment",
-                filename: "#{t('.filename')}-#{Date.current.iso8601}.json"
+      send_data AccountArchive.call(user: @user, host: request.host_with_port),
+                type: "application/zip", disposition: "attachment",
+                filename: "#{t('.filename')}-#{Date.current.iso8601}.zip"
     end
 
     # Closing the account. Not destroyed here: print requests and reviews are

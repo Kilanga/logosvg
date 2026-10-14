@@ -23,6 +23,35 @@ class GeocodePrinterJobTest < ActiveJob::TestCase
     assert_in_delta 3.0573, printer.longitude.to_f, 0.0001
   end
 
+  # Reported on 14/10/2026: « Satolas Et bonce » shown as typed.
+  test "the town is written as the national address base writes it" do
+    stub_request(:get, SEARCH).to_return(
+      body: { features: [ { geometry: { coordinates: [ 5.11, 45.69 ] },
+                            properties: { score: 0.9, city: "Satolas-et-Bonce" } } ] }.to_json,
+      headers: { "Content-Type" => "application/json" }
+    )
+    printer = printers(:brouillon)
+    printer.update_columns(address: "Place de la mairie", postal_code: "38290", city: "Satolas Et bonce")
+
+    GeocodePrinterJob.perform_now(printer)
+
+    assert_equal "Satolas-et-Bonce", printer.reload.city
+  end
+
+  test "a different town in the answer leaves the shop's own word alone" do
+    stub_request(:get, SEARCH).to_return(
+      body: { features: [ { geometry: { coordinates: [ 5.11, 45.69 ] },
+                            properties: { score: 0.5, city: "Colombier-Saugnieu" } } ] }.to_json,
+      headers: { "Content-Type" => "application/json" }
+    )
+    printer = printers(:brouillon)
+    printer.update_columns(address: "Place de la mairie", postal_code: "38290", city: "Satolas Et bonce")
+
+    GeocodePrinterJob.perform_now(printer)
+
+    assert_equal "Satolas Et bonce", printer.reload.city
+  end
+
   # Coordinates are derived data. Writing them through the model would re-run
   # validations on a possibly incomplete draft, and re-trigger this very job.
   test "a draft too incomplete to save is still placed on the map" do

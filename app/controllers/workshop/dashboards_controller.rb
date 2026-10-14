@@ -11,6 +11,9 @@ module Workshop
       @subscription = @printer&.subscription
       @print_requests = recent_requests
       @month = month_figures
+      # On the dashboard too, not only on the subscription page (reported on
+      # 14/10/2026): a shop on Référencement sees its month's allowance go.
+      @generation_quota = PrinterGenerationQuota.for(@printer) if @printer&.subscription
       @pending_clients = @printer ? ClientAffiliation.pending.from_verified_clients.where(printer_id: @printer.id).count : 0
     end
 

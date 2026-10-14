@@ -3,6 +3,10 @@
 
 <%# The panel replaces itself as the generation advances. Broadcast from a job,
     which is why development runs Solid Cable and not the async adapter. %>
+<% if @conversation.size > 1 %>
+  <%= render "client/designs/conversation", conversation: @conversation %>
+<% end %>
+
 <% if @proposals.any? %>
   <%# Several proposals of one click: the client keeps one before going on.
       Each card listens to its own design's stream. %>
@@ -128,7 +132,7 @@
     </div>
 
     <% if @design.ready? %>
-      <div class="panel p-6">
+      <div id="envoyer" class="panel scroll-mt-6 p-6">
         <h2 class="label-rule"><%= t(".who_can_print") %></h2>
 
         <% if !@design.print_approved? %>

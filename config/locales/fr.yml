@@ -1191,9 +1191,10 @@ fr:
         other_sessions: "Vos autres sessions seront déconnectées."
         data: "Vos données"
         export_body: >-
-          Tout ce que la plateforme conserve sur vous, au format JSON :
-          coordonnées, designs, demandes d'impression, vérifications et
-          échanges.
+          Tout ce que la plateforme conserve sur vous, dans une archive ZIP :
+          vos coordonnées, designs, demandes d'impression, vérifications et
+          échanges au format JSON, avec l'aperçu de chacun de vos designs et
+          les images que vous avez déposées.
         export: "Exporter mes données"
         close: "Fermer mon compte"
         close_body: >-
@@ -1376,6 +1377,13 @@ fr:
         empty: "Écrivez un message avant de l'envoyer."
 
     designs:
+      conversation:
+        label: "Vos demandes de retouche"
+        first: "Votre idée"
+        you: "Votre demande"
+        variants: "D'autres versions, s'il vous plaît."
+        version: "Version %{number} — la revoir"
+        current: "Version %{number}, ci-dessous"
       index:
         title: "Mes designs"
         heading: "Mes designs"
@@ -1477,6 +1485,7 @@ fr:
           sont écartées.
       choose:
         chosen: "Proposition retenue. Vous pouvez la retoucher ou l'envoyer à un atelier."
+        check_then_send: "Proposition retenue. Vérifiez-la sur le textile et dans ses détails, puis choisissez l'atelier à qui l'envoyer."
       proposal:
         label: "Proposition"
         number: "N° %{number}"
@@ -1598,6 +1607,10 @@ fr:
           ne montre personne d'identifiable sans son accord.
         ai_declared: "Ce visuel a été créé avec une IA (il sera signalé comme tel, comme la loi le demande)."
         remove_background: "Retirer le fond blanc (le textile apparaîtra à la place)"
+        remove_background_hint: >-
+          Seul le blanc est retiré. Un fond gris clair, crème ou légèrement
+          teinté reste dans l'image et sera imprimé comme une couleur : détourez
+          votre image sur fond blanc (ou transparent) avant de la déposer.
         name: "Un nom pour le retrouver (facultatif)"
         name_placeholder: "Logo du club, affiche de la fête…"
         technique_hint: >-
@@ -1719,6 +1732,7 @@ fr:
         this_month: "Ce mois-ci"
         to_confirm: "À confirmer"
         garments: "Pièces"
+        generations: "Générations"
         no_request: "Aucune demande reçue pour l'instant."
         your_link: "Votre lien client"
         share_link: "Partager mon lien"
@@ -2455,7 +2469,7 @@ fr:
       rights_of_person:
         title: "Vos droits"
         body:
-          - "Vous pouvez exporter l'ensemble de vos données au format JSON depuis votre espace, à tout moment et sans nous écrire."
+          - "Vous pouvez exporter l'ensemble de vos données depuis votre espace, à tout moment et sans nous écrire : une archive avec vos informations au format JSON et vos fichiers."
           - "Vous pouvez fermer votre compte depuis le même écran. Les droits d'accès, de rectification, d'effacement et d'opposition s'exercent auprès de l'adresse de contact."
 
     cookies:
