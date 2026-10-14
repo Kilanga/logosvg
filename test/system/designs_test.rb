@@ -293,6 +293,13 @@ class DesignsTest < ApplicationSystemTestCase
 
     within("#design_#{second.token}") { click_on I18n.t("client.designs.proposal.choose") }
     assert_text displayed("client.designs.show.selected", number: 2)
+
+    # The pick survives a reload (reported on 14/10/2026).
+    assert_current_path(/proposition=#{second.token}/)
+    visit current_url
+    assert_text displayed("client.designs.show.selected", number: 2)
+    assert_selector "[data-proposals-target=card][data-token=#{second.token}][aria-current=true]"
+
     fill_in "instruction_proposals", with: "ajoute des lunettes"
     click_on I18n.t("client.designs.design.refine_submit")
 

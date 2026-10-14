@@ -11,21 +11,38 @@ export default class extends Controller {
   static targets = ["card", "form", "submit", "selection", "panel"]
   static values = { selected: String }
 
+  // The pick survives a reload (reported on 14/10/2026): it is written into
+  // the address as ?proposition=<token>, and read back from it here. Nothing
+  // is stored on the server until the client acts, as before.
   connect() {
+    const token = new URL(window.location.href).searchParams.get("proposition")
+    const form = token && this.element.querySelector(`form[data-proposals-token-param="${CSS.escape(token)}"]`)
+    if (form) this.pick(form.dataset)
     this.render()
   }
 
   // A card's "Choisir celle-ci" form, intercepted.
   select(event) {
     event.preventDefault()
-    const { token, refineUrl, variantsUrl, choiceUrl, number } = event.params
-
-    this.selectedValue = token
-    this.urls = { refine: refineUrl, variants: variantsUrl, choice: choiceUrl }
-    this.number = number
+    this.pick(event.currentTarget.dataset)
+    this.remember(this.selectedValue)
     this.render()
     // On a phone the three cards stack: bring the panel into view.
     if (this.hasPanelTarget) this.panelTarget.scrollIntoView({ block: "nearest", behavior: "smooth" })
+  }
+
+  // From the data-proposals-*-param attributes of a card's form.
+  pick(data) {
+    this.selectedValue = data.proposalsTokenParam
+    this.urls = { refine: data.proposalsRefineUrlParam, variants: data.proposalsVariantsUrlParam,
+                  choice: data.proposalsChoiceUrlParam }
+    this.number = data.proposalsNumberParam
+  }
+
+  remember(token) {
+    const url = new URL(window.location.href)
+    url.searchParams.set("proposition", token)
+    window.history.replaceState(window.history.state, "", url)
   }
 
   render() {

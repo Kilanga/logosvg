@@ -40,12 +40,25 @@ class ClientDashboard
 
     # A finished design nobody has been asked to print is the whole point of
     # the platform left undone.
+    #
+    # One per idea, not one per version (reported on 14/10/2026: a creation
+    # and its retouch gave two « Design prêt, jamais envoyé »): the newest
+    # ready version of a lineage, and nothing if any version of it was sent.
     def unsent_designs
-      designs.kept.where(status: "ready")
-             .where.missing(:print_requests)
-             .map do |design|
+      sent = Design.joins(:print_requests).where(user_id: @client.id).select(Arel.sql(LINEAGE))
+      latest_per_lineage(designs.kept.where(status: "ready").where("#{LINEAGE} NOT IN (?)", sent))
+        .map do |design|
         Action.new(kind: :design_unsent, record: design, on: design.updated_at)
       end
+    end
+
+    LINEAGE = "COALESCE(designs.root_id, designs.id)".freeze
+
+    # The newest row of each lineage in `scope`.
+    def latest_per_lineage(scope)
+      newest = scope.select("DISTINCT ON (COALESCE(designs.root_id, designs.id)) designs.*")
+                    .reorder(Arel.sql("COALESCE(designs.root_id, designs.id), designs.created_at DESC, designs.id DESC"))
+      Design.from(newest, :designs)
     end
 
     # The workshop has not even confirmed receipt. Worth saying so before the
@@ -88,8 +101,11 @@ class ClientDashboard
       end
     end
 
+    # One entry per idea, its newest kept version: the proposals not chosen
+    # and the earlier versions of a retouch are the same idea again.
     def recent_designs
-      designs.newest_first.limit(RECENT_LIMIT).includes(:printer).with_attached_print_file
+      latest_per_lineage(designs.kept).newest_first.limit(RECENT_LIMIT)
+                                      .includes(:printer).with_attached_print_file
     end
 
     def recent_print_requests
