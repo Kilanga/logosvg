@@ -30,7 +30,9 @@ class PrintRequest < ApplicationRecord
   validates :print_width_cm, numericality: { in: 3..60 }
   validates :contact_name, :contact_email, presence: true
   validates :contact_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
-  validates :consent_text_version, :consented_at, presence: true
+  # One box, one message (reported on 14/10/2026: two technical messages,
+  # « Consent text version » and « Consented at », for a single checkbox).
+  validate :consent_recorded
 
   # A workshop cannot quote a job with no garments in it, and the sizes are the
   # only place the quantity comes from.
@@ -149,6 +151,10 @@ class PrintRequest < ApplicationRecord
   def printer_supplies_textile? = textile_source == "printer"
 
   private
+    def consent_recorded
+      errors.add(:base, :no_consent) if consent_text_version.blank? || consented_at.blank?
+    end
+
     def settings = Rails.application.config.tshirt.print_requests
 
     def count_garments

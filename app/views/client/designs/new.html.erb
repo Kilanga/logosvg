@@ -5,13 +5,18 @@
   <%# The shop in context, kept for the whole session by /a/:slug. It is what
       narrows the techniques on offer, so it leads. %>
   <% if context_printer %>
-    <div class="panel mb-8 flex flex-wrap items-center justify-between gap-4 p-4">
+    <%# Atelier+ dresses this band in the shop's own colour (docs/SPEC.md,
+        « Abonnements imprimeurs »); BrandPalette keeps the text legible on it.
+        An attribute, not a <style>: the CSP lets only the former through. %>
+    <% palette = context_printer.brand_palette if context_printer.featured? && context_printer.brand_color.present? %>
+    <div id="workshop_band" class="panel mb-8 flex flex-wrap items-center justify-between gap-4 p-4"
+         <% if palette %>style="background-color: <%= palette.base %>; color: <%= palette.on_base %>; border-color: <%= palette.base %>;"<% end %>>
       <p class="flex items-center gap-3 text-sm">
-        <%= registration_mark css_class: "text-emulsion" %>
+        <%= registration_mark css_class: (palette ? "opacity-70" : "text-emulsion") %>
         <span><%= t(".for_workshop_html", name: tag.strong(context_printer.name)) %></span>
       </p>
       <%= link_to t(".change_workshop"), printers_path,
-            class: "text-sm underline underline-offset-4 hover:text-emulsion" %>
+            class: "text-sm underline underline-offset-4 #{palette ? '' : 'hover:text-emulsion'}" %>
     </div>
   <% end %>
 

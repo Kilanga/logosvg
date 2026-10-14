@@ -23,7 +23,23 @@ class DesignPolicyTest < ActiveSupport::TestCase
   test "the preview follows ownership, not the state of the design" do
     assert DesignPolicy.new(users(:client), designs(:fox_screen)).image?
     assert DesignPolicy.new(users(:client), designs(:pending_design)).image?
-    assert_not DesignPolicy.new(users(:printer), designs(:fox_screen)).image?
+    assert_not DesignPolicy.new(users(:printer_draft), designs(:fox_screen)).image?
+  end
+
+  # Reported on 14/10/2026: the workshop's print requests showed a broken image.
+  test "the workshop a design was sent to, its designers and the administration see the preview" do
+    fox = designs(:fox_screen)
+    assert PrintRequest.exists?(design: fox, printer: printers(:rennes))
+
+    assert DesignPolicy.new(users(:printer), fox).image?, "the workshop it was sent to"
+    assert DesignPolicy.new(users(:designer), fox).image?, "the designer of its review"
+    assert DesignPolicy.new(users(:admin), fox).image?
+
+    # Nobody else, and seeing the preview opens nothing else.
+    assert_not DesignPolicy.new(users(:printer_draft), fox).image?
+    assert_not DesignPolicy.new(users(:printer), designs(:pending_design)).image?
+    assert_not DesignPolicy.new(users(:printer), fox).show?
+    assert_not DesignPolicy.new(users(:printer), fox).refine?
   end
 
   # A ready design never changes: only a ready one can father children.

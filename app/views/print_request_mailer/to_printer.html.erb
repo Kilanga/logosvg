@@ -27,6 +27,23 @@
   </h2>
   <%= render "sheet", sheet: @sheet %>
 
+  <%# Who to call or write to for the quote (asked on 14/10/2026). %>
+  <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;margin:24px 0 8px;">
+    <%= t("mailers.print_request.to_printer.contact_title") %>
+  </h2>
+  <p style="margin:0;line-height:1.6;">
+    <strong><%= @print_request.contact_name %></strong><br>
+    <%= t("mailers.print_request.to_printer.contact_email") %> :
+    <a href="mailto:<%= @print_request.contact_email %>" style="color:#1F5F7A;"><%= @print_request.contact_email %></a><br>
+    <% if @print_request.contact_phone.present? %>
+      <%= t("mailers.print_request.to_printer.contact_phone") %> :
+      <a href="tel:<%= @print_request.contact_phone %>" style="color:#1F5F7A;"><%= @print_request.contact_phone %></a><br>
+    <% end %>
+    <% if @print_request.contact_city.present? %>
+      <%= @print_request.contact_city %>
+    <% end %>
+  </p>
+
   <% if @print_request.message.present? %>
     <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;margin:24px 0 8px;">
       <%= t("mailers.print_request.to_printer.message_title") %>

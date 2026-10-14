@@ -70,10 +70,16 @@ class PrintRequestsTest < ApplicationSystemTestCase
     assert_current_path workshop_print_requests_path(statut: "open")
     find("a[href='#{workshop_print_request_path(print_requests(:waiting))}']").click
 
+    # The design's preview loads for the workshop (reported on 14/10/2026: a
+    # broken image). Waited for before clicking, too: the picture arriving
+    # moves the page under the pointer.
+    assert_design_preview_loaded
+
     # One button: the next step, and only if it is possible from here.
     click_on I18n.t("workshop.print_requests.show.event.acknowledge")
 
     assert_text displayed("enums.print_request.status.acknowledged")
+    assert_design_preview_loaded
 
     click_on I18n.t("workshop.print_requests.show.event.quote")
 
@@ -123,5 +129,13 @@ class PrintRequestsTest < ApplicationSystemTestCase
     def svg
       %(<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 10 10">) +
         %(<path d="M0 0h10v10H0z" fill="#1F5F7A"/></svg>)
+    end
+
+    def assert_design_preview_loaded
+      image = find("aside img[src*='/apercu']")
+      assert(Timeout.timeout(Capybara.default_max_wait_time) do
+        sleep 0.1 until evaluate_script("arguments[0].complete && arguments[0].naturalWidth > 0", image)
+        true
+      end)
     end
 end

@@ -19,7 +19,7 @@
       <p class="label-rule text-warning"><%= t("client.designs.design.failed") %></p>
       <p class="max-w-sm text-warning"><%= design.error_message %></p>
       <%# A failed generation consumed no allowance: trying again is free. %>
-      <%= link_to t("client.designs.design.try_again"), new_design_path, class: "btn btn-primary mt-2" %>
+      <%= link_to t("client.designs.design.try_again"), new_design_path(depuis: design.token), class: "btn btn-primary mt-2" %>
     </div>
 
   <% else %>
@@ -220,7 +220,7 @@
     <div class="flex flex-wrap gap-3 border-t border-line p-4">
       <%# The print file never leaves for the client: this is a watermarked
           rendering of it. %>
-      <%= link_to t("client.designs.design.download"), design_image_path(design),
+      <%= link_to t("client.designs.design.download"), design_image_path(design, telecharger: 1),
             class: "btn btn-secondary text-sm" %>
 
       <% if design.refinements_left.to_i.positive? %>

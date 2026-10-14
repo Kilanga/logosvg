@@ -65,6 +65,9 @@ class Printer < ApplicationRecord
                    format: { with: /\A[a-z0-9-]+\z/ }
   validates :orders_email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :postal_code, format: { with: POSTAL_CODE }, allow_blank: true
+  # The colour picker always sends a value, the platform's own when the shop
+  # chose none: stored as « no colour », which is what it renders as anyway.
+  normalizes :brand_color, with: ->(c) { c.strip.casecmp?(BrandPalette::FALLBACK) ? nil : c.strip }
   validates :brand_color, format: { with: HEX_COLOUR }, allow_blank: true
   validates :max_print_width_cm, :max_print_height_cm, :min_order_qty,
             numericality: { greater_than: 0 }, allow_nil: true

@@ -54,10 +54,10 @@ Rails.application.routes.draw do
   post "designs",         to: "client/designs#create", as: :designs
   get  "designs/:token",  to: "client/designs#show",   as: :design
   # Le rendu filigrané : jamais le fichier d'impression lui-même.
-  get  "designs/:token/apercu", to: "client/designs#image", as: :design_image
+  get  "designs/:token/apercu", to: "design_previews#show", as: :design_image
   # Pour comparer : l'image d'origine, elle aussi filigranée, jamais envoyée
   # telle quelle. Voir docs/SPEC.md, "Détails d'interface à respecter" → "Aperçu".
-  get  "designs/:token/original", to: "client/designs#original_image", as: :design_original_image
+  get  "designs/:token/original", to: "design_previews#original", as: :design_original_image
   # Le fichier d'impression avec sa transparence, pour la silhouette de t-shirt :
   # le blanc non imprimé doit laisser voir la couleur du tissu.
   get  "designs/:token/sur-textile", to: "client/designs#garment_image", as: :design_garment_image

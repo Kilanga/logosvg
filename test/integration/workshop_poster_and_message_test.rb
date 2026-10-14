@@ -43,7 +43,10 @@ class WorkshopPosterAndMessageTest < ActionDispatch::IntegrationTest
 
     patch workshop_link_notes_path, params: { printer: { poster_note: "   ", link_email_note: "x" * 401 } }
 
+    assert_response :unprocessable_entity
     assert_predicate flash[:alert], :present?
+    # What was typed is still there to be shortened (reported on 14/10/2026).
+    assert_select "textarea[name=?]", "printer[link_email_note]", text: "x" * 401
     assert_equal "Ancien texte", @rennes.reload.poster_note
 
     patch workshop_link_notes_path, params: { printer: { poster_note: "   ", link_email_note: "" } }

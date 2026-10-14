@@ -46,7 +46,9 @@ export default class extends Controller {
     )
 
     if (markers.length > 0) {
-      this.map.fitBounds(latLngBounds(markers.map((m) => m.getLatLng())).pad(0.2))
+      // A single shop is a point, and fitting to a point zooms in as far as
+      // the tiles go — a grey square (reported on 14/10/2026). Town level.
+      this.map.fitBounds(latLngBounds(markers.map((m) => m.getLatLng())).pad(0.2), { maxZoom: 12 })
     } else if (this.hasCenterValue) {
       this.map.setView([this.centerValue.latitude, this.centerValue.longitude], this.zoomValue)
     } else {
