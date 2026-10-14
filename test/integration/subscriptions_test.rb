@@ -162,6 +162,26 @@ class SubscriptionsTest < ActionDispatch::IntegrationTest
     assert_not_equal 302, response.status
   end
 
+  # --- A shop without its listing yet (found in the test run of 14/10/2026) --
+
+  test "a shop with no listing yet is asked to create it before subscribing" do
+    owner = User.create!(email_address: "sans-fiche@example.invalid", password: "motdepasse-test",
+                         first_name: "Sans", last_name: "Fiche", role: "printer",
+                         terms_accepted_at: Time.current, email_verified_at: Time.current)
+    sign_in_as owner
+
+    get workshop_subscription_path
+    assert_response :success
+    assert_select "form[action=?]", workshop_subscription_path, count: 0
+    assert_select "a[href=?]", edit_workshop_profile_path
+
+    assert_no_difference "Subscription.count" do
+      post workshop_subscription_path, params: { plan: "atelier_plus" }
+    end
+    assert_redirected_to edit_workshop_profile_path
+    assert_equal I18n.t("workshop.subscriptions.create.no_profile"), flash[:alert]
+  end
+
   private
     def svg
       %(<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10">) +

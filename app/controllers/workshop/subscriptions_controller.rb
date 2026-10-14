@@ -19,6 +19,13 @@ module Workshop
     def create
       authorize @printer, :update?
 
+      # The subscription hangs on the shop's listing: without one there is
+      # nothing to attach it to, and saving it raised (a 422 page, found in
+      # the test run of 14/10/2026).
+      if @printer.new_record?
+        return redirect_to edit_workshop_profile_path, alert: t(".no_profile")
+      end
+
       result = Payments::StartSubscription.call(
         printer: @printer,
         plan: params[:plan],
