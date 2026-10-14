@@ -14,7 +14,13 @@ class DesignPolicy < ApplicationPolicy
 
   # The preview is the only rendering a client may ever download — and never
   # the print file itself.
-  def image? = owner?
+  #
+  # The others who work on the design see it too (reported on 14/10/2026: the
+  # workshop's print requests showed a broken image): the workshop it was sent
+  # to, the designers who may take or have taken its review, and the
+  # administration. Each through its own scope, so the rule is the one that
+  # already says which requests and reviews they can open.
+  def image? = owner? || user&.admin? || received_by_workshop? || reviewed_by_designer?
 
   # A ready design is immutable: a variant or a refinement makes a child.
   # Asked of one of several proposals, it keeps that one (see the controller):
@@ -43,4 +49,14 @@ class DesignPolicy < ApplicationPolicy
 
   private
     def owner? = user.present? && record.user_id == user.id
+
+    def received_by_workshop?
+      user&.printer? &&
+        PrintRequestPolicy::Scope.new(user, PrintRequest).resolve.where(design_id: record.id).exists?
+    end
+
+    def reviewed_by_designer?
+      user&.designer? &&
+        ReviewPolicy::Scope.new(user, Review).resolve.where(design_id: record.id).exists?
+    end
 end

@@ -220,7 +220,7 @@
     <div class="flex flex-wrap gap-3 border-t border-line p-4">
       <%# The print file never leaves for the client: this is a watermarked
           rendering of it. %>
-      <%= link_to t("client.designs.design.download"), design_image_path(design),
+      <%= link_to t("client.designs.design.download"), design_image_path(design, telecharger: 1),
             class: "btn btn-secondary text-sm" %>
 
       <% if design.refinements_left.to_i.positive? %>

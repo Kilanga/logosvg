@@ -852,6 +852,9 @@ fr:
           other: "Une demande pour %{count} exemplaires. Tout ce qu'il faut pour chiffrer est ci-dessous."
         confirm: "Confirmer la réception"
         sheet_title: "Fiche technique"
+        contact_title: "Pour joindre le client"
+        contact_email: "Email"
+        contact_phone: "Téléphone"
         message_title: "Message du client"
         files_title: "Pièces jointes"
         files_body: >-

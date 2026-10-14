@@ -316,12 +316,39 @@ class DesignsTest < ActionDispatch::IntegrationTest
     design = attached_design
     sign_in_as users(:client)
 
-    get design_image_path(design)
+    get design_image_path(design, telecharger: 1)
 
     assert_response :success
     assert_equal "image/png", response.media_type
     assert_match(/attachment/, response.headers["Content-Disposition"])
     assert_equal "\x89PNG".b, response.body.byteslice(0, 4)
+  end
+
+  # Reported on 14/10/2026: opening the address downloaded the file.
+  test "the preview opens in the browser unless the download is asked for" do
+    design = attached_design
+    sign_in_as users(:client)
+
+    get design_image_path(design)
+
+    assert_response :success
+    assert_match(/\Ainline/, response.headers["Content-Disposition"])
+  end
+
+  # Reported on 14/10/2026: the workshop's print requests showed a broken image.
+  test "the workshop a design was sent to sees its preview, another workshop does not" do
+    design = attached_design
+    assert PrintRequest.exists?(design: design, printer: printers(:rennes))
+
+    sign_in_as users(:printer)
+    get design_image_path(design)
+    assert_response :success
+    assert_equal "image/png", response.media_type
+
+    sign_out
+    sign_in_as users(:printer_draft)
+    get design_image_path(design)
+    assert_not response.successful?
   end
 
   test "a design with no file yet has nothing to download" do
@@ -362,7 +389,7 @@ class DesignsTest < ActionDispatch::IntegrationTest
 
     get design_original_image_path(design)
 
-    assert_response :not_found
+    assert_not response.successful?
   end
 
   test "the garment rendering is a transparent, watermarked png for the owner only" do
@@ -394,7 +421,7 @@ class DesignsTest < ActionDispatch::IntegrationTest
 
     get design_path(design)
 
-    assert_select "a[href=?]", design_image_path(design)
+    assert_select "a[href=?]", design_image_path(design, telecharger: 1)
     assert_select "a[href*=?]", "/rails/active_storage", count: 0
     # The silhouette shows the transparent rendering — still a watermarked
     # preview, never the stored file.

@@ -4,7 +4,7 @@ module Client
   # The technique is the first field, because it shapes the prompt and not only
   # the output file — see docs/SPEC.md, "Techniques d'impression".
   class DesignsController < BaseController
-    before_action :set_design, only: %i[ show image original_image garment_image reference_image variants refine choose
+    before_action :set_design, only: %i[ show garment_image reference_image variants refine choose
                                              approve_print destroy ]
     # A client creates through their workshop, and only once it has them —
     # see docs/SPEC.md, "Rattachement d'un client à un atelier".
@@ -119,28 +119,6 @@ module Client
 
     # The only rendering a client ever receives: a watermarked raster of the
     # print file, never the print file itself.
-    def image
-      authorize @design
-
-      preview = DesignPreview.call(@design)
-      return head :not_found if preview.nil?
-
-      send_data preview, type: "image/png", disposition: "attachment",
-                filename: "#{@design.token}.png"
-    end
-
-    # For comparison only — the "rendu final / image d'origine" selector. Also
-    # watermarked, and never the deciding rendering: see DesignPreview.
-    def original_image
-      authorize @design, :image?
-
-      preview = DesignPreview.call(@design, variant: :source_png)
-      return head :not_found if preview.nil?
-
-      send_data preview, type: "image/png", disposition: "attachment",
-                filename: "#{@design.token}-original.png"
-    end
-
     # The print file kept transparent, for the garment silhouette only: on a
     # dark fabric the unprinted areas must show the fabric, not a white square.
     # Watermarked like every other rendering, and shown inline, not downloaded.

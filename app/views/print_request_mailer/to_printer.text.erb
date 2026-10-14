@@ -10,6 +10,17 @@
 -- <%= t("mailers.print_request.to_printer.sheet_title") %> --
 
 <%= render "sheet", sheet: @sheet %>
+-- <%= t("mailers.print_request.to_printer.contact_title") %> --
+
+<%= @print_request.contact_name %>
+<%= t("mailers.print_request.to_printer.contact_email") %> : <%= @print_request.contact_email %>
+<% if @print_request.contact_phone.present? -%>
+<%= t("mailers.print_request.to_printer.contact_phone") %> : <%= @print_request.contact_phone %>
+<% end -%>
+<% if @print_request.contact_city.present? -%>
+<%= @print_request.contact_city %>
+<% end -%>
+
 <% if @print_request.message.present? -%>
 
 -- <%= t("mailers.print_request.to_printer.message_title") %> --

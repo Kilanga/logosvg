@@ -39,6 +39,11 @@
                 <%= t(".quantity", count: print_request.total_qty) %> ·
                 <%= print_request.contact_name %>
               </p>
+              <%# Who to call for the quote, without opening the request
+                  (asked on 14/10/2026). Text, not links: the whole row is one. %>
+              <p class="mt-0.5 break-all text-sm text-muted">
+                <%= [ print_request.contact_email, print_request.contact_phone ].compact_blank.join(" · ") %>
+              </p>
             </div>
 
             <div class="flex flex-none flex-col items-end gap-1.5">
