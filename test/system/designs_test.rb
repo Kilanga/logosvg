@@ -53,8 +53,10 @@ class DesignsTest < ApplicationSystemTestCase
     within("#design_#{design.token}") { click_on I18n.t("client.designs.proposal.choose") }
     assert_text displayed("client.designs.show.selected", number: 1)
     click_on I18n.t("client.designs.show.send_to_workshop")
-    assert_current_path new_design_print_request_path(design)
-    visit design_path(design)
+    # The design's own page, its detailed preview first (reported on
+    # 14/10/2026), and the send links there.
+    assert_text displayed("client.designs.choose.check_then_send")
+    assert_current_path design_path(design)
 
     # Vector output is counted in screens, and each ink is one.
     assert_text displayed("client.designs.design.screens", count: 2)

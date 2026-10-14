@@ -1376,6 +1376,13 @@ fr:
         empty: "Écrivez un message avant de l'envoyer."
 
     designs:
+      conversation:
+        label: "Vos demandes de retouche"
+        first: "Votre idée"
+        you: "Votre demande"
+        variants: "D'autres versions, s'il vous plaît."
+        version: "Version %{number} — la revoir"
+        current: "Version %{number}, ci-dessous"
       index:
         title: "Mes designs"
         heading: "Mes designs"
@@ -1477,6 +1484,7 @@ fr:
           sont écartées.
       choose:
         chosen: "Proposition retenue. Vous pouvez la retoucher ou l'envoyer à un atelier."
+        check_then_send: "Proposition retenue. Vérifiez-la sur le textile et dans ses détails, puis choisissez l'atelier à qui l'envoyer."
       proposal:
         label: "Proposition"
         number: "N° %{number}"

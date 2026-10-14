@@ -84,6 +84,7 @@ module Client
       authorize @design
       @proposals = proposals_on_offer
       @compatible_printers = compatible_printers
+      @conversation = @design.parent_id ? @design.conversation : []
     end
 
     # The client keeps this proposal; the others of its click are set aside.
@@ -92,7 +93,11 @@ module Client
 
       ChooseProposal.call(@design)
       case params[:suite]
-      when "atelier" then redirect_to new_design_print_request_path(@design)
+      # The design's own page first, not the form (reported on 14/10/2026):
+      # it is there that the client sees the garment, the dark and light
+      # fabric, the final rendering beside the original, the inks — what they
+      # are about to send.
+      when "atelier" then redirect_to design_path(@design, anchor: "envoyer"), notice: t(".check_then_send")
       when "graphiste" then redirect_to new_design_review_path(@design)
       else redirect_to design_path(@design), notice: t(".chosen")
       end

@@ -331,6 +331,30 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_no_match "Le texte d'un autre client", response.body
   end
 
+  # Reported on 14/10/2026: the client's retouch request did not appear as a
+  # conversation, as docs/SPEC.md « Retouche » asks.
+  test "a retouched design shows what was asked, step by step" do
+    root = designs(:fox_screen)
+    child = Design.create!(root.attributes.except("id", "token", "created_at", "updated_at", "batch_token", "chosen_at")
+                               .merge("parent_id" => root.id, "root_id" => root.id,
+                                      "instruction" => "ajoute des lunettes de soleil"))
+    sign_in_as users(:client)
+
+    get design_path(child)
+
+    assert_select "#conversation", text: /#{Regexp.escape(root.prompt)}/
+    assert_select "#conversation", text: /ajoute des lunettes de soleil/
+    assert_select "#conversation a[href=?]", design_path(root)
+  end
+
+  test "a first design has no conversation to show" do
+    sign_in_as users(:client)
+
+    get design_path(designs(:fox_screen))
+
+    assert_select "#conversation", count: 0
+  end
+
   # --- Files ---------------------------------------------------------------
 
   # The decision the whole preview service exists for: the client downloads the
@@ -627,7 +651,9 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert proposals.map(&:reload).all? { |proposal| proposal.active? && proposal.awaiting_choice? }
   end
 
-  test "a proposal reaches a workshop only once kept, and keeping it can lead straight there" do
+  # Kept for a workshop, it opens on its own page first (reported on
+  # 14/10/2026): the detailed preview comes before the form, not after.
+  test "a proposal reaches a workshop only once kept, and keeping it shows it before sending" do
     sign_in_as users(:client)
     proposal = ready_proposals.first
 
@@ -636,7 +662,11 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_not_equal new_design_print_request_path(proposal), URI(response.location).path
 
     post design_choice_path(proposal), params: { suite: "atelier" }
-    assert_redirected_to new_design_print_request_path(proposal)
+    assert_redirected_to design_path(proposal, anchor: "envoyer")
+    assert_equal I18n.t("client.designs.choose.check_then_send"), flash[:notice]
+
+    follow_redirect!
+    assert_select "#envoyer"
   end
 
   test "a design already kept cannot be chosen again" do
