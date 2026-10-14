@@ -1598,6 +1598,10 @@ fr:
           ne montre personne d'identifiable sans son accord.
         ai_declared: "Ce visuel a été créé avec une IA (il sera signalé comme tel, comme la loi le demande)."
         remove_background: "Retirer le fond blanc (le textile apparaîtra à la place)"
+        remove_background_hint: >-
+          Seul le blanc est retiré. Un fond gris clair, crème ou légèrement
+          teinté reste dans l'image et sera imprimé comme une couleur : détourez
+          votre image sur fond blanc (ou transparent) avant de la déposer.
         name: "Un nom pour le retrouver (facultatif)"
         name_placeholder: "Logo du club, affiche de la fête…"
         technique_hint: >-
@@ -1719,6 +1723,7 @@ fr:
         this_month: "Ce mois-ci"
         to_confirm: "À confirmer"
         garments: "Pièces"
+        generations: "Générations"
         no_request: "Aucune demande reçue pour l'instant."
         your_link: "Votre lien client"
         share_link: "Partager mon lien"
