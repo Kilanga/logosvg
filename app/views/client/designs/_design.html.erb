@@ -19,7 +19,7 @@
       <p class="label-rule text-warning"><%= t("client.designs.design.failed") %></p>
       <p class="max-w-sm text-warning"><%= design.error_message %></p>
       <%# A failed generation consumed no allowance: trying again is free. %>
-      <%= link_to t("client.designs.design.try_again"), new_design_path, class: "btn btn-primary mt-2" %>
+      <%= link_to t("client.designs.design.try_again"), new_design_path(depuis: design.token), class: "btn btn-primary mt-2" %>
     </div>
 
   <% else %>

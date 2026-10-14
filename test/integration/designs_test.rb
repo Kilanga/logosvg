@@ -308,6 +308,29 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # Reported on 14/10/2026: « Réessayer » brought back an empty form.
+  test "retrying a failed design brings back what was written" do
+    design = designs(:fox_screen)
+    design.update_columns(status: "failed", prompt: "Un renard qui fait du skate")
+    sign_in_as users(:client)
+
+    get new_design_path(depuis: design.token)
+
+    assert_response :success
+    assert_select "textarea[name=?]", "design[prompt]", text: "Un renard qui fait du skate"
+  end
+
+  test "retrying only reads the client's own failed designs" do
+    other = designs(:other_client_design)
+    other.update_columns(status: "failed", prompt: "Le texte d'un autre client")
+    sign_in_as users(:client)
+
+    get new_design_path(depuis: other.token)
+
+    assert_response :success
+    assert_no_match "Le texte d'un autre client", response.body
+  end
+
   # --- Files ---------------------------------------------------------------
 
   # The decision the whole preview service exists for: the client downloads the

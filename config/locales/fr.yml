@@ -1833,7 +1833,7 @@ fr:
           none: "Aucune recommandation"
           submit: "Enregistrer"
           directory: "Voir les profils des graphistes"
-          no_designers: "Aucun graphiste n'est encore inscrit sur la plateforme."
+          no_designers: "Aucun graphiste n'est encore validé et disponible sur la plateforme. Dès qu'un profil est publié, vous pourrez le recommander ici."
       recommend:
         done: "%{name} est votre graphiste recommandé."
         cleared: "Vous ne recommandez plus de graphiste."

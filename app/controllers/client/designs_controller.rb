@@ -274,7 +274,21 @@ module Client
           technique: technique&.key,
           colors_requested: (technique&.default_colors if technique&.limited_colors?),
           print_width_cm: Rails.application.config.tshirt.generation[:default_print_width_cm]
-        }
+        }.merge(retried_attributes)
+      end
+
+      # « Réessayer » after a failed generation brings back what the client had
+      # written (reported on 14/10/2026: the description was lost). Only from
+      # one of their own failed designs, and only what the form asks for; the
+      # anti-robot check is asked again, as for any new request.
+      def retried_attributes
+        return {} if params[:depuis].blank?
+
+        failed = policy_scope(Design).find_by(token: params[:depuis])
+        return {} unless failed&.failed?
+
+        failed.slice(:prompt, :style, :technique, :colors_requested, :print_width_cm, :remove_background)
+              .compact.symbolize_keys
       end
 
       def design_params
