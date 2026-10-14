@@ -96,13 +96,27 @@ class DesignPreviewTest < ActiveSupport::TestCase
     image = Vips::Image.new_from_buffer(DesignPreview.call(@design, variant: :garment), "")
 
     assert image.has_alpha?
-    assert_equal 0, image.extract_band(3).getpoint(5, 5).first, "the empty corner should stay transparent"
+    alpha = image.extract_band(3)
+    assert_equal 0, alpha.getpoint(image.width - 5, 5).first, "the empty corner should stay transparent"
+  end
+
+  # Reported on 14/10/2026: a cut-out picture with wide empty borders looked a
+  # seventh of its printed width on the t-shirt. The garment rendering is
+  # cropped to what is printed.
+  test "the garment variant loses its empty margins" do
+    attach(svg_with_room, "design.svg", "image/svg+xml")
+
+    image = Vips::Image.new_from_buffer(DesignPreview.call(@design, variant: :garment), "")
+    alpha = image.extract_band(3)
+
+    assert_operator alpha.getpoint(3, 3).first, :>, 0, "the motif should start at the very edge"
+    assert_equal DesignPreview::WIDTH_PX, image.width
   end
 
   private
     def svg_with_room
       %(<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10">) +
-        %(<path d="M4 4h2v2H4z" fill="#1F5F7A"/></svg>)
+        %(<path d="M2 2h2v2H2z M6 6h2v2H6z" fill="#1F5F7A"/></svg>)
     end
 
     def attach(bytes, name, type)

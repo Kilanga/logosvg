@@ -77,6 +77,7 @@ class DesignPreview
         next nil unless safe?(file)
 
         image = Vips::Image.thumbnail(file.path, WIDTH_PX)
+        image = trimmed(image) if transparent?
         # An SVG renders with transparency, and so does a cut-out PNG: the paper
         # behind it is what the workshop will not print, so it is shown white —
         # except on the garment, where the fabric itself shows through.
@@ -91,6 +92,19 @@ class DesignPreview
         png = stamped.write_to_buffer(".png")
         @design.ai_generated? ? AiProvenance.mark(png, content_type: "image/png") : png
       end
+    end
+
+    # On the garment the picture is drawn as wide as the print, so its empty
+    # margins must go first: a cut-out image with wide transparent borders
+    # showed a motif a fraction of its printed size (reported on 14/10/2026).
+    # Cropped to what is printed, then brought back to the preview's width.
+    def trimmed(image)
+      return image unless image.has_alpha?
+
+      left, top, width, height = image.extract_band(image.bands - 1).find_trim(threshold: 8, background: [ 0 ])
+      return image if width.zero? || height.zero? || (width == image.width && height == image.height)
+
+      image.crop(left, top, width, height).thumbnail_image(WIDTH_PX)
     end
 
     # Burnt into the pixels rather than laid over them in CSS: a watermark a
