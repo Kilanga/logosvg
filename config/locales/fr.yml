@@ -1760,10 +1760,16 @@ fr:
             - "Votre couleur de marque sur l'écran de création"
             - "Statistiques du lien sur 30 jours"
         subscribe: "M'abonner"
+        create_profile_first: "Créer ma fiche d'abord"
+        no_profile_body: >-
+          Commencez par créer votre fiche : l'abonnement s'y rattache, et c'est
+          elle qui apparaîtra dans l'annuaire.
         billing_title: "Facturation"
         billing_body: >-
           Les paiements sont traités par Stripe. Nous ne conservons aucune
           donnée bancaire. Vos factures sont disponibles dans le portail.
+      create:
+        no_profile: "Créez d'abord votre fiche : l'abonnement s'y rattache."
       portal:
         no_customer: "Aucun abonnement à gérer pour l'instant."
 
