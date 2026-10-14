@@ -1,10 +1,9 @@
 # Everything the platform holds about one account, as JSON.
 #
 # Not a database dump: an export a person can actually read, with the
-# platform's own vocabulary and nothing they did not put there. Files are
-# listed with the address they download from rather than bundled — the client
-# is never handed a print file, and a list of links is honest about what they
-# may and may not take.
+# platform's own vocabulary and nothing they did not put there. The files go
+# beside it in the archive AccountArchive builds; the addresses here stay, for
+# reading the JSON on its own.
 #
 # See docs/SPEC.md, "RGPD".
 class AccountExport

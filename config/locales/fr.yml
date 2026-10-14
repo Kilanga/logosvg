@@ -1191,9 +1191,10 @@ fr:
         other_sessions: "Vos autres sessions seront déconnectées."
         data: "Vos données"
         export_body: >-
-          Tout ce que la plateforme conserve sur vous, au format JSON :
-          coordonnées, designs, demandes d'impression, vérifications et
-          échanges.
+          Tout ce que la plateforme conserve sur vous, dans une archive ZIP :
+          vos coordonnées, designs, demandes d'impression, vérifications et
+          échanges au format JSON, avec l'aperçu de chacun de vos designs et
+          les images que vous avez déposées.
         export: "Exporter mes données"
         close: "Fermer mon compte"
         close_body: >-
@@ -2462,7 +2463,7 @@ fr:
       rights_of_person:
         title: "Vos droits"
         body:
-          - "Vous pouvez exporter l'ensemble de vos données au format JSON depuis votre espace, à tout moment et sans nous écrire."
+          - "Vous pouvez exporter l'ensemble de vos données depuis votre espace, à tout moment et sans nous écrire : une archive avec vos informations au format JSON et vos fichiers."
           - "Vous pouvez fermer votre compte depuis le même écran. Les droits d'accès, de rectification, d'effacement et d'opposition s'exercent auprès de l'adresse de contact."
 
     cookies:

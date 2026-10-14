@@ -84,6 +84,7 @@ Quatre rôles sur un seul modèle `User` : `client`, `printer`, `designer`,
 | QR code           | `rqrcode` (SVG et PNG)                                              |
 | Images            | `image_processing` + libvips (filigrane des PNG téléchargés)        |
 | SVG               | `nokogiri` (contrôle de sécurité + comptage des encres)             |
+| Export RGPD       | `rubyzip` — archive JSON + fichiers (accordé le 14/10/2026)        |
 | Anti-robot        | Cloudflare Turnstile + `TurnstileVerifier` maison                   |
 | Emails            | Action Mailer ; `letter_opener_web` en dev ; production à décider   |
 | Tests             | Minitest, fixtures, Capybara (système), `webmock`, faux client Stripe |

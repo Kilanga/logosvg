@@ -66,6 +66,10 @@ gem "geocoder"
 # Printer sharing link: QR code as SVG and PNG
 gem "rqrcode"
 
+# The data export: one archive with the JSON and the files the account may
+# take (decided on 14/10/2026 — docs/SPEC.md, « RGPD »: JSON and files).
+gem "rubyzip", "~> 3.0", require: "zip"
+
 # Subscriptions, review payments, Connect payouts and webhooks
 gem "stripe"
 

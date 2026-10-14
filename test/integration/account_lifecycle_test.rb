@@ -9,23 +9,40 @@ class AccountLifecycleTest < ActionDispatch::IntegrationTest
     get client_account_export_path
 
     assert_response :success
-    assert_equal "application/json", response.media_type
-    assert_match(/attachment/, response.headers["Content-Disposition"])
+    assert_equal "application/zip", response.media_type
+    assert_match(/attachment; filename="mes-donnees-.+\.zip"/, response.headers["Content-Disposition"])
 
-    data = JSON.parse(response.body)
+    data = JSON.parse(archive_entries[AccountArchive::JSON_NAME])
 
     assert_equal users(:client).email_address, data.dig("account", "email")
     assert data["designs"].any?
   end
 
-  test "an export carries nobody else's data" do
+  # Decided on 14/10/2026: the JSON and the files (docs/SPEC.md, « RGPD »).
+  test "the archive holds the preview of each finished design, never a print file" do
+    design = designs(:fox_screen)
+    design.print_file.attach(io: StringIO.new(svg), filename: "design.svg", content_type: "image/svg+xml")
     sign_in_as users(:client)
 
     get client_account_export_path
+    entries = archive_entries
 
-    references = JSON.parse(response.body)["designs"].map { |d| d["reference"] }
+    preview = entries["designs/#{design.token}-apercu.png"]
+    assert_equal "\x89PNG".b, preview.byteslice(0, 4)
+    assert(entries.keys.none? { |name| name.end_with?(".svg") }, "the print file never leaves for the client")
+  end
 
+  test "an export carries nobody else's data" do
+    designs(:other_client_design).print_file.attach(io: StringIO.new(svg), filename: "design.svg",
+                                                    content_type: "image/svg+xml")
+    sign_in_as users(:client)
+
+    get client_account_export_path
+    entries = archive_entries
+
+    references = JSON.parse(entries[AccountArchive::JSON_NAME])["designs"].map { |d| d["reference"] }
     assert_not_includes references, designs(:other_client_design).token
+    assert(entries.keys.none? { |name| name.include?(designs(:other_client_design).token) })
   end
 
   test "a visitor exports nothing" do
@@ -183,5 +200,14 @@ class AccountLifecycleTest < ActionDispatch::IntegrationTest
 
     def svg
       %(<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#000"/></svg>)
+    end
+
+
+    def archive_entries
+      entries = {}
+      Zip::File.open_buffer(StringIO.new(response.body)) do |zip|
+        zip.each { |entry| entries[entry.name] = entry.get_input_stream.read }
+      end
+      entries
     end
 end
