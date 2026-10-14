@@ -305,8 +305,10 @@ class DesignsTest < ApplicationSystemTestCase
     fill_in "instruction_proposals", with: "ajoute des lunettes"
     click_on I18n.t("client.designs.design.refine_submit")
 
-    # The new proposals' page — waited for, not assumed.
-    assert_no_current_path design_path(first_proposal)
+    # The new proposals' page — waited for, not assumed. The query is ignored:
+    # the page being left carries ?proposition=…, which a path-with-query
+    # comparison would take for having already left.
+    assert_no_current_path design_path(first_proposal), ignore_query: true
     assert_text displayed("client.designs.show.proposals_title")
     assert_equal 3, Design.where(parent: second).count
     assert_not second.reload.awaiting_choice?

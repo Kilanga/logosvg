@@ -101,6 +101,9 @@ class DesignPreview
     def trimmed(image)
       return image unless image.has_alpha?
 
+      # Read once into memory: a PNG thumbnail streams top to bottom, and
+      # finding the margins then cropping reads it twice, out of order.
+      image = image.copy_memory
       left, top, width, height = image.extract_band(image.bands - 1).find_trim(threshold: 8, background: [ 0 ])
       return image if width.zero? || height.zero? || (width == image.width && height == image.height)
 

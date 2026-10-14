@@ -113,6 +113,18 @@ class DesignPreviewTest < ActiveSupport::TestCase
     assert_equal DesignPreview::WIDTH_PX, image.width
   end
 
+  # A raster print file streams as it loads: trimming it must not read it
+  # out of order (found in the system tests on 14/10/2026).
+  test "a raster garment rendering is trimmed too" do
+    canvas = Vips::Image.black(100, 100, bands: 4)
+    motif = Vips::Image.black(20, 20).new_from_image([ 31, 95, 122, 255 ])
+    attach(canvas.insert(motif, 40, 40).copy(interpretation: :srgb).write_to_buffer(".png"), "print.png", "image/png")
+
+    image = Vips::Image.new_from_buffer(DesignPreview.call(@design, variant: :garment), "")
+
+    assert_operator image.extract_band(3).getpoint(5, 5).first, :>, 0
+  end
+
   private
     def svg_with_room
       %(<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10">) +
