@@ -1,0 +1,98 @@
+<% content_for :title, @design.prompt %>
+<% content_for :heading, @design.prompt %>
+<%# Until the file is ready, the page asks again on its own: a conversion takes
+    a few seconds to a minute, and the shop should not have to reload. %>
+<% content_for :head, tag.meta("http-equiv": "refresh", content: "4") if @design.in_progress? %>
+
+<div class="grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)] lg:items-start">
+  <div class="panel overflow-hidden">
+    <% if @design.in_progress? %>
+      <div class="screen-tint flex aspect-square w-full flex-col items-center justify-center gap-4 p-8 text-center">
+        <span class="flex gap-4 text-emulsion" aria-hidden="true">
+          <%= registration_mark %><%= registration_mark %><%= registration_mark %>
+        </span>
+        <p class="label-rule text-emulsion" role="status"><%= t(".working") %></p>
+        <p class="max-w-xs text-sm text-muted"><%= t(".working_hint") %></p>
+      </div>
+    <% elsif @design.failed? %>
+      <div class="flex aspect-square w-full flex-col items-center justify-center gap-4 bg-warning-bg p-8 text-center">
+        <p class="label-rule text-warning"><%= t(".failed") %></p>
+        <p class="max-w-sm text-warning"><%= @design.error_message %></p>
+        <%= link_to t(".try_again"), new_workshop_conversion_path, class: "btn btn-primary mt-2" %>
+      </div>
+    <% else %>
+      <div class="screen-tint p-6">
+        <%= image_tag design_image_path(@design), alt: @design.prompt, class: "mx-auto w-full max-w-xl" %>
+      </div>
+      <div class="border-t border-line p-4">
+        <% if @design.vector? %>
+          <p class="label-rule"><%= t("client.designs.design.screens", count: @design.inks_count.to_i) %></p>
+          <ul class="mt-3 flex flex-wrap gap-4">
+            <% @design.palette.each do |ink| %>
+              <li class="flex items-center gap-2">
+                <span class="size-6 rounded-xs border border-ink/15" style="background-color: <%= ink["hex"] %>"></span>
+                <span class="font-display text-sm font-semibold uppercase"><%= ink["hex"] %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="label-rule"><%= t("client.designs.design.print_file") %></p>
+          <dl class="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+            <% design_file_facts(@design).each do |label, value| %>
+              <div>
+                <dt class="label-rule"><%= label %></dt>
+                <dd class="mt-0.5 font-semibold"><%= value %></dd>
+              </div>
+            <% end %>
+          </dl>
+        <% end %>
+
+        <% if @design.warnings.any? %>
+          <ul class="mt-4 space-y-2 border-t border-line pt-4">
+            <% @design.warnings.each do |warning| %>
+              <li class="flex gap-3 border-l-2 border-warning bg-warning-bg px-3 py-2 text-sm text-warning">
+                <%= registration_mark css_class: "mt-0.5 flex-none" %><%= warning %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <aside class="space-y-6">
+    <div class="panel p-5">
+      <p class="label-rule"><%= t(".file") %></p>
+      <dl class="mt-3 space-y-2 text-sm">
+        <div class="flex justify-between gap-4 border-b border-line pb-2">
+          <dt class="text-muted"><%= t(".technique") %></dt>
+          <dd class="text-right font-medium"><%= workshop_technique_label(@design.catalogue) %></dd>
+        </div>
+        <div class="flex justify-between gap-4">
+          <dt class="text-muted"><%= t(".status") %></dt>
+          <dd class="text-right"><%= design_status_pill(@design) %></dd>
+        </div>
+      </dl>
+
+      <% if policy(@design).download_print_file? %>
+        <%= link_to t(".download", file_format: @design.print_file.blob.filename.extension.upcase),
+              workshop_conversion_file_path(@design), class: "btn btn-primary mt-5 w-full" %>
+        <p class="mt-2 text-sm text-muted"><%= t(".download_hint") %></p>
+      <% end %>
+    </div>
+
+    <% if @design.reference_image.attached? %>
+      <div class="panel p-5">
+        <p class="label-rule"><%= t(".original") %></p>
+        <%= image_tag workshop_conversion_original_path(@design), alt: "",
+              class: "screen-tint mt-3 w-full rounded-xs border border-line object-contain" %>
+      </div>
+    <% end %>
+
+    <div class="flex flex-wrap gap-3">
+      <%= link_to t(".another"), new_workshop_conversion_path, class: "btn btn-secondary" %>
+      <%= button_to t(".delete"), workshop_conversion_path(@design), method: :delete,
+            class: "btn btn-secondary", form: { data: { turbo_confirm: t(".delete_confirm") } } %>
+    </div>
+  </aside>
+</div>

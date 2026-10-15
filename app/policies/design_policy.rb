@@ -41,6 +41,15 @@ class DesignPolicy < ApplicationPolicy
   # Keeping one of the proposals of a click: a ready one, still on offer.
   def choose? = owner? && record.ready? && record.awaiting_choice?
 
+  # The workshop's converter (asked for on 15/10/2026): a shop puts one of its
+  # own pictures in its machine's format. Its own designs, nobody else's.
+  def conversions? = user&.printer?
+  def convert? = conversions?
+
+  # The print file itself — which no client ever receives — goes to the
+  # workshop that converted it: it is that shop's own picture.
+  def download_print_file? = owner? && user.printer? && record.upload? && record.ready? && record.print_file.attached?
+
   def destroy? = owner?
 
   class Scope < ApplicationPolicy::Scope

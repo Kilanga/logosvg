@@ -177,6 +177,7 @@ fr:
     dashboard: "Tableau de bord"
     my_listing: "Ma fiche"
     my_clients: "Mes clients"
+    converter: "Convertir une image"
     help: "Aide"
     print_requests: "Demandes"
     my_designs: "Mes designs"
@@ -675,6 +676,16 @@ fr:
       completed: "Votre commande est terminée."
       canceled: "Vous avez annulé cette demande. L'atelier ne la traitera pas."
       expired: "L'atelier n'a pas répondu dans les délais. Votre design est intact : choisissez un autre atelier."
+    # Read by the workshop, on the confirmation page its email leads to
+    # (reported on 14/10/2026: it said « Vous avez annulé » to the workshop).
+    workshop_status_body:
+      sent: "Cette demande attend votre confirmation de réception."
+      acknowledged: "Vous avez déjà confirmé la réception de cette demande."
+      quoted: "Vous avez envoyé votre devis pour cette demande."
+      in_production: "Cette commande est en cours d'impression chez vous."
+      completed: "Cette commande est terminée."
+      canceled: "Le client a annulé cette demande : il n'y a plus rien à confirmer ni à préparer."
+      expired: "Cette demande a expiré faute de réponse dans les délais : le client a été invité à choisir un autre atelier."
 
   sessions:
     new:
@@ -884,6 +895,14 @@ fr:
           other: "%{client} attend une réponse pour %{count} exemplaires. Sans confirmation sous %{days} jours, la demande expire et le client est invité à choisir un autre atelier."
         confirm: "Confirmer la réception"
         files_again: "Les fichiers sont joints à nouveau, au cas où le premier email se serait perdu."
+      canceled_to_printer:
+        subject: "Demande annulée par le client — %{reference}"
+        eyebrow: "Demande %{reference}"
+        heading: "%{client} a annulé sa demande"
+        body: >-
+          %{client} a annulé cette demande d'impression avant votre devis. Rien
+          à préparer : vous pouvez classer les fichiers reçus avec la demande.
+        reply_to: "Une question ? Répondez à cet email pour écrire au client (%{email})."
       expired:
         subject: "Pas de réponse de %{printer}"
         heading: "%{printer} n'a pas répondu"
@@ -1702,6 +1721,67 @@ fr:
         canceled: "Votre demande a été annulée."
 
   workshop:
+    conversions:
+      default_title: "Image convertie"
+      index:
+        title: "Convertir une image"
+        heading: "Convertir une image"
+        lead: >-
+          Une image que vous avez déjà — le logo envoyé par un client, un scan,
+          un visuel maison — mise au format de votre machine : vectorisée en
+          aplats pour la sérigraphie, le flex ou la broderie, PNG détouré à
+          300 dpi pour le DTF, le DTG ou la sublimation. Vous téléchargez le
+          fichier d'impression lui-même.
+        new: "Déposer une image"
+        download: "Télécharger le %{file_format}"
+        retention: >-
+          Les conversions sont effacées au bout de %{days} jours : téléchargez
+          le fichier dont vous avez besoin.
+        empty: "Aucune conversion pour l'instant"
+        empty_body: >-
+          Déposez un JPEG ou un PNG : il est préparé en quelques secondes pour
+          l'une de vos techniques, sans compter dans vos générations du mois.
+      new:
+        title: "Convertir une image"
+        heading: "Convertir une image"
+        intro: >-
+          Rien n'est redessiné : l'image est préparée au format de la technique
+          choisie, comme celles que vos clients déposent. Gratuit, et sans
+          compter dans vos générations du mois.
+        no_techniques: >-
+          Votre fiche ne déclare encore aucune technique : c'est elle qui décide
+          du format préparé.
+        edit_listing: "Compléter ma fiche"
+        image_legend: "L'image"
+        image: "Image à convertir"
+        image_hint: "PNG, JPEG ou WebP, 10 Mo au plus. Plus elle est grande, plus le fichier sera net."
+        rights: >-
+          J'ai le droit d'imprimer cette image : elle est à moi ou à mon client,
+          qui m'a autorisé à la reproduire.
+        ai_declared: "Cette image a été créée avec une IA."
+        name: "Un nom pour la retrouver (facultatif)"
+        name_placeholder: "Logo du club de foot, commande Martin…"
+        submit: "Lancer la conversion"
+        free: "Gratuit : la conversion ne compte pas dans vos générations du mois."
+      create:
+        missing_image: "Ajoutez l'image à convertir."
+        unknown_technique: "Choisissez l'une des techniques de votre fiche."
+      show:
+        working: "Conversion en cours"
+        working_hint: "Quelques secondes à une minute. La page se met à jour seule."
+        failed: "La conversion a échoué"
+        try_again: "Réessayer"
+        file: "Fichier d'impression"
+        technique: "Technique"
+        status: "État"
+        download: "Télécharger le %{file_format}"
+        download_hint: "Le fichier tel que votre machine l'attend, sans filigrane."
+        original: "Image de départ"
+        another: "Convertir une autre image"
+        delete: "Supprimer"
+        delete_confirm: "Supprimer cette conversion ?"
+      destroy:
+        deleted: "Conversion supprimée."
     dashboards:
       show:
         pending_clients:
@@ -2453,7 +2533,7 @@ fr:
         title: "Pourquoi"
         body:
           - "Faire fonctionner le service : générer un visuel, le transmettre à l'atelier que vous choisissez, suivre votre demande."
-          - "Aucun traceur publicitaire n'est déposé. Les polices sont hébergées par nos soins : votre navigateur ne contacte aucun service tiers pour les charger."
+          - "Aucun traceur publicitaire n'est déposé sur le site. Les polices sont hébergées par nos soins : votre navigateur ne contacte aucun service tiers pour les charger. Seuls les emails comportent une mesure d'ouverture et de clic, décrite plus bas."
           - "Un seul cookie facultatif existe : il retient l'atelier qui vous a envoyé sur le site, et seulement si vous l'acceptez. Le détail est sur la page Cookies."
       recipients:
         title: "Qui reçoit quoi"
@@ -2461,6 +2541,7 @@ fr:
           - "L'atelier que vous choisissez reçoit votre demande, vos coordonnées et le fichier d'impression — uniquement après que vous ayez explicitement accepté cette transmission."
           - "Le moteur de génération reçoit votre description et un identifiant pseudonymisé calculé à partir de votre compte. Il n'apprend jamais qui vous êtes. Il s'exécute en France, sur une machine dédiée à la génération d'images, distincte du serveur qui héberge le site."
           - "Stripe traite les paiements et reçoit les informations nécessaires à ce titre."
+          - "Les emails du service (confirmation d'adresse, demandes d'impression, suivi) sont envoyés par Brevo (Sendinblue SAS, Paris), qui reçoit pour cela votre adresse email et le contenu du message. Brevo mesure l'ouverture de chaque email, par une image invisible, et les clics sur ses liens, qui passent par une adresse de redirection (r.contact.pretatirer.fr) avant d'arriver sur le site. Ces mesures servent à vérifier que les emails arrivent bien ; elles ne servent à aucune publicité et ne sont pas croisées avec d'autres données. Pour les éviter, n'affichez pas les images de l'email et recopiez l'adresse du site plutôt que de cliquer."
       retention:
         title: "Combien de temps"
         body:

@@ -77,23 +77,36 @@ class DesignsTest < ActionDispatch::IntegrationTest
 
   # Asked of the client now, and checked on the server: the drawing and the
   # presets are a convenience, not the rule.
-  test "a design submitted without a size comes back with the form" do
+  test "a raster design submitted without a size comes back with the form" do
     sign_in_as users(:client)
 
     assert_no_enqueued_jobs(only: GenerateDesignJob) do
-      post designs_path, params: { design: valid_design.merge(print_width_cm: "") }
+      post designs_path, params: { design: valid_design.merge(technique: "dtf", colors_requested: nil, print_width_cm: "") }
     end
 
     assert_response :unprocessable_entity
   end
 
-  test "the size is asked for a vector technique as much as for a raster one" do
+  # Decided on 14/10/2026, as docs/SPEC.md says: asked of the raster
+  # techniques only. The question is on the page, hidden while a vector
+  # technique is selected.
+  test "the size question is hidden for a vector technique" do
     sign_in_as users(:client)
 
     get new_design_path
 
-    assert_select "input[name=?]", "design[print_width_cm]"
-    assert_select "legend", text: /#{Regexp.escape(I18n.t('client.designs.new.size_legend'))}/i
+    assert_select "fieldset[data-design-form-target=size][hidden]" do
+      assert_select "input[name=?]", "design[print_width_cm]"
+    end
+  end
+
+  test "a vector design keeps the default size whatever is sent" do
+    sign_in_as users(:client)
+
+    post designs_path, params: { design: valid_design.merge(print_width_cm: "") }
+
+    assert_equal Rails.application.config.tshirt.generation[:default_print_width_cm],
+                 Design.order(:created_at).last.print_width_cm
   end
 
   test "the daily allowance stops the sixth attempt of the day" do
@@ -181,7 +194,7 @@ class DesignsTest < ActionDispatch::IntegrationTest
     design = Design.order(:created_at).last
 
     assert_equal 4, design.colors_requested, "Rennes prints four screens"
-    assert_equal 30, design.print_width_cm
+    assert_equal 25, design.print_width_cm, "a vector design keeps the default, within the press"
     assert_equal printers(:rennes).id, design.printer_id
   end
 

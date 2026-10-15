@@ -153,6 +153,28 @@ class PrintersTest < ApplicationSystemTestCase
     end
   end
 
+  # Asked for on 15/10/2026: the workshop's own converter.
+  test "a workshop sends one of its pictures to the converter" do
+    picture = Tempfile.new([ "logo", ".png" ])
+    picture.binmode
+    picture.write(Vips::Image.black(120, 80).add(200).cast(:uchar).bandjoin([ 30, 40 ])
+                             .copy(interpretation: :srgb).write_to_buffer(".png"))
+    picture.flush
+
+    sign_in users(:printer)
+    within("nav") { click_on I18n.t("nav.converter") }
+    click_on I18n.t("workshop.conversions.index.new")
+
+    attach_file I18n.t("workshop.conversions.new.image"), picture.path
+    check I18n.t("workshop.conversions.new.rights")
+    fill_in I18n.t("workshop.conversions.new.name"), with: "Logo du club"
+    click_on I18n.t("workshop.conversions.new.submit")
+
+    assert_text displayed("workshop.conversions.show.working")
+  ensure
+    picture&.close!
+  end
+
   private
     def sign_in(user)
       visit new_session_path

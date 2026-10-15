@@ -53,6 +53,7 @@ module Client
 
       @print_request.cancel!
       @print_request.save!
+      PrintRequestMailer.canceled_to_printer(@print_request).deliver_later
 
       redirect_to print_request_path(@print_request), notice: t(".canceled")
     end

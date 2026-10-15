@@ -34,7 +34,13 @@ class BoundedGenerationRequest
       [ ceilings.min, 1 ].max
     end
 
+    # Asked only of the raster techniques, where it fixes the file's
+    # definition (decided on 14/10/2026, as docs/SPEC.md says): a vector file
+    # scales to any size, so a screen-printed design keeps the default and the
+    # client is not asked a question that changes nothing.
     def bounded_width(entry)
+      return [ default_width, shop_technique(entry)&.effective_max_width_cm ].compact.min unless entry.raster?
+
       asked = @attributes[:print_width_cm].presence&.to_i
       return asked if asked.nil?
 
@@ -42,4 +48,6 @@ class BoundedGenerationRequest
     end
 
     def shop_technique(entry) = @printer&.technique_for(entry.key)
+
+    def default_width = Rails.application.config.tshirt.generation[:default_print_width_cm]
 end

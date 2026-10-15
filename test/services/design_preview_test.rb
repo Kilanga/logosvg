@@ -125,6 +125,19 @@ class DesignPreviewTest < ActiveSupport::TestCase
     assert_operator image.extract_band(3).getpoint(5, 5).first, :>, 0
   end
 
+  # B1, decided on 15/10/2026: the mark covers the whole picture, not only a
+  # corner a crop removes.
+  test "the watermark is repeated over the whole picture" do
+    attach(%(<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#fff"/></svg>),
+           "blank.svg", "image/svg+xml")
+
+    image = Vips::Image.new_from_buffer(DesignPreview.call(@design), "")
+    top_half = image.crop(0, 0, image.width, image.height / 2)
+
+    assert_operator top_half.min, :<, 250, "the top half, far from the band, should carry the mark too"
+    assert_operator top_half.avg, :>, 220, "light enough to judge the design through"
+  end
+
   private
     def svg_with_room
       %(<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 10 10">) +

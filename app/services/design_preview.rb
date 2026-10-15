@@ -83,8 +83,12 @@ class DesignPreview
         # except on the garment, where the fabric itself shows through.
         image = image.flatten(background: [ 255, 255, 255 ]) if image.has_alpha? && !transparent?
 
+        image = image.copy_memory
+        # Repeated across the whole picture, under the band (B1, decided on
+        # 15/10/2026): a mention in one corner was gone with one crop.
+        stamped = image.composite2(tiled_mark(image), :over)
         band = watermark(image.width)
-        stamped = image.composite2(band, :over, x: 0, y: image.height - band.height)
+        stamped = stamped.composite2(band, :over, x: 0, y: image.height - band.height)
 
         # Flattened again on the way out: compositing a semi-transparent band
         # puts an alpha channel back on, and the preview has no use for one.
@@ -109,6 +113,40 @@ class DesignPreview
 
       image.crop(left, top, width, height).thumbnail_image(WIDTH_PX)
     end
+
+    # The shop's name and the platform's address, diagonally, over the whole
+    # picture: light enough to judge the design through, dense enough that no
+    # crop leaves a clean piece worth printing. On the garment rendering the
+    # mark is kept to what is printed — the fabric around it stays clean, as it
+    # will be.
+    TILE_OPACITY = 0.38
+
+    # Light letters with a dark edge: legible on a pale design as on a dark
+    # one, where a single grey disappeared into either.
+    def tiled_mark(image)
+      text = Vips::Image.text(ERB::Util.html_escape("#{credit} · #{platform_site}"), dpi: 120)
+      cell = text.embed(20, 20, text.width + 70, text.height + 70).similarity(angle: -30)
+      cols = (image.width / cell.width.to_f).ceil + 1
+      rows = (image.height / cell.height.to_f).ceil + 1
+      tiles = cell.replicate(cols + 1, rows + 1)
+      # A second grid, offset by half a cell, fills the gaps between the rows.
+      offset = tiles.embed(cell.width / 2, cell.height / 2, tiles.width, tiles.height)
+      mask = (tiles > offset).ifthenelse(tiles, offset).crop(0, 0, image.width, image.height).cast(:uchar)
+      shifted = mask.embed(2, 2, image.width, image.height)
+      edge = (shifted > mask).ifthenelse(shifted, mask)
+
+      if image.has_alpha?
+        coverage = image.extract_band(image.bands - 1) / 255.0
+        mask = (mask * coverage).cast(:uchar)
+        edge = (edge * coverage).cast(:uchar)
+      end
+
+      dark = edge.new_from_image([ 29, 36, 51 ]).bandjoin((edge * TILE_OPACITY).cast(:uchar))
+      light = mask.new_from_image([ 255, 255, 255 ]).bandjoin((mask * TILE_OPACITY * 1.4).cast(:uchar))
+      dark.copy(interpretation: :srgb).composite2(light.copy(interpretation: :srgb), :over)
+    end
+
+    def platform_site = Rails.application.config.tshirt.platform_site
 
     # Burnt into the pixels rather than laid over them in CSS: a watermark a
     # browser draws is a watermark a screenshot removes. Two lines — the

@@ -1,0 +1,7 @@
+<%= t("mailers.print_request.canceled_to_printer.eyebrow", reference: @print_request.token.first(8).upcase) %>
+
+<%= t("mailers.print_request.canceled_to_printer.heading", client: @print_request.contact_name) %>
+
+<%= t("mailers.print_request.canceled_to_printer.body", client: @print_request.contact_name) %>
+
+<%= t("mailers.print_request.canceled_to_printer.reply_to", email: @print_request.contact_email) %>

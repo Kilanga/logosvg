@@ -19,6 +19,27 @@ class DesignPolicyTest < ActiveSupport::TestCase
     assert_not DesignPolicy.new(nil, Design.new).create?
   end
 
+  # Asked for on 15/10/2026: the workshop's converter.
+  test "only a workshop converts, and only its own conversion's print file is handed over" do
+    assert DesignPolicy.new(users(:printer), Design.new).convert?
+    assert_not DesignPolicy.new(users(:client), Design.new).convert?
+    assert_not DesignPolicy.new(users(:designer), Design.new).convert?
+    assert_not DesignPolicy.new(nil, Design.new).conversions?
+
+    own = Design.new(user: users(:printer), mode: "upload", status: "ready")
+    own.print_file.attach(io: StringIO.new("<svg/>"), filename: "d.svg", content_type: "image/svg+xml")
+    assert DesignPolicy.new(users(:printer), own).download_print_file?
+    assert_not DesignPolicy.new(users(:printer_lyon), own).download_print_file?
+
+    running = Design.new(user: users(:printer), mode: "upload", status: "generating")
+    assert_not DesignPolicy.new(users(:printer), running).download_print_file?
+
+    # A client's own upload stays a preview for its client.
+    client_upload = Design.new(user: users(:client), mode: "upload", status: "ready")
+    client_upload.print_file.attach(io: StringIO.new("<svg/>"), filename: "d.svg", content_type: "image/svg+xml")
+    assert_not DesignPolicy.new(users(:client), client_upload).download_print_file?
+  end
+
   # The preview is the one file a client may download; the print file is not.
   test "the preview follows ownership, not the state of the design" do
     assert DesignPolicy.new(users(:client), designs(:fox_screen)).image?

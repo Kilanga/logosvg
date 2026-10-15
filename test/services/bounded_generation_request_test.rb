@@ -43,17 +43,26 @@ class BoundedGenerationRequestTest < ActiveSupport::TestCase
   end
 
   test "a width beyond the shop's press comes back at the press's width" do
-    bounded = call(technique: "screen_printing", colors_requested: 2,
-                   print_width_cm: 50, printer: printers(:rennes))
+    bounded = call(technique: "dtf", print_width_cm: 50, printer: printers(:lyon))
 
-    assert_equal 30, bounded[:print_width_cm]
+    assert_equal 40, bounded[:print_width_cm]
   end
 
   test "a width nobody has a ceiling for is left alone" do
-    bounded = call(technique: "screen_printing", colors_requested: 2,
-                   print_width_cm: 18, printer: nil)
+    bounded = call(technique: "dtf", print_width_cm: 18, printer: nil)
 
     assert_equal 18, bounded[:print_width_cm]
+  end
+
+  # Decided on 14/10/2026: the size is a raster question. A vector design keeps
+  # the default, within the shop's press, whatever the form sent.
+  test "a vector technique keeps the default width, within the shop's press" do
+    default = Rails.application.config.tshirt.generation[:default_print_width_cm]
+
+    assert_equal default, call(technique: "screen_printing", colors_requested: 2,
+                               print_width_cm: 50, printer: nil)[:print_width_cm]
+    assert_equal [ default, 20 ].min, call(technique: "embroidery", colors_requested: 2,
+                                           print_width_cm: 50, printer: printers(:nantes))[:print_width_cm]
   end
 
   # A stale form, a renamed technique: nothing to bound against, and the model's

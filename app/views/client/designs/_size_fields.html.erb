@@ -1,8 +1,9 @@
-<%# The size is a question of its own, and asked for every technique: a
-    chest logo and a back print are not the same job, they do not produce
-    the same file, and they do not leave the same workshops able to print
-    it. %>
-<fieldset>
+<%# Asked only of the raster techniques, where it fixes the definition of the
+    file (decided on 14/10/2026, as docs/SPEC.md « Création » says). A vector
+    file scales to any size: for screen printing, flex and embroidery the
+    question is hidden, and the server keeps the default. %>
+<% family = PrintTechniques.find(@design.technique)&.family || "vector" %>
+<fieldset data-design-form-target="size" <%= "hidden" unless family == "raster" %>>
   <div class="flex items-baseline gap-4 border-b border-line pb-3">
     <span class="font-display text-xl font-bold text-emulsion"><%= number %></span>
     <legend class="font-display text-xl font-bold uppercase"><%= t("client.designs.new.size_legend") %></legend>
@@ -14,7 +15,7 @@
      data-design-form-target="sizeHint"
      data-vector="<%= t("client.designs.new.size_hint.vector") %>"
      data-raster="<%= t("client.designs.new.size_hint.raster") %>">
-    <%= t("client.designs.new.size_hint.#{PrintTechniques.find(@design.technique)&.family || 'vector'}") %>
+    <%= t("client.designs.new.size_hint.#{family}") %>
   </p>
 
   <div class="mt-6 grid gap-6 sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-start">
