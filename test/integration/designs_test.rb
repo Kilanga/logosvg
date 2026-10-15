@@ -627,6 +627,29 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_select "form[data-kind=choice] input[name=suite][value=atelier]"
   end
 
+  # Decided on 15/10/2026: put forward after the three reprises, but there
+  # from the first generation.
+  test "a designer is offered from the first proposals, before any reprise is spent" do
+    sign_in_as users(:client)
+    proposals = ready_proposals
+
+    get design_path(proposals.first)
+
+    assert_select "form[data-kind=choice] input[name=suite][value=graphiste]"
+  end
+
+  test "a ready design and « Mes designs » both offer a designer" do
+    design = designs(:fox_screen)
+    design.update_columns(refinements_left: 3)
+    sign_in_as users(:client)
+
+    get design_path(design)
+    assert_select "a[href=?]", new_design_review_path(design)
+
+    get client_designs_path
+    assert_select "a[href=?]", new_design_review_path(design)
+  end
+
   test "keeping a proposal sets the others aside" do
     sign_in_as users(:client)
     proposals = ready_proposals

@@ -70,12 +70,14 @@
                 class: "btn btn-secondary w-full text-sm",
                 data: { proposals_target: "submit" },
                 form: { data: { proposals_target: "form", kind: "variants" } } %>
-        <% else %>
-          <%= button_to t("client.designs.design.ask_designer"), design_choice_path(first),
-                params: { suite: "graphiste" }, class: "btn btn-primary w-full text-sm",
-                data: { proposals_target: "submit" },
-                form: { data: { proposals_target: "form", kind: "choice" } } %>
         <% end %>
+        <%# Offered from the first proposals (decided on 15/10/2026), and put
+            first once the reprises are spent. %>
+        <%= button_to t("client.designs.design.ask_designer"), design_choice_path(first),
+              params: { suite: "graphiste" },
+              class: "btn #{@design.refinements_remaining.positive? ? "btn-secondary" : "btn-primary"} w-full text-sm",
+              data: { proposals_target: "submit" },
+              form: { data: { proposals_target: "form", kind: "choice" } } %>
         <%= button_to t(".send_to_workshop"), design_choice_path(first),
               params: { suite: "atelier" }, class: "btn btn-secondary w-full text-sm",
               data: { proposals_target: "submit" },

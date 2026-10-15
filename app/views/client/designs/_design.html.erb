@@ -229,6 +229,11 @@
       <% if design.refinements_left.to_i.positive? %>
         <%= button_to t("client.designs.design.variants"), design_variants_path(design),
               class: "btn btn-secondary text-sm" %>
+        <%# A designer from the first generation, for a client who wants one
+            straight away (decided on 15/10/2026); put forward below once the
+            reprises are spent. %>
+        <%= link_to t("client.designs.design.ask_designer"), new_design_review_path(design),
+              class: "btn btn-secondary text-sm" %>
       <% end %>
     </div>
 

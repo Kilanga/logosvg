@@ -70,6 +70,9 @@
               <% if design.ready? && !design.awaiting_choice? %>
                 <%= link_to t(".send_to_workshop"), new_design_print_request_path(design),
                       class: "font-medium text-emulsion underline underline-offset-4" %>
+                <%# Decided on 15/10/2026: a designer, from « Mes designs » too. %>
+                <%= link_to t("client.designs.design.ask_designer"), new_design_review_path(design),
+                      class: "underline underline-offset-4 hover:text-emulsion" %>
               <% end %>
               <%= button_to t(".delete"), delete_design_path(design), method: :delete,
                     class: "ms-auto text-muted underline underline-offset-4 hover:text-warning",
