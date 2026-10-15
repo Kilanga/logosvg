@@ -53,6 +53,13 @@
                 placeholder: t(".prompt_placeholder"),
                 class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
           <p class="mt-1.5 text-sm text-muted"><%= t(".prompt_hint") %></p>
+          <%# A refusal said where it happened (reported on 15/10/2026: a
+              blocked term was refused with nothing on screen). %>
+          <% if @design.errors[:prompt].any? %>
+            <p class="mt-1.5 border-l-2 border-warning bg-warning-bg px-3 py-2 text-sm text-warning" role="alert">
+              <%= @design.errors.full_messages_for(:prompt).first %>
+            </p>
+          <% end %>
         </div>
 
         <%# Optional: the client's own sketch, old logo or photo to start from.

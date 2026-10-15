@@ -213,7 +213,29 @@ class DesignersTest < ActionDispatch::IntegrationTest
     patch admin_designer_path(designer_profiles(:nour)), params: { status: "active" }
 
     assert_predicate designer_profiles(:nour).reload, :pending_review?
-    assert_equal I18n.t("admin.designers.update.incomplete", name: "Nour Haddad"), flash[:alert]
+    # E1, reported on 15/10/2026: what is missing, not a list of everything.
+    assert_match "Nour Haddad", flash[:alert]
+    assert_match(/#{I18n.t("activerecord.attributes.designer_profile.bio")}/i, flash[:alert])
+    assert_no_match(/#{I18n.t("activerecord.attributes.designer_profile.city")}/i, flash[:alert])
+  end
+
+  test "a remote designer is published without a city" do
+    designer_profiles(:nour).update!(city: "", remote: true)
+    sign_in_as users(:admin)
+
+    patch admin_designer_path(designer_profiles(:nour)), params: { status: "active" }
+
+    assert_predicate designer_profiles(:nour).reload, :active?
+  end
+
+  test "a designer awaiting review is told what is still missing" do
+    profile = designer_profiles(:nour)
+    profile.update!(bio: "")
+    sign_in_as profile.user
+
+    get edit_designer_profile_path
+
+    assert_match I18n.t("designer.profiles.edit.missing_title"), CGI.unescapeHTML(response.body)
   end
 
   test "an administrator suspends a published profile" do

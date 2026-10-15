@@ -2302,6 +2302,7 @@ fr:
         display_name_hint: "Le nom sous lequel les clients vous verront."
         bio_placeholder: "Votre parcours, vos habitudes de travail, ce que vous aimez reprendre…"
         bio_hint: "Quarante caractères au moins. C'est le premier texte que lira un client."
+        missing_title: "Il manque encore à votre profil, pour qu'il soit publié :"
         city_hint: "Sert à vous situer sur la carte. Facultatif si vous travaillez uniquement à distance."
         what: "Ce que vous faites"
         portfolio_hint: "Quelques pièces suffisent. Elles s'affichent sur votre profil public."
@@ -2394,10 +2395,16 @@ fr:
         message_placeholder: "Ce que vous avez repris, ce qu'il reste à décider…"
         send_version: "Envoyer cette version"
         return_title: "Renvoyer la demande"
-        return_body: >-
-          À faire avant toute livraison, une seule fois, si l'option choisie ne
-          permet pas de travailler correctement. Votre lecture n'est pas
-          facturée.
+        return_body:
+          queued: >-
+            À faire avant toute livraison, une seule fois, si l'option choisie ne
+            permet pas de travailler correctement. Votre lecture n'est pas
+            facturée.
+          claimed: >-
+            À faire avant toute livraison, une seule fois, si l'option choisie ne
+            permet pas de travailler correctement. Vous avez pris la demande en
+            charge : si le client refuse votre proposition, la part garantie du
+            prix vous reste acquise.
         reason: "Motif"
         proposed_level: "Niveau proposé"
         proposed_custom_hint: >-
@@ -2833,6 +2840,10 @@ fr:
       techniques:
         one: "%{count} technique au catalogue"
         other: "%{count} techniques au catalogue"
+      catalogue_cold: >-
+        Le catalogue n'a pas pu être relu auprès du service de génération : le
+        site utilise la copie embarquée, juste mais peut-être ancienne. Il se
+        met à jour tout seul dès que le service répond.
       show:
         title: "État du service"
         heading: "État de la plateforme"
@@ -2924,7 +2935,7 @@ fr:
       update:
         active: "Le profil de %{name} est publié."
         suspended: "Le profil de %{name} est suspendu."
-        incomplete: "Le profil de %{name} est incomplet : présentation, ville et au moins un niveau sont nécessaires."
+        incomplete: "Le profil de %{name} ne peut pas encore être publié : %{missing}. Le graphiste le voit aussi sur sa page de profil."
 
     printers:
       index:

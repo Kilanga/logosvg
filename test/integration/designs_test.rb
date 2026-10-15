@@ -730,6 +730,21 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_equal 1, GenerationQuota.for(users(:client)).used
   end
 
+  # F1, reported on 15/10/2026: refused with nothing on screen, and never
+  # counted — the count was rolled back with the save.
+  test "a creation naming a blocked term says so, and the term is counted" do
+    sign_in_as users(:client)
+    BlockedTerm.create!(term: "pikachu")
+
+    assert_no_difference "Design.count" do
+      post designs_path, params: { design: valid_design.merge(prompt: "un pikachu qui fait du skate") }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "[role=alert]", text: /pikachu/i
+    assert_equal 1, BlockedTerm.find_by(term: "pikachu").hits_count
+  end
+
   test "a retouche naming a blocked term is refused before anything is spent" do
     sign_in_as users(:client)
     BlockedTerm.create!(term: "pikachu")

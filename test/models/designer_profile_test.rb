@@ -92,6 +92,17 @@ class DesignerProfileTest < ActiveSupport::TestCase
     assert profile.errors.include?(:review_levels)
   end
 
+  test "a designer working only at a distance needs no city" do
+    profile = designer_profiles(:ines)
+    profile.city = ""
+
+    profile.remote = false
+    assert_not_predicate profile, :ready_for_activation?
+
+    profile.remote = true
+    assert_predicate profile, :ready_for_activation?
+  end
+
   test "a level a designer did not accept is not one they offer" do
     assert designer_profiles(:tom).accepts?(review_levels(:check))
     assert_not designer_profiles(:tom).accepts?(review_levels(:custom))

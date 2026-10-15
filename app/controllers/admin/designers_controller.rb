@@ -25,11 +25,15 @@ module Admin
       # cannot publish a profile with no bio and no levels, however they got
       # to this button.
       def activate
-        if @designer.ready_for_activation? && @designer.update(status: "active")
+        problems = @designer.activation_problems
+        if problems.empty? && @designer.update(status: "active")
           DesignerMailer.profile_approved(@designer).deliver_later
           redirect_to admin_designers_path, notice: t(".active", name: @designer.display_name)
         else
-          redirect_to admin_designers_path, alert: t(".incomplete", name: @designer.display_name)
+          # What exactly is missing, rather than the list of everything that
+          # might be (reported on 15/10/2026).
+          redirect_to admin_designers_path,
+                      alert: t(".incomplete", name: @designer.display_name, missing: problems.to_sentence.downcase_first)
         end
       end
 

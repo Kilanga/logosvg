@@ -95,6 +95,20 @@ class Design < ApplicationRecord
   # Public URLs carry the token, never the sequential id.
   def to_param = token
 
+  # A refused term is counted once the save has given up and its transaction
+  # is gone: counted inside it, the count was rolled back with the save
+  # (reported on 15/10/2026 — « Jamais déclenché » after a refusal).
+  def save(...)
+    super.tap { |saved| record_blocked_term_hit unless saved }
+  end
+
+  def save!(...)
+    super
+  rescue ActiveRecord::RecordInvalid
+    record_blocked_term_hit
+    raise
+  end
+
   def reviewed? = mode == "reviewed"
 
   def upload? = mode == "upload"
@@ -234,7 +248,15 @@ class Design < ApplicationRecord
       term = BlockedTerm.matching(prompt)
       return if term.nil?
 
-      BlockedTerm.record_hit!(term)
+      # Counted by `save`, once its transaction is over.
+      @blocked_term_hit = term
       errors.add(:prompt, :blocked_term, term: term)
+    end
+
+    def record_blocked_term_hit
+      return if @blocked_term_hit.nil?
+
+      BlockedTerm.record_hit!(@blocked_term_hit)
+      @blocked_term_hit = nil
     end
 end

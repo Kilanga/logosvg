@@ -32,8 +32,10 @@ class DesignerProfile < ApplicationRecord
   # Enough to be judged, checked when an administrator activates the profile
   # rather than on every save: a designer writing their page over three
   # sittings must be able to save it half-finished.
-  validates :bio, presence: true, length: { minimum: 40 }, on: :activation
-  validates :city, presence: true, on: :activation
+  validates :bio, length: { minimum: 40 }, on: :activation
+  # Optional for a designer who works only at a distance, as the form says
+  # (reported on 15/10/2026: the administration was refused all the same).
+  validates :city, presence: true, on: :activation, unless: :remote?
   validate :declares_at_least_one_level, on: :activation
 
   STATUSES.each { |value| define_method("#{value}?") { status == value } }
@@ -70,6 +72,14 @@ class DesignerProfile < ApplicationRecord
 
   # Whether an administrator could activate this profile as it stands.
   def ready_for_activation? = valid?(:activation)
+
+  # What still stands between this profile and publication, in the words the
+  # designer and the administration both read. Runs the checks without saving.
+  def activation_problems
+    return [] if valid?(:activation)
+
+    errors.full_messages.tap { errors.clear }
+  end
 
   # How often this designer hands work back rather than doing it, over the last
   # thirty days. A few returns are healthy — it is what the mechanism is for;

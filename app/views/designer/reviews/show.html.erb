@@ -116,7 +116,7 @@
     <% if @review.may_return_to_client? %>
       <section class="panel p-5" data-controller="review-return">
         <p class="label-rule"><%= t(".return_title") %></p>
-        <p class="mt-2 text-sm text-muted"><%= t(".return_body") %></p>
+        <p class="mt-2 text-sm text-muted"><%= t(".return_body.#{@review.claimed_at ? "claimed" : "queued"}") %></p>
 
         <%= form_with url: return_designer_review_path(@review), class: "mt-4 space-y-4" do %>
           <fieldset>
