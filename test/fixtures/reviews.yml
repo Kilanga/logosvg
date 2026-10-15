@@ -24,6 +24,7 @@ in_progress:
   designer_profile: ines
   review_level: retouch
   token: revue-en-cours
+  claimed_at: <%= 20.hours.ago.to_fs(:db) %>
   status: in_progress
   assignment_mode: chosen
   client_brief: Le dégradé du fond passe mal, pouvez-vous le reprendre ?
@@ -43,6 +44,7 @@ in_progress_vector:
   designer_profile: ines
   review_level: retouch
   token: revue-en-cours-svg
+  claimed_at: <%= 20.hours.ago.to_fs(:db) %>
   status: in_progress
   assignment_mode: chosen
   price_cents: 4900
@@ -60,6 +62,7 @@ delivered:
   designer_profile: ines
   review_level: check
   token: revue-livree
+  claimed_at: <%= 2.days.ago.to_fs(:db) %>
   status: delivered
   assignment_mode: chosen
   price_cents: 1900

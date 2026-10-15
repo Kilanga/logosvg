@@ -1,6 +1,7 @@
 <%= render "frame",
       eyebrow: t("mailers.review.proposal_expired.eyebrow"),
       heading: t("mailers.review.proposal_expired.heading"),
-      body: t("mailers.review.proposal_expired.body"),
+      body: t("mailers.review.proposal_expired.body", amount: number_to_currency(@review.refunded_cents / 100.0, unit: "€", format: "%n %u")),
+      notice: (t("mailers.review.refunded.guaranteed", amount: number_to_currency(@review.guaranteed_share_cents / 100.0, unit: "€", format: "%n %u")) if @review.designer_payout_cents.to_i.positive?),
       url: design_url(@review.design),
       action: t("mailers.review.proposal_expired.action") %>

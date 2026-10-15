@@ -1,0 +1,7 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.new_message.eyebrow"),
+      heading: t("mailers.review.new_message.heading", name: @message.author.first_name),
+      body: @message.body.truncate(400),
+      url: @to_designer ? designer_review_url(@review) : review_url(@review),
+      action: t("mailers.review.new_message.action"),
+      footer: t("mailers.review.new_message.footer") %>

@@ -12,6 +12,10 @@
           </span>
           <% if index.zero? %>
             <%= step.prompt %>
+          <%# The step a designer took: the client asked for a review, not for
+              other versions (reported on 15/10/2026). %>
+          <% elsif step.reviewed? %>
+            <%= t("client.designs.conversation.reviewed") %>
           <% elsif step.instruction.present? %>
             <%= step.instruction %>
           <% else %>

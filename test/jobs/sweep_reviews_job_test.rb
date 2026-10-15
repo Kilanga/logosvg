@@ -60,7 +60,8 @@ class SweepReviewsJobTest < ActiveJob::TestCase
   test "a proposal past its date is closed rather than chased" do
     reviews(:returned).update!(proposal_expires_at: 1.minute.ago)
 
-    assert_emails 1 do
+    # The client, and the designer who handed it back (reported on 15/10/2026).
+    assert_emails 2 do
       SweepReviewsJob.perform_now
       perform_enqueued_jobs
     end

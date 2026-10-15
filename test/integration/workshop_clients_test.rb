@@ -293,12 +293,23 @@ class WorkshopClientsTest < ActionDispatch::IntegrationTest
   end
 
   test "the last week tells the client how to stay" do
+    # No review open for the shop: one would hold the period instead.
+    Review.where(client: users(:client)).update_all(status: "accepted")
     users(:client).update!(workshop_until: 3.days.from_now)
     sign_in_as users(:client)
 
     get client_dashboard_path
 
     assert_match "Il repart pour 30 jours quand l&#39;atelier confirme", response.body
+  end
+
+  # F5, reported on 15/10/2026: the date was shown while it did not count.
+  test "while a review is open, the dashboard says the period is held" do
+    sign_in_as users(:client)
+
+    get client_dashboard_path
+
+    assert_match I18n.t("client.dashboards.workshop_panel.suspended", days: 30), response.body
   end
 
   private

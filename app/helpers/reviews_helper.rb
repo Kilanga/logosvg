@@ -18,8 +18,10 @@ module ReviewsHelper
 
   # Red under six hours, as the spec asks: it is the designer's own deadline,
   # and it is the one number they scan the queue for.
+  # Only while the work is the designer's to do (reported on 15/10/2026: still
+  # « Échéance 2 jours » once delivered, or finished).
   def due_badge(review)
-    return nil if review.due_at.blank?
+    return nil if review.due_at.blank? || !review.in_progress?
 
     tone = if review.overdue? then "text-warning"
     elsif review.due_soon? then "text-warning"
@@ -28,6 +30,17 @@ module ReviewsHelper
 
     tag.span t("reviews.due", when: distance_of_time_in_words_to_now(review.due_at)),
              class: "label-rule #{tone}"
+  end
+
+  # What the designer gets from this review, as it stands: the share on offer
+  # while it is open, what was actually paid once it is settled — less after a
+  # split, the guaranteed share after a closure, nothing otherwise.
+  def designer_earnings_cents(review)
+    case review.status
+    when "accepted" then review.payout_cents
+    when "canceled" then review.designer_payout_cents.to_i
+    else review.designer_share_cents
+    end
   end
 
   def money(cents) = number_to_currency((cents || 0) / 100.0, unit: "€", format: "%n %u")

@@ -28,6 +28,7 @@ module Reviews
       return failure(:message_required) if @message.blank?
       return failure(:already_returned) unless @review.returnable?
       return failure(:proposal_required) if proposing? && proposed_amount.nil?
+      return failure(:proposal_direction) if proposing? && !proposal_goes_the_right_way?
 
       @review.assign_attributes(
         return_reason_code: @reason,
@@ -64,6 +65,19 @@ module Reviews
         return 0 if @proposed_level&.quoted?
 
         @proposed_price_cents.presence || @proposed_level&.price_cents
+      end
+
+      # Reported on 15/10/2026: « level too low » with the very level already
+      # paid went through, and the client was shown a 0 € difference and the
+      # wording of a downgrade. Too low means dearer, or a custom job; too high
+      # means cheaper.
+      def proposal_goes_the_right_way?
+        return @reason == "level_too_low" if @proposed_level&.quoted?
+
+        case @reason
+        when "level_too_low" then proposed_amount > @review.price_cents
+        when "level_too_high" then proposed_amount < @review.price_cents
+        end
       end
 
       def expiry

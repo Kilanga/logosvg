@@ -36,7 +36,7 @@ module Payments
       # Never more than what is left to give back.
       def capped_amount
         asked = @amount_cents.presence || @review.price_cents
-        remaining = @review.price_cents - @review.refunded_cents
+        remaining = @review.price_cents - @review.refunded_against_price_cents
 
         [ asked, remaining ].min.to_i.clamp(0, @review.price_cents)
       end

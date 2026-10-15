@@ -277,6 +277,7 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 | `reviews.notify_designers_max`     | `10`              | **décidé** (10/10/2026) — graphistes prévenus par email |
 | `reviews.acceptance_reminder_days` | `[3, 1]`          | **décidé** (08/10/2026) — rappels avant validation auto |
 | `reviews.dispute_alert_count` / `dispute_alert_days` | `2` / `90` | **décidé** (08/10/2026) — litiges perdus |
+| `reviews.designer_guaranteed_share` | `0.3`         | **décidé** (15/10/2026) — part du prix acquise au graphiste dès la prise en charge, commission comprise |
 | `consent_text_version`             | `2026-09-v1`      | version du texte de consentement       |
 | `platform_site`                    | `pretatirer.fr`   | **décidé** (10/10/2026) — nom de la plateforme sur l'affiche et l'email d'atelier |
 
@@ -755,6 +756,19 @@ tables Active Storage ne sont pas des fixtures : un attachement créé par un es
 de débogage **reste** dans la base de test et fait passer, au hasard des seeds,
 un test qui attendait « aucun fichier ». Nettoyer, ou envelopper dans un
 `ActiveRecord::Base.transaction { … raise ActiveRecord::Rollback }`.
+
+**Un compteur écrit pendant une validation est annulé avec elle.** Le
+compteur d'un terme bloqué était incrémenté dans la validation du design : le
+`save` refusé annule sa transaction, et l'incrément avec — l'administration
+lisait « Jamais déclenché ». Un `after_rollback` n'y peut rien, il ne se
+déclenche pas pour un enregistrement jamais persisté. `Design#save` compte
+donc après coup, une fois la transaction terminée.
+
+**Un remboursement qui baisse le prix n'est pas un remboursement sur le prix.**
+Après une baisse de niveau, `price_cents` diminue *et* `refunded_cents`
+augmente : compter les deux revenait à rembourser deux fois la différence.
+`price_change_refunded_cents` met cette part à l'écart ; `refundable_cents` et
+`payout_after_refund` raisonnent sur `refunded_against_price_cents`.
 
 ### Ce que la machine impose
 

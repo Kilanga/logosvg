@@ -125,6 +125,21 @@ class ReviewDisputesTest < ActionDispatch::IntegrationTest
     ENV.delete("STRIPE_SECRET_KEY")
   end
 
+  # Decided on 15/10/2026: the designer who took it on keeps 30 % whatever.
+  test "an administrator cannot refund the designer's guaranteed share" do
+    deliver_a_version
+    @review.dispute!
+    @review.save!
+    sign_in_as users(:admin)
+
+    post settle_admin_review_path(@review),
+         params: { decision: "cancel", refund: "19", note: "Rien d'utilisable." }
+
+    assert_redirected_to admin_review_path(@review)
+    assert_equal I18n.t("admin.disputes.errors.too_much"), flash[:alert]
+    assert_not_predicate @review.reload, :canceled?
+  end
+
   test "splitting needs a delivered version" do
     @review.dispute!
     @review.save!

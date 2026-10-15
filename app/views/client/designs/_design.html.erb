@@ -34,7 +34,7 @@
             picture was drawn by an AI before approving it. %>
         <% if design.ai_generated? %>
         <p class="pill absolute left-3 top-3 border border-line bg-surface text-muted"
-           title="<%= t("designs.ai_label_hint") %>"><%= t("designs.ai_label") %></p>
+           title="<%= t("designs.ai_label_hint") %>"><%= t(design.reviewed? ? "designs.ai_label_reviewed" : "designs.ai_label") %></p>
         <% end %>
         <div class="relative w-full max-w-64">
           <%= render "client/designs/garment" %>
@@ -85,7 +85,10 @@
         <button type="button" data-action="design-preview#closeZoom" class="btn btn-secondary text-sm">
           <%= t("client.designs.design.zoom_close") %>
         </button>
-        <img alt="<%= design.prompt %>" data-design-preview-target="zoomImage" class="zoom-dialog-image">
+        <%# Given its picture up front, loaded only when the dialog opens: an
+            image with no source read as a broken one (reported on 15/10/2026). %>
+        <%= image_tag design_garment_image_path(design), alt: design.prompt, loading: "lazy",
+              data: { design_preview_target: "zoomImage" }, class: "zoom-dialog-image" %>
       </dialog>
     </div>
 
@@ -225,6 +228,11 @@
 
       <% if design.refinements_left.to_i.positive? %>
         <%= button_to t("client.designs.design.variants"), design_variants_path(design),
+              class: "btn btn-secondary text-sm" %>
+        <%# A designer from the first generation, for a client who wants one
+            straight away (decided on 15/10/2026); put forward below once the
+            reprises are spent. %>
+        <%= link_to t("client.designs.design.ask_designer"), new_design_review_path(design),
               class: "btn btn-secondary text-sm" %>
       <% end %>
     </div>

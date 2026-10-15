@@ -93,7 +93,8 @@ class PlatformStatus
       failed = SolidQueue::FailedExecution.count
 
       if failed.positive?
-        Check.new(key: :queue, state: :warning, detail: I18n.t("admin.status.failed_jobs", count: failed))
+        Check.new(key: :queue, state: :warning,
+                  detail: [ I18n.t("admin.status.failed_jobs", count: failed), *failure_breakdown ].join("\n"))
       else
         Check.new(key: :queue, state: :ok, detail: I18n.t("admin.status.pending_jobs", count: pending))
       end
@@ -101,13 +102,38 @@ class PlatformStatus
       Check.new(key: :queue, state: :down, detail: e.class.to_s)
     end
 
+    # Which jobs failed, and with what, the most frequent first (reported on
+    # 15/10/2026: « 756 tâches en échec », and nothing to start from). The
+    # errors are kept by Solid Queue as JSON; only the class and the first
+    # words of the message are shown.
+    FAILURE_GROUPS = 6
+
+    def failure_breakdown
+      rows = SolidQueue::FailedExecution.joins(:job)
+                                        .order(created_at: :desc).limit(2_000)
+                                        .pluck("solid_queue_jobs.class_name", :error)
+      rows.group_by { |job_class, error| [ job_class, failure_label(error) ] }
+          .sort_by { |_, group| -group.size }
+          .first(FAILURE_GROUPS)
+          .map { |(job_class, label), group| "#{group.size} × #{job_class} — #{label}" }
+    end
+
+    def failure_label(error)
+      data = error.is_a?(Hash) ? error : JSON.parse(error.to_s)
+      "#{data["exception_class"]}: #{data["message"].to_s.truncate(120)}"
+    rescue JSON::ParserError, TypeError
+      error.to_s.truncate(120)
+    end
+
     # A cold cache falls back to the bundled copy, which is correct but stale:
-    # worth saying so rather than letting a renamed technique surprise someone.
+    # worth saying so rather than letting a renamed technique surprise someone
+    # — and saying why, which the label alone did not (15/10/2026).
     def catalogue
       cached = Rails.cache.read(PrintTechniques::CACHE_KEY).present?
+      count = I18n.t("admin.status.techniques", count: PrintTechniques.keys.size)
 
       Check.new(key: :catalogue,
                 state: cached ? :ok : :warning,
-                detail: I18n.t("admin.status.techniques", count: PrintTechniques.keys.size))
+                detail: cached ? count : "#{count}\n#{I18n.t("admin.status.catalogue_cold")}")
     end
 end

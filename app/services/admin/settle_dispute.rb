@@ -11,6 +11,10 @@ module Admin
   # names, and the designer is paid for the rest — the commission applies to
   # what is paid, at the review's own rate. With nothing refunded, the
   # designer is simply paid in full.
+  #
+  # Since 15/10/2026 the designer who took the review on keeps a guaranteed
+  # share whatever is decided (Review#guaranteed_share_cents): the refund
+  # stops short of it, and a cancellation pays it out.
   class SettleDispute
     Result = Data.define(:review, :error) do
       def success? = error.nil?
@@ -32,6 +36,9 @@ module Admin
       return failure(:too_much) if @amount_cents > refundable
       return split if @pay_designer
 
+      payout = @review.payout_after_refund(@amount_cents)
+      payout = 0 if @review.guaranteed_share_cents.zero?
+
       Review.transaction do
         # Quiet: the decision email below states the amount, and two messages
         # about one event read as a mistake.
@@ -39,12 +46,15 @@ module Admin
           Payments::RefundReview.call(review: @review, amount_cents: @amount_cents, notify: false)
         end
 
+        @review.reload
         @review.cancel!
-        @review.assign_attributes(admin_note: @note, settled_by: @admin, settled_at: Time.current)
+        @review.assign_attributes(admin_note: @note, settled_by: @admin, settled_at: Time.current,
+                                  designer_payout_cents: (payout if payout.positive?))
         @review.save!
       end
 
-      ReviewMailer.settled_by_admin(@review, @amount_cents).deliver_later
+      Payments::SettleReview.call(review: @review, notify: false) if payout.positive?
+      notify
       Result.new(review: @review, error: nil)
     end
 
@@ -53,7 +63,7 @@ module Admin
       # client keeps.
       def split
         return failure(:nothing_delivered) unless @review.may_accept? && @review.delivered_any?
-        return failure(:nothing_left) if @amount_cents >= refundable
+        return failure(:nothing_left) unless @review.payout_after_refund(@amount_cents).positive?
 
         Review.transaction do
           payout = @review.payout_after_refund(@amount_cents)
@@ -68,14 +78,23 @@ module Admin
           @review.save!
         end
 
-        Payments::SettleReview.call(review: @review)
+        Payments::SettleReview.call(review: @review, notify: false)
         CreateReviewedDesign.call(review: @review)
-        ReviewMailer.settled_by_admin(@review, @amount_cents).deliver_later
+        notify
         Result.new(review: @review, error: nil)
+      end
+
+      # Each side gets its own email (reported on 15/10/2026: both were in
+      # « À », each reading the other's address).
+      def notify
+        ReviewMailer.settled_by_admin(@review, @amount_cents, recipient: "client").deliver_later
+        return if @review.designer_profile_id.nil?
+
+        ReviewMailer.settled_by_admin(@review, @amount_cents, recipient: "designer").deliver_later
       end
 
       def failure(reason) = Result.new(review: @review, error: I18n.t("admin.disputes.errors.#{reason}"))
 
-      def refundable = @review.price_cents - @review.refunded_cents
+      def refundable = @review.refundable_cents
   end
 end

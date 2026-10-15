@@ -22,7 +22,7 @@ module Reviews
 
       Review.transaction do
         @review.update!(fix_offered_at: Time.current)
-        @review.messages.create!(author: @author, body: @message)
+        @review.messages.create!(author: @author, body: @message, kind: "fix")
       end
 
       ReviewMailer.fix_offered(@review).deliver_later

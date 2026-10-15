@@ -25,6 +25,38 @@ class ReviewStateMachineTest < ActiveSupport::TestCase
     review.claim!
 
     assert_predicate review, :in_progress?
+    assert_not_nil review.claimed_at, "the guaranteed share runs from here"
+  end
+
+  # --- The guaranteed share (decided on 15/10/2026) --------------------------
+
+  test "nothing is guaranteed before a designer takes the review on" do
+    assert_equal 0, reviews(:queued).guaranteed_share_cents
+    assert_equal 1900, reviews(:queued).refundable_cents
+  end
+
+  test "once taken on, part of the price stays the designer's, commission applied" do
+    review = reviews(:in_progress)
+
+    assert_equal 1470, review.guaranteed_share_cents, "30 % of 49 €"
+    assert_equal 3430, review.refundable_cents
+    # 14,70 € kept, less the review's own 20 % commission.
+    assert_equal 1176, review.guaranteed_payout_cents
+  end
+
+  test "what was already refunded comes off what is left to refund" do
+    review = reviews(:in_progress)
+    review.refunded_cents = 3000
+
+    assert_equal 430, review.refundable_cents
+  end
+
+  test "a new designer starts the guarantee again from nothing" do
+    review = reviews(:returned)
+    review.update_column(:claimed_at, 1.day.ago)
+    review.pick_new_designer!
+
+    assert_nil review.claimed_at
   end
 
   # The rule step 7 exists for, enforced where the work is handed over.

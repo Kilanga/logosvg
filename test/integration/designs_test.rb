@@ -627,6 +627,29 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_select "form[data-kind=choice] input[name=suite][value=atelier]"
   end
 
+  # Decided on 15/10/2026: put forward after the three reprises, but there
+  # from the first generation.
+  test "a designer is offered from the first proposals, before any reprise is spent" do
+    sign_in_as users(:client)
+    proposals = ready_proposals
+
+    get design_path(proposals.first)
+
+    assert_select "form[data-kind=choice] input[name=suite][value=graphiste]"
+  end
+
+  test "a ready design and « Mes designs » both offer a designer" do
+    design = designs(:fox_screen)
+    design.update_columns(refinements_left: 3)
+    sign_in_as users(:client)
+
+    get design_path(design)
+    assert_select "a[href=?]", new_design_review_path(design)
+
+    get client_designs_path
+    assert_select "a[href=?]", new_design_review_path(design)
+  end
+
   test "keeping a proposal sets the others aside" do
     sign_in_as users(:client)
     proposals = ready_proposals
@@ -705,6 +728,21 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert Design.where(parent: designs(:fox_screen)).all?(&:awaiting_choice?)
     assert_equal 1, designs(:fox_screen).refinements_used
     assert_equal 1, GenerationQuota.for(users(:client)).used
+  end
+
+  # F1, reported on 15/10/2026: refused with nothing on screen, and never
+  # counted — the count was rolled back with the save.
+  test "a creation naming a blocked term says so, and the term is counted" do
+    sign_in_as users(:client)
+    BlockedTerm.create!(term: "pikachu")
+
+    assert_no_difference "Design.count" do
+      post designs_path, params: { design: valid_design.merge(prompt: "un pikachu qui fait du skate") }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "[role=alert]", text: /pikachu/i
+    assert_equal 1, BlockedTerm.find_by(term: "pikachu").hits_count
   end
 
   test "a retouche naming a blocked term is refused before anything is spent" do

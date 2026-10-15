@@ -108,14 +108,39 @@ class ReviewMailer < ApplicationMailer
     mail to: review.client.email_address, subject: t("mailers.review.refunded.subject")
   end
 
-  # An administrator closed a dispute. Both sides are told, together, with the
-  # same account of what was decided.
-  def settled_by_admin(review, amount_cents)
+  # An administrator closed a dispute. Both sides are told the same account of
+  # what was decided — each in an email of their own, since 15/10/2026: put
+  # together in « À », each read the other's address.
+  def settled_by_admin(review, amount_cents, recipient: "client")
     review = @review = reload(review)
     @amount_cents = amount_cents
-    recipients = [ review.client.email_address, review.designer_profile&.user&.email_address ].compact
+    @for_designer = recipient == "designer"
+    to = @for_designer ? review.designer_profile&.user&.email_address : review.client.email_address
+    return message.perform_deliveries = false if to.blank?
 
-    mail to: recipients, subject: t("mailers.review.settled_by_admin.subject")
+    mail to: to, subject: t("mailers.review.settled_by_admin.subject")
+  end
+
+  # The client refused the designer's proposal, or let it lapse: the review is
+  # closed, and the designer is told (reported on 15/10/2026: they were not),
+  # with the share that stays theirs when they had started.
+  def proposal_declined(review)
+    review = @review = reload(review)
+    return message.perform_deliveries = false if review.designer_profile.nil?
+
+    mail to: review.designer_profile.user.email_address, subject: t("mailers.review.proposal_declined.subject")
+  end
+
+  # A message in the conversation, to the side that did not write it (G3,
+  # decided on 15/10/2026). One per unread run: see ReviewMessage.
+  def new_message(review_message)
+    @message = ReviewMessage.includes(:author).find(review_message.id)
+    review = @review = reload(@message.review_id)
+    @to_designer = @message.author_id == review.client_id
+    to = @to_designer ? review.designer_profile&.user&.email_address : review.client.email_address
+    return message.perform_deliveries = false if to.blank?
+
+    mail to: to, subject: t("mailers.review.new_message.subject", name: @message.author.first_name)
   end
 
   # --- Disputes (decided on 08/10/2026) -------------------------------------
@@ -161,7 +186,8 @@ class ReviewMailer < ApplicationMailer
     # Reloaded with everything an email reads: a mailer job gets a bare record,
     # and development refuses to walk to an association nobody preloaded.
     def reload(review)
-      Review.includes(:client, :design, :review_level, :proposed_level, designer_profile: :user).find(review.id)
+      Review.includes(:client, :design, :review_level, :proposed_level, designer_profile: :user)
+            .find(review.is_a?(Review) ? review.id : review)
     end
 
     # Decided on 09/10/2026: the workshop the design was made for is copied on

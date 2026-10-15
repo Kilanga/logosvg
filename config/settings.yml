@@ -67,6 +67,11 @@ shared:
     prices_set_by: platform
     # Décidé le 06/10/2026 : 15 % de commission sur les vérifications.
     platform_fee_rate: 0.15
+    # Décidé le 15/10/2026 : dès qu'un graphiste a pris en charge une
+    # vérification, 30 % du prix lui restent acquis, même si le client est
+    # remboursé (litige tranché, proposition refusée ou laissée sans réponse).
+    # La commission s'applique sur cette part, comme sur tout ce qui est payé.
+    designer_guaranteed_share: 0.3
     # Délais décidés le 06/10/2026. Le graphiste choisi a 24 h, et non 12 :
     # une nuit ne doit pas suffire à lui faire perdre une mission.
     auto_accept_days: 7

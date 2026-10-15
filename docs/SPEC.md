@@ -345,7 +345,8 @@ Le graphiste est payé à la validation, et seulement à la validation : l'argen
 - **Rappels** 3 jours puis 1 jour avant la validation automatique (`reviews.acceptance_reminder_days`), une fois par livraison.
 - **Signalement** : sur une version livrée, une fois par vérification, avec un motif (`not_as_requested`, `file_defect`, `other`) et une explication. La vérification passe en `disputed` : plus de validation automatique ; le graphiste et l'administration sont prévenus.
 - **Correction gratuite** : le graphiste peut proposer une reprise de plus, sans frais ; si le client accepte, la vérification repart `in_progress` avec un nouveau délai. Le client peut aussi valider ou retirer son signalement (une semaine pleine lui est rendue).
-- **Arbitrage** : l'administration annule et rembourse (le graphiste n'est pas payé), ou **partage** : remboursement du montant choisi, le graphiste est payé pour le reste, commission appliquée au montant versé au taux de la vérification, et le client garde le fichier.
+- **Arbitrage** : l'administration annule et rembourse, ou **partage** : remboursement du montant choisi, le graphiste est payé pour le reste, commission appliquée au montant versé au taux de la vérification, et le client garde le fichier. Dans les deux cas, la part garantie du graphiste (ci-dessous) n'est pas remboursable.
+- **Part garantie (décidé le 15/10/2026).** Dès qu'un graphiste a pris la revue en charge (`claimed_at`), `reviews.designer_guaranteed_share` (30 %) du prix lui reste acquis quoi qu'il arrive : litige tranché en faveur du client, proposition refusée ou laissée sans réponse. C'est la pratique du « kill fee » : une part du prix total, sur laquelle la commission s'applique comme sur tout montant versé (sur une Retouche à 49 € : remboursement de 34,30 € au plus). Avant la prise en charge, ou pour un renvoi sans proposition (visuel inutilisable, contenu interdit), le remboursement reste intégral. Un nouveau graphiste choisi par le client repart de zéro.
 - **Signal côté administration** : un graphiste avec `reviews.dispute_alert_count` litiges perdus (remboursement décidé) sur `reviews.dispute_alert_days` jours apparaît sur le tableau de bord.
 - **Virement** rattaché au paiement du client (`source_transaction`) quand il tient dans ce paiement : une validation rapide ne fait plus échouer le virement faute de solde disponible.
 
@@ -520,7 +521,8 @@ Stripe gère deux flux : les abonnements des imprimeurs et le paiement des revue
 - Paiement par Checkout en mode `payment`, encaissé sur le compte de la plateforme (charges et transferts séparés).
 - À l'état `accepted`, transfert vers le compte Connect Express du graphiste : prix moins `platform_fee_cents`.
 - Montée de niveau acceptée : second Checkout pour la différence. Baisse de niveau : remboursement partiel du paiement initial.
-- Annulation : remboursement intégral, ou montant saisi par l'admin en cas de litige.
+- Annulation : remboursement intégral avant la prise en charge ; après, au plus le prix moins la part garantie du graphiste, ou le montant saisi par l'admin en cas de litige, dans la même limite.
+- Paiement par carte uniquement (Apple Pay et Google Pay compris), décidé le 15/10/2026 : pas de moyen de paiement à confirmation différée.
 - Chaque appel Stripe porte une clé d'idempotence ; les webhooks sont vérifiés par signature et enregistrés pour ne jamais être traités deux fois (table `stripe_events`).
 
 ### Emails

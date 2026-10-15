@@ -26,6 +26,7 @@ module HelpHelper
         expire_days: settings.print_requests.fetch(:expire_after_days),
         auto_accept_days: settings.reviews.fetch(:auto_accept_days),
         fee_percent: (settings.reviews.fetch(:platform_fee_rate) * 100).round,
+        guaranteed_percent: (settings.reviews.fetch(:designer_guaranteed_share) * 100).round,
         claim_hours: settings.reviews.fetch(:designer_claim_timeout_hours),
         unclaimed_hours: settings.reviews.fetch(:unclaimed_refund_hours),
         proposal_hours: settings.reviews.fetch(:proposal_expiry_hours),

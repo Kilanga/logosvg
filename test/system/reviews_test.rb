@@ -84,8 +84,9 @@ class ReviewsTest < ApplicationSystemTestCase
 
     assert_selector "[data-review-return-target='proposal']", visible: true
 
-    select review_levels(:retouch).name, from: "proposed_level_id"
-    fill_in "return_message", with: "Un simple contrôle ne suffira pas ici."
+    # Dearer than the Retouche paid, as « too low » now requires.
+    select review_levels(:custom).name, from: "proposed_level_id"
+    fill_in "return_message", with: "Une retouche ne suffira pas ici."
     accept_confirm { click_on I18n.t("designer.reviews.show.return_action") }
 
     assert_text displayed("designer.reviews.return_to_client.returned")

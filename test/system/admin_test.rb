@@ -10,6 +10,14 @@ class AdminTest < ApplicationSystemTestCase
     stub_request(:post, %r{/v1/refunds}).to_return(
       headers: { "Content-Type" => "application/json" }, body: { id: "re_1" }.to_json
     )
+    # The designer had taken it on: the share not refunded is paid out.
+    stub_request(:get, %r{/v1/payment_intents/}).to_return(
+      headers: { "Content-Type" => "application/json" },
+      body: { id: "pi_test_progress", latest_charge: "ch_1", amount_received: 4900 }.to_json
+    )
+    stub_request(:post, %r{/v1/transfers}).to_return(
+      headers: { "Content-Type" => "application/json" }, body: { id: "tr_1" }.to_json
+    )
 
     sign_in users(:admin)
 

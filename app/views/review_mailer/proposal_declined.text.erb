@@ -1,0 +1,7 @@
+<%= render "frame",
+      eyebrow: t("mailers.review.proposal_declined.eyebrow"),
+      heading: t("mailers.review.proposal_declined.heading"),
+      body: t("mailers.review.proposal_declined.body"),
+      notice: (t("mailers.review.proposal_declined.guaranteed", amount: number_to_currency(@review.designer_payout_cents / 100.0, unit: "€", format: "%n %u")) if @review.designer_payout_cents.to_i.positive?),
+      url: designer_review_url(@review),
+      action: t("mailers.review.proposal_declined.action") %>

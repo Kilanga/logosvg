@@ -88,6 +88,9 @@ class Review < ApplicationRecord
     # someone who cannot be paid.
     event :claim do
       transitions from: :queued, to: :in_progress, guard: :claimable?
+      # Kept through a hand-back: the work started then is what the
+      # guaranteed share pays for.
+      after { self.claimed_at ||= Time.current }
     end
 
     # Every delivery starts the client's week again, reminders included.
@@ -163,7 +166,12 @@ class Review < ApplicationRecord
     # MAX_DESIGNER_REFUSALS — past that, only the proposal or a refund remain.
     event :pick_new_designer do
       transitions from: :returned_to_client, to: :queued, guard: :reassignable?
-      after { self.queued_at = Time.current }
+      # Another designer starts from nothing: the guaranteed share is owed
+      # only once they take it on themselves.
+      after do
+        self.queued_at = Time.current
+        self.claimed_at = nil
+      end
     end
 
     # Refused, or simply never answered.
@@ -245,7 +253,7 @@ class Review < ApplicationRecord
   # The designer's share of what the platform keeps after a partial refund:
   # the commission applies to what is paid, at the review's own rate.
   def payout_after_refund(refund_cents)
-    kept = [ price_cents - refunded_cents - refund_cents, 0 ].max
+    kept = [ price_cents - refunded_against_price_cents - refund_cents, 0 ].max
     return 0 if price_cents.zero?
 
     kept - (kept * platform_fee_cents / price_cents.to_f).round
@@ -303,6 +311,32 @@ class Review < ApplicationRecord
   end
 
   def designer_share_cents = price_cents - platform_fee_cents
+
+  # --- The designer's guaranteed share (decided on 15/10/2026) ---------------
+  #
+  # Once a designer has taken the review on, part of the price is theirs
+  # whatever happens next — a dispute the client wins, a proposal refused or
+  # left unanswered. The usual practice of a kill fee: a share of the whole
+  # price, on which the commission applies like on anything paid. A custom
+  # job is paid outside the platform, and owes nothing here.
+  def guaranteed_share_cents
+    return 0 if claimed_at.nil? || off_platform?
+
+    (price_cents * Rails.application.config.tshirt.reviews.fetch(:designer_guaranteed_share)).round
+  end
+
+  # What may still go back to the client.
+  def refundable_cents = [ price_cents - refunded_against_price_cents - guaranteed_share_cents, 0 ].max
+
+  # What was refunded out of the current price — not what came back when the
+  # price itself went down (a cheaper level, a custom job quoted outside).
+  def refunded_against_price_cents = refunded_cents - price_change_refunded_cents
+
+  # What the client paid here in all, whatever the level became since.
+  def paid_cents = price_cents + price_change_refunded_cents
+
+  # What the designer is owed once everything refundable has gone back.
+  def guaranteed_payout_cents = payout_after_refund(refundable_cents)
 
   # The chosen designer had 12 hours and did not take it. The client then picks
   # what happens next — see docs/SPEC.md, "Graphiste choisi indisponible".

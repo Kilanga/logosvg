@@ -13,6 +13,19 @@
     <% end %>
   </div>
 
+  <%# What still stands before publication, said before the administration
+      refuses it (reported on 15/10/2026: the designer was never told). %>
+  <% if @profile.pending_review? && @profile.errors.empty? && (missing = @profile.activation_problems).any? %>
+    <div class="mt-6 border-l-2 border-warning bg-warning-bg px-4 py-3 text-sm text-warning">
+      <p class="font-medium"><%= t(".missing_title") %></p>
+      <ul class="mt-1 list-disc pl-5">
+        <% missing.each do |problem| %>
+          <li><%= problem %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
   <%= form_with model: @profile, url: designer_profile_path, method: :patch,
         class: "mt-8 space-y-10" do |form| %>
     <%= render "shared/form_errors", record: @profile %>

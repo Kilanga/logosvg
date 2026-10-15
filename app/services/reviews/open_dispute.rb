@@ -31,7 +31,7 @@ module Reviews
         @review.assign_attributes(dispute_reason: @reason, dispute_message: @message)
         @review.save!
         # In the conversation too: the designer answers there.
-        @review.messages.create!(author: @author, body: @message)
+        @review.messages.create!(author: @author, body: @message, kind: "dispute")
       end
 
       ReviewMailer.dispute_opened(@review).deliver_later
