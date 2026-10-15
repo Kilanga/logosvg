@@ -19,7 +19,9 @@ class ReviewPolicy < ApplicationPolicy
 
   def accept_proposal? = client? && record.may_accept_proposal?
 
-  def decline_proposal? = client? && record.may_decline_proposal?
+  # Also the way out when the chosen designer went quiet: the button is on the
+  # same page, and was refused before 15/10/2026.
+  def decline_proposal? = client? && (record.may_decline_proposal? || record.chosen_designer_silent?)
 
   def pick_designer? = client? && record.may_pick_new_designer?
 

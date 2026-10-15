@@ -1043,8 +1043,19 @@ fr:
         subject: "Votre vérification a été annulée et remboursée"
         eyebrow: "Proposition expirée"
         heading: "Faute de réponse, nous avons annulé votre vérification"
-        body: "Le montant payé vous est remboursé. Votre design, lui, est intact."
+        body: "%{amount} vous sont remboursés. Votre design, lui, est intact."
         action: "Revoir mon design"
+      proposal_declined:
+        subject: "La demande que vous avez renvoyée est close"
+        eyebrow: "Proposition refusée"
+        heading: "Le client n'a pas retenu votre proposition"
+        body: >-
+          Il l'a refusée, ou n'y a pas répondu dans le délai : la vérification
+          est close et vous n'avez plus rien à faire.
+        guaranteed: >-
+          Vous l'aviez prise en charge : votre part garantie, %{amount} après
+          commission, part vers votre compte Stripe.
+        action: "Voir la vérification"
       designer_silent:
         subject: "Votre graphiste n'a pas répondu"
         eyebrow: "Sans réponse"
@@ -1063,19 +1074,30 @@ fr:
         subject: "Vous avez été payé"
         eyebrow: "Versement"
         heading: "%{amount} vous ont été versés"
-        body: "Le client a validé votre travail. Le virement part vers votre compte Stripe."
+        body:
+          accepted: "Le client a validé votre travail. Le virement part vers votre compte Stripe."
+          settled: "Après la décision de notre équipe, voici votre part. Le virement part vers votre compte Stripe."
+          guaranteed: >-
+            La vérification a été close sans validation, mais vous l'aviez prise
+            en charge : voici votre part garantie. Le virement part vers votre
+            compte Stripe.
         action: "Voir mes versements"
       settled_by_admin:
         subject: "Votre vérification a été close par notre équipe"
         eyebrow: "Décision"
         heading: "Nous avons tranché votre vérification"
         refunded: "Montant remboursé au client : %{amount}."
+        designer_paid: "Montant versé au graphiste : %{amount}."
         action: "Voir la vérification"
       refunded:
         subject: "Vous avez été remboursé"
         eyebrow: "Remboursement"
         heading: "%{amount} vous ont été remboursés"
         body: "Le remboursement apparaît sous quelques jours selon votre banque."
+        guaranteed: >-
+          Le graphiste avait pris votre demande en charge : comme le prévoient
+          les conditions générales, %{amount} lui restent acquis pour le travail
+          commencé.
         action: "Revoir mon design"
 
     designer:
@@ -1336,6 +1358,10 @@ fr:
         accept_and_refund: "Accepter, la différence vous est remboursée"
         decline: "Refuser et être remboursé"
         decline_confirm: "Refuser cette proposition et être remboursé ?"
+        decline_guaranteed: >-
+          Le graphiste avait commencé : en refusant, vous êtes remboursé de
+          %{refund}, et %{share} lui restent acquis pour le travail fait, comme
+          le prévoient les conditions générales.
         pick_another: "Ou essayer un autre graphiste"
         pick_another_hint: >-
           Vous gardez le niveau et le prix déjà payés ; un nouveau graphiste,
@@ -2415,6 +2441,9 @@ fr:
     accept: "Accepter"
     decline: "Refuser"
 
+  payments:
+    transfer_description: "Vérification %{level} — %{reference}"
+
   legal:
     eyebrow: "Informations légales"
     updated_on: "2026-09-20"
@@ -2467,6 +2496,12 @@ fr:
         body:
           - "Vous recevez un aperçu filigrané de votre visuel. Le fichier d'impression lui-même n'est transmis qu'à l'atelier que vous choisissez et, le cas échéant, au graphiste que vous sollicitez."
           - "Vous restez responsable de ce que vous demandez à dessiner et de son usage."
+      reviews:
+        title: "La vérification par un graphiste"
+        body:
+          - "La vérification est payée à la commande. Le graphiste n'est réglé qu'à votre validation de son travail, ou à sa validation automatique après %{auto_accept_days} jours sans réponse de votre part."
+          - "Si aucun graphiste ne prend votre demande en charge, ou s'il vous la renvoie avant de l'avoir prise en charge, vous êtes remboursé en entier."
+          - "Dès qu'un graphiste a pris votre demande en charge, %{share} du prix lui restent acquis pour le travail commencé, quelle que soit la suite : proposition refusée ou laissée sans réponse, ou signalement tranché en votre faveur. Le remboursement porte alors au plus sur le reste."
       liability:
         title: "Responsabilités"
         body:
@@ -2515,10 +2550,12 @@ fr:
         body:
           - "Le client paie à la commande. Votre part vous est virée automatiquement dès qu'il valide votre travail, ou à sa validation automatique après le délai prévu."
           - "La plateforme prélève une commission sur le prix du niveau. Son taux est indiqué sur votre écran de paiements."
+          - "Dès que vous avez pris une demande en charge, %{share} du prix vous restent acquis quelle que soit la suite : un signalement tranché en faveur du client, une proposition qu'il refuse ou laisse sans réponse. La commission s'applique sur cette part comme sur tout paiement."
       returns:
         title: "Renvoyer une demande"
         body:
-          - "Si l'option payée par le client ne permet pas de faire le travail correctement, vous pouvez lui renvoyer la demande avant toute livraison, une seule fois, en proposant le niveau qui convient. Votre lecture n'est pas facturée."
+          - "Si l'option payée par le client ne permet pas de faire le travail correctement, vous pouvez lui renvoyer la demande avant toute livraison, une seule fois, en proposant le niveau qui convient. Renvoyée avant la prise en charge, votre lecture n'est pas facturée."
+          - "Une demande que vous renvoyez parce que le visuel est inutilisable ou interdit est remboursée en entier au client : aucune part ne vous est due."
           - "Un taux de renvoi anormalement élevé est signalé à l'administration."
 
     privacy:
@@ -2672,17 +2709,21 @@ fr:
           sans que l'argent bouge laisse un client qui a payé pour rien.
         refund_amount: "Montant à rembourser (€)"
         refund_hint: "Au plus %{max}. Zéro est un choix valable."
+        guaranteed_hint: >-
+          Le graphiste a pris la demande en charge : %{share} du prix lui restent
+          acquis quelle que soit la décision, soit %{payout} après commission.
         note: "Votre décision"
         note_placeholder: "Ce que vous avez décidé et pourquoi."
         note_hint: "Ce texte est envoyé au client et au graphiste."
         settle_action: "Clôturer cette vérification"
         settle_confirm: "Clôturer avec cette décision ? Elle est définitive."
         decision: "Décision"
-        decision_cancel: "Annuler la vérification : le client est remboursé du montant indiqué, le graphiste n'est pas payé."
+        decision_cancel: "Annuler la vérification : le client est remboursé du montant indiqué et ne garde pas le fichier ; le graphiste ne reçoit que ce qui n'est pas remboursé (sa part garantie au moins, s'il avait pris la demande en charge)."
         decision_split: >-
           Partager : le client est remboursé du montant indiqué, le graphiste
           est payé pour le reste (commission déduite) et le client garde le
-          fichier. Avec 0 €, le graphiste est payé en entier.
+          fichier. Avec 0 €, le graphiste est payé en entier. Sa part garantie
+          ne peut pas être remboursée.
         disputed: "Signalée par le client le %{date}"
         fix_offered: "Correction gratuite proposée par le graphiste le %{date}."
 
@@ -3092,6 +3133,11 @@ fr:
                   elle est validée d'office au bout de %{auto_accept_days}
                   jours ; vous êtes prévenu avant. Un problème ? Signalez-le
                   depuis la vérification, avant de valider.
+                - >-
+                  Dès qu'il a pris votre demande en charge,
+                  %{guaranteed_percent} % du prix lui restent acquis pour le
+                  travail commencé, même si vous refusez sa proposition ou si un
+                  signalement est tranché en votre faveur.
         - title: "Vos données"
           questions:
             - q: "Qui voit mes visuels et mes coordonnées ?"

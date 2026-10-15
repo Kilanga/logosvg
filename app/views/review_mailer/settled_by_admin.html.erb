@@ -3,6 +3,7 @@
       eyebrow: t("mailers.review.settled_by_admin.eyebrow"),
       heading: t("mailers.review.settled_by_admin.heading"),
       body: @review.admin_note,
-      notice: (t("mailers.review.settled_by_admin.refunded", amount: number_to_currency(@amount_cents / 100.0, unit: "€", format: "%n %u")) if @amount_cents.positive?),
-      url: review_url(@review),
+      notice: [ (t("mailers.review.settled_by_admin.refunded", amount: number_to_currency(@amount_cents / 100.0, unit: "€", format: "%n %u")) if @amount_cents.positive?),
+                (t("mailers.review.settled_by_admin.designer_paid", amount: number_to_currency(@review.designer_payout_cents / 100.0, unit: "€", format: "%n %u")) if @review.designer_payout_cents.to_i.positive?) ].compact.join(" ").presence,
+      url: @for_designer ? designer_review_url(@review) : review_url(@review),
       action: t("mailers.review.settled_by_admin.action") %>

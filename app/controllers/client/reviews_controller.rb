@@ -106,9 +106,7 @@ module Client
     def decline_proposal
       authorize @review
 
-      Payments::RefundReview.call(review: @review, amount_cents: @review.price_cents)
-      @review.decline_proposal!
-      @review.save!
+      Reviews::DeclineProposal.call(review: @review)
 
       redirect_to review_path(@review), notice: t(".declined")
     end

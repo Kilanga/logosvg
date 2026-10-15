@@ -27,4 +27,9 @@ module LegalHelper
       }
     end
   end
+
+  # « 30 % », from the setting the money follows (decided on 15/10/2026).
+  def guaranteed_share_label
+    "#{(Rails.application.config.tshirt.reviews.fetch(:designer_guaranteed_share) * 100).round}\u00A0%"
+  end
 end

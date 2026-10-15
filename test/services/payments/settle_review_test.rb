@@ -23,6 +23,26 @@ module Payments
       end
     end
 
+    # G9, reported on 15/10/2026: a bare transfer matched nothing in Stripe.
+    test "the transfer names the review it pays for" do
+      stub_transfer
+      review = accepted_review
+      SettleReview.call(review: review)
+
+      assert_requested :post, %r{/v1/transfers} do |request|
+        body = Rack::Utils.parse_nested_query(request.body)
+        body["description"].include?(review.token) && body.dig("metadata", "review") == review.token
+      end
+    end
+
+    test "a review closed with a guaranteed share pays it out" do
+      stub_transfer
+      review = reviews(:delivered)
+      review.update_columns(status: "canceled", designer_payout_cents: 456)
+
+      assert_equal :transferred, SettleReview.call(review: review)
+    end
+
     # A retried webhook, or an administrator pressing twice, must not pay twice.
     test "a review already settled is not paid again" do
       stub_transfer

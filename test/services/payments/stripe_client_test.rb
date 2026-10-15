@@ -28,6 +28,19 @@ module Payments
       end
     end
 
+    # F3, decided on 15/10/2026: no payment that confirms days later.
+    test "a review is paid by card only" do
+      StripeClient.new.create_payment_session(
+        amount_cents: 4900, product_name: "Retouche", client_email: "claire@example.invalid",
+        success_url: "https://pretatirer.test/ok", cancel_url: "https://pretatirer.test/ko",
+        client_reference_id: "revue", idempotency_key: "review-revue"
+      )
+
+      assert_requested :post, CHECKOUT do |request|
+        Rack::Utils.parse_nested_query(request.body)["payment_method_types"] == { "0" => "card" }
+      end
+    end
+
     test "without a rate configured, no tax line is sent" do
       open_session
 

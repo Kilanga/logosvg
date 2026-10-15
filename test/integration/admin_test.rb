@@ -55,9 +55,18 @@ class AdminTest < ActionDispatch::IntegrationTest
     stub_request(:post, %r{/v1/refunds}).to_return(
       headers: { "Content-Type" => "application/json" }, body: { id: "re_1" }.to_json
     )
+    stub_request(:get, %r{/v1/payment_intents/}).to_return(
+      headers: { "Content-Type" => "application/json" },
+      body: { id: "pi_test_progress", latest_charge: "ch_1", amount_received: 4900 }.to_json
+    )
+    # 49 € − 25 € refunded = 24 € kept, less 20 % commission: 19,20 €.
+    transfer = stub_request(:post, %r{/v1/transfers})
+               .with { |request| Rack::Utils.parse_nested_query(request.body)["amount"] == "1920" }
+               .to_return(headers: { "Content-Type" => "application/json" }, body: { id: "tr_1" }.to_json)
     sign_in_as users(:admin)
 
-    assert_emails 1 do
+    # The client and the designer, each their own email.
+    assert_emails 2 do
       post settle_admin_review_path(reviews(:in_progress)),
            params: { refund: "25", note: "Le graphiste n'a pas répondu ; remboursement partiel." }
       perform_enqueued_jobs
@@ -67,6 +76,7 @@ class AdminTest < ActionDispatch::IntegrationTest
 
     assert_predicate review, :canceled?
     assert_equal 2500, review.refunded_cents
+    assert_requested transfer
     assert_equal users(:admin), review.settled_by
     assert_not_nil review.settled_at
     assert_match(/remboursement partiel/, review.admin_note)

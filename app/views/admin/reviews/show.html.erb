@@ -162,11 +162,15 @@
 
           <div>
             <%= label_tag :refund, t(".refund_amount"), class: "label-rule block" %>
-            <%= number_field_tag :refund, (@review.price_cents - @review.refunded_cents) / 100.0,
-                  min: 0, max: (@review.price_cents - @review.refunded_cents) / 100.0, step: 0.01,
+            <%= number_field_tag :refund, @review.refundable_cents / 100.0,
+                  min: 0, max: @review.refundable_cents / 100.0, step: 0.01,
                   class: "mt-2 block min-h-touch w-full rounded-xs border border-line bg-surface px-3" %>
             <p class="mt-1.5 text-sm text-muted">
-              <%= t(".refund_hint", max: money(@review.price_cents - @review.refunded_cents)) %>
+              <%= t(".refund_hint", max: money(@review.refundable_cents)) %>
+              <% if @review.guaranteed_share_cents.positive? %>
+                <%= t(".guaranteed_hint", share: money(@review.guaranteed_share_cents),
+                      payout: money(@review.guaranteed_payout_cents)) %>
+              <% end %>
             </p>
           </div>
 

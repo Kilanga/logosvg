@@ -43,9 +43,8 @@ class SweepReviewsJob < ApplicationJob
       Review.where(status: "returned_to_client")
             .where(proposal_expires_at: ..Time.current)
             .find_each do |review|
-        Payments::RefundReview.call(review: review, amount_cents: review.price_cents)
-        review.decline_proposal!
-        review.save!
+        # The expiry email states the refund: one message, not two.
+        Reviews::DeclineProposal.call(review: review, notify_client: false)
         ReviewMailer.proposal_expired(review).deliver_later
       end
     end

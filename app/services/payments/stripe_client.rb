@@ -124,6 +124,10 @@ module Payments
         } ],
         customer_email: client_email,
         client_reference_id: client_reference_id,
+        # Card only — Apple Pay and Google Pay ride on it (decided on
+        # 15/10/2026): Klarna, Bancontact, EPS or PayPal confirm days later,
+        # and a review is opened to designers the moment it is paid.
+        payment_method_types: [ "card" ],
         metadata: metadata,
         success_url: success_url,
         cancel_url: cancel_url
@@ -135,11 +139,15 @@ module Payments
     end
 
     # The designer's share, moved to their Connect account.
-    def create_transfer(amount_cents:, destination:, source_transaction: nil, idempotency_key:)
+    # The description and metadata name the review (reported on 15/10/2026: a
+    # bare transfer could not be matched to anything in the dashboard).
+    def create_transfer(amount_cents:, destination:, source_transaction: nil, idempotency_key:,
+                        description: nil, metadata: {})
       request(idempotency_key) do
         @stripe.v1.transfers.create({
           amount: amount_cents, currency: "eur",
-          destination: destination, source_transaction: source_transaction
+          destination: destination, source_transaction: source_transaction,
+          description: description, metadata: metadata.presence
         }.compact, { idempotency_key: idempotency_key })
       end
     end

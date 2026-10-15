@@ -37,6 +37,14 @@
                 class: "btn btn-secondary text-sm",
                 form: { data: { turbo_confirm: t(".decline_confirm") } } %>
         </div>
+        <%# Said before the click (decided on 15/10/2026): once a designer has
+            started, part of the price stays theirs. %>
+        <% if @review.guaranteed_share_cents.positive? %>
+          <p class="mt-3 text-sm text-muted">
+            <%= t(".decline_guaranteed", refund: money(@review.refundable_cents),
+                  share: money(@review.guaranteed_share_cents)) %>
+          </p>
+        <% end %>
 
         <%# Not paying the difference does not have to mean giving up — once
             per review, the client may try someone else instead. %>

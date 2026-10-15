@@ -7,12 +7,16 @@ module Payments
   class SettleReview
     def self.call(...) = new(...).call
 
-    def initialize(review:)
+    # `notify` is false when another email already states the amount — an
+    # administrator's decision, a closed proposal — and two messages about one
+    # payment read as a mistake.
+    def initialize(review:, notify: true)
       @review = review
+      @notify = notify
     end
 
     def call
-      return :not_accepted unless @review.accepted?
+      return :not_accepted unless payable?
       return :already_settled if @review.stripe_transfer_id.present?
       return :nothing_owed unless @review.payout_cents.positive?
 
@@ -21,7 +25,7 @@ module Payments
       return :not_configured unless StripeClient.configured?
 
       transfer(destination)
-      ReviewMailer.paid(@review).deliver_later
+      ReviewMailer.paid(@review).deliver_later if @notify
       :transferred
     rescue StripeClient::NotConfigured
       :not_configured
@@ -33,6 +37,12 @@ module Payments
     end
 
     private
+      # Accepted, or closed after the designer took it on with their guaranteed
+      # share recorded (decided on 15/10/2026).
+      def payable?
+        @review.accepted? || (@review.canceled? && @review.designer_payout_cents.to_i.positive?)
+      end
+
       def transfer(destination)
         client = StripeClient.new
         result = client.create_transfer(
@@ -41,7 +51,11 @@ module Payments
           source_transaction: source_charge(client),
           # Stable for this review: a retried webhook, or an administrator
           # pressing the button twice, must not pay twice.
-          idempotency_key: "transfer-#{@review.token}"
+          idempotency_key: "transfer-#{@review.token}",
+          description: I18n.t("payments.transfer_description", reference: @review.token,
+                              level: ReviewLevel.where(id: @review.review_level_id).pick(:name)),
+          metadata: { review: @review.token, design: Design.where(id: @review.design_id).pick(:token),
+                      outcome: @review.status }
         )
 
         @review.update!(stripe_transfer_id: result.id)

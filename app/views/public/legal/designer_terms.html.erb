@@ -3,6 +3,6 @@
 <%= render layout: "public/legal/frame", locals: { title: t("legal.designer_terms.title") } do %>
   <%= legal_section("status") %>
   <%= legal_section("rights") %>
-  <%= legal_section("payment") %>
+  <%= legal_section("payment", share: guaranteed_share_label) %>
   <%= legal_section("returns") %>
 <% end %>

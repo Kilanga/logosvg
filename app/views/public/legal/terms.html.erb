@@ -5,5 +5,6 @@
   <%= legal_section("account") %>
   <%= legal_section("generation") %>
   <%= legal_section("files") %>
+  <%= legal_section("reviews", auto_accept_days: Rails.application.config.tshirt.reviews[:auto_accept_days], share: guaranteed_share_label) %>
   <%= legal_section("liability") %>
 <% end %>
