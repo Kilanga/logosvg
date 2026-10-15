@@ -115,6 +115,13 @@ class AccountLifecycleTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # B2, decided on 15/10/2026: the emails' open and click measurement is said.
+  test "the privacy policy names Brevo and its email measurement" do
+    get privacy_path
+
+    assert_match(/Brevo.*r\.contact\.pretatirer\.fr/m, response.body)
+  end
+
   test "each one links to the others" do
     get privacy_path
 

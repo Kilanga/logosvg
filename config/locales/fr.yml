@@ -2471,7 +2471,7 @@ fr:
         title: "Pourquoi"
         body:
           - "Faire fonctionner le service : générer un visuel, le transmettre à l'atelier que vous choisissez, suivre votre demande."
-          - "Aucun traceur publicitaire n'est déposé. Les polices sont hébergées par nos soins : votre navigateur ne contacte aucun service tiers pour les charger."
+          - "Aucun traceur publicitaire n'est déposé sur le site. Les polices sont hébergées par nos soins : votre navigateur ne contacte aucun service tiers pour les charger. Seuls les emails comportent une mesure d'ouverture et de clic, décrite plus bas."
           - "Un seul cookie facultatif existe : il retient l'atelier qui vous a envoyé sur le site, et seulement si vous l'acceptez. Le détail est sur la page Cookies."
       recipients:
         title: "Qui reçoit quoi"
@@ -2479,6 +2479,7 @@ fr:
           - "L'atelier que vous choisissez reçoit votre demande, vos coordonnées et le fichier d'impression — uniquement après que vous ayez explicitement accepté cette transmission."
           - "Le moteur de génération reçoit votre description et un identifiant pseudonymisé calculé à partir de votre compte. Il n'apprend jamais qui vous êtes. Il s'exécute en France, sur une machine dédiée à la génération d'images, distincte du serveur qui héberge le site."
           - "Stripe traite les paiements et reçoit les informations nécessaires à ce titre."
+          - "Les emails du service (confirmation d'adresse, demandes d'impression, suivi) sont envoyés par Brevo (Sendinblue SAS, Paris), qui reçoit pour cela votre adresse email et le contenu du message. Brevo mesure l'ouverture de chaque email, par une image invisible, et les clics sur ses liens, qui passent par une adresse de redirection (r.contact.pretatirer.fr) avant d'arriver sur le site. Ces mesures servent à vérifier que les emails arrivent bien ; elles ne servent à aucune publicité et ne sont pas croisées avec d'autres données. Pour les éviter, n'affichez pas les images de l'email et recopiez l'adresse du site plutôt que de cliquer."
       retention:
         title: "Combien de temps"
         body:
