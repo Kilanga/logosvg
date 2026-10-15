@@ -16,11 +16,16 @@
             <dt class="text-muted"><%= t(".proposed_level") %></dt>
             <dd class="font-medium"><%= @review.proposed_level&.name %></dd>
           </div>
+          <% custom = @review.proposed_level&.quoted? %>
           <div class="flex justify-between gap-4">
-            <dt class="text-muted"><%= t(".difference") %></dt>
-            <dd class="font-display font-bold <%= @review.proposal_difference_cents.positive? ? 'text-warning' : 'text-success' %>">
-              <%= signed_money(@review.proposal_difference_cents) %>
-            </dd>
+            <dt class="text-muted"><%= t(custom ? ".custom_price" : ".difference") %></dt>
+            <% if custom %>
+              <dd class="font-medium"><%= t(".custom_quoted") %></dd>
+            <% else %>
+              <dd class="font-display font-bold <%= @review.proposal_difference_cents.positive? ? 'text-warning' : 'text-success' %>">
+                <%= signed_money(@review.proposal_difference_cents) %>
+              </dd>
+            <% end %>
           </div>
           <div class="flex justify-between gap-4">
             <dt class="text-muted"><%= t(".answer_before") %></dt>
@@ -28,10 +33,20 @@
           </div>
         </dl>
 
+        <%# A custom job is quoted and paid with the designer, outside the
+            site: said before the client accepts (reported on 15/10/2026). %>
+        <% if custom %>
+          <p class="mt-4 text-sm text-muted"><%= t(".custom_explained", amount: money(@review.price_cents)) %></p>
+        <% end %>
+
         <div class="mt-5 flex flex-wrap gap-3">
           <%= button_to accept_review_proposal_path(@review), class: "btn btn-primary text-sm",
                 form: { data: { turbo: false } } do %>
-            <%= @review.proposal_difference_cents.positive? ? t(".accept_and_pay") : t(".accept_and_refund") %>
+            <% if custom %>
+              <%= t(".accept_custom") %>
+            <% else %>
+              <%= @review.proposal_difference_cents.positive? ? t(".accept_and_pay") : t(".accept_and_refund") %>
+            <% end %>
           <% end %>
           <%= button_to t(".decline"), decline_review_proposal_path(@review),
                 class: "btn btn-secondary text-sm",
@@ -236,7 +251,7 @@
           </div>
           <div class="flex justify-between gap-4">
             <dt class="text-muted"><%= t(".paid") %></dt>
-            <dd class="font-medium"><%= t("reviews.price_ttc", amount: money(@review.price_cents)) %></dd>
+            <dd class="font-medium"><%= t("reviews.price_ttc", amount: money(@review.paid_cents)) %></dd>
           </div>
           <% if @review.refunded_cents.positive? %>
             <div class="flex justify-between gap-4">

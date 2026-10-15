@@ -10,7 +10,7 @@
             class: "underline-offset-4 hover:underline" %>
     </p>
     <p class="mt-0.5 text-sm text-muted">
-      <%= money(review.designer_share_cents) %>
+      <%= money(designer_earnings_cents(review)) %>
       · <%= review.design.technique_label %>
       <% if review.design.vector? && review.design.inks_count %>
         · <%= t("client.designs.design.screens", count: review.design.inks_count) %>

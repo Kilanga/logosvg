@@ -79,7 +79,7 @@ module Client
       return redirect_to review_path(@review), alert: t(".message_required") if body.blank?
 
       Review.transaction do
-        @review.messages.create!(author: Current.user, body: body)
+        @review.messages.create!(author: Current.user, body: body, kind: "revision")
         @review.request_revision!
         @review.due_at = Time.current + @review.review_level.turnaround_hours.hours
         @review.save!
@@ -302,7 +302,11 @@ module Client
         owed = -@review.proposal_difference_cents
         return unless owed.positive?
 
-        Payments::RefundReview.call(review: @review, amount_cents: owed)
+        # Counted apart: this comes back because the price goes down, not as a
+        # refund against it (see Review#refunded_against_price_cents).
+        return unless Payments::RefundReview.call(review: @review, amount_cents: owed) == :refunded
+
+        @review.update!(price_change_refunded_cents: @review.price_change_refunded_cents + owed)
       end
 
       def refresh_designer_rating

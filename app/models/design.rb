@@ -185,7 +185,7 @@ class Design < ApplicationRecord
   # the client asked at each step. One query over the lineage, walked here.
   def conversation
     rows = Design.where(id: lineage_root_id).or(Design.where(root_id: lineage_root_id))
-                 .select(:id, :parent_id, :token, :prompt, :instruction, :created_at).index_by(&:id)
+                 .select(:id, :parent_id, :token, :prompt, :instruction, :mode, :created_at).index_by(&:id)
     path = []
     current = rows[id] || self
     while current

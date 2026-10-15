@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_175356) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_180744) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -310,10 +310,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_175356) do
     t.datetime "read_at"
     t.bigint "review_id", null: false
     t.datetime "updated_at", null: false
+    t.string "kind", default: "message", null: false
     t.index ["author_id"], name: "index_review_messages_on_author_id"
     t.index ["review_id", "created_at"], name: "index_review_messages_on_review_id_and_created_at"
     t.index ["review_id", "read_at"], name: "index_review_messages_on_review_id_and_read_at"
     t.index ["review_id"], name: "index_review_messages_on_review_id"
+    t.check_constraint "kind::text = ANY (ARRAY['message'::character varying, 'revision'::character varying, 'dispute'::character varying, 'fix'::character varying]::text[])", name: "review_messages_kind_known"
   end
 
   create_table "review_versions", force: :cascade do |t|
@@ -377,6 +379,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_175356) do
     t.integer "designer_payout_cents"
     t.datetime "queued_at"
     t.datetime "claimed_at"
+    t.integer "price_change_refunded_cents", default: 0, null: false
     t.index ["client_id", "created_at"], name: "index_reviews_on_client_id_and_created_at"
     t.index ["client_id"], name: "index_reviews_on_client_id"
     t.index ["design_id"], name: "index_reviews_on_design_id"
@@ -392,6 +395,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_175356) do
     t.index ["stripe_checkout_session_id"], name: "index_reviews_on_stripe_checkout_session_id", unique: true
     t.index ["stripe_payment_intent_id"], name: "index_reviews_on_stripe_payment_intent_id"
     t.index ["token"], name: "index_reviews_on_token", unique: true
+    t.check_constraint "price_change_refunded_cents >= 0", name: "reviews_price_change_refunded_positive"
   end
 
   create_table "sessions", force: :cascade do |t|

@@ -106,6 +106,13 @@
             <dt class="label-rule"><%= t(".origin") %></dt>
             <dd class="mt-0.5"><%= t(@design.ai_declared? ? ".origin_upload_ai" : ".origin_upload") %></dd>
           </div>
+        <%# Finished by a person: the AI's style no longer describes it
+            (reported on 15/10/2026). %>
+        <% elsif @design.reviewed? %>
+          <div>
+            <dt class="label-rule"><%= t(".origin") %></dt>
+            <dd class="mt-0.5"><%= t(".origin_reviewed") %></dd>
+          </div>
         <% else %>
           <div>
             <dt class="label-rule"><%= t("activerecord.attributes.design.style") %></dt>

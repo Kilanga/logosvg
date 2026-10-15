@@ -92,6 +92,9 @@ Rails.application.routes.draw do
        as: :design_reviews
 
   get  "verifications/:token", to: "client/reviews#show", as: :review
+  # Une version livrée, filigranée : le client la voit avant de répondre.
+  get  "verifications/:token/versions/:number/apercu", to: "review_version_previews#show",
+       as: :review_version_image
   post "verifications/:token/valider",   to: "client/reviews#accept",   as: :accept_review
   post "verifications/:token/retour",    to: "client/reviews#revision", as: :revision_review
   post "verifications/:token/proposition/accepter", to: "client/reviews#accept_proposal",
@@ -210,6 +213,11 @@ Rails.application.routes.draw do
   # La file du graphiste et ce qu'il y fait.
   get  "studio/revues",        to: "designer/reviews#index", as: :designer_reviews
   get  "studio/revues/:token", to: "designer/reviews#show",  as: :designer_review
+  # Les fichiers du travail : le design de départ et les versions livrées.
+  get  "studio/revues/:token/fichier-origine", to: "designer/reviews#source_file",
+       as: :designer_review_source_file
+  get  "studio/revues/:token/versions/:number/fichier", to: "designer/reviews#version_file",
+       as: :designer_review_version_file
   post "studio/revues/:token/prendre",   to: "designer/reviews#claim",    as: :claim_designer_review
   post "studio/revues/:token/versions",  to: "designer/reviews#deliver",  as: :deliver_designer_review
   post "studio/revues/:token/renvoyer",  to: "designer/reviews#return_to_client",

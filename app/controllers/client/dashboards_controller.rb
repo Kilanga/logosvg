@@ -16,7 +16,9 @@ module Client
       @lapsed_workshop = Printer.find_by(id: Current.user.workshop_id) if @workshop.nil? && Current.user.workshop_id
       @pending_affiliation = ClientAffiliation.pending.includes(:printer).find_by(client_id: Current.user.id)
       @workshop_until = Current.user.workshop_until if @workshop
-      @workshop_suspended = @workshop && Current.user.workshop_period_suspended?
+      # Said while a review is open, not only once the date has passed
+      # (reported on 15/10/2026): the date shown is not the one that counts.
+      @workshop_suspended = @workshop && Current.user.reviewing_for_workshop?
     end
   end
 end

@@ -30,6 +30,27 @@ module Designer
       mark_client_messages_read
     end
 
+    # G1, reported on 15/10/2026: the designer worked from the watermarked
+    # preview. The print file itself, and the image the model drew when there
+    # is one (`?image=source`), for the designer who took the review on.
+    def source_file
+      authorize @review, :download_files?
+
+      design = @review.design
+      attachment = params[:image] == "source" ? design.source_png : design.print_file
+      return head :not_found unless attachment.attached?
+
+      send_blob attachment, "#{design.token}#{"-source" if params[:image] == "source"}"
+    end
+
+    # What the designer delivered, as delivered.
+    def version_file
+      authorize @review, :download_files?
+
+      version = @review.versions.with_attached_file.find_by!(number: params[:number])
+      send_blob version.file, "#{@review.token}-version-#{version.number}"
+    end
+
     def claim
       authorize @review
 
@@ -114,8 +135,14 @@ module Designer
       # already reads without ever having declared: the design and its level.
       # `strict_loading` had no test on this exact page to catch the gap before.
       def set_review
-        @review = policy_scope(Review).includes(:client, :review_level, design: :print_file_attachment)
+        @review = policy_scope(Review).includes(:client, :review_level,
+                                                design: { print_file_attachment: :blob, source_png_attachment: :blob })
                                       .find_by!(token: params[:token])
+      end
+
+      def send_blob(attachment, name)
+        send_data attachment.download, type: attachment.content_type, disposition: "attachment",
+                                       filename: "#{name}.#{attachment.filename.extension}"
       end
 
       def mark_client_messages_read

@@ -131,6 +131,18 @@ class ReviewMailer < ApplicationMailer
     mail to: review.designer_profile.user.email_address, subject: t("mailers.review.proposal_declined.subject")
   end
 
+  # A message in the conversation, to the side that did not write it (G3,
+  # decided on 15/10/2026). One per unread run: see ReviewMessage.
+  def new_message(review_message)
+    @message = ReviewMessage.includes(:author).find(review_message.id)
+    review = @review = reload(@message.review_id)
+    @to_designer = @message.author_id == review.client_id
+    to = @to_designer ? review.designer_profile&.user&.email_address : review.client.email_address
+    return message.perform_deliveries = false if to.blank?
+
+    mail to: to, subject: t("mailers.review.new_message.subject", name: @message.author.first_name)
+  end
+
   # --- Disputes (decided on 08/10/2026) -------------------------------------
 
   # The client says the delivery is not right. The designer is told, and the
@@ -174,7 +186,8 @@ class ReviewMailer < ApplicationMailer
     # Reloaded with everything an email reads: a mailer job gets a bare record,
     # and development refuses to walk to an association nobody preloaded.
     def reload(review)
-      Review.includes(:client, :design, :review_level, :proposed_level, designer_profile: :user).find(review.id)
+      Review.includes(:client, :design, :review_level, :proposed_level, designer_profile: :user)
+            .find(review.is_a?(Review) ? review.id : review)
     end
 
     # Decided on 09/10/2026: the workshop the design was made for is copied on

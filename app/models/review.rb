@@ -253,7 +253,7 @@ class Review < ApplicationRecord
   # The designer's share of what the platform keeps after a partial refund:
   # the commission applies to what is paid, at the review's own rate.
   def payout_after_refund(refund_cents)
-    kept = [ price_cents - refunded_cents - refund_cents, 0 ].max
+    kept = [ price_cents - refunded_against_price_cents - refund_cents, 0 ].max
     return 0 if price_cents.zero?
 
     kept - (kept * platform_fee_cents / price_cents.to_f).round
@@ -326,7 +326,14 @@ class Review < ApplicationRecord
   end
 
   # What may still go back to the client.
-  def refundable_cents = [ price_cents - refunded_cents - guaranteed_share_cents, 0 ].max
+  def refundable_cents = [ price_cents - refunded_against_price_cents - guaranteed_share_cents, 0 ].max
+
+  # What was refunded out of the current price — not what came back when the
+  # price itself went down (a cheaper level, a custom job quoted outside).
+  def refunded_against_price_cents = refunded_cents - price_change_refunded_cents
+
+  # What the client paid here in all, whatever the level became since.
+  def paid_cents = price_cents + price_change_refunded_cents
 
   # What the designer is owed once everything refundable has gone back.
   def guaranteed_payout_cents = payout_after_refund(refundable_cents)

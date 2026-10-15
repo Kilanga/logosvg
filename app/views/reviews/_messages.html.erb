@@ -14,6 +14,13 @@
               <%= mine ? t("reviews.you") : message.author.first_name %>
               · <%= l(message.created_at, format: :short) %>
             </p>
+            <%# A request for another go, a dispute, a free fix: said as such,
+                not mistaken for small talk (reported on 15/10/2026). %>
+            <% unless message.plain? %>
+              <p class="pill mt-1.5 <%= message.kind == "dispute" ? "pill-warning" : "border border-line text-muted" %>">
+                <%= t("reviews.message_kinds.#{message.kind}") %>
+              </p>
+            <% end %>
             <p class="mt-1 whitespace-pre-line text-sm"><%= message.body %></p>
           </div>
         </li>

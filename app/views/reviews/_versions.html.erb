@@ -13,6 +13,23 @@
           </time>
         </div>
 
+        <%# What was delivered, seen before anyone answers it (reported on
+            15/10/2026, blocking: only the message and the size were shown). %>
+        <div class="screen-tint border-b border-line p-4">
+          <%= image_tag review_version_image_path(version.review, number: version.number),
+                alt: t("reviews.version_preview", number: version.number), loading: "lazy",
+                class: "mx-auto max-h-96 w-auto max-w-full object-contain" %>
+        </div>
+        <% if local_assigns[:downloads] %>
+          <p class="border-b border-line px-4 py-3 text-sm">
+            <%= link_to t("reviews.download_version", file_format: version.file.filename.extension.upcase),
+                  designer_review_version_file_path(version.review, number: version.number),
+                  class: "underline underline-offset-4 hover:text-emulsion" %>
+          </p>
+        <% else %>
+          <p class="border-b border-line px-4 py-2 text-xs text-muted"><%= t("reviews.version_preview_hint") %></p>
+        <% end %>
+
         <% if version.message.present? %>
           <p class="border-b border-line px-4 py-3 whitespace-pre-line"><%= version.message %></p>
         <% end %>

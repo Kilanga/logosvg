@@ -70,6 +70,21 @@ module Reviews
       assert_predicate reviews(:silent).reload, :in_progress?
     end
 
+    # G15, reported on 15/10/2026: checked for a custom job, where the client
+    # is the one to be contacted.
+    test "a custom job taken on tells the client, and gives the designer their details" do
+      review = reviews(:queued)
+      review.update_columns(review_level_id: review_levels(:custom).id, price_cents: 0, platform_fee_cents: 0)
+      designer_profiles(:ines).review_levels << review_levels(:custom) unless designer_profiles(:ines).review_levels.include?(review_levels(:custom))
+
+      assert_emails 2 do
+        Claim.call(review: review.reload, profile: designer_profiles(:ines))
+        perform_enqueued_jobs
+      end
+
+      assert(ActionMailer::Base.deliveries.any? { |mail| mail.to == [ users(:client).email_address ] })
+    end
+
     test "the client is told when someone takes it" do
       assert_emails 1 do
         Claim.call(review: reviews(:queued), profile: designer_profiles(:ines))

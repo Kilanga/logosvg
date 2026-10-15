@@ -393,13 +393,13 @@ class ReviewsTest < ActionDispatch::IntegrationTest
 
     post return_designer_review_path(reviews(:in_progress)), params: {
       reason: "level_too_low", message: "Il faut tout redessiner.",
-      proposed_level_id: review_levels(:retouch).id
+      proposed_level_id: review_levels(:custom).id
     }
 
     review = reviews(:in_progress).reload
 
     assert_predicate review, :returned_to_client?
-    assert_equal review_levels(:retouch), review.proposed_level
+    assert_equal review_levels(:custom), review.proposed_level
   end
 
   # --- Custom work, arranged outside the platform (decided 06/10/2026) -----
@@ -529,6 +529,102 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_equal review_levels(:retouch), review.review_level
     assert_equal 4900, review.price_cents
     assert_equal 0, review.revisions_used
+  end
+
+  # --- Seeing the work (recette du 15/10/2026) -------------------------------
+
+  # G5, blocking: the client was asked to answer a file they had never seen.
+  test "the client sees a watermarked preview of every version, never the file" do
+    review = reviews(:delivered)
+    review.versions.create!(message: "v1", file: { io: StringIO.new(svg), filename: "v1.svg",
+                                                   content_type: "image/svg+xml" })
+    sign_in_as users(:client)
+
+    get review_path(review)
+    assert_select "img[src=?]", review_version_image_path(review, number: 1)
+    assert_select "a[href=?]", designer_review_version_file_path(review, number: 1), count: 0
+
+    get review_version_image_path(review, number: 1)
+    assert_response :success
+    assert_equal "image/png", response.media_type
+
+    get designer_review_version_file_path(review, number: 1)
+    assert_response :redirect
+  end
+
+  test "nobody outside the review sees its versions" do
+    review = reviews(:delivered)
+    review.versions.create!(message: "v1", file: { io: StringIO.new(svg), filename: "v1.svg",
+                                                   content_type: "image/svg+xml" })
+    sign_in_as users(:designer_maya)
+
+    get review_version_image_path(review, number: 1)
+    assert_response :redirect
+  end
+
+  # G1: the designer worked from the watermarked preview.
+  test "the designer who took it on downloads the design's file and their versions" do
+    review = reviews(:in_progress_vector)
+    review.design.print_file.attach(io: StringIO.new(svg), filename: "design.svg", content_type: "image/svg+xml")
+    review.versions.create!(message: "v1", file: { io: StringIO.new(svg), filename: "v1.svg",
+                                                   content_type: "image/svg+xml" })
+    sign_in_as users(:designer)
+
+    get designer_review_path(review)
+    assert_select "a[href=?]", designer_review_source_file_path(review)
+    assert_select "a[href=?]", designer_review_version_file_path(review, number: 1)
+
+    get designer_review_source_file_path(review)
+    assert_response :success
+    assert_equal svg, response.body
+    assert_match(/attachment/, response.headers["Content-Disposition"])
+  end
+
+  test "a designer reads a queued review before taking it, without its files" do
+    sign_in_as users(:designer)
+
+    get designer_review_path(reviews(:queued))
+    assert_response :success
+    assert_select "form[action=?]", claim_designer_review_path(reviews(:queued))
+
+    get designer_review_source_file_path(reviews(:queued))
+    assert_response :redirect
+  end
+
+  # G7: a request for another go read like small talk.
+  test "a request for another go is marked as such in the conversation" do
+    review = reviews(:delivered)
+    review.versions.create!(message: "v1", file: { io: StringIO.new(svg), filename: "v1.svg",
+                                                   content_type: "image/svg+xml" })
+    sign_in_as users(:client)
+
+    post revision_review_path(review), params: { body: "Le texte est trop petit." }
+    get review_path(review)
+
+    assert_select ".pill", text: I18n.t("reviews.message_kinds.revision")
+  end
+
+  # G3, decided on 15/10/2026: one email per unread run.
+  test "a message tells the other side once, until they come back to read" do
+    review = reviews(:in_progress)
+    sign_in_as users(:client)
+
+    assert_emails 1 do
+      post review_messages_path(review), params: { body: "Une question sur les couleurs." }
+      post review_messages_path(review), params: { body: "Et une autre." }
+      perform_enqueued_jobs
+    end
+
+    sign_out
+    sign_in_as users(:designer)
+    get designer_review_path(review)
+    sign_out
+    sign_in_as users(:client)
+
+    assert_emails 1 do
+      post review_messages_path(review), params: { body: "Une dernière." }
+      perform_enqueued_jobs
+    end
   end
 
   private

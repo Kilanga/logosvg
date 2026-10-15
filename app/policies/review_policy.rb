@@ -1,7 +1,9 @@
 # A review has two sides and an onlooker: the client who paid, the designer who
 # does the work, and an administrator settling a dispute.
 class ReviewPolicy < ApplicationPolicy
-  def show? = client? || designer? || user&.admin?
+  # A designer who could take a queued review reads it before claiming
+  # (reported on 15/10/2026: the card's link led nowhere).
+  def show? = client? || designer? || user&.admin? || open_to_designer?
 
   # Each of the three has a list of their own; the scope is what tells them
   # apart. The administration's is a different scope, not a different rule.
@@ -43,6 +45,11 @@ class ReviewPolicy < ApplicationPolicy
   def claim? = designer_user? && record.claimable_by?(user.read_association(:designer_profile))
 
   def deliver? = designer? && record.may_deliver?
+
+  # The files themselves — the design to work from, and the versions handed
+  # back — go to the designer who took the review on, and to nobody else: a
+  # client only ever sees watermarked previews.
+  def download_files? = designer? && record.claimed_at.present?
 
   def return_to_client? = designer? && record.may_return_to_client?
 
@@ -108,6 +115,8 @@ class ReviewPolicy < ApplicationPolicy
     def designer_user? = user&.designer? && designer_profile.present?
 
     def designer? = designer_user? && record.designer_profile_id == designer_profile.id
+
+    def open_to_designer? = designer_user? && record.claimable_by?(designer_profile)
 
     def owns_design? = record.design&.user_id == user&.id
 end

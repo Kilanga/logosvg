@@ -570,6 +570,13 @@ fr:
     version: "Version %{number}"
     no_version: "Aucune version déposée pour l'instant."
     conversation: "Échanges"
+    message_kinds:
+      revision: "Retour demandé"
+      dispute: "Signalement"
+      fix: "Correction proposée"
+    version_preview: "Aperçu de la version %{number}"
+    version_preview_hint: "Aperçu filigrané : le fichier lui-même part à l'atelier une fois la version validée."
+    download_version: "Télécharger le fichier (%{file_format})"
     no_message: "Aucun message pour l'instant."
     write: "Écrire un message"
     write_placeholder: "Une précision, une question…"
@@ -611,6 +618,7 @@ fr:
       message_required: "Un message est obligatoire."
       already_returned: "Cette vérification a déjà été renvoyée une fois."
       proposal_required: "Indiquez le niveau ou le prix que vous proposez."
+      proposal_direction: "Le niveau proposé doit aller dans le sens du motif : plus élevé (ou sur mesure) si l'option payée ne suffit pas, moins élevé si elle dépasse le besoin."
       designer_required: "Choisissez un graphiste."
       already_refused: "Ce graphiste a déjà renvoyé cette vérification."
       reassignment_closed: "Vous avez déjà changé de graphiste pour cette vérification."
@@ -1045,6 +1053,14 @@ fr:
         heading: "Faute de réponse, nous avons annulé votre vérification"
         body: "%{amount} vous sont remboursés. Votre design, lui, est intact."
         action: "Revoir mon design"
+      new_message:
+        subject: "%{name} vous a écrit"
+        eyebrow: "Nouveau message"
+        heading: "%{name} vous a écrit au sujet de la vérification"
+        action: "Lire et répondre"
+        footer: >-
+          Vous ne recevrez pas d'autre email pour les messages suivants tant que
+          vous n'aurez pas ouvert la vérification.
       proposal_declined:
         subject: "La demande que vous avez renvoyée est close"
         eyebrow: "Proposition refusée"
@@ -1207,7 +1223,7 @@ fr:
         until: "Jusqu'au %{date}."
         suspended: >-
           Délai suspendu pendant la vérification de votre visuel par un
-          graphiste. Il repart pour 30 jours dès que le graphiste livre.
+          graphiste : il repart pour %{days} jours dès que le graphiste livre.
         ending_soon: >-
           Votre rattachement se termine le %{date}. Il repart pour 30 jours
           quand l'atelier confirme l'une de vos demandes d'impression : c'est
@@ -1356,6 +1372,13 @@ fr:
         answer_before: "À répondre avant le"
         accept_and_pay: "Accepter et payer la différence"
         accept_and_refund: "Accepter, la différence vous est remboursée"
+        accept_custom: "Accepter la création sur mesure"
+        custom_price: "Prix"
+        custom_quoted: "Sur devis, avec le graphiste"
+        custom_explained: >-
+          Une création sur mesure se chiffre et se paie directement avec le
+          graphiste, hors du site. En acceptant, les %{amount} payés ici vous
+          sont remboursés et le graphiste vous contacte pour son devis.
         decline: "Refuser et être remboursé"
         decline_confirm: "Refuser cette proposition et être remboursé ?"
         decline_guaranteed: >-
@@ -1424,6 +1447,7 @@ fr:
     designs:
       conversation:
         label: "Vos demandes de retouche"
+        reviewed: "La vérification par un graphiste"
         first: "Votre idée"
         you: "Votre demande"
         variants: "D'autres versions, s'il vous plaît."
@@ -1517,6 +1541,7 @@ fr:
         origin: "Origine"
         origin_upload: "Votre visuel, déposé tel quel"
         origin_upload_ai: "Votre visuel, déposé tel quel (créé par IA)"
+        origin_reviewed: "Repris et finalisé par un graphiste"
         proposals_hint: >-
           L'IA a dessiné trois versions de votre idée, chacune avec son parti
           pris. Choisissez-en une, puis modifiez-la ou envoyez-la à un atelier
@@ -2385,6 +2410,9 @@ fr:
         the_design: "Le design"
         contact: "Contact"
         no_phone: "Aucun numéro renseigné"
+        download_print_file: "Télécharger le fichier d'impression (%{file_format})"
+        download_source: "Télécharger l'image d'origine (PNG)"
+        download_hint: "Les fichiers eux-mêmes, sans filigrane : travaillez à partir d'eux."
         what_you_earn: "Ce que vous touchez"
         earn_hint: "Prix payé %{price}, commission plateforme %{fee}."
         off_platform_earn_hint: >-
@@ -2944,6 +2972,7 @@ fr:
     watermark: "Créé avec %{name}"
     watermark_ai: "Image générée par IA"
     ai_label: "Généré par IA"
+    ai_label_reviewed: "Généré par IA, repris par un graphiste"
     ai_label_hint: >-
       Ce visuel a été dessiné par une intelligence artificielle. Les fichiers
       transmis à l'atelier le signalent dans leurs métadonnées.

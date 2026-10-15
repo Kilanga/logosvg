@@ -5,14 +5,14 @@ module Reviews
   # three end it there and then, refunded.
   class ReturnToClientTest < ActiveSupport::TestCase
     test "a level that is too low comes back with a proposal and a deadline" do
-      result = call(reason: "level_too_low", proposed_level: review_levels(:retouch))
+      result = call(reason: "level_too_low", proposed_level: review_levels(:custom))
 
       assert_predicate result, :success?
 
       review = reviews(:in_progress).reload
 
       assert_predicate review, :returned_to_client?
-      assert_equal review_levels(:retouch), review.proposed_level
+      assert_equal review_levels(:custom), review.proposed_level
       assert_predicate review, :proposal_open?
       assert_in_delta 72.hours.from_now, review.proposal_expires_at, 1.minute
     end
@@ -20,7 +20,7 @@ module Reviews
     # The reassignment cap counts proposing returns only — see
     # Review::MAX_DESIGNER_REFUSALS.
     test "a proposal counts as a refusal and excludes that designer from the next pick" do
-      call(reason: "level_too_low", proposed_level: review_levels(:retouch))
+      call(reason: "level_too_low", proposed_level: review_levels(:custom))
 
       review = reviews(:in_progress).reload
 
@@ -113,9 +113,19 @@ module Reviews
       assert_not_predicate result, :success?
     end
 
+    # G11, reported on 15/10/2026: the level already paid went through.
+    test "the proposed level has to go the way the reason says" do
+      result = call(reason: "level_too_low", proposed_level: review_levels(:retouch))
+      assert_not_predicate result, :success?
+      assert_equal I18n.t("reviews.errors.proposal_direction"), result.error
+
+      result = call(reason: "level_too_high", proposed_level: review_levels(:custom))
+      assert_not_predicate result, :success?
+    end
+
     test "the client is told either way" do
       assert_emails 1 do
-        call(reason: "level_too_low", proposed_level: review_levels(:retouch))
+        call(reason: "level_too_low", proposed_level: review_levels(:custom))
         perform_enqueued_jobs
       end
     end
