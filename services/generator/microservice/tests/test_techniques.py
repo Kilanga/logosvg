@@ -323,9 +323,26 @@ def test_le_prompt_demande_le_dessin_seul_et_le_texte_a_la_lettre():
 
     prompt = build_prompt('a village party with the text "FÊTE 2026"', "illustration", 3, "screen_printing")
     assert '"FÊTE 2026"' in prompt
-    assert "letter for letter" in prompt
+    assert "spelled exactly like that" in prompt
     assert "do not draw the t-shirt" in prompt
     assert "exactly 3 flat colors" in prompt
+
+
+def test_sans_guillemets_aucun_texte():
+    from app.prompt_builder import build_prompt
+
+    assert "Do not write any text" in build_prompt("a fox", "mascotte", 3, "screen_printing")
+
+
+# Recette du 14/10/2026 : « style aquarelle » devenait « Vintage illustration
+# look » sur la deuxième proposition.
+def test_un_style_demande_n_est_pas_remplace_par_les_registres():
+    from app.prompt_builder import build_prompt, flavour_count
+
+    prompts = [build_prompt("two otters under a rainbow, watercolor style", "illustration", 3, "dtf", i)
+               for i in range(flavour_count())]
+    assert len(set(prompts)) == 3
+    assert not any("Vintage" in p or "Vibrant modern" in p for p in prompts)
 
 
 def test_les_trois_propositions_ont_des_registres_differents():

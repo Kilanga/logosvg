@@ -88,8 +88,17 @@ class Settings:
     # retouche s'écarte de l'image de départ (0 = identique, 1 = image nouvelle).
     max_refinements: int = _int("MAX_REFINEMENTS", 3)
     refine_denoise: float = _float("REFINE_DENOISE", 0.55)
+    # Une demande qui déplace, agrandit, ajoute ou retire quelque chose : 0,55
+    # gardait la mise en page, et la retouche restait sans effet (recette du
+    # 14/10/2026). 0,75 garde le sujet et les couleurs, pas la disposition.
+    refine_denoise_layout: float = _float("REFINE_DENOISE_LAYOUT", 0.75)
 
-    rate_limit_count: int = _int("RATE_LIMIT_COUNT", 5)
+    # Un garde-fou technique, pas le quota du client : le site compte déjà les
+    # créations du jour (5 par client) et les reprises (3 par design). À 5 par
+    # heure, deux idées retouchées suffisaient à bloquer un client qui n'avait
+    # pas atteint son quota, un dépôt « gratuit » comptait, et un atelier
+    # Atelier+ « illimité » était arrêté à la sixième (recette du 14/10/2026).
+    rate_limit_count: int = _int("RATE_LIMIT_COUNT", 30)
     rate_limit_window: int = _int("RATE_LIMIT_WINDOW_SECONDS", 3600)
     max_queue: int = _int("MAX_QUEUE", 10)
     blocklist_file: Path = Path(os.getenv("BLOCKLIST_FILE", "blocklist.txt"))
