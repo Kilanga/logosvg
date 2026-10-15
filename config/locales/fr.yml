@@ -675,6 +675,16 @@ fr:
       completed: "Votre commande est terminée."
       canceled: "Vous avez annulé cette demande. L'atelier ne la traitera pas."
       expired: "L'atelier n'a pas répondu dans les délais. Votre design est intact : choisissez un autre atelier."
+    # Read by the workshop, on the confirmation page its email leads to
+    # (reported on 14/10/2026: it said « Vous avez annulé » to the workshop).
+    workshop_status_body:
+      sent: "Cette demande attend votre confirmation de réception."
+      acknowledged: "Vous avez déjà confirmé la réception de cette demande."
+      quoted: "Vous avez envoyé votre devis pour cette demande."
+      in_production: "Cette commande est en cours d'impression chez vous."
+      completed: "Cette commande est terminée."
+      canceled: "Le client a annulé cette demande : il n'y a plus rien à confirmer ni à préparer."
+      expired: "Cette demande a expiré faute de réponse dans les délais : le client a été invité à choisir un autre atelier."
 
   sessions:
     new:
@@ -884,6 +894,14 @@ fr:
           other: "%{client} attend une réponse pour %{count} exemplaires. Sans confirmation sous %{days} jours, la demande expire et le client est invité à choisir un autre atelier."
         confirm: "Confirmer la réception"
         files_again: "Les fichiers sont joints à nouveau, au cas où le premier email se serait perdu."
+      canceled_to_printer:
+        subject: "Demande annulée par le client — %{reference}"
+        eyebrow: "Demande %{reference}"
+        heading: "%{client} a annulé sa demande"
+        body: >-
+          %{client} a annulé cette demande d'impression avant votre devis. Rien
+          à préparer : vous pouvez classer les fichiers reçus avec la demande.
+        reply_to: "Une question ? Répondez à cet email pour écrire au client (%{email})."
       expired:
         subject: "Pas de réponse de %{printer}"
         heading: "%{printer} n'a pas répondu"

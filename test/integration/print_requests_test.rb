@@ -110,6 +110,24 @@ class PrintRequestsTest < ActionDispatch::IntegrationTest
     assert_predicate print_requests(:waiting).reload, :canceled?
   end
 
+  # C8, decided on 15/10/2026: the workshop is told by email.
+  test "a cancelled request is announced to the workshop, and its page says who cancelled" do
+    request = print_requests(:waiting)
+    sign_in_as users(:client)
+
+    assert_enqueued_email_with PrintRequestMailer, :canceled_to_printer, args: [ request ] do
+      post cancel_print_request_path(request)
+    end
+
+    mail = PrintRequestMailer.canceled_to_printer(request.reload)
+    assert_equal [ request.printer.orders_email ], mail.to
+    assert_equal [ request.contact_email ], mail.reply_to
+
+    sign_out
+    get print_request_confirmation_path(request.confirmation_token)
+    assert_select "p", text: I18n.t("print_requests.workshop_status_body.canceled")
+  end
+
   # --- The workshop's confirmation page ------------------------------------
 
   # Mail scanners follow links on their own: opening the page must change

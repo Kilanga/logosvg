@@ -45,6 +45,17 @@ class PrintRequestMailer < ApplicationMailer
                     reference: print_request.token.first(8).upcase)
   end
 
+  # The client called it off (C8, decided on 15/10/2026): the workshop learns it
+  # by email, not by opening the request — it may already be quoting it.
+  def canceled_to_printer(print_request)
+    print_request = @print_request = reload(print_request)
+
+    mail to: print_request.printer.orders_email,
+         reply_to: print_request.contact_email,
+         subject: t("mailers.print_request.canceled_to_printer.subject",
+                    reference: print_request.token.first(8).upcase)
+  end
+
   def expired(print_request)
     print_request = @print_request = reload(print_request)
 
