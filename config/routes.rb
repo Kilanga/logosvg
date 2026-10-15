@@ -170,6 +170,16 @@ Rails.application.routes.draw do
   get "atelier/fiches",            to: redirect("/atelier/lien")
   get "atelier/aide/fiche-client", to: redirect("/atelier/lien")
 
+  # Le convertisseur de l'atelier : une image à lui, mise au format de sa
+  # machine, et le fichier d'impression rendu tel quel. Demandé le 15/10/2026.
+  get    "atelier/convertir",               to: "workshop/conversions#index",    as: :workshop_conversions
+  get    "atelier/convertir/nouveau",       to: "workshop/conversions#new",      as: :new_workshop_conversion
+  post   "atelier/convertir",               to: "workshop/conversions#create"
+  get    "atelier/convertir/:token",        to: "workshop/conversions#show",     as: :workshop_conversion
+  delete "atelier/convertir/:token",        to: "workshop/conversions#destroy"
+  get    "atelier/convertir/:token/fichier", to: "workshop/conversions#download", as: :workshop_conversion_file
+  get    "atelier/convertir/:token/original", to: "workshop/conversions#original", as: :workshop_conversion_original
+
   # Les vérifications par un graphiste sur les designs faits pour l'atelier.
   get "atelier/verifications", to: "workshop/reviews#index", as: :workshop_reviews
   # Le graphiste que l'atelier recommande à ses clients.

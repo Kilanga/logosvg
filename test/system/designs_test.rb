@@ -29,10 +29,9 @@ class DesignsTest < ApplicationSystemTestCase
     choose "design_technique_screen_printing", allow_label_click: true
     fill_in "design_prompt", with: "un renard qui fait du skate"
 
-    # The size is asked here too, though screen printing is vectorial: it is
-    # what decides which workshops can take the job.
-    assert_text displayed("client.designs.new.size_legend")
-    click_on I18n.t("client.designs.new.size_presets.chest")
+    # Not asked for a vector file, which scales to any size (D7, decided on
+    # 15/10/2026): the default width is kept.
+    assert_no_text displayed("client.designs.new.size_legend")
 
     perform_enqueued_jobs do
       click_on I18n.t("client.designs.new.submit")
@@ -194,7 +193,8 @@ class DesignsTest < ApplicationSystemTestCase
   # centimetres. The presets speak that language and fill the field.
   test "the size presets fill the width, and the template follows" do
     sign_in users(:client)
-    visit new_design_path
+    visit workshop_invite_path(slug: printers(:nantes).slug, code: printers(:nantes).invite_code)
+    choose "design_technique_sublimation", allow_label_click: true
 
     click_on I18n.t("client.designs.new.size_presets.small_logo")
 
@@ -214,9 +214,9 @@ class DesignsTest < ApplicationSystemTestCase
     assert_selector "figcaption", text: shown("18 cm")
   end
 
-  # Why the size matters is not the same question in both families, and the
-  # screen must not give the wrong reason.
-  test "the size explanation follows the technique" do
+  # Asked only where it fixes the file's definition (D7, decided on
+  # 15/10/2026): a vector file scales to any size.
+  test "the size is asked for a raster technique only" do
     sign_in users(:client)
     visit workshop_invite_path(slug: printers(:nantes).slug, code: printers(:nantes).invite_code)
 
@@ -226,7 +226,7 @@ class DesignsTest < ApplicationSystemTestCase
 
     choose "design_technique_embroidery", allow_label_click: true
 
-    assert_text displayed("client.designs.new.size_hint.vector")
+    assert_no_text displayed("client.designs.new.size_legend")
   end
 
   test "a design still being generated shows a drawn waiting state, not a blank panel" do

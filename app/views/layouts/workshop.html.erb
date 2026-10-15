@@ -18,6 +18,10 @@
         path: workshop_clients_path,
         current: current_page?(workshop_clients_path) %>
   <%= render "layouts/space_link",
+        label: t("nav.converter"),
+        path: workshop_conversions_path,
+        current: request.path.start_with?(workshop_conversions_path) %>
+  <%= render "layouts/space_link",
         label: t("nav.my_listing"),
         path: edit_workshop_profile_path,
         current: current_page?(edit_workshop_profile_path) %>
