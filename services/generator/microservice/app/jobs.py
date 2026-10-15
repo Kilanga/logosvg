@@ -23,7 +23,7 @@ from .moderation import review
 from .prompt_builder import build_prompt
 from .prompt_filter import PromptFilter
 from .raster import rasterize, target_pixels
-from .refine import apply_instruction
+from .refine import rewrite
 from .techniques import DEFAULT_PRINT_WIDTH_CM, DEFAULT_TECHNIQUE, resolve
 from .translate import to_english
 from .vectorizer import vectorize
@@ -65,6 +65,8 @@ class Job:
     # Une variante la reprend de son parent : elle redessine la même image.
     init_png: Optional[bytes] = None
     subject: Optional[str] = None  # description anglaise réellement envoyée au modèle
+    # Retouche : « layout » (déplacer, agrandir, ajouter, retirer) ou « detail ».
+    refine_scope: Optional[str] = None
     status: str = "queued"  # queued | running | done | error
     error: Optional[str] = None
     result: Optional[dict] = None
@@ -228,7 +230,9 @@ class JobManager:
         base = parent.subject or await to_english(parent.prompt)
         if job.mode == VARIANT:
             return base
-        return await apply_instruction(base, job.instruction or "")
+        result = await rewrite(base, job.instruction or "")
+        job.refine_scope = result.scope
+        return result.subject
 
     def _init_image(self, job: Job) -> bytes:
         parent = self.get(job.parent_id) if job.parent_id else None
@@ -305,9 +309,12 @@ class JobManager:
         prompt = build_prompt(subject, job.style, colors, profile.key, job.flavour)
 
         if job.mode == REFINE:
+            # Une demande qui touche la mise en page s'écarte davantage de
+            # l'image de départ (B4, recette du 14/10/2026).
+            denoise = settings.refine_denoise_layout if job.refine_scope == "layout" else settings.refine_denoise
             png = await self.generator.refine(
                 prompt, job.seed, colors,
-                self._init_image(job), settings.refine_denoise,
+                self._init_image(job), denoise,
             )
         elif job.init_png:
             # Une création (ou une variante) qui part de l'image du client : la

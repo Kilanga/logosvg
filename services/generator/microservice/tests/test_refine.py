@@ -334,3 +334,57 @@ def test_une_retouche_donne_trois_propositions_pour_une_seule_reprise(client):
     assert all(d["status"] == "done" for d in datas)
     # Une seule description pour le lot : le traducteur n'est appelé qu'une fois.
     assert len({d["result"]["subject"] for d in datas}) == 1
+
+
+# Recette du 14/10/2026 (B4) : « mets le texte en grand sous le skateboard »
+# était appliqué avec l'écart d'une retouche de couleur, et restait sans effet.
+def test_la_portee_de_la_demande_choisit_l_ecart():
+    from app.refine import guess_scope
+
+    assert guess_scope("mets le texte en grand sous le skateboard") == "layout"
+    assert guess_scope("enlève le skateboard") == "layout"
+    assert guess_scope("couleurs plus douces, contour plus net") == "detail"
+
+
+def test_le_texte_a_imprimer_garde_ses_guillemets_a_la_reecriture(monkeypatch):
+    import asyncio
+    import dataclasses
+    import json as jsonlib
+
+    import app.refine as refine
+
+    async def no_translation(text):
+        return text
+
+    class FakeResponse:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            # Le modèle garde le repère et dit que la mise en page change.
+            return {"message": {"content": jsonlib.dumps({
+                "description": "a fox on a skateboard, with [[T1]] in big letters under the skateboard",
+                "scope": "layout"})}}
+
+    class FakeClient:
+        def __init__(self, timeout):
+            assert timeout >= 180
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def post(self, url, json):
+            assert "PIZZA CLUB" not in json["messages"][1]["content"]
+            return FakeResponse()
+
+    monkeypatch.setattr(refine, "to_english", no_translation)
+    monkeypatch.setattr(refine.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(refine, "settings", dataclasses.replace(refine.settings, ollama_url="http://ollama.test"))
+
+    result = asyncio.run(refine.rewrite('a fox on a skateboard, with the text "PIZZA CLUB"',
+                                        "put the text big under the skateboard"))
+    assert result.subject == 'a fox on a skateboard, with "PIZZA CLUB" in big letters under the skateboard'
+    assert result.scope == "layout"

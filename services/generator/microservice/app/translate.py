@@ -26,9 +26,19 @@ SYSTEM = (
     "background, composition or art-direction words. "
     "Describe the design to print, not the garment: drop words such as 't-shirt for' or "
     "'sweatshirt with'. Words written in capitals are text to print: keep them exactly "
-    "as written, untranslated, in double quotes. Keep every marker like [[T1]] unchanged. "
+    "as written, untranslated, in double quotes. "
     "Output only the translation, no comments."
 )
+
+# Dit seulement quand il y a des repères. Écrit à chaque fois, la consigne
+# donnait au modèle un exemple à recopier : « style aquarelle », sans aucun
+# guillemet, revenait en « watercolor style "T1 » (recette du 14/10/2026), et ce
+# guillemet ouvert déclenchait ensuite la règle du texte à imprimer.
+MARKERS = " Keep every marker such as [[T1]] exactly where it is, unchanged."
+
+# Ce qui ressemble à un repère sans en être un : un [[T3]] inventé, un « "T1 »
+# tronqué, un « [T1] » à moitié recopié.
+STRAY_MARKER = re.compile(r'\[{1,2}\s*T\d+\s*\]{0,2}|"\s*T\d+\b\.?|\bT\d+\]{1,2}')
 
 # Ce qui est entre guillemets — français, droits ou typographiques — est du texte à
 # imprimer, et ne se traduit pas.
@@ -62,11 +72,30 @@ async def to_english(text: str) -> str:
     if not settings.ollama_url:
         return text
     protected, saved = protect(text)
-    translated = await _translate(protected)
-    return restore(translated, saved) if translated != protected else text
+    translated = await _translate(protected, markers=bool(saved))
+    if translated == protected:
+        return text
+    return restore(clean_output(translated, len(saved)), saved)
 
 
-async def _translate(text: str) -> str:
+def clean_output(text: str, markers: int) -> str:
+    """Retire ce que le traducteur a ajouté et qui n'est pas une traduction :
+    des repères qu'on ne lui a pas donnés, et un guillemet resté ouvert — qui,
+    dans le prompt, ferait passer la suite pour du texte à imprimer."""
+    def keep_real(match):
+        found = re.search(r"\d+", match.group(0))
+        number = int(found.group(0)) if found else 0
+        real = match.group(0).startswith("[[") and match.group(0).rstrip().endswith("]]")
+        return match.group(0) if real and 1 <= number <= markers else ""
+
+    text = STRAY_MARKER.sub(keep_real, text)
+    if text.count('"') % 2 == 1:
+        last = text.rfind('"')
+        text = text[:last] + text[last + 1:]
+    return re.sub(r"\s{2,}", " ", text).strip(" ,;")
+
+
+async def _translate(text: str, markers: bool = False) -> str:
     payload = {
         "model": settings.ollama_model,
         "stream": False,
@@ -77,7 +106,7 @@ async def _translate(text: str) -> str:
         "keep_alive": 0,
         "options": {"temperature": 0},
         "messages": [
-            {"role": "system", "content": SYSTEM},
+            {"role": "system", "content": SYSTEM + (MARKERS if markers else "")},
             {"role": "user", "content": text},
         ],
     }
