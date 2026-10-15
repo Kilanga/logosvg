@@ -71,7 +71,9 @@ module Designer
         coverage: params[:coverage]&.to_unsafe_h
       )
 
-      if result.success?
+      if result.success? && result.version.watermarked?
+        redirect_to designer_review_path(@review), alert: t(".delivered_watermarked", number: result.version.number)
+      elsif result.success?
         redirect_to designer_review_path(@review), notice: t(".delivered", number: result.version.number)
       else
         redirect_to designer_review_path(@review), alert: result.error

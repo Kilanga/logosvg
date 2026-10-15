@@ -17,6 +17,10 @@ class ReviewVersion < ApplicationRecord
 
   def vector? = review.design.vector?
 
+  # Made from the watermarked preview rather than the original (G2): see
+  # WatermarkCheck.
+  def watermarked? = Array(checks["warnings"]).include?("watermarked")
+
   private
     # Continuous within the review. Taken from the rows rather than counted,
     # so a deleted version does not hand its number to the next one.

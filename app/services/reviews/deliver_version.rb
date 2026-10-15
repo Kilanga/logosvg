@@ -28,6 +28,10 @@ module Reviews
       inspection = inspect_file(bytes)
       return failure(inspection) if inspection.is_a?(String)
 
+      # G2 (reported on 15/10/2026): the watermarked preview, blown up, went
+      # through as a version. Said beside it rather than refused.
+      @watermarked = WatermarkCheck.call(design, bytes) == true
+
       version = store(inspection)
       advance
 
@@ -98,13 +102,15 @@ module Reviews
 
       def checks_from(inspection)
         if design.vector?
-          { "inks" => inspection.inks, "fills" => inspection.fills }
+          { "inks" => inspection.inks, "fills" => inspection.fills, "warnings" => extra_warnings }
         else
           { "width_px" => inspection.width_px, "height_px" => inspection.height_px,
             "dpi" => inspection.dpi, "has_alpha" => inspection.has_alpha,
-            "warnings" => inspection.warnings.map(&:to_s) }
+            "warnings" => inspection.warnings.map(&:to_s) + extra_warnings }
         end
       end
+
+      def extra_warnings = @watermarked ? [ "watermarked" ] : []
 
       # A second version on a review already delivered is a delivery too: the
       # state only moves when there is somewhere to move from.

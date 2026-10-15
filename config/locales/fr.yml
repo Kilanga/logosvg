@@ -594,6 +594,7 @@ fr:
     warnings:
       no_transparency: "Le fichier n'a pas de fond transparent : l'atelier devra le détourer."
       low_resolution: "La définition est faible pour la taille demandée : le rendu risque de manquer de netteté."
+      watermarked: "Cette version reprend l'aperçu filigrané, pas le fichier d'origine : le filigrane serait imprimé."
     errors:
       no_file: "Joignez un fichier."
       svg_refused: "Ce SVG n'a pas passé nos contrôles de sécurité."
@@ -2449,6 +2450,10 @@ fr:
         claimed: "Vérification prise en charge. À vous de jouer."
       deliver:
         delivered: "Version %{number} envoyée au client."
+        delivered_watermarked: >-
+          Version %{number} envoyée, mais elle reprend l'aperçu filigrané : le
+          client le verra. Repartez du fichier d'origine (bouton « Télécharger »
+          à droite) et déposez une nouvelle version.
       return_to_client:
         returned: "Demande renvoyée au client."
       message:

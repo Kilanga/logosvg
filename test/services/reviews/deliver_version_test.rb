@@ -100,6 +100,23 @@ module Reviews
       end
     end
 
+    # G2, reported on 15/10/2026.
+    test "a version made from the watermarked preview is delivered with a warning" do
+      design = reviews(:in_progress).design
+      picture = (Vips::Image.sines(900, 900, hfreq: 3, vfreq: 2) * 100 + 128).cast(:uchar)
+      picture = picture.bandjoin([ picture.rot(:d90), picture ]).copy(interpretation: :srgb)
+      design.print_file.attach(io: StringIO.new(picture.write_to_buffer(".png")),
+                               filename: "print.png", content_type: "image/png")
+      preview = Vips::Image.new_from_buffer(DesignPreview.call(design), "")
+
+      result = deliver(reviews(:in_progress), upload(preview.resize(2953.0 / preview.width).write_to_buffer(".png"),
+                                                     "image/png", "version.png"))
+
+      assert_predicate result, :success?
+      assert_predicate result.version, :watermarked?
+      assert_includes result.version.checks["warnings"], "watermarked"
+    end
+
     private
       def deliver(review, file, message: "Voici la reprise.")
         DeliverVersion.call(review: review, file: file, message: message)
