@@ -185,10 +185,12 @@
               <dt class="text-muted"><%= t("activerecord.attributes.design.technique") %></dt>
               <dd class="text-right font-medium"><%= @design.technique_label %></dd>
             </div>
-            <div class="flex justify-between gap-4">
-              <dt class="text-muted"><%= t("activerecord.attributes.design.print_width_cm") %></dt>
-              <dd class="text-right font-medium"><%= @design.print_width_cm %> cm</dd>
-            </div>
+            <% unless @design.vector? %>
+              <div class="flex justify-between gap-4">
+                <dt class="text-muted"><%= t("activerecord.attributes.design.print_width_cm") %></dt>
+                <dd class="text-right font-medium"><%= @design.print_width_cm %> cm</dd>
+              </div>
+            <% end %>
             <% if @design.vector? && @design.inks_count %>
               <div class="flex justify-between gap-4">
                 <dt class="text-muted"><%= t(".inks") %></dt>

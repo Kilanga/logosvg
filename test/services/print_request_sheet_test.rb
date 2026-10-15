@@ -7,7 +7,7 @@ class PrintRequestSheetTest < ActiveSupport::TestCase
     lines = labels_and_values(print_requests(:waiting))
 
     assert_equal "Sérigraphie", lines[t("technique")]
-    assert_equal "25 cm", lines[t("print_width")]
+    assert_nil lines[t("print_width")], "a vector file scales: no width was asked (decided on 14/10/2026)"
     assert_equal "3", lines[t("inks")].to_s
     assert_match "#1F5F7A", lines[t("palette")]
     assert_nil lines[t("resolution")], "pixels mean nothing on a screen-printed job"
@@ -18,6 +18,7 @@ class PrintRequestSheetTest < ActiveSupport::TestCase
 
     assert_equal "300 dpi", lines[t("resolution")]
     assert_equal "13 cm", lines[t("sharp_up_to")]
+    assert_match(/\d+ cm/, lines[t("print_width")], "the width that fixes a raster file stays on its sheet")
     assert_nil lines[t("inks")], "there are no screens to mount on a DTF press"
     assert_nil lines[t("palette")]
   end

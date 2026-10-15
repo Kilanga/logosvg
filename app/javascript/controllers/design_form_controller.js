@@ -3,16 +3,15 @@ import { Controller } from "@hotwired/stimulus"
 // The creation form follows the technique, because the technique decides what
 // the rest of the form even means: an ink count on a DTF press is meaningless.
 //
-// The print size, on the other hand, is asked whatever the technique. It is not
-// only what fixes the definition of a raster file — it is what tells a small
-// chest logo apart from a large back print, and it decides which workshops are
-// able to print the result at all.
+// The print size is asked of the raster techniques only, where it fixes the
+// definition of the file (decided on 14/10/2026); a vector file scales to any
+// size, and the server keeps the default for it.
 //
 // Progressive: without JavaScript every field is shown, the number field alone
 // carries the size, and the server bounds whatever comes back. This only spares
 // the client questions that do not apply, and shows them what a width means.
 export default class extends Controller {
-  static targets = ["technique", "inks", "inkValue", "width", "preset", "area", "areaLabel", "sizeHint"]
+  static targets = ["technique", "inks", "inkValue", "width", "preset", "area", "areaLabel", "sizeHint", "size"]
   static values = { families: Object, ceilings: Object }
 
   // A t-shirt body is about 50 cm across, drawn 60 units wide in the template.
@@ -39,6 +38,7 @@ export default class extends Controller {
     }
 
     this.showSizeHint(this.familiesValue[key])
+    if (this.hasSizeTarget) this.sizeTarget.hidden = this.familiesValue[key] !== "raster"
   }
 
   choosePreset(event) {

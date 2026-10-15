@@ -28,7 +28,9 @@ class PrintRequestSheet
     def job_lines
       [
         line(:technique, @design.technique_label),
-        line(:print_width, "#{@print_request.print_width_cm} cm"),
+        # Not asked for a vector file, which the workshop scales as it likes
+        # (decided on 14/10/2026).
+        line(:print_width, ("#{@print_request.print_width_cm} cm" unless @design.vector?)),
         line(:placements, placements),
         line(:textile, textile),
         line(:sizes, sizes),
