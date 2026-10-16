@@ -236,6 +236,54 @@ class PrintRequestsTest < ActionDispatch::IntegrationTest
     assert_predicate print_requests(:waiting).reload, :sent?
   end
 
+  # --- Retrait ou livraison, express (decided on 16/10/2026) -------------
+
+  test "the form offers the shop's ways back, the shipping cost and express" do
+    printers(:rennes).update!(ships: true, shipping_price_note: "8 € par colis",
+                              express_available: true, express_lead_hours: 48)
+    sign_in_as users(:client)
+
+    get new_design_print_request_path(designs(:fox_screen), atelier: printers(:rennes).slug)
+
+    assert_select "input[name='print_request[delivery_method]'][value=pickup]"
+    assert_select "input[name='print_request[delivery_method]'][value=shipping]"
+    assert_match "L&#39;atelier vous contactera pour prendre vos coordonnées de livraison", response.body
+    assert_match "Frais d&#39;envoi en supplément : 8 € par colis", response.body
+    assert_match "Réalisée sous 48 heures", response.body
+  end
+
+  test "the chosen way and express reach the workshop's email" do
+    printers(:rennes).update!(ships: true, express_available: true, express_lead_hours: 48)
+    sign_in_as users(:client)
+
+    assert_emails 2 do
+      post design_print_requests_path(designs(:fox_screen), atelier: printers(:rennes).slug),
+           params: { print_request: valid_params.merge(delivery_method: "shipping", express: "1") }
+    end
+
+    request = PrintRequest.order(:created_at).last
+    assert_equal "shipping", request.delivery_method
+    assert_predicate request, :express?
+
+    workshop_email = ActionMailer::Base.deliveries.find { |m| m.to.include?(printers(:rennes).orders_email) }
+    body = workshop_email.text_part.body.to_s
+    assert_match "Livraison", body
+    assert_match "frais d'envoi en supplément", body
+    assert_match "Oui, sous 48 heures", body
+  end
+
+  test "a shop doing both ways makes the client choose" do
+    printers(:rennes).update!(ships: true)
+    sign_in_as users(:client)
+
+    assert_no_difference "PrintRequest.count" do
+      post design_print_requests_path(designs(:fox_screen), atelier: printers(:rennes).slug),
+           params: { print_request: valid_params }
+    end
+    assert_response :unprocessable_entity
+    assert_match "choisissez le retrait", response.body
+  end
+
   private
     def attach_print_file
       designs(:fox_screen).print_file.attach(

@@ -289,6 +289,49 @@ class PrintRequestTest < ActiveSupport::TestCase
     assert_predicate print_requests(:forgotten), :expiry_due?
   end
 
+  # --- Only what the shop offers (decided on 16/10/2026) -------------------
+
+  test "a shop doing both lets the client choose how the order comes back" do
+    printers(:nantes).update!(pickup: true, ships: true)
+
+    assert_predicate build_request(delivery_method: "shipping"), :valid?
+    assert_predicate build_request(delivery_method: "pickup"), :valid?
+
+    request = build_request
+    assert_not request.valid?
+    assert request.errors.of_kind?(:delivery_method, :blank)
+  end
+
+  test "a shop doing only one way has it chosen for the client" do
+    printers(:nantes).update!(pickup: true, ships: false)
+
+    request = build_request
+    assert_predicate request, :valid?
+    assert_equal "pickup", request.delivery_method
+  end
+
+  test "a way the shop does not offer is refused" do
+    printers(:nantes).update!(pickup: true, ships: false)
+
+    assert build_request(delivery_method: "shipping").tap(&:valid?).errors.of_kind?(:delivery_method, :not_offered)
+  end
+
+  test "express only where the shop offers it" do
+    assert_predicate build_request(express: true), :valid?, "nantes offers express"
+
+    printers(:nantes).update!(express_available: false)
+    assert build_request(express: true).tap(&:valid?).errors.of_kind?(:express, :not_offered)
+  end
+
+  test "a textile source and a placement the shop does not offer are refused" do
+    printers(:nantes).update!(provides_textile: true, accepts_client_textile: false, placements: [ "chest_center" ])
+
+    request = build_request(textile_source: "client", placements: [ "back_full" ])
+    assert_not request.valid?
+    assert request.errors.of_kind?(:textile_source, :not_offered)
+    assert request.errors.of_kind?(:placements, :not_offered)
+  end
+
   private
     # `nantes` publishes no minimum order, so a test that is not about the
     # minimum is not silently about it.

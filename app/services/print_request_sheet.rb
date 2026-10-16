@@ -33,6 +33,8 @@ class PrintRequestSheet
         line(:print_width, ("#{@print_request.print_width_cm} cm" unless @design.vector?)),
         line(:placements, placements),
         line(:textile, textile),
+        line(:delivery, (t("delivery_method.#{@print_request.delivery_method}") if @print_request.delivery_method)),
+        line(:express, express),
         line(:sizes, sizes),
         line(:total_qty, @print_request.total_qty),
         line(:desired_on, @print_request.desired_on&.to_fs(:long))
@@ -82,6 +84,13 @@ class PrintRequestSheet
     def textile
       source = t("textile_source.#{@print_request.textile_source}")
       [ source, @print_request.textile_model, @print_request.textile_color ].compact_blank.join(" — ")
+    end
+
+    def express
+      return nil unless @print_request.express?
+
+      hours = Printer.where(id: @print_request.printer_id).pick(:express_lead_hours)
+      hours ? t("express_value", count: hours) : t("express_yes")
     end
 
     def sizes

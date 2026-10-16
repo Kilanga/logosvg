@@ -311,6 +311,15 @@ fr:
                 other: "n'atteignent pas la commande minimale de cet atelier : %{count} exemplaires"
             desired_on:
               in_the_past: "ne peut pas être une date passée"
+            textile_source:
+              not_offered: "n'est pas proposé par cet atelier"
+            placements:
+              not_offered: "comporte un emplacement que cet atelier ne propose pas"
+            delivery_method:
+              blank: ": choisissez le retrait à l'atelier ou la livraison"
+              not_offered: "n'est pas proposé par cet atelier"
+            express:
+              not_offered: "n'est pas proposé par cet atelier"
             base:
               no_consent: "Cochez la case qui autorise l'envoi de vos coordonnées à l'atelier : sans elle, il ne peut pas vous recontacter."
         workshop_link_channel:
@@ -372,6 +381,8 @@ fr:
         textile_model: "Modèle de textile"
         textile_color: "Couleur du textile"
         placements: "Emplacement"
+        delivery_method: "Récupération"
+        express: "Option express"
         sizes: "Tailles et quantités"
         desired_on: "Date souhaitée"
         message: "Message à l'atelier"
@@ -472,6 +483,9 @@ fr:
         ready: "Prêt"
         failed: "Échec"
     print_request:
+      delivery_method:
+        pickup: "Retrait à l'atelier"
+        shipping: "Livraison"
       status:
         sent: "Envoyée"
         acknowledged: "Reçue par l'atelier"
@@ -677,6 +691,15 @@ fr:
       textile_source:
         printer: "Fourni par l'atelier"
         client: "Fourni par le client"
+      delivery: "Récupération"
+      delivery_method:
+        pickup: "Retrait à l'atelier"
+        shipping: "Livraison — l'atelier contacte le client pour ses coordonnées ; frais d'envoi en supplément"
+      express: "Express"
+      express_value:
+        one: "Oui, sous %{count} heure"
+        other: "Oui, sous %{count} heures"
+      express_yes: "Oui"
     status_body:
       sent: "L'atelier a reçu votre demande par email. Il confirme sa réception, puis vous envoie son devis."
       acknowledged: "L'atelier a confirmé la réception de votre demande. Le devis arrive par email, hors plateforme."
@@ -1734,6 +1757,17 @@ fr:
           one: "Cet atelier imprime à partir de %{count} exemplaire."
           other: "Cet atelier imprime à partir de %{count} exemplaires."
         total: "Total"
+        delivery_legend: "Retrait ou livraison"
+        delivery_hint:
+          pickup: "Vous récupérez votre commande à l'atelier : %{place}."
+          shipping: "L'atelier vous contactera pour prendre vos coordonnées de livraison."
+        shipping_cost: "Frais d'envoi en supplément : %{note}"
+        shipping_cost_unknown: "Frais d'envoi en supplément, précisés dans le devis."
+        express_label: "Je souhaite l'option express"
+        express_hint:
+          one: "Réalisée sous %{count} heure. Supplément éventuel précisé dans le devis."
+          other: "Réalisée sous %{count} heures. Supplément éventuel précisé dans le devis."
+        express_hint_no_delay: "Délai raccourci. Supplément éventuel précisé dans le devis."
         details_legend: "Délai et précisions"
         desired_on_hint: "Facultatif. L'atelier vous dira ce qui est réalisable."
         message_placeholder: "Une précision sur le rendu, le textile, la livraison…"

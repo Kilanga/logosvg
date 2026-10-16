@@ -77,6 +77,8 @@ class AccountExport
           textile_source: request.textile_source,
           textile: [ request.textile_model, request.textile_color ].compact_blank.join(" "),
           placements: request.placements,
+          delivery_method: request.delivery_method,
+          express: request.express,
           sizes: request.sizes,
           total_qty: request.total_qty,
           message: request.message,

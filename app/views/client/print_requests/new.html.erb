@@ -107,10 +107,68 @@
         </div>
       </fieldset>
 
-      <%# 04 — When, and anything the shop should know. %>
+      <%# 04 — Picking up or sent, and express: only what this shop offers
+          (decided on 16/10/2026). No address here: the shop asks for it with
+          the quote. Hidden when the shop declares neither. %>
+      <% deliveries = @printer.delivery_methods %>
+      <% offers_choice = deliveries.any? || @printer.express_available? %>
+      <% if offers_choice %>
+        <fieldset>
+          <div class="flex items-baseline gap-4 border-b border-line pb-3">
+            <span class="font-display text-xl font-bold text-emulsion">04</span>
+            <legend class="font-display text-xl font-bold uppercase"><%= t(".delivery_legend") %></legend>
+          </div>
+
+          <div class="mt-6 space-y-5">
+            <% if deliveries.any? %>
+              <div class="grid gap-2 sm:grid-cols-2">
+                <% PrintRequest::DELIVERY_METHODS.each do |method| %>
+                  <% available = deliveries.include?(method) %>
+                  <label class="flex cursor-pointer flex-col gap-1 rounded-xs border border-line p-3
+                                has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5
+                                has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
+                    <%= form.radio_button :delivery_method, method, class: "sr-only", disabled: !available %>
+                    <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
+                      <%= t("enums.print_request.delivery_method.#{method}") %>
+                    </span>
+                    <span class="text-sm text-muted">
+                      <% if !available %>
+                        <%= t(".textile_unavailable") %>
+                      <% elsif method == "pickup" %>
+                        <%= t(".delivery_hint.pickup", place: [ @printer.address, @printer.city ].compact_blank.join(", ").presence || @printer.name) %>
+                      <% else %>
+                        <%= t(".delivery_hint.shipping") %>
+                      <% end %>
+                    </span>
+                    <% if available && method == "shipping" %>
+                      <span class="text-sm font-medium text-warning">
+                        <%= @printer.shipping_price_note.present? ? t(".shipping_cost", note: @printer.shipping_price_note) : t(".shipping_cost_unknown") %>
+                      </span>
+                    <% end %>
+                  </label>
+                <% end %>
+              </div>
+            <% end %>
+
+            <% if @printer.express_available? %>
+              <label class="flex gap-3 rounded-xs border border-line p-3 text-sm has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5">
+                <%= form.check_box :express, class: "mt-0.5 size-4 flex-none rounded-xs border-line text-emulsion" %>
+                <span>
+                  <span class="font-medium"><%= t(".express_label") %></span>
+                  <span class="block text-muted">
+                    <%= @printer.express_lead_hours.present? ? t(".express_hint", count: @printer.express_lead_hours) : t(".express_hint_no_delay") %>
+                  </span>
+                </span>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+      <% end %>
+
+      <%# When, and anything the shop should know. %>
       <fieldset>
         <div class="flex items-baseline gap-4 border-b border-line pb-3">
-          <span class="font-display text-xl font-bold text-emulsion">04</span>
+          <span class="font-display text-xl font-bold text-emulsion"><%= offers_choice ? "05" : "04" %></span>
           <legend class="font-display text-xl font-bold uppercase"><%= t(".details_legend") %></legend>
         </div>
 
@@ -132,11 +190,11 @@
         </div>
       </fieldset>
 
-      <%# 05 — Who the shop answers. Prefilled from the account: the quote comes
+      <%# Who the shop answers. Prefilled from the account: the quote comes
           back by email or by telephone, outside the platform. %>
       <fieldset>
         <div class="flex items-baseline gap-4 border-b border-line pb-3">
-          <span class="font-display text-xl font-bold text-emulsion">05</span>
+          <span class="font-display text-xl font-bold text-emulsion"><%= offers_choice ? "06" : "05" %></span>
           <legend class="font-display text-xl font-bold uppercase"><%= t(".contact_legend") %></legend>
         </div>
         <p class="mt-3 text-sm text-muted"><%= t(".contact_hint") %></p>
