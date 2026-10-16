@@ -31,6 +31,11 @@ shared:
     # chacune avec son parti pris ; le client en garde une. Un clic compte pour
     # une génération et une reprise. Plafonné par PROPOSALS côté service.
     proposals_per_request: 3
+    # Tableau de bord de l'administration (décidé le 16/10/2026) : au-delà de
+    # cette attente moyenne entre la demande et l'image, la machine de
+    # génération ne suit plus. Trois propositions passent l'une après l'autre,
+    # une quarantaine de secondes chacune : une minute et demie est l'ordinaire.
+    load_alert_wait_seconds: 240
     # Bornes imposées par le microservice FastAPI.
     prompt_min_length: 3
     prompt_max_length: 300

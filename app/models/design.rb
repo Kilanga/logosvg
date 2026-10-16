@@ -82,11 +82,14 @@ class Design < ApplicationRecord
       transitions from: [ :pending, :failed ], to: :generating
     end
 
+    # `before`, not `after`: an event's `after` runs once the state is saved.
     event :succeed do
+      before { self.finished_at = Time.current }
       transitions from: :generating, to: :ready
     end
 
     event :fail do
+      before { self.finished_at = Time.current }
       transitions from: [ :pending, :generating ], to: :failed
       after { |message| self.error_message = message }
     end

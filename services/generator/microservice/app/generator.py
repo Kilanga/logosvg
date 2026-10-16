@@ -20,6 +20,7 @@ from .config import settings
 WORKFLOWS = Path(__file__).resolve().parent.parent / "workflows"
 TEXT2IMG = WORKFLOWS / "flux2_klein.json"
 IMG2IMG = WORKFLOWS / "flux2_klein_img2img.json"
+EDIT = WORKFLOWS / "flux2_klein_edit.json"
 UPSCALE = WORKFLOWS / "upscale_model.json"
 
 
@@ -95,6 +96,10 @@ class MockGenerator:
         img.save(buf, format="PNG")
         return buf.getvalue()
 
+    async def edit(self, prompt: str, seed: int, colors: int, init_png: bytes) -> bytes:
+        """Sans GPU, une édition se simule comme une retouche."""
+        return await MockGenerator.refine(self, prompt, seed, colors, init_png, 1.0)
+
 
 def _multiple_of_16(value: int) -> int:
     """Le latent de FLUX.2 se découpe en carreaux de 16 px : une taille qui n'en est
@@ -111,11 +116,17 @@ class ComfyUIGenerator:
     officiel de ComfyUI. Une retouche et la passe haute définition sont de
     l'img2img : l'image encodée sert de latent de départ, et SplitSigmasDenoise
     ne garde que la fin du planning de bruit.
+
+    Une retouche qui touche la mise en page passe par l'édition : l'image
+    sert de référence (ReferenceLatent) et le dessin part d'un latent vide.
+    En img2img, l'image de départ fixe la composition — un gros texte noir
+    survivait même à 0,75 (B4, recette du 16/10/2026).
     """
 
     def __init__(self):
         self.text2img = json.loads(TEXT2IMG.read_text(encoding="utf-8"))
         self.img2img = json.loads(IMG2IMG.read_text(encoding="utf-8"))
+        self.edit_wf = json.loads(EDIT.read_text(encoding="utf-8"))
 
     def _common(self, wf: dict, prompt: str, seed: int) -> dict:
         wf["1"]["inputs"]["unet_name"] = settings.flux_unet
@@ -145,6 +156,11 @@ class ComfyUIGenerator:
         wf["14"]["inputs"]["image"] = image_name
         wf["17"]["inputs"]["denoise"] = denoise
         return self._sized(wf, size or settings.image_size)
+
+    def _workflow_edit(self, prompt: str, seed: int, image_name: str) -> dict:
+        wf = self._common(json.loads(json.dumps(self.edit_wf)), prompt, seed)
+        wf["14"]["inputs"]["image"] = image_name
+        return self._sized(wf, settings.image_size)
 
     async def _upload(self, client: httpx.AsyncClient, png: bytes) -> str:
         """Dépose l'image de départ dans le dossier d'entrée de ComfyUI."""
@@ -227,6 +243,10 @@ class ComfyUIGenerator:
     async def refine(self, prompt: str, seed: int, colors: int, init_png: bytes, denoise: float) -> bytes:
         name = await self._uploaded(init_png)
         return await self._run(self._workflow_refine(prompt, seed, name, denoise))
+
+    async def edit(self, prompt: str, seed: int, colors: int, init_png: bytes) -> bytes:
+        name = await self._uploaded(init_png)
+        return await self._run(self._workflow_edit(prompt, seed, name))
 
 
 def get_generator():

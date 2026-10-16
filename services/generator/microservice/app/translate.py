@@ -17,6 +17,11 @@ log = logging.getLogger(__name__)
 # l'ancienne ratait n'était pas anodin — « un blaireau qui joue de la trompette »
 # revenait en « a toothbrush playing a trumpet ». Une espèce fausse, et le
 # dessin ne correspond plus du tout à ce que le client a demandé.
+#
+# Le 16/10/2026, la même phrase est revenue en « a toothbrush playing the
+# trumpet » : la consigne ne suffisait plus. Les mots à double sens sont
+# maintenant nommés, avec la règle qui tranche (un sujet qui agit est l'animal),
+# et le formulaire invite le client à lever l'ambiguïté lui-même.
 SYSTEM = (
     "You are a translator. Translate the user's French t-shirt design idea into English. "
     "Rules: translate literally. Keep the exact species or object, the exact number of "
@@ -26,6 +31,10 @@ SYSTEM = (
     "Describe the design to print, not the garment: drop words such as 't-shirt for' or "
     "'sweatshirt with'. Words written in capitals are text to print: keep them exactly "
     "as written, untranslated, in double quotes. "
+    "Some French words name both an animal and an object: blaireau (badger or shaving brush), "
+    "souris (mouse or computer mouse), grue (crane bird or construction crane), "
+    "papillon (butterfly or bow tie), bourdon (bumblebee or great bell). When such a word is "
+    "a subject that does something or has a face, it is the animal. "
     "Output only the translation, no comments."
 )
 

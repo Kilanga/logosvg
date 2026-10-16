@@ -311,7 +311,8 @@ def test_seul_flux2_reste_et_le_mock_sert_aux_tests(monkeypatch):
     monkeypatch.setattr(generator, "settings", dataclasses.replace(generator.settings, generator_mode="comfyui"))
     assert type(generator.get_generator()) is generator.ComfyUIGenerator
     workflows = {p.name for p in (Path(generator.__file__).parent.parent / "workflows").glob("*.json")}
-    assert workflows == {"flux2_klein.json", "flux2_klein_img2img.json", "upscale_model.json"}
+    assert workflows == {"flux2_klein.json", "flux2_klein_img2img.json", "flux2_klein_edit.json",
+                         "upscale_model.json"}
 
 
 # ------------------------------------------------------------------ prompts

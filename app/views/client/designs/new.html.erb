@@ -53,6 +53,11 @@
                 placeholder: t(".prompt_placeholder"),
                 class: "mt-2 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
           <p class="mt-1.5 text-sm text-muted"><%= t(".prompt_hint") %></p>
+          <%# Reported on 16/10/2026: « un blaireau qui joue de la trompette »
+              came back as a shaving brush. The translator now knows the
+              usual double meanings; the client is asked to lift the doubt
+              too, since nobody knows what they meant better than they do. %>
+          <p id="prompt_precision" class="mt-1 text-sm text-muted"><%= t(".prompt_precision") %></p>
           <%# A refusal said where it happened (reported on 15/10/2026: a
               blocked term was refused with nothing on screen). %>
           <% if @design.errors[:prompt].any? %>

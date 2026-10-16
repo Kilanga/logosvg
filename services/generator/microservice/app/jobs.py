@@ -20,7 +20,7 @@ from PIL import Image
 from .config import settings
 from .generator import GenerationError, get_generator
 from .moderation import review
-from .prompt_builder import build_prompt
+from .prompt_builder import build_prompt, edit_prompt
 from .prompt_filter import PromptFilter
 from .raster import rasterize, target_pixels
 from .refine import rewrite
@@ -67,6 +67,7 @@ class Job:
     subject: Optional[str] = None  # description anglaise réellement envoyée au modèle
     # Retouche : « layout » (déplacer, agrandir, ajouter, retirer) ou « detail ».
     refine_scope: Optional[str] = None
+    refine_instruction: Optional[str] = None  # la demande de retouche, en anglais
     status: str = "queued"  # queued | running | done | error
     error: Optional[str] = None
     result: Optional[dict] = None
@@ -232,6 +233,7 @@ class JobManager:
             return base
         result = await rewrite(base, job.instruction or "")
         job.refine_scope = result.scope
+        job.refine_instruction = result.instruction
         return result.subject
 
     def _init_image(self, job: Job) -> bytes:
@@ -307,8 +309,16 @@ class JobManager:
         colors = profile.clamp_colors(job.colors)
         job.colors = colors
         prompt = build_prompt(subject, job.style, colors, profile.key, job.flavour)
+        # Ce que le modèle a lu pour ce dessin ; la passe haute définition, elle,
+        # relit la description, pas la consigne d'édition.
+        drawn_with = prompt
 
-        if job.mode == REFINE:
+        if job.mode == REFINE and job.refine_scope == "layout" and settings.refine_layout_mode == "edit":
+            # Déplacer, agrandir, ajouter, retirer : l'image sert de référence,
+            # la demande est dite au modèle, et le dessin repart de zéro (B4).
+            drawn_with = edit_prompt(job.refine_instruction, prompt)
+            png = await self.generator.edit(drawn_with, job.seed, colors, self._init_image(job))
+        elif job.mode == REFINE:
             # Une demande qui touche la mise en page s'écarte davantage de
             # l'image de départ (B4, recette du 14/10/2026).
             denoise = settings.refine_denoise_layout if job.refine_scope == "layout" else settings.refine_denoise
@@ -368,7 +378,7 @@ class JobManager:
             "inks": out["inks"],
             "stats": out["stats"],
             "warnings": out["warnings"],
-            "prompt_used": prompt,
+            "prompt_used": drawn_with,
             "flavour": job.flavour,
             "subject": subject,
             "instruction": job.instruction,

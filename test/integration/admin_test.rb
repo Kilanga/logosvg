@@ -46,6 +46,25 @@ class AdminTest < ActionDispatch::IntegrationTest
     assert_match "1 email n&#39;a pas pu partir", response.body
   end
 
+  # Decided on 16/10/2026: with the reprises out of the client's daily count,
+  # the load on the generation machine is watched here.
+  test "the dashboard shows what the generation machine drew today, and warns when clients wait" do
+    Design.update_all(created_at: 2.days.ago)
+    design = designs(:fox_screen)
+    design.update_columns(mode: "refine", created_at: 10.minutes.ago,
+                          finished_at: 10.minutes.ago + (GenerationLoad.alert_wait_seconds + 60).seconds)
+    sign_in_as users(:admin)
+
+    get admin_dashboard_path
+
+    assert_select "#generation_load" do
+      assert_select "dd", text: "1"
+      assert_select "dd", text: /0 en création, 1 en reprise/
+      assert_select "ol li", 7
+    end
+    assert_match "la machine de génération ne suit plus", response.body
+  end
+
   # --- Settling a dispute, end to end ---------------------------------------
   #
   # The completion criterion of step 9.

@@ -1,7 +1,14 @@
 # A retouch or a batch of variants asked of a design: every check made before
-# the generation service is called, the call itself, and the quota given back
-# when it fails. Moved out of Client::DesignsController (revue du 16/10/2026),
-# where it was sixty lines of one private method.
+# the generation service is called, and the call itself. Moved out of
+# Client::DesignsController (revue du 16/10/2026), where it was sixty lines of
+# one private method.
+#
+# A reprise does not count against the client's creations of the day (decided
+# on 16/10/2026): the three reprises of a design already bound it, and a client
+# who retouched once found « 2 créations » left after two. The load it puts on
+# the generation machine is followed on the admin dashboard instead
+# (GenerationLoad). The shop's monthly allowance still counts it: that one is
+# what the shop pays for.
 #
 # `request` is the call to the service — a refinement or variants — run once,
 # and once more after the design has been revived if the service had
@@ -29,9 +36,6 @@ class TakeDesignFurther
       return failure(t("client.designs.workshop_quota_reached", printer: @design.printer.name))
     end
 
-    quota = GenerationQuota.for(@user)
-    return failure(t("client.designs.create.quota_exceeded", count: GenerationQuota.per_day)) unless quota.consume!
-
     begin
       children = CreateDesignChildren.call(parent: @design, instruction: @instruction) do
         @request.call
@@ -40,13 +44,13 @@ class TakeDesignFurther
         @request.call
       end
     rescue ReviveDesign::Unrecoverable
-      return refunded(quota, t("client.designs.take_it_further.too_old"))
+      return failure(t("client.designs.take_it_further.too_old"))
     rescue GeneratorClient::BudgetExhausted
-      return refunded(quota, t("client.designs.take_it_further.budget_exhausted"))
+      return failure(t("client.designs.take_it_further.budget_exhausted"))
     rescue GeneratorClient::Rejected => e
-      return refunded(quota, e.detail)
+      return failure(e.detail)
     rescue GeneratorClient::Error
-      return refunded(quota, t("designs.errors.unavailable"))
+      return failure(t("designs.errors.unavailable"))
     end
 
     # Retouched or varied straight from the choice screen: the proposal it
@@ -60,11 +64,6 @@ class TakeDesignFurther
     def t(...) = I18n.t(...)
 
     def failure(message) = Result.new(design: nil, error: message)
-
-    def refunded(quota, message)
-      quota.refund!
-      failure(message)
-    end
 
     # The client's own words are read first, then whether this shop still
     # pays for their reprises, then whether any are left: nothing is spent

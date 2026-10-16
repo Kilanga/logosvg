@@ -100,6 +100,16 @@ class DesignsTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # Reported on 16/10/2026: « un blaireau qui joue de la trompette » came
+  # back as a shaving brush. The client is asked to lift the doubt.
+  test "the form asks for precision and warns about words with two meanings" do
+    sign_in_as users(:client)
+
+    get new_design_path
+
+    assert_select "#prompt_precision", text: /double sens/
+  end
+
   test "a vector design keeps the default size whatever is sent" do
     sign_in_as users(:client)
 
@@ -522,6 +532,24 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_equal 0, GenerationQuota.for(users(:client)).used
   end
 
+  # Decided on 16/10/2026: a reprise is bounded by the design's three, not by
+  # the creations of the day — a client who had spent them all could no
+  # longer touch up what they had made.
+  test "a reprise does not spend a creation of the day, and works once they are spent" do
+    sign_in_as users(:client)
+    designs(:fox_screen).update!(generator_job_id: "job-42")
+    GenerationQuota.per_day.times { GenerationQuota.for(users(:client)).consume! }
+    stub_request(:post, %r{/jobs/job-42/refine}).to_return(
+      status: 202, body: { job_ids: %w[ c1 c2 c3 ], job_id: "c1", refinements_left: 2 }.to_json
+    )
+
+    assert_difference "Design.count", 3 do
+      post design_refine_path(designs(:fox_screen)), params: { instruction: "un casque rouge" }
+    end
+
+    assert_equal GenerationQuota.per_day, GenerationQuota.for(users(:client)).used
+  end
+
   test "the variants of one click share a batch token, and count as one reprise" do
     sign_in_as users(:client)
     designs(:fox_screen).update!(generator_job_id: "job-42")
@@ -727,7 +755,7 @@ class DesignsTest < ActionDispatch::IntegrationTest
 
     assert Design.where(parent: designs(:fox_screen)).all?(&:awaiting_choice?)
     assert_equal 1, designs(:fox_screen).refinements_used
-    assert_equal 1, GenerationQuota.for(users(:client)).used
+    assert_equal 0, GenerationQuota.for(users(:client)).used, "a reprise is not a creation of the day"
   end
 
   # F1, reported on 15/10/2026: refused with nothing on screen, and never

@@ -392,3 +392,60 @@ def test_le_texte_a_imprimer_garde_ses_guillemets_a_la_reecriture(monkeypatch):
                                         "put the text big under the skateboard"))
     assert result.subject == 'a fox on a skateboard, with "PIZZA CLUB" in big letters under the skateboard'
     assert result.scope == "layout"
+    assert result.instruction == "put the text big under the skateboard"
+
+
+# Recette du 16/10/2026 (B4, suite) : en img2img, même à 0,75, « PIZZA »
+# restait au-dessus du chat. Une demande de mise en page passe par l'édition.
+def test_une_retouche_de_mise_en_page_passe_par_l_edition(client, monkeypatch):
+    calls = []
+    generator = main.manager.generator
+    original_edit, original_refine = generator.edit, generator.refine
+
+    async def edit(prompt, seed, colors, init_png):
+        calls.append(("edit", prompt))
+        return await original_edit(prompt, seed, colors, init_png)
+
+    async def refine(prompt, seed, colors, init_png, denoise):
+        calls.append(("refine", denoise))
+        return await original_refine(prompt, seed, colors, init_png, denoise)
+
+    monkeypatch.setattr(generator, "edit", edit)
+    monkeypatch.setattr(generator, "refine", refine)
+
+    parent = create_design(client, "e1")
+    r = client.post(f"/jobs/{parent}/refine", headers=HEADERS,
+                    json={"instruction": "mets le texte en grand sous le skateboard", "user_id": "e1"})
+    data = wait_for(client, r.json()["job_id"], "e1")
+    assert data["status"] == "done", data
+    assert [kind for kind, _ in calls] == ["edit"]
+    assert calls[0][1].startswith("Edit the reference image: ")
+    assert data["result"]["prompt_used"] == calls[0][1]
+
+    calls.clear()
+    r = client.post(f"/jobs/{parent}/refine", headers=HEADERS,
+                    json={"instruction": "couleurs plus douces", "user_id": "e1"})
+    assert wait_for(client, r.json()["job_id"], "e1")["status"] == "done"
+    assert [kind for kind, _ in calls] == ["refine"]
+
+
+def test_le_prompt_d_edition_dit_la_demande_puis_le_dessin():
+    from app.prompt_builder import edit_prompt
+
+    prompt = edit_prompt("move the text below the skateboard.", "A detailed illustration: a cat.")
+    assert prompt.startswith("Edit the reference image: move the text below the skateboard. ")
+    assert prompt.endswith("The result: A detailed illustration: a cat.")
+    assert edit_prompt("", "A cat.") == "A cat."
+
+
+def test_le_workflow_d_edition_part_d_un_latent_vide_avec_l_image_en_reference():
+    import json
+    from pathlib import Path
+
+    wf = json.loads((Path(__file__).parent.parent / "workflows" / "flux2_klein_edit.json").read_text())
+    assert wf["18"]["class_type"] == "ReferenceLatent"
+    assert wf["18"]["inputs"]["latent"] == ["16", 0]
+    assert wf["10"]["inputs"]["positive"] == ["18", 0]
+    assert wf["11"]["inputs"]["latent_image"] == ["6", 0]
+    assert wf["6"]["class_type"] == "EmptyFlux2LatentImage"
+    assert wf["11"]["inputs"]["sigmas"] == ["7", 0]
