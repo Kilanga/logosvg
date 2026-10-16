@@ -12,6 +12,16 @@ from .config import settings
 
 log = logging.getLogger(__name__)
 
+# Les mots qui désignent un animal et un objet (16/10/2026 : « un blaireau qui
+# joue de la trompette » est revenu en « a toothbrush playing the trumpet »).
+# La règle qui tranche : un sujet qui agit est l'animal.
+DOUBLE_MEANINGS = (
+    "Some French words name both an animal and an object: blaireau (badger or shaving brush), "
+    "souris (mouse or computer mouse), grue (crane bird or construction crane), "
+    "papillon (butterfly or bow tie), bourdon (bumblebee or great bell). When such a word is "
+    "a subject that does something or has a face, it is the animal. "
+)
+
 # La consigne retire au modèle la permission d'interpréter. Mesurée sur neuf
 # phrases d'épreuve contre l'ancienne : 9/9 contre 8/9 avec qwen2.5:7b. Ce que
 # l'ancienne ratait n'était pas anodin — « un blaireau qui joue de la trompette »
@@ -31,11 +41,8 @@ SYSTEM = (
     "Describe the design to print, not the garment: drop words such as 't-shirt for' or "
     "'sweatshirt with'. Words written in capitals are text to print: keep them exactly "
     "as written, untranslated, in double quotes. "
-    "Some French words name both an animal and an object: blaireau (badger or shaving brush), "
-    "souris (mouse or computer mouse), grue (crane bird or construction crane), "
-    "papillon (butterfly or bow tie), bourdon (bumblebee or great bell). When such a word is "
-    "a subject that does something or has a face, it is the animal. "
-    "Output only the translation, no comments."
+    + DOUBLE_MEANINGS
+    + "Output only the translation, no comments."
 )
 
 # Dit seulement quand il y a des repères. Écrit à chaque fois, la consigne
@@ -86,6 +93,43 @@ async def to_english(text: str, keep_warm: bool = False) -> str:
     if translated == protected:
         return text
     return restore(clean_output(translated, len(saved)), saved)
+
+
+# Une demande de retouche n'est pas une idée de dessin. Passée par la consigne
+# ci-dessus, « mets tout le texte en grand sous le skateboard » revenait en
+# majuscules entre guillemets — donc en texte à imprimer —, ou en
+# « PUTSILHOMMES" "SUR" "LE"… (recette du 16/10/2026). Mesurée sur huit demandes
+# avec qwen2.5:7b : huit traductions justes, tailles et places comprises.
+INSTRUCTION_SYSTEM = (
+    "You translate a French request to change an image into plain English. Write it as a "
+    "short instruction in lowercase, as an English speaker would ask it. Keep the meaning "
+    "exactly and keep every word about size, place, colour and number (big, small, under, "
+    "above, left, right...); do not add anything. Only markers such as [[T1]] stand for text "
+    "to print: keep them unchanged. Do not put anything in quotes or in capitals. "
+    + DOUBLE_MEANINGS
+    + "Output only the translation."
+)
+
+
+async def instruction_to_english(text: str, keep_warm: bool = False) -> str:
+    """Une demande de retouche, en anglais. Le texte entre guillemets passe à
+    côté du traducteur, comme pour une idée ; tout autre guillemet est retiré :
+    il ferait passer la demande pour du texte à imprimer."""
+    if not settings.ollama_url:
+        return text
+    protected, saved = protect(text)
+    try:
+        translated = await ollama.chat(
+            INSTRUCTION_SYSTEM, protected,
+            keep_alive=ollama.KEEP_WARM if keep_warm else ollama.UNLOAD,
+        )
+    except Exception as exc:  # une retouche ne doit jamais échouer sur la traduction
+        log.warning("Traduction de la retouche indisponible, demande d'origine conservée : %s", exc)
+        return text
+    translated = clean_output(translated.replace('"', " ")[:300], len(saved))
+    if not translated:
+        return text
+    return restore(translated, saved)
 
 
 def clean_output(text: str, markers: int) -> str:

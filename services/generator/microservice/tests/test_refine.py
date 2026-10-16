@@ -380,7 +380,7 @@ def test_le_texte_a_imprimer_garde_ses_guillemets_a_la_reecriture(monkeypatch):
             assert "PIZZA CLUB" not in json["messages"][1]["content"]
             return FakeResponse()
 
-    monkeypatch.setattr(refine, "to_english", no_translation)
+    monkeypatch.setattr(refine, "instruction_to_english", no_translation)
     import app.ollama as ollama
 
     configured = dataclasses.replace(refine.settings, ollama_url="http://ollama.test")
@@ -421,6 +421,14 @@ def test_une_retouche_de_mise_en_page_passe_par_l_edition(client, monkeypatch):
     assert [kind for kind, _ in calls] == ["edit"]
     assert calls[0][1].startswith("Edit the reference image: ")
     assert data["result"]["prompt_used"] == calls[0][1]
+
+    # Les trois propositions d'un clic partagent la portée, pas seulement la
+    # description : la 2e et la 3e repartaient en retouche de détail.
+    calls.clear()
+    r = client.post(f"/jobs/{parent}/refine", headers=HEADERS,
+                    json={"instruction": "mets le chat à gauche", "user_id": "e1", "count": 3})
+    assert all(wait_for(client, job_id, "e1")["status"] == "done" for job_id in r.json()["job_ids"])
+    assert [kind for kind, _ in calls] == ["edit", "edit", "edit"]
 
     calls.clear()
     r = client.post(f"/jobs/{parent}/refine", headers=HEADERS,
