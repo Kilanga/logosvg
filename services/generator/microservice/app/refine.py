@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 from . import ollama
 from .config import settings
-from .translate import protect, restore, to_english
+from .translate import instruction_to_english, protect, restore
 
 log = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ async def rewrite(subject: str, instruction: str) -> Rewrite:
     """La nouvelle description anglaise du design, et la portée de la demande."""
     scope = guess_scope(instruction)
     # Le modèle reste chargé entre la traduction et la réécriture qui suit.
-    instruction_en = await to_english(instruction, keep_warm=True)
+    instruction_en = await instruction_to_english(instruction, keep_warm=True)
     if not settings.ollama_url:
         return _fallback(subject, instruction_en, scope)
 
@@ -90,7 +90,9 @@ async def rewrite(subject: str, instruction: str) -> Rewrite:
             temperature=0.2, json=True,
         )
         answer = json.loads(content)
-        merged = str(answer.get("description", "")).strip().strip('"')
+        # Les textes à imprimer sont des repères ici : un guillemet dans la
+        # réponse n'en est pas un, et ferait du reste du texte à imprimer.
+        merged = re.sub(r"\s{2,}", " ", str(answer.get("description", "")).replace('"', " ")).strip(" ,;")
         # Un doute entre les deux penche vers la mise en page : une retouche
         # sans effet coûte une reprise au client.
         if answer.get("scope") == "layout":

@@ -199,7 +199,12 @@ class JobManager:
         if job.batch_id and job.batch_id in self.batch_refusals:
             raise GenerationError(self.batch_refusals[job.batch_id])
         if job.batch_id and job.batch_id in self.batch_subjects:
-            return self.batch_subjects[job.batch_id]
+            # Toute la lecture de la demande est partagée, pas seulement la
+            # description : sans la portée, la 2e et la 3e proposition d'une
+            # retouche de mise en page repartaient en simple retouche de détail
+            # (recette du 16/10/2026).
+            subject, job.refine_scope, job.refine_instruction = self.batch_subjects[job.batch_id]
+            return subject
         refusal = await self._review(job)
         if refusal:
             if job.batch_id:
@@ -207,7 +212,7 @@ class JobManager:
             raise GenerationError(refusal)
         subject = await self._fresh_subject(job)
         if job.batch_id:
-            self.batch_subjects[job.batch_id] = subject
+            self.batch_subjects[job.batch_id] = (subject, job.refine_scope, job.refine_instruction)
         return subject
 
     async def _review(self, job: Job) -> Optional[str]:
