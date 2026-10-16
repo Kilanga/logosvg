@@ -21,17 +21,12 @@
     </a>
   </p>
 
-  <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;
-             margin:0 0 8px;padding-top:16px;border-top:1px solid #C8D0D4;">
-    <%= t("mailers.print_request.to_printer.sheet_title") %>
-  </h2>
-  <%= render "sheet", sheet: @sheet %>
-
-  <%# Who to call or write to for the quote (asked on 14/10/2026). %>
-  <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;margin:24px 0 8px;">
+  <%# Who to call or write to for the quote (asked on 14/10/2026), first since
+      17/10/2026: below the sheet and its long prompt, it went unseen. %>
+  <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;margin:0 0 8px;padding-top:16px;border-top:1px solid #C8D0D4;">
     <%= t("mailers.print_request.to_printer.contact_title") %>
   </h2>
-  <p style="margin:0;line-height:1.6;">
+  <p style="margin:0 0 24px;line-height:1.6;">
     <strong><%= @print_request.contact_name %></strong><br>
     <%= t("mailers.print_request.to_printer.contact_email") %> :
     <a href="mailto:<%= @print_request.contact_email %>" style="color:#1F5F7A;"><%= @print_request.contact_email %></a><br>
@@ -43,6 +38,12 @@
       <%= @print_request.contact_city %>
     <% end %>
   </p>
+
+  <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;
+             margin:0 0 8px;padding-top:16px;border-top:1px solid #C8D0D4;">
+    <%= t("mailers.print_request.to_printer.sheet_title") %>
+  </h2>
+  <%= render "sheet", sheet: @sheet %>
 
   <% if @print_request.message.present? %>
     <h2 style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#505A67;margin:24px 0 8px;">
