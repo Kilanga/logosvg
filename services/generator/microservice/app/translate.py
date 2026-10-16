@@ -7,8 +7,7 @@ devenu « FESTIVAL 2026 » — sur un t-shirt, c'est une faute imprimée cent fo
 import logging
 import re
 
-import httpx
-
+from . import ollama
 from .config import settings
 
 log = logging.getLogger(__name__)
@@ -68,11 +67,13 @@ def restore(text: str, saved: list) -> str:
     return text
 
 
-async def to_english(text: str) -> str:
+async def to_english(text: str, keep_warm: bool = False) -> str:
+    """`keep_warm` quand un autre appel au modèle suit aussitôt (la réécriture
+    d'une retouche) : il évite de le recharger à froid."""
     if not settings.ollama_url:
         return text
     protected, saved = protect(text)
-    translated = await _translate(protected, markers=bool(saved))
+    translated = await _translate(protected, markers=bool(saved), keep_warm=keep_warm)
     if translated == protected:
         return text
     return restore(clean_output(translated, len(saved)), saved)
@@ -95,32 +96,18 @@ def clean_output(text: str, markers: int) -> str:
     return re.sub(r"\s{2,}", " ", text).strip(" ,;")
 
 
-async def _translate(text: str, markers: bool = False) -> str:
-    payload = {
-        "model": settings.ollama_model,
-        "stream": False,
-        # Décharge le modèle aussitôt pour laisser la VRAM à ComfyUI : sur une
-        # carte de 12 Go, un modèle de 7 milliards resté en mémoire prendrait la
-        # place du modèle d'image. Le prix de cette discipline est un chargement
-        # à froid à chaque appel — d'où le délai large ci-dessous.
-        "keep_alive": 0,
-        "options": {"temperature": 0},
-        "messages": [
-            {"role": "system", "content": SYSTEM + (MARKERS if markers else "")},
-            {"role": "user", "content": text},
-        ],
-    }
-    # Trois minutes, et non une. Le modèle est rechargé à froid à chaque appel,
-    # et ce chargement peut tomber pendant que ComfyUI charge son modèle. À 60 s, il
-    # dépassait le délai, l'exception était avalée, et le prompt français
-    # partait tel quel vers un modèle qui ne comprend que l'anglais : le dessin
-    # revenait à côté sans qu'aucune erreur ne soit levée nulle part.
+async def _translate(text: str, markers: bool = False, keep_warm: bool = False) -> str:
+    # Déchargé aussitôt d'ordinaire, pour laisser la VRAM à ComfyUI : sur une
+    # carte de 12 Go, un modèle de 7 milliards resté en mémoire prendrait la
+    # place du modèle d'image.
     try:
-        async with httpx.AsyncClient(timeout=180) as client:
-            resp = await client.post(f"{settings.ollama_url.rstrip('/')}/api/chat", json=payload)
-            resp.raise_for_status()
-            translated = resp.json()["message"]["content"].strip().strip('"')
-            return translated[:300] or text
+        translated = await ollama.chat(
+            SYSTEM + (MARKERS if markers else ""), text,
+            keep_alive=ollama.KEEP_WARM if keep_warm else ollama.UNLOAD,
+        )
+        return translated.strip('"')[:300] or text
     except Exception as exc:  # la traduction ne doit jamais bloquer la génération
+        # Le prompt français part alors tel quel : jobs.py le repère (sujet
+        # identique à la demande) et le signale au client.
         log.warning("Traduction indisponible, prompt d'origine conservé : %s", exc)
         return text

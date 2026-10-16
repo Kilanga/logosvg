@@ -26,7 +26,7 @@ def test_un_guillemet_reste_ouvert_est_retire():
 def test_la_consigne_ne_parle_des_reperes_que_s_il_y_en_a(monkeypatch):
     seen = []
 
-    async def fake(text, markers=False):
+    async def fake(text, markers=False, keep_warm=False):
         seen.append(markers)
         return text.replace("un renard", "a fox")
 
