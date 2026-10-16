@@ -49,7 +49,7 @@ module Client
 
       return introduce if @review.off_platform?
 
-      checkout
+      start_checkout(amount_cents: @review.price_cents, cancel_url: new_design_review_url(@design))
     end
 
     def show
@@ -95,14 +95,15 @@ module Client
       authorize @review
 
       if @review.proposal_difference_cents.positive?
-        upgrade_checkout
-      elsif Payments::RefundReview.failed?(refund_difference)
-        # The cheaper level is not applied while the difference has not come
-        # back: the client would have paid the old price for the new one.
-        redirect_to review_path(@review), alert: t("reviews.errors.refund_failed")
-      else
-        Reviews::ApplyProposal.call(review: @review)
+        return start_checkout(amount_cents: @review.proposal_difference_cents, purpose: :upgrade,
+                              cancel_url: review_url(@review))
+      end
+
+      result = Reviews::AcceptProposal.call(review: @review)
+      if result.success?
         redirect_to review_path(@review), notice: t(".accepted")
+      else
+        redirect_to review_path(@review), alert: result.error
       end
     end
 
@@ -278,10 +279,11 @@ module Client
         redirect_to review_path(@review), notice: t(".introduced")
       end
 
-      def checkout
+      # Paying for the review, or for the difference to a dearer level.
+      def start_checkout(amount_cents:, cancel_url:, purpose: :review)
         result = Payments::StartReviewCheckout.call(
-          review: @review, amount_cents: @review.price_cents,
-          success_url: review_url(@review), cancel_url: new_design_review_url(@design)
+          review: @review, amount_cents: amount_cents, purpose: purpose,
+          success_url: review_url(@review), cancel_url: cancel_url
         )
 
         if result.success?
@@ -289,31 +291,6 @@ module Client
         else
           redirect_to review_path(@review), alert: result.error
         end
-      end
-
-      def upgrade_checkout
-        result = Payments::StartReviewCheckout.call(
-          review: @review, amount_cents: @review.proposal_difference_cents, purpose: :upgrade,
-          success_url: review_url(@review), cancel_url: review_url(@review)
-        )
-
-        if result.success?
-          redirect_to result.url, allow_other_host: true
-        else
-          redirect_to review_path(@review), alert: result.error
-        end
-      end
-
-      # A cheaper level means money back before the work restarts.
-      def refund_difference
-        owed = -@review.proposal_difference_cents
-        return unless owed.positive?
-
-        # Counted apart: this comes back because the price goes down, not as a
-        # refund against it (see Review#refunded_against_price_cents).
-        result = Payments::RefundReview.call(review: @review, amount_cents: owed)
-        @review.update!(price_change_refunded_cents: @review.price_change_refunded_cents + owed) if result == :refunded
-        result
       end
 
       def refresh_designer_rating

@@ -3,7 +3,7 @@ module SubscriptionsHelper
   # actually charged is the Stripe price; the two are kept equal by hand.
   def plan_price(plan)
     cents = Rails.application.config.tshirt.subscriptions.fetch(:"price_#{plan}_cents")
-    t("subscriptions.price_per_month", amount: number_to_currency(cents / 100.0, precision: 0))
+    t("subscriptions.price_per_month", amount: money(cents, precision: 0))
   end
 
   def trial_days = Rails.application.config.tshirt.subscriptions[:trial_period_days].to_i

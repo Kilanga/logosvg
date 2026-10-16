@@ -17,7 +17,7 @@ module DesignersHelper
   def level_price(level, ttc: false)
     return t("designers.levels.quoted") if level.quoted?
 
-    amount = number_to_currency(level.price_euros, unit: "€", format: "%n %u", precision: 0)
+    amount = money(level.price_cents, precision: 0)
     ttc ? t("reviews.price_ttc", amount: amount) : amount
   end
 

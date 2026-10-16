@@ -157,9 +157,7 @@ fr:
   layout:
     skip_to_content: "Aller au contenu"
     main_navigation: "Navigation principale"
-    user_menu: "Menu du compte"
     close: "Fermer"
-    open_menu: "Ouvrir le menu"
 
   nav:
     home: "Accueil"
@@ -1655,10 +1653,6 @@ fr:
       approve_print:
         approved: "Rendu validé. Il ne reste qu'à compléter votre demande."
         unconfirmed: "Cochez la case pour confirmer que vous validez ce rendu."
-      variants:
-        budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
-      refine:
-        budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
       reference_image:
         errors:
           too_large: "L'image de départ dépasse 10 Mo."
@@ -1672,6 +1666,7 @@ fr:
         Votre compte n'est rattaché à aucun atelier pour le moment : vous
         pourrez créer dès qu'un atelier vous aura accepté.
       take_it_further:
+        budget_exhausted: "Ce design a épuisé ses reprises. Faites-le vérifier par un graphiste pour aller plus loin."
         other_workshop: >-
           Ce visuel a été créé pour un atelier dont vous n'êtes plus client.
           Créez-en un nouveau avec votre atelier actuel.

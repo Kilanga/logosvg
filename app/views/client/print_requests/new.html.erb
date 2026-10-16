@@ -28,18 +28,14 @@
         <div class="mt-6 space-y-5">
           <div class="grid gap-2 sm:grid-cols-2">
             <% PrintRequest::TEXTILE_SOURCES.each do |source| %>
-              <% available = source == "printer" ? @printer.provides_textile? : @printer.accepts_client_textile? %>
-              <label class="flex cursor-pointer flex-col gap-1 rounded-xs border border-line p-3
-                            has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5
-                            has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
-                <%= form.radio_button :textile_source, source, class: "sr-only", disabled: !available %>
-                <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
-                  <%= t("enums.print_request.textile_source.#{source}") %>
-                </span>
+              <% available = @printer.textile_sources.include?(source) %>
+              <%= render layout: "shared/choice_tile",
+                    locals: { form: form, field: :textile_source, value: source, available: available,
+                              title: t("enums.print_request.textile_source.#{source}") } do %>
                 <span class="text-sm text-muted">
-                  <%= available ? t(".textile_source_hint.#{source}") : t(".textile_unavailable") %>
+                  <%= available ? t("client.print_requests.new.textile_source_hint.#{source}") : t("client.print_requests.new.textile_unavailable") %>
                 </span>
-              </label>
+              <% end %>
             <% end %>
           </div>
 
@@ -124,28 +120,24 @@
               <div class="grid gap-2 sm:grid-cols-2">
                 <% PrintRequest::DELIVERY_METHODS.each do |method| %>
                   <% available = deliveries.include?(method) %>
-                  <label class="flex cursor-pointer flex-col gap-1 rounded-xs border border-line p-3
-                                has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5
-                                has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
-                    <%= form.radio_button :delivery_method, method, class: "sr-only", disabled: !available %>
-                    <span class="font-display text-base font-bold uppercase tracking-[0.04em]">
-                      <%= t("enums.print_request.delivery_method.#{method}") %>
-                    </span>
+                  <%= render layout: "shared/choice_tile",
+                        locals: { form: form, field: :delivery_method, value: method, available: available,
+                                  title: t("enums.print_request.delivery_method.#{method}") } do %>
                     <span class="text-sm text-muted">
                       <% if !available %>
-                        <%= t(".textile_unavailable") %>
+                        <%= t("client.print_requests.new.textile_unavailable") %>
                       <% elsif method == "pickup" %>
-                        <%= t(".delivery_hint.pickup", place: [ @printer.address, @printer.city ].compact_blank.join(", ").presence || @printer.name) %>
+                        <%= t("client.print_requests.new.delivery_hint.pickup", place: [ @printer.address, @printer.city ].compact_blank.join(", ").presence || @printer.name) %>
                       <% else %>
-                        <%= t(".delivery_hint.shipping") %>
+                        <%= t("client.print_requests.new.delivery_hint.shipping") %>
                       <% end %>
                     </span>
                     <% if available && method == "shipping" %>
                       <span class="text-sm font-medium text-warning">
-                        <%= @printer.shipping_price_note.present? ? t(".shipping_cost", note: @printer.shipping_price_note) : t(".shipping_cost_unknown") %>
+                        <%= @printer.shipping_price_note.present? ? t("client.print_requests.new.shipping_cost", note: @printer.shipping_price_note) : t("client.print_requests.new.shipping_cost_unknown") %>
                       </span>
                     <% end %>
-                  </label>
+                  <% end %>
                 <% end %>
               </div>
             <% end %>

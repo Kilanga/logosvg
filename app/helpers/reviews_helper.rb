@@ -43,8 +43,6 @@ module ReviewsHelper
     end
   end
 
-  def money(cents) = number_to_currency((cents || 0) / 100.0, unit: "€", format: "%n %u")
-
   # "+30 €" or "−30 €", with the sign that tells a client which way it goes.
   def signed_money(cents)
     return money(0) if cents.to_i.zero?

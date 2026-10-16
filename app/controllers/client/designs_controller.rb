@@ -154,9 +154,9 @@ module Client
 
     def refine
       authorize @design
-      @instruction = params[:instruction].to_s.strip
-      take_it_further do
-        GeneratorClient.new.refine(@design.generator_job_id, instruction: @instruction, user_id: Current.user.id)
+      instruction = params[:instruction].to_s.strip
+      take_it_further(instruction) do
+        GeneratorClient.new.refine(@design.generator_job_id, instruction: instruction, user_id: Current.user.id)
       end
     end
 
@@ -183,59 +183,14 @@ module Client
       # The budget is checked here first, on the application's own count: the
       # service's resets whenever its machine is switched off. And a design the
       # machine has forgotten is put back on it once, then asked again.
-      def take_it_further
-        # A retouche is the client's own words too: the platform's list reads
-        # them here, before anything is spent or sent.
-        if @instruction.present? && (term = BlockedTerm.matching(@instruction))
-          BlockedTerm.record_hit!(term)
-          return redirect_to design_path(@design), alert: t("client.designs.take_it_further.blocked")
-        end
+      def take_it_further(instruction = nil, &request)
+        result = TakeDesignFurther.call(design: @design, user: Current.user, instruction: instruction, &request)
 
-        # Every reprise counts against the shop the design was made for. Once
-        # the client has left that shop — or it has let them go — it no longer
-        # pays for their reprises: a new design, with the new shop, does.
-        unless reprise_allowed?
-          return redirect_to design_path(@design), alert: t("client.designs.take_it_further.other_workshop")
+        if result.success?
+          redirect_to design_path(result.design)
+        else
+          redirect_to design_path(@design), alert: result.error
         end
-
-        if @design.refinements_remaining.zero?
-          return redirect_to design_path(@design), alert: t(".budget_exhausted")
-        end
-
-        workshop_quota = PrinterGenerationQuota.for(@design.printer)
-        unless workshop_quota.allows?
-          return redirect_to design_path(@design),
-                             alert: t("client.designs.workshop_quota_reached", printer: @design.printer.name)
-        end
-
-        unless GenerationQuota.for(Current.user).consume!
-          return redirect_to design_path(@design),
-                             alert: t("client.designs.create.quota_exceeded", count: GenerationQuota.per_day)
-        end
-
-        children = CreateDesignChildren.call(parent: @design, instruction: @instruction) do
-          yield
-        rescue GeneratorClient::NotFound
-          ReviveDesign.call(@design)
-          yield
-        end
-        # Retouched or varied straight from the choice screen: the proposal
-        # it started from is the one kept.
-        ChooseProposal.call(@design) if @design.awaiting_choice?
-        workshop_quota.notify_if_reached!
-        redirect_to design_path(children.first)
-      rescue ReviveDesign::Unrecoverable
-        GenerationQuota.for(Current.user).refund!
-        redirect_to design_path(@design), alert: t("client.designs.take_it_further.too_old")
-      rescue GeneratorClient::BudgetExhausted
-        GenerationQuota.for(Current.user).refund!
-        redirect_to design_path(@design), alert: t(".budget_exhausted")
-      rescue GeneratorClient::Rejected => e
-        GenerationQuota.for(Current.user).refund!
-        redirect_to design_path(@design), alert: e.detail
-      rescue GeneratorClient::Error
-        GenerationQuota.for(Current.user).refund!
-        redirect_to design_path(@design), alert: t("designs.errors.unavailable")
       end
 
       # The client's workshop, from the account rather than from the visit:
@@ -257,11 +212,6 @@ module Client
         return if context_printer
 
         redirect_to client_dashboard_path, alert: t("client.designs.workshop_required")
-      end
-
-      def reprise_allowed?
-        Current.user.attached_to_workshop? &&
-          (@design.printer_id.nil? || @design.printer_id == Current.user.active_workshop_id)
       end
 
       # A shop in context narrows the choice to what it actually does; without

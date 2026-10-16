@@ -3,7 +3,7 @@
 <%= render layout: "public/legal/frame", locals: { title: t("legal.subscription_terms.title") } do %>
   <%# Amounts from config/settings.yml, never written twice. %>
   <% prices = Subscription::PLANS.to_h do |plan|
-       [ plan.to_sym, number_to_currency(Rails.application.config.tshirt.subscriptions.fetch(:"price_#{plan}_cents") / 100.0, precision: 0) ]
+       [ plan.to_sym, money(Rails.application.config.tshirt.subscriptions.fetch(:"price_#{plan}_cents"), precision: 0) ]
      end %>
   <%= legal_section("plans", **prices, generations: listing_generations, deep_interpolation: true) %>
   <%= legal_section("billing", trial_days: trial_days, deep_interpolation: true) %>

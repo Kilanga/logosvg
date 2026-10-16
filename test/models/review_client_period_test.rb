@@ -17,7 +17,7 @@ class ReviewClientPeriodTest < ActiveSupport::TestCase
 
     client = User.find(@client.id)
     assert client.attached_to_workshop?
-    assert client.workshop_period_suspended?
+    assert client.reviewing_for_workshop?
     assert_includes User.attached_to(printers(:rennes)), client
   end
 

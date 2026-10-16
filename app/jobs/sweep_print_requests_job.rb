@@ -17,26 +17,19 @@ class SweepPrintRequestsJob < ApplicationJob
   end
 
   private
-    def settings = Rails.application.config.tshirt.print_requests
-
     # Nothing after 48 hours: the workshop is chased once, and once only —
     # `reminded_at` is what stops this from running every time the sweep does.
     def remind
-      PrintRequest.awaiting_acknowledgement
-                  .where(reminded_at: nil)
-                  .where(sent_at: ..settings[:reminder_after_hours].hours.ago)
-                  .find_each do |print_request|
+      PrintRequest.reminder_due.find_each do |print_request|
         print_request.update!(reminded_at: Time.current)
         PrintRequestMailer.reminder(print_request).deliver_later
       end
     end
 
-    # After five days the client is told to choose another workshop, rather than
+    # After seven days the client is told to choose another workshop, rather than
     # left waiting on a shop that never looked.
     def expire
-      PrintRequest.awaiting_acknowledgement
-                  .where(sent_at: ..settings[:expire_after_days].days.ago)
-                  .find_each do |print_request|
+      PrintRequest.expiry_due.find_each do |print_request|
         print_request.expire!
         print_request.save!
         PrintRequestMailer.expired(print_request).deliver_later
