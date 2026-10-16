@@ -76,6 +76,12 @@ class Settings:
     # point le dessin s'en écarte. Plus haut qu'une retouche (0,55), parce qu'il
     # faut souvent changer de style — d'une photo à des aplats imprimables.
     upload_denoise: float = _float("UPLOAD_DENOISE", 0.7)
+    # Comment se sert-on de cette image : « edit » (elle sert de référence au
+    # modèle, qui applique la demande du client : changer le décor, passer de
+    # nuit, ajouter un personnage) ou « img2img » (elle fixe la composition, avec
+    # l'écart ci-dessus). En img2img, une grosse modification ne passait pas : le
+    # dessin restait collé à l'image (recette du 17/10/2026).
+    upload_mode: str = os.getenv("UPLOAD_MODE", "edit")
     # Le visuel d'un client préparé tel quel (POST /convert) : la définition est
     # gardée jusqu'à cette taille. Au-delà, un fichier de 25 cm à 300 dpi n'en
     # demande pas plus, et la vectorisation ralentirait pour rien.

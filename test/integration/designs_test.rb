@@ -110,6 +110,18 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_select "#prompt_precision", text: /double sens/
   end
 
+  # Reported on 17/10/2026: below the description, the starting image went
+  # unseen. It now comes first, and says the description is what changes it.
+  test "the form offers the client's own image before the description" do
+    sign_in_as users(:client)
+
+    get new_design_path
+
+    body = response.body
+    assert_operator body.index('name="design[reference_image]"'), :<, body.index('name="design[prompt]"')
+    assert_select "label", text: "Partir de votre image (facultatif)"
+  end
+
   test "a vector design keeps the default size whatever is sent" do
     sign_in_as users(:client)
 

@@ -457,3 +457,50 @@ def test_le_workflow_d_edition_part_d_un_latent_vide_avec_l_image_en_reference()
     assert wf["11"]["inputs"]["latent_image"] == ["6", 0]
     assert wf["6"]["class_type"] == "EmptyFlux2LatentImage"
     assert wf["11"]["inputs"]["sigmas"] == ["7", 0]
+
+
+# Recette du 17/10/2026 : partir de l'image du client pour la changer
+# franchement (décor, nuit, personnage ajouté). En img2img à 0,7, la
+# composition de l'image l'emportait sur la demande.
+def test_une_creation_avec_image_passe_par_l_edition(client, monkeypatch):
+    calls = []
+    generator = main.manager.generator
+    original_edit = generator.edit
+
+    async def edit(prompt, seed, colors, init_png):
+        calls.append(prompt)
+        return await original_edit(prompt, seed, colors, init_png)
+
+    async def refine(*args):
+        raise AssertionError("l'img2img ne doit plus servir pour une image de départ")
+
+    monkeypatch.setattr(generator, "edit", edit)
+    monkeypatch.setattr(generator, "refine", refine)
+
+    r = client.post("/generate", headers=HEADERS, json={
+        "prompt": "passe la scène de nuit avec une grande lune", "style": "illustration", "colors": 3,
+        "user_id": "img5", "init_image": _image_client("JPEG"), "count": 3,
+    })
+    assert r.status_code == 202, r.text
+    jobs = r.json()["job_ids"]
+    results = [wait_for(client, job_id, "img5") for job_id in jobs]
+    assert all(data["status"] == "done" for data in results), results
+    assert len(calls) == 3
+    assert all(prompt.startswith("Use the reference image as the base and change it: ") for prompt in calls)
+    assert results[0]["result"]["prompt_used"] == calls[0]
+
+    # Une variante refait la même édition sur la même image.
+    calls.clear()
+    v = client.post(f"/jobs/{jobs[0]}/variants", headers=HEADERS, json={"user_id": "img5", "count": 1})
+    assert wait_for(client, v.json()["job_id"], "img5")["status"] == "done"
+    assert len(calls) == 1 and calls[0].startswith("Use the reference image as the base and change it: ")
+
+
+def test_le_prompt_d_une_image_de_depart_garde_le_sujet_pas_le_rendu():
+    from app.prompt_builder import image_edit_prompt
+
+    prompt = image_edit_prompt("make it night with a big moon.", "A flat illustration: a village.")
+    assert prompt.startswith("Use the reference image as the base and change it: make it night with a big moon. ")
+    assert "Keep its subject and composition" in prompt
+    assert prompt.endswith("The result: A flat illustration: a village.")
+    assert image_edit_prompt("", "A cat.") == "A cat."

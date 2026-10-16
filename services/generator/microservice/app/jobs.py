@@ -20,12 +20,12 @@ from PIL import Image
 from .config import settings
 from .generator import GenerationError, get_generator
 from .moderation import review
-from .prompt_builder import build_prompt, edit_prompt
+from .prompt_builder import build_prompt, edit_prompt, image_edit_prompt
 from .prompt_filter import PromptFilter
 from .raster import rasterize, target_pixels
 from .refine import rewrite
 from .techniques import DEFAULT_PRINT_WIDTH_CM, DEFAULT_TECHNIQUE, resolve
-from .translate import to_english
+from .translate import instruction_to_english, to_english
 from .vectorizer import vectorize
 
 log = logging.getLogger(__name__)
@@ -228,6 +228,11 @@ class JobManager:
 
     async def _fresh_subject(self, job: Job) -> str:
         if job.mode == CREATE:
+            if job.init_png is not None and settings.upload_mode == "edit":
+                # Avec une image, ce que le client écrit est souvent une
+                # consigne (« passe la scène de nuit ») : elle est traduite
+                # comme telle, en plus de la description.
+                job.refine_instruction = await instruction_to_english(job.prompt)
             return await to_english(job.prompt)
 
         parent = self.get(job.parent_id) if job.parent_id else None
@@ -235,6 +240,9 @@ class JobManager:
             raise GenerationError("La version précédente a expiré. Relancez la création.")
         base = parent.subject or await to_english(parent.prompt)
         if job.mode == VARIANT:
+            # Une variante d'une création partie d'une image refait la même édition.
+            if job.init_png is not None:
+                job.refine_instruction = parent.refine_instruction
             return base
         result = await rewrite(base, job.instruction or "")
         job.refine_scope = result.scope
@@ -331,9 +339,13 @@ class JobManager:
                 prompt, job.seed, colors,
                 self._init_image(job), denoise,
             )
+        elif job.init_png is not None and settings.upload_mode == "edit":
+            # Une création (ou une variante) qui part de l'image du client :
+            # l'image sert de référence, la demande est dite au modèle.
+            drawn_with = image_edit_prompt(job.refine_instruction or subject, prompt)
+            png = await self.generator.edit(drawn_with, job.seed, colors, job.init_png)
         elif job.init_png:
-            # Une création (ou une variante) qui part de l'image du client : la
-            # même voie que la retouche, avec un écart plus grand.
+            # Même voie que la retouche, avec un écart plus grand.
             png = await self.generator.refine(
                 prompt, job.seed, colors, job.init_png, settings.upload_denoise,
             )

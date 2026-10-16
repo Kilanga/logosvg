@@ -1510,10 +1510,12 @@ fr:
         prompt_placeholder: "un renard qui fait du skate, style rétro"
         prompt_hint: "Une phrase suffit. Décrivez le sujet, pas la technique."
         prompt_precision: "Soyez le plus précis possible. Attention aux mots à double sens : écrivez « un blaireau (l'animal) » ou « une souris (l'animal) » plutôt que le mot seul."
-        reference_image: "Partir d'une image (facultatif)"
+        reference_image: "Partir de votre image (facultatif)"
         reference_image_hint: >-
-          Un croquis, votre ancien logo, une photo : l'IA part de cette image et
-          la transforme selon votre description. PNG, JPEG ou WebP, 10 Mo au plus.
+          Une photo, un croquis, votre ancien logo, une peinture : l'IA garde
+          votre image et la change selon votre description, par exemple « passe
+          la scène de nuit », « ajoute un chat sur le muret », « en style
+          rétro ». PNG, JPEG ou WebP, 10 Mo au plus.
         reference_rights: >-
           Cette image m'appartient ou j'ai le droit de l'utiliser, elle ne
           reprend pas la marque de quelqu'un d'autre, et elle ne montre
@@ -3164,7 +3166,7 @@ fr:
                 - "Elle doit vous appartenir, ou vous devez avoir le droit de l'utiliser : pas de marque, de personnage ni de personne reconnaissable sans accord."
             - q: "Puis-je partir d'un croquis ou d'une photo ?"
               a:
-                - "Oui : ajoutez une image de départ à votre description. L'IA la transforme selon ce que vous écrivez."
+                - "Oui : ajoutez votre image en haut du formulaire, puis dites dans la description ce qu'il faut changer (« passe la scène de nuit », « ajoute un chat », « en style rétro »). L'IA garde le sujet et la composition, et applique votre demande."
         - title: "Le fichier et l'impression"
           questions:
             - q: "Puis-je télécharger mon visuel ?"
