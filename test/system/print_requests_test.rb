@@ -29,6 +29,8 @@ class PrintRequestsTest < ApplicationSystemTestCase
     # The run adds itself up where the decision is made.
     assert_selector "[data-size-run-target='output']", text: "20"
 
+    # Asked since 17/10/2026: the workshop calls back to quote.
+    fill_in "print_request_contact_phone", with: "06 12 34 56 78"
     check "print_request_consent"
     click_on I18n.t("client.print_requests.new.submit")
 
