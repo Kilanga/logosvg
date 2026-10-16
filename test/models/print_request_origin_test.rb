@@ -22,7 +22,7 @@ class PrintRequestOriginTest < ActiveSupport::TestCase
     request = PrintRequest.new(
       design: design, client: users(:client), printer: printers(:rennes),
       textile_source: "printer", placements: [ "chest_center" ], print_width_cm: 25,
-      sizes: { "M" => 5 }, total_qty: 5, contact_name: "Claire Martin",
+      sizes: { "M" => 5 }, total_qty: 5, contact_name: "Claire Martin", contact_phone: "0612345678",
       contact_email: "claire@example.invalid", consent_text_version: "2026-09-v1",
       consented_at: Time.current
     )

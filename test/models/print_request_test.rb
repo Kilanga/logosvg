@@ -237,6 +237,8 @@ class PrintRequestTest < ActiveSupport::TestCase
 
   test "a request needs someone to answer" do
     assert_not build_request(contact_name: "").valid?
+    # Reported on 17/10/2026: a request reached the workshop with no telephone.
+    assert_not build_request(contact_phone: "").valid?
     assert_not build_request(contact_email: "").valid?
     assert_not build_request(contact_email: "pas-une-adresse").valid?
   end
@@ -342,7 +344,7 @@ class PrintRequestTest < ActiveSupport::TestCase
         printer: printers(:nantes),
         print_width_cm: 25,
         sizes: { "M" => "5" },
-        contact_name: "Claire Martin",
+        contact_name: "Claire Martin", contact_phone: "0612345678",
         contact_email: "claire@example.invalid",
         consent_text_version: "2026-09-v1",
         consented_at: Time.current

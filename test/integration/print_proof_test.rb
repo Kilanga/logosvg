@@ -124,7 +124,7 @@ class PrintProofTest < ActionDispatch::IntegrationTest
       {
         textile_source: "printer", textile_model: "Stanley Stella", textile_color: "Noir",
         placements: [ "chest_center" ], sizes: { "M" => "12", "L" => "8" },
-        contact_name: "Claire Martin", contact_email: "claire@example.invalid", consent: "1"
+        contact_name: "Claire Martin", contact_phone: "0612345678", contact_email: "claire@example.invalid", consent: "1"
       }
     end
 

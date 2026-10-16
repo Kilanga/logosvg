@@ -144,6 +144,17 @@ class Design < ApplicationRecord
     @client_original
   end
 
+  # The design holding the client's own picture this idea was drawn from —
+  # itself, or the first of its lineage — or nil when the AI started from
+  # words alone. Nil too for the client's own finished picture: there, the
+  # picture is the print file itself. Read by query, like GeneratorClient.
+  def starting_image_holder
+    return nil if client_original?
+
+    holders = Design.with_attached_reference_image.where(id: [ id, lineage_root_id ].uniq).to_a
+    holders.find { |design| design.reference_image.attached? }
+  end
+
   # Reprises already spent on this lineage, counted by the application.
   #
   # The service counts them too, but in memory: every time its machine is

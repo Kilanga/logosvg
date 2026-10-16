@@ -31,6 +31,9 @@
 -- <%= t("mailers.print_request.to_printer.files_title") %> --
 
 <%= t("mailers.print_request.to_printer.files_body") %>
+<% if @print_request.starting_image.attached? -%>
+<%= t("mailers.print_request.to_printer.starting_image_body") %>
+<% end -%>
 
 <%= t("mailers.print_request.to_printer.ai_notice") %>
 

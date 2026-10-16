@@ -61,6 +61,7 @@ class PrintRequestSheet
     # What lets the workshop — or us — reproduce the same image later.
     def provenance_lines
       [
+        line(:starting_image, (t("starting_image_value") if starting_image?)),
         line(:asked_for, @design.prompt),
         line(:prompt_used, @design.prompt_used),
         line(:instruction, @design.instruction),
@@ -69,6 +70,12 @@ class PrintRequestSheet
         line(:style, (I18n.t("enums.design.style.#{@design.style}") unless @design.upload?)),
         line(:seed, @design.seed)
       ]
+    end
+
+    # By query: the request reaches here bare from mailers and jobs.
+    def starting_image?
+      ActiveStorage::Attachment.exists?(record_type: "PrintRequest", record_id: @print_request.id,
+                                        name: "starting_image")
     end
 
     def line(key, value)

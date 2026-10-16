@@ -37,6 +37,15 @@ class Technique:
     # FLUX lit les négations (son encodeur est un modèle de langage, pas CLIP) :
     # les interdits y sont dits en clair, il n'y a plus de prompt négatif.
     prompt_hint: str
+    # Comment le dessin occupe le fond, lu par FLUX.2. Les techniques vectorielles
+    # veulent un sujet isolé (détourage, vectorisation). Les techniques
+    # matricielles impriment aussi une scène : un paysage y était forcé en
+    # « single subject, no landscape », et le modèle le découpait au hasard
+    # (recette du 17/10/2026).
+    composition: str = (
+        "One single subject, centered, isolated on a plain pure white background, "
+        "with no scenery, no landscape and no background shapes."
+    )
 
     @property
     def file_name(self) -> str:
@@ -116,6 +125,11 @@ CATALOG = {
             min_detail=0,
             dpi=300,
             prompt_hint="Full-color illustration with rich colors, smooth shading and crisp clean edges.",
+            composition=(
+                "One centered artwork on a plain pure white background. A single subject is drawn "
+                "isolated; a scene or a landscape is drawn as one self-contained vignette with a "
+                "clean, crisp outer edge, and the white around it is left empty."
+            ),
         ),
         Technique(
             key="dtg",
@@ -128,6 +142,11 @@ CATALOG = {
             min_detail=0,
             dpi=300,
             prompt_hint="Full-color illustration with rich colors, smooth shading and crisp clean edges.",
+            composition=(
+                "One centered artwork on a plain pure white background. A single subject is drawn "
+                "isolated; a scene or a landscape is drawn as one self-contained vignette with a "
+                "clean, crisp outer edge, and the white around it is left empty."
+            ),
         ),
         Technique(
             key="sublimation",
@@ -143,6 +162,10 @@ CATALOG = {
             prompt_hint=(
                 "Full-color illustration with rich colors and smooth shading, bright tones; "
                 "no white outline, as the fabric itself provides the white."
+            ),
+            composition=(
+                "One centered artwork on a plain pure white background. A single subject is drawn "
+                "isolated; a scene or a landscape may fill a large vignette with a clean outer edge."
             ),
         ),
     )
@@ -162,6 +185,7 @@ def catalog_payload() -> list:
     for technique in CATALOG.values():
         entry = asdict(technique)
         entry.pop("prompt_hint", None)
+        entry.pop("composition", None)
         entry["file_name"] = technique.file_name
         payload.append(entry)
     return payload

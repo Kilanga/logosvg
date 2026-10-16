@@ -109,7 +109,7 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
       PrintRequest.create!(design: create_design, client: users(:client),
                            printer: printers(:rennes), print_width_cm: 25,
                            sizes: { "M" => 20 }, total_qty: 20,
-                           contact_name: "Claire", contact_email: "claire@example.invalid",
+                           contact_name: "Claire", contact_phone: "0612345678", contact_email: "claire@example.invalid",
                            consent_text_version: "2026-09-v1", consented_at: Time.current,
                            sent_at: Time.current)
     end

@@ -88,8 +88,11 @@ def test_dtf_produit_une_image_dimprimerie(client):
     # Les dégradés sont l'intérêt de la machine : rien ne les interdit ici.
     assert "no gradients" not in result["prompt_used"]
     assert "smooth shading" in result["prompt_used"]
-    # Le décor, lui, reste interdit quelle que soit la technique.
-    assert "no scenery" in result["prompt_used"]
+    # Une scène y est permise, dans une vignette nette sur fond blanc
+    # (recette du 17/10/2026) ; le fond blanc reste la règle.
+    assert "no scenery" not in result["prompt_used"]
+    assert "self-contained vignette" in result["prompt_used"]
+    assert "plain pure white background" in result["prompt_used"]
 
     stats = result["stats"]
     assert stats["dpi"] == 300
@@ -363,3 +366,14 @@ def test_le_texte_entre_guillemets_ne_passe_pas_par_le_traducteur():
     assert restore("Village party with [[T1]] and [[T2]]", saved) == 'Village party with "FÊTE 2026" and "Les Lions"'
     # Il en perd un : le texte n'est pas perdu pour autant.
     assert '"Les Lions"' in restore("Village party with [[T1]]", saved)
+
+
+def test_le_vectoriel_garde_un_sujet_isole():
+    from app.prompt_builder import build_prompt
+
+    for key in ("screen_printing", "flex", "embroidery"):
+        assert "no scenery, no landscape" in build_prompt("a village terrace at sunset", "illustration", 3, key)
+    for key in ("dtf", "dtg", "sublimation"):
+        prompt = build_prompt("a village terrace at sunset", "illustration", 3, key)
+        assert "no landscape" not in prompt
+        assert "vignette" in prompt

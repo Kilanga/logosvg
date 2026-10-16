@@ -56,6 +56,9 @@
   </h2>
   <p style="margin:0 0 12px;line-height:1.5;color:#505A67;">
     <%= t("mailers.print_request.to_printer.files_body") %>
+    <% if @print_request.starting_image.attached? %>
+      <%= t("mailers.print_request.to_printer.starting_image_body") %>
+    <% end %>
   </p>
   <%# Said in the email because the print file says it only in its metadata:
       nothing visible is printed. %>

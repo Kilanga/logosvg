@@ -9,8 +9,9 @@ Trois choses y sont dites à chaque fois, parce que leur oubli a été constaté
 
 - **le dessin seul**, pas le vêtement : « t-shirt pour la fête du village » faisait
   dessiner un t-shirt, qui se serait retrouvé imprimé sur le t-shirt ;
-- **un sujet isolé sur fond blanc uni**, condition du détourage et de la
-  vectorisation ;
+- **un fond blanc uni**, condition du détourage et de la vectorisation : sujet
+  isolé en vectoriel ; en matriciel, une scène est permise dans une vignette
+  nette (voir `Technique.composition`) ;
 - **le texte entre guillemets, à la lettre** : « FÊTE 2026 » était devenu
   « FESTIVAL 2026 ».
 
@@ -31,7 +32,7 @@ STYLES = {
 
 RICH_STYLES = {
     "logo": "A polished logo emblem built around one centered symbol",
-    "illustration": "A detailed illustration of a single subject",
+    "illustration": "A detailed illustration of the subject or scene described",
     "mascotte": "An expressive full-body cartoon mascot character with clean outlines",
     "badge": "A compact circular badge emblem with clean outlines",
 }
@@ -65,10 +66,6 @@ QUOTED = re.compile(r'"([^"]+)"')
 ARTWORK_ONLY = (
     "Only the artwork itself, as a print-ready graphic for a t-shirt: do not draw the "
     "t-shirt, a model, a mockup, a poster or a frame."
-)
-ISOLATED = (
-    "One single subject, centered, isolated on a plain pure white background, "
-    "with no scenery, no landscape and no background shapes."
 )
 NO_TEXT = "Do not write any text, letters or numbers."
 
@@ -106,7 +103,7 @@ def build_prompt(subject: str, style: str, colors: int, technique: str = None, f
         palette = f"Use exactly {profile.clamp_colors(colors)} flat colors, plus the white of the background."
 
     parts = [f"{opening}: {subject}.", text_rule(subject), look, profile.prompt_hint, palette,
-             ISOLATED, ARTWORK_ONLY]
+             profile.composition, ARTWORK_ONLY]
     return " ".join(p for p in parts if p)
 
 
