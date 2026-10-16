@@ -3,6 +3,18 @@ require "test_helper"
 class PrintRequestsTest < ActionDispatch::IntegrationTest
   setup { attach_print_file }
 
+  # Asked on 17/10/2026: the shop had to scroll past the sheet to find who to call.
+  test "the workshop's request page shows the client's contact first" do
+    sign_in_as users(:printer)
+    print_requests(:waiting).update_columns(contact_phone: "+33612345678")
+
+    get workshop_print_request_path(print_requests(:waiting))
+
+    assert_response :success
+    assert_select "#client_contact a[href='tel:+33612345678']"
+    assert_operator response.body.index('id="client_contact"'), :<, response.body.index(I18n.t("workshop.print_requests.show.sheet"))
+  end
+
   # --- Sending -------------------------------------------------------------
 
   test "a client sends a finished design to a compatible shop" do

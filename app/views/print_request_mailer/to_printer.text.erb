@@ -7,9 +7,6 @@
 <%= t("mailers.print_request.to_printer.confirm") %> :
 <%= @confirmation_url %>
 
--- <%= t("mailers.print_request.to_printer.sheet_title") %> --
-
-<%= render "sheet", sheet: @sheet %>
 -- <%= t("mailers.print_request.to_printer.contact_title") %> --
 
 <%= @print_request.contact_name %>
@@ -21,6 +18,9 @@
 <%= @print_request.contact_city %>
 <% end -%>
 
+-- <%= t("mailers.print_request.to_printer.sheet_title") %> --
+
+<%= render "sheet", sheet: @sheet %>
 <% if @print_request.message.present? -%>
 
 -- <%= t("mailers.print_request.to_printer.message_title") %> --

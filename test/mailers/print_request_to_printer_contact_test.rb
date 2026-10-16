@@ -16,4 +16,15 @@ class PrintRequestToPrinterContactTest < ActionMailer::TestCase
     end
     assert_includes mail.html_part.body.to_s, "tel:+33612345678"
   end
+
+  # Asked on 17/10/2026: below the sheet and its long prompt, the contact went
+  # unseen. It now comes first.
+  test "the contact comes before the technical sheet" do
+    mail = PrintRequestMailer.to_printer(print_requests(:waiting))
+
+    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+      assert_operator body.index(I18n.t("mailers.print_request.to_printer.contact_title")), :<,
+                      body.index(I18n.t("mailers.print_request.to_printer.sheet_title"))
+    end
+  end
 end
