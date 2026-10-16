@@ -5,4 +5,4 @@
       url: designer_review_url(@review),
       action: t("mailers.review.notify_designers.action"),
       footer: (@review.off_platform? ? t("mailers.review.notify_designers.footer_off_platform") :
-               t("mailers.review.notify_designers.footer", amount: number_to_currency(@review.designer_share_cents / 100.0, unit: "€", format: "%n %u"))) %>
+               t("mailers.review.notify_designers.footer", amount: money(@review.designer_share_cents))) %>

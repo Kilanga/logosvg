@@ -21,8 +21,7 @@ import logging
 import re
 from dataclasses import dataclass
 
-import httpx
-
+from . import ollama
 from .config import settings
 from .translate import protect, restore, to_english
 
@@ -69,7 +68,8 @@ def _fallback(subject: str, instruction: str, scope: str) -> Rewrite:
 async def rewrite(subject: str, instruction: str) -> Rewrite:
     """La nouvelle description anglaise du design, et la portée de la demande."""
     scope = guess_scope(instruction)
-    instruction_en = await to_english(instruction)
+    # Le modèle reste chargé entre la traduction et la réécriture qui suit.
+    instruction_en = await to_english(instruction, keep_warm=True)
     if not settings.ollama_url:
         return _fallback(subject, instruction_en, scope)
 
@@ -80,34 +80,21 @@ async def rewrite(subject: str, instruction: str) -> Rewrite:
         protected_instruction = protected_instruction.replace(f"[[T{number}]]", f"[[T{len(saved) + number}]]")
     saved = saved + saved_instruction
 
-    payload = {
-        "model": settings.ollama_model,
-        "stream": False,
-        "format": "json",
-        # Décharge le modèle aussitôt pour laisser la VRAM à ComfyUI.
-        "keep_alive": 0,
-        "options": {"temperature": 0.2},
-        "messages": [
-            {"role": "system", "content": SYSTEM},
-            {"role": "user",
-             "content": f"Current description: {protected_subject}\nChange request: {protected_instruction}"},
-        ],
-    }
     try:
-        # Trois minutes, comme la traduction : le modèle vient d'être déchargé
-        # par elle et repart à froid.
-        async with httpx.AsyncClient(timeout=180) as client:
-            resp = await client.post(f"{settings.ollama_url.rstrip('/')}/api/chat", json=payload)
-            resp.raise_for_status()
-            answer = json.loads(resp.json()["message"]["content"])
-            merged = str(answer.get("description", "")).strip().strip('"')
-            # Un doute entre les deux penche vers la mise en page : une retouche
-            # sans effet coûte une reprise au client.
-            if answer.get("scope") == "layout":
-                scope = "layout"
-            if not merged:
-                return _fallback(subject, instruction_en, scope)
-            return Rewrite(restore(merged, saved)[:MAX_SUBJECT], scope)
+        content = await ollama.chat(
+            SYSTEM,
+            f"Current description: {protected_subject}\nChange request: {protected_instruction}",
+            temperature=0.2, json=True,
+        )
+        answer = json.loads(content)
+        merged = str(answer.get("description", "")).strip().strip('"')
+        # Un doute entre les deux penche vers la mise en page : une retouche
+        # sans effet coûte une reprise au client.
+        if answer.get("scope") == "layout":
+            scope = "layout"
+        if not merged:
+            return _fallback(subject, instruction_en, scope)
+        return Rewrite(restore(merged, saved)[:MAX_SUBJECT], scope)
     except Exception as exc:  # une retouche ne doit jamais échouer sur la réécriture
         log.warning("Réécriture indisponible, repli sur la concaténation : %s", exc)
         return _fallback(subject, instruction_en, scope)

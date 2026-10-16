@@ -187,8 +187,6 @@ class Design < ApplicationRecord
 
   def in_progress? = pending? || generating?
 
-  def lineage_root = root || self
-
   # L'identifiant de la racine sans charger la racine. Un enfant se rattache à
   # la lignée par une clé étrangère : aller chercher l'enregistrement pour lire
   # son id, c'est une requête de plus et, sur un design rendu par un travail de

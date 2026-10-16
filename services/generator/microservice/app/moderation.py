@@ -19,8 +19,7 @@ import json
 import logging
 from typing import Optional
 
-import httpx
-
+from . import ollama
 from .config import settings
 
 log = logging.getLogger(__name__)
@@ -90,25 +89,12 @@ async def review(text: str, context: str = "") -> Optional[str]:
 
 
 async def _ask(request: str) -> Optional[dict]:
-    payload = {
-        "model": settings.ollama_model,
-        "stream": False,
-        "format": "json",
+    try:
         # Gardé chargé quelques secondes : la traduction suit immédiatement et
         # reprend le même modèle, au lieu de le recharger à froid. Elle, le
-        # décharge (keep_alive 0) pour rendre la VRAM à ComfyUI.
-        "keep_alive": "20s",
-        "options": {"temperature": 0},
-        "messages": [
-            {"role": "system", "content": SYSTEM},
-            {"role": "user", "content": request},
-        ],
-    }
-    try:
-        async with httpx.AsyncClient(timeout=180) as client:
-            resp = await client.post(f"{settings.ollama_url.rstrip('/')}/api/chat", json=payload)
-            resp.raise_for_status()
-            return json.loads(resp.json()["message"]["content"])
+        # décharge pour rendre la VRAM à ComfyUI.
+        answer = await ollama.chat(SYSTEM, request, json=True, keep_alive=ollama.KEEP_WARM)
+        return json.loads(answer)
     except Exception as exc:  # la modération ne doit jamais bloquer par panne
         log.warning("Modération indisponible, demande acceptée : %s", exc)
         return None

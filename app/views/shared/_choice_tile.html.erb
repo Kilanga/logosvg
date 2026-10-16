@@ -1,0 +1,11 @@
+<%# One option of a choice the shop limits — the textile, the way the order
+    comes back: a tile with its title and a line under it, greyed out when the
+    shop does not offer it. The content under the title comes from the block.
+    Locals: form, field, value, title, available. %>
+<label class="flex cursor-pointer flex-col gap-1 rounded-xs border border-line p-3
+              has-[:checked]:border-emulsion has-[:checked]:bg-emulsion/5
+              has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
+  <%= form.radio_button field, value, class: "sr-only", disabled: !available %>
+  <span class="font-display text-base font-bold uppercase tracking-[0.04em]"><%= title %></span>
+  <%= yield %>
+</label>

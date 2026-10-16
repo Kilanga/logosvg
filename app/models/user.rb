@@ -105,9 +105,6 @@ class User < ApplicationRecord
     workshop_until&.future? || reviewing_for_workshop?
   end
 
-  # The period has run out, but a review holds it open.
-  def workshop_period_suspended? = workshop_id.present? && !workshop_until&.future? && reviewing_for_workshop?
-
   def reviewing_for_workshop?
     return @reviewing_for_workshop if defined?(@reviewing_for_workshop)
 

@@ -42,5 +42,5 @@ module HelpHelper
   # from I18n uninterpolated, so every string goes through here.
   def help_text(string) = I18n.interpolate(string.to_s, help_values)
 
-  def help_price(cents) = number_to_currency(cents / 100.0, unit: "€", format: "%n %u", precision: 0)
+  def help_price(cents) = money(cents, precision: 0)
 end

@@ -1,7 +1,7 @@
 module Admin
   # What an administrator checks when something looks wrong.
   class StatusController < BaseController
-    skip_after_action :verify_authorized
+    # Authorised by SpaceController#authorize_space, like every admin page.
     skip_after_action :verify_policy_scoped
 
     def show

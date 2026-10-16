@@ -62,6 +62,19 @@ class PrintRequest < ApplicationRecord
   scope :newest_first, -> { order(sent_at: :desc, created_at: :desc) }
   scope :awaiting_acknowledgement, -> { where(status: "sent") }
 
+  # The two deadlines a request runs against, defined once and read by
+  # SweepPrintRequestsJob (revue du 16/10/2026: the rule lived both here, as
+  # methods only the tests called, and in the job).
+  # Chased once, `reminder_after_hours` after it was sent.
+  scope :reminder_due, -> {
+    awaiting_acknowledgement.where(reminded_at: nil)
+                            .where(sent_at: ..Rails.application.config.tshirt.print_requests[:reminder_after_hours].hours.ago)
+  }
+  # Closed `expire_after_days` after it was sent, if the shop never answered.
+  scope :expiry_due, -> {
+    awaiting_acknowledgement.where(sent_at: ..Rails.application.config.tshirt.print_requests[:expire_after_days].days.ago)
+  }
+
   # `sent` is the initial state: a print request exists because it was sent.
   # There is no draft — the form is the draft.
   aasm column: :status, whiny_transitions: true do
@@ -127,8 +140,6 @@ class PrintRequest < ApplicationRecord
 
   def open? = %w[ sent acknowledged quoted in_production ].include?(status)
 
-  def awaiting_acknowledgement? = sent?
-
   # A confirmation link is dead once the request has moved on or been called
   # off — an antivirus following an old link must not revive anything.
   def confirmable? = sent? && !confirmation_expired?
@@ -137,15 +148,6 @@ class PrintRequest < ApplicationRecord
     return false if sent_at.nil?
 
     sent_at < settings[:confirmation_token_valid_days].days.ago
-  end
-
-  def reminder_due?
-    sent? && reminded_at.nil? && sent_at.present? &&
-      sent_at <= settings[:reminder_after_hours].hours.ago
-  end
-
-  def expiry_due?
-    sent? && sent_at.present? && sent_at <= settings[:expire_after_days].days.ago
   end
 
   # Sizes in the order the settings list them, not the order they were typed.
@@ -157,10 +159,6 @@ class PrintRequest < ApplicationRecord
   end
 
   def self.garment_sizes = Rails.application.config.tshirt.print_requests[:garment_sizes]
-
-  def printer_supplies_textile? = textile_source == "printer"
-
-  def shipping? = delivery_method == "shipping"
 
   private
     def consent_recorded

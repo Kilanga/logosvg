@@ -200,10 +200,6 @@ module Payments
       request(nil) { @stripe.v1.accounts.login_links.create(account) }
     end
 
-    def retrieve_account(id)
-      request(nil) { @stripe.v1.accounts.retrieve(id).to_hash }
-    end
-
     # Verifies the signature and returns the event. An unsigned or missigned
     # payload never becomes an event at all.
     #

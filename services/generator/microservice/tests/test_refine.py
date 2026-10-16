@@ -353,7 +353,7 @@ def test_le_texte_a_imprimer_garde_ses_guillemets_a_la_reecriture(monkeypatch):
 
     import app.refine as refine
 
-    async def no_translation(text):
+    async def no_translation(text, keep_warm=False):
         return text
 
     class FakeResponse:
@@ -381,8 +381,12 @@ def test_le_texte_a_imprimer_garde_ses_guillemets_a_la_reecriture(monkeypatch):
             return FakeResponse()
 
     monkeypatch.setattr(refine, "to_english", no_translation)
-    monkeypatch.setattr(refine.httpx, "AsyncClient", FakeClient)
-    monkeypatch.setattr(refine, "settings", dataclasses.replace(refine.settings, ollama_url="http://ollama.test"))
+    import app.ollama as ollama
+
+    configured = dataclasses.replace(refine.settings, ollama_url="http://ollama.test")
+    monkeypatch.setattr(ollama.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(ollama, "settings", configured)
+    monkeypatch.setattr(refine, "settings", configured)
 
     result = asyncio.run(refine.rewrite('a fox on a skateboard, with the text "PIZZA CLUB"',
                                         "put the text big under the skateboard"))

@@ -58,6 +58,25 @@ class Review < ApplicationRecord
   scope :open_for_designer, -> { where(status: %w[ queued in_progress delivered ]) }
   scope :awaiting_claim, -> { where(status: "queued") }
 
+  # The deadlines SweepReviewsJob acts on, each defined once (revue du
+  # 16/10/2026: they lived in the job, and again here as methods nobody
+  # called).
+  # Paid, and no designer took it within `unclaimed_refund_hours`.
+  scope :unclaimed_too_long, -> {
+    awaiting_claim.where(queued_at: ..Rails.application.config.tshirt.reviews[:unclaimed_refund_hours].hours.ago)
+  }
+  # A proposal the client let lapse.
+  scope :proposal_expired, -> { where(status: "returned_to_client").where(proposal_expires_at: ..Time.current) }
+  # A proposal about to lapse, not yet chased.
+  scope :proposal_reminder_due, -> {
+    where(status: "returned_to_client", proposal_reminded_at: nil)
+      .where(proposal_expires_at: Time.current..Rails.application.config.tshirt.reviews[:proposal_reminder_hours].hours.from_now)
+  }
+  # Delivered, and the client said nothing for `auto_accept_days`.
+  scope :auto_accept_due, -> {
+    where(status: "delivered").where(delivered_at: ..Rails.application.config.tshirt.reviews[:auto_accept_days].days.ago)
+  }
+
   # The designer the client chose has not taken it within the time allowed.
   # The same rule as #chosen_designer_silent?, for the sweep: a custom job is
   # never paid here, so its clock starts when it was asked for (reported on
@@ -272,8 +291,6 @@ class Review < ApplicationRecord
     kept - (kept * platform_fee_cents / price_cents.to_f).round
   end
 
-  def latest_version = versions.last
-
   def delivered_any? = versions.any?
 
   def open? = %w[ queued in_progress delivered returned_to_client disputed ].include?(status)
@@ -363,13 +380,6 @@ class Review < ApplicationRecord
 
     since <= settings[:designer_claim_timeout_hours].hours.ago
   end
-
-  def auto_accept_due?
-    delivered? && delivered_at.present? &&
-      delivered_at <= settings[:auto_accept_days].days.ago
-  end
-
-  def proposal_expired? = returned_to_client? && proposal_expires_at.present? && proposal_expires_at.past?
 
   def overdue? = due_at.present? && due_at.past? && %w[ in_progress ].include?(status)
 

@@ -9,6 +9,7 @@ class ApplicationMailer < ActionMailer::Base
   # sets its own.
   default reply_to: -> { Rails.application.config.tshirt.support_email }
   layout "mailer"
+  helper MoneyHelper
 
   # Retried for a day when Brevo refuses, and counted. See MailDeliveryJob.
   self.delivery_job = MailDeliveryJob

@@ -24,7 +24,7 @@ class SweepReviewsJob < ApplicationJob
     # closed. Their thirty days with the shop, held while it was open, run
     # again from where they were.
     def release_unclaimed
-      Review.awaiting_claim.where(queued_at: ..settings[:unclaimed_refund_hours].hours.ago).find_each do |review|
+      Review.unclaimed_too_long.find_each do |review|
         refund = Payments::RefundReview.call(review: review, notify: false) unless review.off_platform?
         # Money that could not go back must not look as if it had: left in the
         # queue, it is tried again on the next run — and stays visible.
@@ -40,9 +40,7 @@ class SweepReviewsJob < ApplicationJob
     # back. Run before the reminder, so a proposal past its date is not chased
     # and closed in the same minute.
     def expire_proposals
-      Review.where(status: "returned_to_client")
-            .where(proposal_expires_at: ..Time.current)
-            .find_each do |review|
+      Review.proposal_expired.find_each do |review|
         # The expiry email states the refund: one message, not two. A refund
         # that failed leaves the review as it was, for the next run.
         result = Reviews::DeclineProposal.call(review: review, notify_client: false)
@@ -52,9 +50,7 @@ class SweepReviewsJob < ApplicationJob
 
     # Chased once, a day before it lapses.
     def remind_about_proposals
-      Review.where(status: "returned_to_client", proposal_reminded_at: nil)
-            .where(proposal_expires_at: Time.current..settings[:proposal_reminder_hours].hours.from_now)
-            .find_each do |review|
+      Review.proposal_reminder_due.find_each do |review|
         review.update!(proposal_reminded_at: Time.current)
         ReviewMailer.proposal_reminder(review).deliver_later
       end
@@ -94,9 +90,7 @@ class SweepReviewsJob < ApplicationJob
     # Seven days after the last delivery with no word from the client, the work
     # is taken as accepted and the designer is paid.
     def auto_accept
-      Review.where(status: "delivered")
-            .where(delivered_at: ..settings[:auto_accept_days].days.ago)
-            .find_each do |review|
+      Review.auto_accept_due.find_each do |review|
         review.accept!
         review.save!
         Payments::SettleReview.call(review: review)

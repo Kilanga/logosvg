@@ -271,22 +271,22 @@ class PrintRequestTest < ActiveSupport::TestCase
   test "a request is chased once, and only once" do
     forgotten = print_requests(:forgotten)
 
-    assert_predicate forgotten, :reminder_due?
+    assert_includes PrintRequest.reminder_due, forgotten
 
     forgotten.update!(reminded_at: Time.current)
 
-    assert_not_predicate forgotten, :reminder_due?
+    assert_not_includes PrintRequest.reminder_due, forgotten
   end
 
   test "a request just sent is neither chased nor expired" do
     waiting = print_requests(:waiting)
 
-    assert_not_predicate waiting, :reminder_due?
-    assert_not_predicate waiting, :expiry_due?
+    assert_not_includes PrintRequest.reminder_due, waiting
+    assert_not_includes PrintRequest.expiry_due, waiting
   end
 
   test "a request left long enough is due to expire" do
-    assert_predicate print_requests(:forgotten), :expiry_due?
+    assert_includes PrintRequest.expiry_due, print_requests(:forgotten)
   end
 
   # --- Only what the shop offers (decided on 16/10/2026) -------------------
