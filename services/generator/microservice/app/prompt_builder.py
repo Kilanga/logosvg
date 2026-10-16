@@ -108,3 +108,19 @@ def build_prompt(subject: str, style: str, colors: int, technique: str = None, f
     parts = [f"{opening}: {subject}.", text_rule(subject), look, profile.prompt_hint, palette,
              ISOLATED, ARTWORK_ONLY]
     return " ".join(p for p in parts if p)
+
+
+def edit_prompt(instruction: str, prompt: str) -> str:
+    """Le prompt d'une édition : la demande d'abord, puis le dessin attendu.
+
+    Un modèle d'édition lit une consigne (« move the text below the board »)
+    mieux qu'il ne devine l'écart entre deux descriptions ; la description
+    complète suit, avec sa règle de texte, pour que le reste ne bouge pas.
+    """
+    instruction = (instruction or "").strip().rstrip(".")
+    if not instruction:
+        return prompt
+    return (
+        f"Edit the reference image: {instruction}. Keep the same character, colors and style; "
+        f"change only what is asked. The result: {prompt}"
+    )

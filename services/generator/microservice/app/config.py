@@ -92,6 +92,11 @@ class Settings:
     # gardait la mise en page, et la retouche restait sans effet (recette du
     # 14/10/2026). 0,75 garde le sujet et les couleurs, pas la disposition.
     refine_denoise_layout: float = _float("REFINE_DENOISE_LAYOUT", 0.75)
+    # Comment se fait une retouche de mise en page : « edit » (l'image sert de
+    # référence au modèle, qui redessine librement) ou « img2img » (l'image sert
+    # de point de départ, avec l'écart ci-dessus). À 0,75 en img2img, le texte
+    # « PIZZA » restait au-dessus du chat (recette du 16/10/2026).
+    refine_layout_mode: str = os.getenv("REFINE_LAYOUT_MODE", "edit")
 
     # Un garde-fou technique, pas le quota du client : le site compte déjà les
     # créations du jour (5 par client) et les reprises (3 par design). À 5 par

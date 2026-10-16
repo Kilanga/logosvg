@@ -55,6 +55,9 @@ LAYOUT_WORDS = re.compile(
 class Rewrite:
     subject: str
     scope: str  # "layout" ou "detail"
+    # La demande elle-même, en anglais : l'édition la donne au modèle telle
+    # quelle, à côté de la description (« move the text below the board »).
+    instruction: str = ""
 
 
 def guess_scope(instruction: str) -> str:
@@ -62,7 +65,7 @@ def guess_scope(instruction: str) -> str:
 
 
 def _fallback(subject: str, instruction: str, scope: str) -> Rewrite:
-    return Rewrite(f"{subject}, {instruction}"[:MAX_SUBJECT], scope)
+    return Rewrite(f"{subject}, {instruction}"[:MAX_SUBJECT], scope, instruction)
 
 
 async def rewrite(subject: str, instruction: str) -> Rewrite:
@@ -94,7 +97,7 @@ async def rewrite(subject: str, instruction: str) -> Rewrite:
             scope = "layout"
         if not merged:
             return _fallback(subject, instruction_en, scope)
-        return Rewrite(restore(merged, saved)[:MAX_SUBJECT], scope)
+        return Rewrite(restore(merged, saved)[:MAX_SUBJECT], scope, instruction_en)
     except Exception as exc:  # une retouche ne doit jamais échouer sur la réécriture
         log.warning("Réécriture indisponible, repli sur la concaténation : %s", exc)
         return _fallback(subject, instruction_en, scope)

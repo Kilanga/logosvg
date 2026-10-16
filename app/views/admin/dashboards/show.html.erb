@@ -45,6 +45,68 @@
     </div>
   </section>
 
+  <%# The generation machine is one workstation: how much it drew today, and
+      how long clients waited for it. A wait that grows is the first sign it
+      no longer keeps up (decided on 16/10/2026). %>
+  <section id="generation_load" aria-labelledby="load-title">
+    <h2 id="load-title" class="label-rule border-b border-line pb-3"><%= t(".load") %></h2>
+    <div class="panel mt-4 p-4 <%= 'border-l-2 border-l-warning' if @load.slow? %>">
+      <dl class="grid gap-4 sm:grid-cols-4">
+        <div>
+          <dt class="label-rule"><%= t(".load_images") %></dt>
+          <dd class="mt-1 font-display text-4xl font-bold text-ink"><%= @load.images_today %></dd>
+          <dd class="text-sm text-muted">
+            <%= t(".load_split", creations: @load.creations_today, reprises: @load.reprises_today) %>
+          </dd>
+        </div>
+        <div>
+          <dt class="label-rule"><%= t(".load_wait") %></dt>
+          <dd class="mt-1 font-display text-4xl font-bold <%= @load.slow? ? 'text-warning' : 'text-ink' %>">
+            <%= @load.mean_wait_today ? duration_in_words_short(@load.mean_wait_today) : "—" %>
+          </dd>
+          <% if @load.longest_wait_today %>
+            <dd class="text-sm text-muted"><%= t(".load_longest", wait: duration_in_words_short(@load.longest_wait_today)) %></dd>
+          <% end %>
+        </div>
+        <div>
+          <dt class="label-rule"><%= t(".load_peak") %></dt>
+          <% if (peak = @load.busiest_hour_today) %>
+            <dd class="mt-1 font-display text-4xl font-bold text-ink"><%= peak.last %></dd>
+            <dd class="text-sm text-muted"><%= t(".load_peak_hour", from: peak.first, to: peak.first + 1) %></dd>
+          <% else %>
+            <dd class="mt-1 font-display text-4xl font-bold text-muted">—</dd>
+          <% end %>
+        </div>
+        <div>
+          <dt class="label-rule"><%= t(".load_failed") %></dt>
+          <dd class="mt-1 font-display text-4xl font-bold <%= @load.failed_today.positive? ? 'text-warning' : 'text-muted' %>">
+            <%= @load.failed_today %>
+          </dd>
+        </div>
+      </dl>
+
+      <% week = @load.last_week %>
+      <% top = [ week.map(&:images).max, 1 ].max %>
+      <figure class="mt-6">
+        <figcaption class="label-rule"><%= t(".load_week") %></figcaption>
+        <ol class="mt-3 flex h-24 items-end gap-2">
+          <% week.each do |day| %>
+            <li class="flex flex-1 flex-col items-center gap-1" title="<%= t(".load_day", date: l(day.date, format: :short), count: day.images) %>">
+              <span class="text-xs text-muted"><%= day.images %></span>
+              <span class="w-full rounded-xs bg-emulsion" style="height: <%= (day.images * 56 / top.to_f).round %>px" aria-hidden="true"></span>
+              <span class="text-xs text-muted"><%= l(day.date, format: "%a") %></span>
+            </li>
+          <% end %>
+        </ol>
+      </figure>
+
+      <p class="mt-4 text-sm text-muted"><%= t(".load_body") %></p>
+      <% if @load.slow? %>
+        <p class="mt-1 text-sm text-warning"><%= t(".load_slow", wait: duration_in_words_short(GenerationLoad.alert_wait_seconds)) %></p>
+      <% end %>
+    </div>
+  </section>
+
   <%# Designers whose disputes keep ending with the client refunded (decided
       on 08/10/2026). A signal for the administration, never shown publicly. %>
   <% if @disputing.any? %>

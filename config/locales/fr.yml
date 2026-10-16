@@ -1509,6 +1509,7 @@ fr:
         idea_legend: "Votre idée"
         prompt_placeholder: "un renard qui fait du skate, style rétro"
         prompt_hint: "Une phrase suffit. Décrivez le sujet, pas la technique."
+        prompt_precision: "Soyez le plus précis possible. Attention aux mots à double sens : écrivez « un blaireau (l'animal) » ou « une souris (l'animal) » plutôt que le mot seul."
         reference_image: "Partir d'une image (facultatif)"
         reference_image_hint: >-
           Un croquis, votre ancien logo, une photo : l'IA part de cette image et
@@ -2734,6 +2735,20 @@ fr:
         platform: "État de la plateforme"
         platform_body: "Service de génération, clés Stripe, file de tâches et catalogue des techniques."
         see_status: "Voir l'état"
+        load: "Charge de l'IA"
+        load_images: "Images aujourd'hui"
+        load_split: "%{creations} en création, %{reprises} en reprise"
+        load_wait: "Attente moyenne"
+        load_longest: "la plus longue : %{wait}"
+        load_peak: "Heure la plus chargée"
+        load_peak_hour: "entre %{from} h et %{to} h"
+        load_failed: "Échecs aujourd'hui"
+        load_week: "Images dessinées, 7 derniers jours"
+        load_day:
+          one: "%{date} : 1 image"
+          other: "%{date} : %{count} images"
+        load_body: "Chaque proposition est une image : un clic en dessine trois, l'une après l'autre. L'attente court du clic du client à l'image prête."
+        load_slow: "L'attente moyenne dépasse %{wait} : la machine de génération ne suit plus la demande."
 
     reviews:
       index:
@@ -3123,6 +3138,7 @@ fr:
                   couleurs ». Le nombre de couleurs et la technique se règlent
                   dans le formulaire.
                 - "Un texte à écrire sur le visuel ? Mettez-le entre guillemets : il est reproduit tel quel, sans traduction."
+                - "Soyez précis, et méfiez-vous des mots à double sens : « blaireau », « souris », « papillon »… Précisez « l'animal » si c'est l'animal que vous voulez."
             - q: "Pourquoi dois-je choisir la technique d'impression en premier ?"
               a:
                 - >-
@@ -3136,8 +3152,8 @@ fr:
                 - >-
                   Oui, %{max_refinements} fois par visuel : une retouche
                   (« enlève le skateboard, ajoute un casque ») ou d'autres
-                  versions des mêmes mots. Chacune compte aussi comme une
-                  création du jour. Au-delà, un graphiste peut prendre le
+                  versions des mêmes mots. Les retouches ne comptent pas dans
+                  vos créations du jour. Au-delà, un graphiste peut prendre le
                   relais.
             - q: "J'ai déjà mon image, faite ailleurs. Puis-je l'utiliser ?"
               a:

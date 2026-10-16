@@ -31,6 +31,11 @@ module Admin
       # 10/10/2026): how far today has gone, and what could not leave at all.
       @mail_today = MailDeliveryDay.today
       @mail_failed = MailDeliveryDay.where(day: 6.days.ago.to_date..).sum(:failed_count)
+
+      # What the generation machine drew today, and how long clients waited
+      # (decided on 16/10/2026, when the reprises stopped counting against the
+      # creations of the day).
+      @load = GenerationLoad.new
     end
 
     private
