@@ -200,7 +200,7 @@
                 kind: :email_field, options: { required: true } %>
           <%= render "shared/field", form: form, field: :contact_phone,
                 label: t("activerecord.attributes.print_request.contact_phone"),
-                kind: :telephone_field %>
+                kind: :telephone_field, options: { required: true } %>
           <%= render "shared/field", form: form, field: :contact_city,
                 label: t("activerecord.attributes.print_request.contact_city") %>
         </div>

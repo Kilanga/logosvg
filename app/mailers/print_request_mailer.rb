@@ -76,7 +76,7 @@ class PrintRequestMailer < ApplicationMailer
     # Reloaded with what the email reads: a mailer job gets a bare record.
     def reload(print_request)
       PrintRequest.includes(:client, :printer, { final_file_attachment: :blob }, { preview_png_attachment: :blob },
-                            design: { print_file_attachment: :blob }).find(print_request.id)
+                            { starting_image_attachment: :blob }, design: { print_file_attachment: :blob }).find(print_request.id)
     end
 
     def attach_files
@@ -84,6 +84,9 @@ class PrintRequestMailer < ApplicationMailer
       attachments[file.filename.to_s] = file.download if file.attached?
 
       attach_preview
+
+      start = @print_request.starting_image
+      attachments[start.filename.to_s] = start.download if start.attached?
     end
 
     def attach_preview

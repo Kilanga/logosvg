@@ -15,6 +15,9 @@ class PrintRequest < ApplicationRecord
   # fichiers à l'envoi".
   has_one_attached :final_file
   has_one_attached :preview_png
+  # The client's own picture the AI started from, when there was one: the
+  # workshop sees what the client sent, not only what came out (17/10/2026).
+  has_one_attached :starting_image
 
   has_secure_token :token
   has_secure_token :confirmation_token
@@ -33,6 +36,10 @@ class PrintRequest < ApplicationRecord
   validates :delivery_method, inclusion: { in: DELIVERY_METHODS }, allow_nil: true
   validates :print_width_cm, numericality: { in: 3..60 }
   validates :contact_name, :contact_email, presence: true
+  # The shop calls back to quote and to settle the delivery (reported on
+  # 17/10/2026: a request reached the workshop with no telephone). Asked as
+  # sent, so that requests from before stay valid.
+  validates :contact_phone, presence: true, on: :create
   validates :contact_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   # One box, one message (reported on 14/10/2026: two technical messages,
   # « Consent text version » and « Consented at », for a single checkbox).

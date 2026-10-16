@@ -59,6 +59,18 @@ class PurgeStaleDataJobTest < ActiveJob::TestCase
     assert_equal 15, request.total_qty, "what the workshop printed is untouched"
   end
 
+  test "the client's starting picture goes with the person" do
+    request = print_requests(:waiting)
+    png = Vips::Image.black(8, 8).write_to_buffer(".png")
+    request.starting_image.attach(io: StringIO.new(png), filename: "depart.png", content_type: "image/png")
+    request.update_column(:created_at, (@retention[:print_request_anonymize_days] + 1).days.ago)
+
+    perform_enqueued_jobs { PurgeStaleDataJob.perform_now }
+
+    assert_not ActiveStorage::Attachment.exists?(record_type: "PrintRequest", record_id: request.id,
+                                                 name: "starting_image")
+  end
+
   test "a recent print request keeps its contact" do
     PurgeStaleDataJob.perform_now
 

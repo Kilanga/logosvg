@@ -66,6 +66,30 @@ class SendPrintRequestTest < ActiveSupport::TestCase
     assert_equal "image/png", request.preview_png.content_type
   end
 
+  # Recette du 17/10/2026: the workshop saw the result, never what the client
+  # had sent the AI to start from.
+  test "the client's starting picture travels to the workshop, and the sheet says so" do
+    png = Vips::Image.black(8, 8).write_to_buffer(".png")
+    @design.reference_image.attach(io: StringIO.new(png), filename: "image-de-depart.png", content_type: "image/png")
+    request = build_request
+
+    perform_enqueued_jobs { SendPrintRequest.call(print_request: request) }
+
+    assert_predicate request.starting_image, :attached?
+    to_printer = ActionMailer::Base.deliveries.find { |mail| mail.to.include?(request.printer.orders_email) }
+    assert to_printer.attachments.any? { |file| file.filename.include?("image-de-depart-client") }
+    assert_includes to_printer.text_part.body.decoded, I18n.t("print_requests.sheet.starting_image_value")
+    to_client = ActionMailer::Base.deliveries.find { |mail| mail.to.include?(request.client.email_address) }
+    assert_not to_client.attachments.any? { |file| file.filename.include?("image-de-depart-client") }
+  end
+
+  test "a design drawn from words alone sends no starting picture" do
+    request = build_request
+    SendPrintRequest.call(print_request: request)
+
+    assert_not_predicate request.starting_image, :attached?
+  end
+
   # The directory already said so on screen; sending anyway would waste both
   # sides' time.
   # The controller and the policy already stop it; the object that sends is
@@ -136,7 +160,7 @@ class SendPrintRequestTest < ActiveSupport::TestCase
         printer: printers(:rennes),
         print_width_cm: @design.print_width_cm,
         sizes: { "M" => "20" },
-        contact_name: "Claire Martin",
+        contact_name: "Claire Martin", contact_phone: "0612345678",
         contact_email: "claire@example.invalid",
         consent_text_version: "2026-09-v1",
         consented_at: Time.current

@@ -384,7 +384,7 @@ fr:
         sizes: "Tailles et quantités"
         desired_on: "Date souhaitée"
         message: "Message à l'atelier"
-        contact_name: "Votre nom"
+        contact_name: "Votre prénom et nom"
         contact_email: "Votre email"
         contact_phone: "Votre téléphone"
         contact_city: "Votre ville"
@@ -682,6 +682,8 @@ fr:
       definition: "Définition"
       resolution: "Résolution"
       sharp_up_to: "Net jusqu'à"
+      starting_image: "Point de départ"
+      starting_image_value: "Une image fournie par le client, retravaillée par l'IA (jointe à l'email de l'atelier)"
       asked_for: "Demande du client"
       prompt_used: "Prompt utilisé"
       instruction: "Dernière retouche"
@@ -900,6 +902,9 @@ fr:
         files_body: >-
           Le fichier d'impression et un aperçu filigrané. Le client, lui, n'a
           jamais reçu le fichier d'impression.
+        starting_image_body: >-
+          L'image que le client a fournie comme point de départ est jointe
+          aussi : l'IA l'a retravaillée selon sa demande.
         ai_notice: >-
           Ce visuel a été généré par une intelligence artificielle. Le fichier
           d'impression ne porte aucune mention visible ; il le signale seulement

@@ -48,12 +48,25 @@ class SendPrintRequest
     # copy with it.
     def copy_files(design)
       attach_copy(design.print_file, to: @print_request.final_file)
+      copy_starting_image(design)
 
       preview = DesignPreview.call(design)
       return if preview.nil?
 
       @print_request.preview_png.attach(
         io: StringIO.new(preview), filename: "#{design.token}-apercu.png", content_type: "image/png"
+      )
+    end
+
+    # The picture the client gave the AI, as it was re-encoded on the way in
+    # (no EXIF). Sent as is, never marked: nobody here drew it.
+    def copy_starting_image(design)
+      holder = design.starting_image_holder
+      return if holder.nil?
+
+      @print_request.starting_image.attach(
+        io: StringIO.new(holder.reference_image.download),
+        filename: "#{design.token}-image-de-depart-client.png", content_type: "image/png"
       )
     end
 

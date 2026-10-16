@@ -42,6 +42,13 @@ class PurgeStaleDataJob < ApplicationJob
           contact_email: nil, contact_phone: nil, contact_city: nil,
           message: nil, updated_at: Time.current
         )
+        # The client's own photo goes with the person: it may show them, their
+        # home, their family. The print file, the shop's record, stays.
+        photos = ActiveStorage::Attachment.where(record_type: "PrintRequest", record_id: request.id,
+                                                 name: "starting_image")
+        blob_ids = photos.pluck(:blob_id)
+        photos.delete_all
+        ActiveStorage::Blob.where(id: blob_ids).strict_loading(false).find_each(&:purge)
       end
     end
 
