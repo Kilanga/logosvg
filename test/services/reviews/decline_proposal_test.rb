@@ -19,7 +19,7 @@ module Reviews
     teardown { ENV.delete("STRIPE_SECRET_KEY") }
 
     test "handed back from the queue, the review is refunded in full and pays nobody" do
-      review = DeclineProposal.call(review: reviews(:returned))
+      review = DeclineProposal.call(review: reviews(:returned)).review
 
       assert_predicate review, :canceled?
       assert_equal 1900, review.refunded_cents
@@ -27,10 +27,24 @@ module Reviews
       assert_not_requested @transfer
     end
 
+    # Reported on 16/10/2026: the review was closed and the designer paid
+    # even when the client's money had not come back.
+    test "a refund that fails changes nothing and pays nobody" do
+      remove_request_stub(@refund)
+      stub_request(:post, %r{/v1/refunds}).to_return(status: 500, body: "{}")
+      reviews(:returned).update_column(:claimed_at, 2.days.ago)
+
+      result = DeclineProposal.call(review: reviews(:returned))
+
+      assert_not_predicate result, :success?
+      assert_predicate reviews(:returned).reload, :returned_to_client?
+      assert_not_requested @transfer
+    end
+
     test "handed back after the designer took it on, the guaranteed share is paid out" do
       reviews(:returned).update_column(:claimed_at, 2.days.ago)
 
-      review = DeclineProposal.call(review: reviews(:returned))
+      review = DeclineProposal.call(review: reviews(:returned)).review
 
       # 30 % of 19 € = 5,70 € kept; less the 20 % commission, 4,56 € paid.
       assert_equal 1330, review.refunded_cents
@@ -51,7 +65,7 @@ module Reviews
 
     # The way out offered when the chosen designer went quiet.
     test "a review whose chosen designer never answered is called off and refunded" do
-      review = DeclineProposal.call(review: reviews(:silent))
+      review = DeclineProposal.call(review: reviews(:silent)).review
 
       assert_predicate review, :canceled?
       assert_equal 1900, review.refunded_cents

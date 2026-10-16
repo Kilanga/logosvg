@@ -610,6 +610,7 @@ fr:
       low_resolution: "La définition est faible pour la taille demandée : le rendu risque de manquer de netteté."
       watermarked: "Cette version reprend l'aperçu filigrané, pas le fichier d'origine : le filigrane serait imprimé."
     errors:
+      refund_failed: "Le remboursement n'a pas abouti chez Stripe : rien n'a changé. Réessayez dans quelques minutes ; si cela se répète, écrivez-nous à contact@pretatirer.fr."
       no_file: "Joignez un fichier."
       svg_refused: "Ce SVG n'a pas passé nos contrôles de sécurité."
       raster_refused: "Ce fichier n'a pas passé nos contrôles."
@@ -2713,6 +2714,7 @@ fr:
         too_much: "Le remboursement dépasse ce qui reste à rendre."
         nothing_delivered: "Pour payer le graphiste, il faut une version livrée."
         nothing_left: "Avec ce remboursement, il ne reste rien à verser au graphiste : choisissez l'annulation."
+        refund_failed: "Stripe a refusé le remboursement : la décision n'est pas enregistrée et rien n'a été envoyé. Vérifiez le paiement dans Stripe, puis réessayez."
     dashboards:
       show:
         title: "Administration"

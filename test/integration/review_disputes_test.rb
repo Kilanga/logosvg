@@ -125,6 +125,28 @@ class ReviewDisputesTest < ActionDispatch::IntegrationTest
     ENV.delete("STRIPE_SECRET_KEY")
   end
 
+  # Reported on 16/10/2026: a refused refund still closed the review, and the
+  # email told the client they had been refunded.
+  test "a refund Stripe refuses records no decision and sends nothing" do
+    ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
+    stub_request(:post, %r{/v1/refunds}).to_return(status: 500, body: "{}")
+    deliver_a_version
+    @review.dispute!
+    @review.save!
+    sign_in_as users(:admin)
+
+    assert_no_enqueued_emails do
+      post settle_admin_review_path(@review),
+           params: { decision: "cancel", refund: "5", note: "Rien d'utilisable." }
+    end
+
+    assert_equal I18n.t("admin.disputes.errors.refund_failed"), flash[:alert]
+    assert_predicate @review.reload, :disputed?
+    assert_nil @review.settled_at
+  ensure
+    ENV.delete("STRIPE_SECRET_KEY")
+  end
+
   # Decided on 15/10/2026: the designer who took it on keeps 30 % whatever.
   test "an administrator cannot refund the designer's guaranteed share" do
     deliver_a_version

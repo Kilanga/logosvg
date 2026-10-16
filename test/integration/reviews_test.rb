@@ -307,6 +307,39 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_predicate reviews(:returned).reload, :canceled?
   end
 
+  # Reported on 16/10/2026: the refund was not checked.
+  test "declining a proposal whose refund fails keeps it open, and says so" do
+    ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
+    stub_request(:post, %r{/v1/refunds}).to_return(status: 500, body: "{}")
+    sign_in_as users(:client)
+
+    post decline_review_proposal_path(reviews(:returned))
+
+    assert_equal I18n.t("reviews.errors.refund_failed"), flash[:alert]
+    assert_predicate reviews(:returned).reload, :returned_to_client?
+  ensure
+    ENV.delete("STRIPE_SECRET_KEY")
+  end
+
+  test "a cheaper level is not applied while the difference has not come back" do
+    ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
+    stub_request(:post, %r{/v1/refunds}).to_return(status: 500, body: "{}")
+    reviews(:in_progress).update_columns(status: "returned_to_client", return_reason_code: "level_too_high",
+                                         proposed_level_id: review_levels(:check).id,
+                                         returned_at: 1.hour.ago, proposal_expires_at: 2.days.from_now)
+    sign_in_as users(:client)
+
+    post accept_review_proposal_path(reviews(:in_progress))
+
+    review = reviews(:in_progress).reload
+    assert_equal I18n.t("reviews.errors.refund_failed"), flash[:alert]
+    assert_predicate review, :returned_to_client?
+    assert_equal review_levels(:retouch).id, review.review_level_id
+    assert_equal 4900, review.price_cents
+  ensure
+    ENV.delete("STRIPE_SECRET_KEY")
+  end
+
   test "a proposal that has expired can no longer be accepted" do
     reviews(:returned).update!(proposal_expires_at: 1.hour.ago)
     sign_in_as users(:client)

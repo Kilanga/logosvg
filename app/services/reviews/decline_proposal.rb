@@ -8,6 +8,10 @@ module Reviews
   # designer who took it on, and the designer is told the review is closed
   # (reported on 15/10/2026: nobody told them).
   class DeclineProposal
+    Result = Data.define(:review, :error) do
+      def success? = error.nil?
+    end
+
     def self.call(...) = new(...).call
 
     def initialize(review:, notify_client: true)
@@ -20,7 +24,13 @@ module Reviews
       # fails must not hand the designer what the client should have got back.
       payout = @review.guaranteed_payout_cents
 
-      Payments::RefundReview.call(review: @review, amount_cents: @review.refundable_cents, notify: @notify_client)
+      refund = Payments::RefundReview.call(review: @review, amount_cents: @review.refundable_cents, notify: @notify_client)
+      # Money that did not go back must not look as if it had: nothing
+      # changes, and the client (or the next sweep) tries again.
+      if Payments::RefundReview.failed?(refund)
+        return Result.new(review: @review, error: I18n.t("reviews.errors.refund_failed"))
+      end
+
       @review.reload
       @review.designer_payout_cents = payout if payout.positive?
       returned = @review.returned_to_client?
@@ -31,7 +41,7 @@ module Reviews
 
       Payments::SettleReview.call(review: @review, notify: false) if payout.positive?
       ReviewMailer.proposal_declined(@review).deliver_later if returned && @review.designer_profile_id
-      @review
+      Result.new(review: @review, error: nil)
     end
   end
 end

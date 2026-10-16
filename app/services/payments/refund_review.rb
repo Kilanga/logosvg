@@ -7,6 +7,11 @@ module Payments
   class RefundReview
     def self.call(...) = new(...).call
 
+    # Stripe refused, or could not be reached: the money did not move. Every
+    # caller stops on this rather than closing the review as if it had
+    # (reported on 16/10/2026: only one of five callers looked).
+    def self.failed?(result) = result == :failed
+
     # `notify` is false when the refund is part of a larger message the client
     # is about to receive anyway — an administrator's decision already states
     # the amount, and two emails about one event read as a mistake.

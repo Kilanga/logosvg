@@ -58,6 +58,19 @@ class Review < ApplicationRecord
   scope :open_for_designer, -> { where(status: %w[ queued in_progress delivered ]) }
   scope :awaiting_claim, -> { where(status: "queued") }
 
+  # The designer the client chose has not taken it within the time allowed.
+  # The same rule as #chosen_designer_silent?, for the sweep: a custom job is
+  # never paid here, so its clock starts when it was asked for (reported on
+  # 16/10/2026: the sweep only read `paid_at`, and a custom job was never
+  # chased).
+  scope :chosen_designer_silent, -> {
+    since = Rails.application.config.tshirt.reviews.fetch(:designer_claim_timeout_hours).hours.ago
+    awaiting_claim.where(assignment_mode: "chosen").where.not(designer_profile_id: nil)
+                  .left_joins(:review_level)
+                  .where("reviews.paid_at <= :since OR (reviews.paid_at IS NULL " \
+                         "AND review_levels.key = 'custom' AND reviews.created_at <= :since)", since: since)
+  }
+
   # The whole life of a review. Every transition here is one somebody can
   # trigger; the guards say who and when. See docs/SPEC.md, "Revue graphiste".
   aasm column: :status, whiny_transitions: true do
@@ -338,7 +351,8 @@ class Review < ApplicationRecord
   # What the designer is owed once everything refundable has gone back.
   def guaranteed_payout_cents = payout_after_refund(refundable_cents)
 
-  # The chosen designer had 12 hours and did not take it. The client then picks
+  # The chosen designer had `designer_claim_timeout_hours` (24 h since
+  # 06/10/2026) and did not take it. The client then picks
   # what happens next — see docs/SPEC.md, "Graphiste choisi indisponible".
   def chosen_designer_silent?
     return false unless queued? && chosen? && designer_profile_id.present?

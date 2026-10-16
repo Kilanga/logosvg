@@ -43,9 +43,10 @@ class SweepReviewsJob < ApplicationJob
       Review.where(status: "returned_to_client")
             .where(proposal_expires_at: ..Time.current)
             .find_each do |review|
-        # The expiry email states the refund: one message, not two.
-        Reviews::DeclineProposal.call(review: review, notify_client: false)
-        ReviewMailer.proposal_expired(review).deliver_later
+        # The expiry email states the refund: one message, not two. A refund
+        # that failed leaves the review as it was, for the next run.
+        result = Reviews::DeclineProposal.call(review: review, notify_client: false)
+        ReviewMailer.proposal_expired(review).deliver_later if result.success?
       end
     end
 
@@ -59,14 +60,10 @@ class SweepReviewsJob < ApplicationJob
       end
     end
 
-    # The designer the client picked has had twelve hours. The client decides
-    # what happens next — this only tells them the choice exists.
+    # The designer the client picked has had their time (24 h). The client
+    # decides what happens next — this only tells them the choice exists.
     def warn_about_silent_designers
-      Review.awaiting_claim.where(assignment_mode: "chosen")
-            .where.not(designer_profile_id: nil)
-            .where(paid_at: ..settings[:designer_claim_timeout_hours].hours.ago)
-            .where(designer_reminded_at: nil)
-            .find_each do |review|
+      Review.chosen_designer_silent.where(designer_reminded_at: nil).find_each do |review|
         review.update!(designer_reminded_at: Time.current)
         ReviewMailer.designer_silent(review).deliver_later
       end

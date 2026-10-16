@@ -39,13 +39,9 @@ module Admin
       payout = @review.payout_after_refund(@amount_cents)
       payout = 0 if @review.guaranteed_share_cents.zero?
 
-      Review.transaction do
-        # Quiet: the decision email below states the amount, and two messages
-        # about one event read as a mistake.
-        if @amount_cents.positive?
-          Payments::RefundReview.call(review: @review, amount_cents: @amount_cents, notify: false)
-        end
+      return failure(:refund_failed) unless refunded?
 
+      Review.transaction do
         @review.reload
         @review.cancel!
         @review.assign_attributes(admin_note: @note, settled_by: @admin, settled_at: Time.current,
@@ -65,12 +61,10 @@ module Admin
         return failure(:nothing_delivered) unless @review.may_accept? && @review.delivered_any?
         return failure(:nothing_left) unless @review.payout_after_refund(@amount_cents).positive?
 
-        Review.transaction do
-          payout = @review.payout_after_refund(@amount_cents)
-          if @amount_cents.positive?
-            Payments::RefundReview.call(review: @review, amount_cents: @amount_cents, notify: false)
-          end
+        payout = @review.payout_after_refund(@amount_cents)
+        return failure(:refund_failed) unless refunded?
 
+        Review.transaction do
           @review.reload
           @review.accept!
           @review.assign_attributes(designer_payout_cents: payout, admin_note: @note,
@@ -82,6 +76,19 @@ module Admin
         CreateReviewedDesign.call(review: @review)
         notify
         Result.new(review: @review, error: nil)
+      end
+
+      # Stripe first, outside any transaction: a call to Stripe cannot be rolled
+      # back, and the decision is only recorded once the money has moved
+      # (reported on 16/10/2026: a refused refund closed the review all the
+      # same, and the email said the client had been refunded). Quiet: the
+      # decision email states the amount, and two messages read as a mistake.
+      def refunded?
+        return true unless @amount_cents.positive?
+
+        !Payments::RefundReview.failed?(
+          Payments::RefundReview.call(review: @review, amount_cents: @amount_cents, notify: false)
+        )
       end
 
       # Each side gets its own email (reported on 15/10/2026: both were in

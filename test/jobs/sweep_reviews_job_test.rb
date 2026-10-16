@@ -153,6 +153,31 @@ class SweepReviewsJobTest < ActiveJob::TestCase
     assert_predicate review.reload, :queued?
   end
 
+  test "an expired proposal whose refund fails is left for the next run" do
+    ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
+    stub_request(:post, %r{/v1/refunds}).to_return(status: 500, body: "{}")
+    reviews(:returned).update_column(:proposal_expires_at, 1.hour.ago)
+
+    assert_no_enqueued_emails { SweepReviewsJob.perform_now }
+
+    assert_predicate reviews(:returned).reload, :returned_to_client?
+  ensure
+    ENV.delete("STRIPE_SECRET_KEY")
+  end
+
+  # Reported on 16/10/2026: the sweep read `paid_at` only, and a custom job —
+  # never paid here — was never chased.
+  test "a chosen designer silent on a custom job is chased too" do
+    review = reviews(:silent)
+    review.update_columns(review_level_id: review_levels(:custom).id, paid_at: nil,
+                          price_cents: 0, created_at: 25.hours.ago, designer_reminded_at: nil)
+
+    assert_enqueued_email_with ReviewMailer, :designer_silent, args: [ review ] do
+      SweepReviewsJob.perform_now
+    end
+    assert_not_nil review.reload.designer_reminded_at
+  end
+
   test "a refund that fails leaves the review in the queue, to be tried again" do
     ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
     stub_request(:post, %r{/v1/refunds}).to_return(status: 500, body: "{}")
