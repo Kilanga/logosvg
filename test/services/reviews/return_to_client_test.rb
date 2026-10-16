@@ -130,6 +130,24 @@ module Reviews
       end
     end
 
+    # Reported on 16/10/2026: a refund Stripe refused closed the review all
+    # the same. Nothing changes now, and the designer can try again.
+    test "an unusable design whose refund fails leaves the review as it was" do
+      ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
+      stub_request(:post, %r{/v1/refunds}).to_return(status: 500, body: "{}")
+
+      result = call(reason: "unusable_design")
+
+      assert_not_predicate result, :success?
+      assert_equal I18n.t("reviews.errors.refund_failed"), result.error
+      review = reviews(:in_progress).reload
+      assert_predicate review, :in_progress?
+      assert_nil review.returned_at
+      assert_equal 0, review.refunded_cents
+    ensure
+      ENV.delete("STRIPE_SECRET_KEY")
+    end
+
     private
       def call(reason:, message: "Il faut redessiner les contours.", **rest)
         ReturnToClient.call(review: reviews(:in_progress), reason: reason, message: message, **rest)

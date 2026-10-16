@@ -29,6 +29,10 @@ module Reviews
       return failure(:already_returned) unless @review.returnable?
       return failure(:proposal_required) if proposing? && proposed_amount.nil?
       return failure(:proposal_direction) if proposing? && !proposal_goes_the_right_way?
+      # No proposal to answer means nothing to wait for: the client gets
+      # everything back now — and before anything changes, so a refund Stripe
+      # refused leaves the review in the designer's hands, to try again.
+      return failure(:refund_failed) if !proposing? && Payments::RefundReview.failed?(refund_outright)
 
       @review.assign_attributes(
         return_reason_code: @reason,
@@ -46,10 +50,8 @@ module Reviews
       end
 
       @review.return_to_client!
+      @review.decline_proposal! unless proposing?
       @review.save!
-
-      # No proposal to answer means nothing to wait for: refund now.
-      refund_outright unless proposing?
 
       ReviewMailer.returned_to_client(@review).deliver_later
       Result.new(review: @review, error: nil)
@@ -87,8 +89,6 @@ module Reviews
       # The designer did the reading, not the work, and that is not billed.
       def refund_outright
         Payments::RefundReview.call(review: @review, amount_cents: @review.price_cents)
-        @review.decline_proposal!
-        @review.save!
       end
   end
 end

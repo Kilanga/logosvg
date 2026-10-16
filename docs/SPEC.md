@@ -297,13 +297,13 @@ stateDiagram-v2
   in_production --> completed
   sent --> canceled: annulation client
   acknowledged --> canceled: annulation client
-  sent --> expired: sans réponse sous 5 jours
+  sent --> expired: sans réponse sous 7 jours
 ```
 
 - À l'envoi, l'atelier reçoit l'email avec les fichiers joints et un lien portant `confirmation_token`.
 - **Fiche technique jointe à l'envoi.** L'atelier reçoit le SVG (fichier d'impression) **et** le PNG, plus une fiche reprenant la description du client, `prompt_used`, l'instruction de la dernière retouche s'il y en a eu, la palette hex avec les parts, le nombre d'encres, `seed` et `style`. Le PNG et le prompt disent l'intention là où le SVG a perdu des nuances ; `seed` et `style` permettent de régénérer la même image des mois plus tard.
 - Le lien ouvre une page de confirmation ; seul le bouton de cette page (POST) change le statut, car les antivirus de messagerie ouvrent les liens automatiquement.
-- Sans confirmation après 48 h : relance à l'atelier. Après 5 jours : statut `expired`, et le client est invité à choisir un autre atelier.
+- Sans confirmation après 48 h : relance à l'atelier. Après 7 jours : statut `expired`, et le client est invité à choisir un autre atelier.
 - L'atelier met aussi à jour les statuts depuis `/atelier/demandes`.
 
 ### Revue graphiste
@@ -373,7 +373,7 @@ Le graphiste renvoie la demande quand l'option choisie ne permet pas de faire le
 
 ### Graphiste choisi indisponible
 
-Si le graphiste choisi ne prend pas la revue en charge dans les 12 h, le client choisit : passer en « premier disponible », choisir un autre graphiste, ou être remboursé.
+Si le graphiste choisi ne prend pas la revue en charge dans les 24 h (réglage `designer_claim_timeout_hours`), le client choisit : passer en « premier disponible », choisir un autre graphiste, ou être remboursé.
 
 ### Graphistes et ateliers (décidé le 09/10/2026)
 
@@ -532,10 +532,10 @@ Stripe gère deux flux : les abonnements des imprimeurs et le paiement des revue
 | Demande d'impression envoyée | Atelier (`orders_email`) | Récapitulatif, SVG et aperçu joints, fiche technique, bouton de confirmation |
 | Demande d'impression envoyée | Client | Copie de la demande |
 | Aucune confirmation après 48 h | Atelier | Relance |
-| Demande expirée après 5 jours | Client | Proposition de choisir un autre atelier |
+| Demande expirée après 7 jours | Client | Proposition de choisir un autre atelier |
 | Statut de demande changé | Client | Nouveau statut |
 | Revue payée | Graphiste choisi ou graphistes disponibles | Nouvelle revue à prendre |
-| Graphiste choisi silencieux après 12 h | Client | Choix : premier disponible, autre graphiste, remboursement |
+| Graphiste choisi silencieux après 24 h | Client | Choix : premier disponible, autre graphiste, remboursement |
 | Version livrée | Client | Lien vers la version à valider |
 | Retour demandé | Graphiste | Message du client, nouvelle échéance |
 | Renvoi au client | Client | Motif, proposition, écart de prix, délai de 72 h |

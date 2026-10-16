@@ -96,8 +96,11 @@ module Client
 
       if @review.proposal_difference_cents.positive?
         upgrade_checkout
+      elsif Payments::RefundReview.failed?(refund_difference)
+        # The cheaper level is not applied while the difference has not come
+        # back: the client would have paid the old price for the new one.
+        redirect_to review_path(@review), alert: t("reviews.errors.refund_failed")
       else
-        refund_difference
         Reviews::ApplyProposal.call(review: @review)
         redirect_to review_path(@review), notice: t(".accepted")
       end
@@ -106,9 +109,13 @@ module Client
     def decline_proposal
       authorize @review
 
-      Reviews::DeclineProposal.call(review: @review)
+      result = Reviews::DeclineProposal.call(review: @review)
 
-      redirect_to review_path(@review), notice: t(".declined")
+      if result.success?
+        redirect_to review_path(@review), notice: t(".declined")
+      else
+        redirect_to review_path(@review), alert: result.error
+      end
     end
 
     # Not paying the difference does not have to mean giving up: a new
@@ -304,9 +311,9 @@ module Client
 
         # Counted apart: this comes back because the price goes down, not as a
         # refund against it (see Review#refunded_against_price_cents).
-        return unless Payments::RefundReview.call(review: @review, amount_cents: owed) == :refunded
-
-        @review.update!(price_change_refunded_cents: @review.price_change_refunded_cents + owed)
+        result = Payments::RefundReview.call(review: @review, amount_cents: owed)
+        @review.update!(price_change_refunded_cents: @review.price_change_refunded_cents + owed) if result == :refunded
+        result
       end
 
       def refresh_designer_rating
