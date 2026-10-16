@@ -2,6 +2,9 @@ class PrintRequest < ApplicationRecord
   include AASM
 
   TEXTILE_SOURCES = %w[ printer client ].freeze
+  # Picking the order up at the shop, or having it sent (16/10/2026). The
+  # address is not asked here: the shop takes it from the client with the quote.
+  DELIVERY_METHODS = %w[ pickup shipping ].freeze
 
   belongs_to :design
   belongs_to :client, class_name: "User"
@@ -27,6 +30,7 @@ class PrintRequest < ApplicationRecord
 
   validates :textile_source, inclusion: { in: TEXTILE_SOURCES }
   validates :placements, inclusion: { in: Printer::PLACEMENTS }, allow_blank: true
+  validates :delivery_method, inclusion: { in: DELIVERY_METHODS }, allow_nil: true
   validates :print_width_cm, numericality: { in: 3..60 }
   validates :contact_name, :contact_email, presence: true
   validates :contact_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
@@ -46,8 +50,14 @@ class PrintRequest < ApplicationRecord
   # state for ever.
   validate :quantity_reaches_the_shop_minimum, on: :create
   validate :desired_on_is_not_in_the_past, on: :create
+  # Only what this shop offers (16/10/2026): the form greys out the rest, and a
+  # request edited by hand must not ask for a garment, a placement, a delivery
+  # or an express job the shop never said it does. Judged as sent, like the
+  # minimum: a shop that changes its listing later leaves old requests alone.
+  validate :within_what_the_shop_offers, on: :create
 
   before_validation :count_garments
+  before_validation :only_way_there_is, on: :create
 
   scope :newest_first, -> { order(sent_at: :desc, created_at: :desc) }
   scope :awaiting_acknowledgement, -> { where(status: "sent") }
@@ -150,6 +160,8 @@ class PrintRequest < ApplicationRecord
 
   def printer_supplies_textile? = textile_source == "printer"
 
+  def shipping? = delivery_method == "shipping"
+
   private
     def consent_recorded
       errors.add(:base, :no_consent) if consent_text_version.blank? || consented_at.blank?
@@ -183,6 +195,34 @@ class PrintRequest < ApplicationRecord
       return if minimum.blank? || total_qty.to_i >= minimum
 
       errors.add(:sizes, :below_minimum, count: minimum)
+    end
+
+    # A shop that does only one of the two leaves nothing to choose.
+    def only_way_there_is
+      return if delivery_method.present? || printer.nil?
+
+      methods = printer.delivery_methods
+      self.delivery_method = methods.first if methods.one?
+    end
+
+    def within_what_the_shop_offers
+      return if printer.nil?
+
+      textile = printer.textile_sources
+      errors.add(:textile_source, :not_offered) if textile.any? && !textile.include?(textile_source)
+
+      if printer.placements.any? && (placements - printer.placements).any?
+        errors.add(:placements, :not_offered)
+      end
+
+      deliveries = printer.delivery_methods
+      if deliveries.any? && !deliveries.include?(delivery_method)
+        errors.add(:delivery_method, delivery_method.blank? ? :blank : :not_offered)
+      elsif deliveries.empty? && delivery_method.present?
+        errors.add(:delivery_method, :not_offered)
+      end
+
+      errors.add(:express, :not_offered) if express? && !printer.express_available?
     end
 
     def desired_on_is_not_in_the_past

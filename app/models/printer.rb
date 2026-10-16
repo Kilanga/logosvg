@@ -257,6 +257,11 @@ class Printer < ApplicationRecord
 
   def self.new_invite_code = SecureRandom.alphanumeric(10).downcase
 
+  # What a client may choose in a print request, from what the shop declares.
+  def textile_sources = [ ("printer" if provides_textile?), ("client" if accepts_client_textile?) ].compact
+
+  def delivery_methods = [ ("pickup" if pickup?), ("shipping" if ships?) ].compact
+
   private
     def assign_invite_code
       self.invite_code ||= self.class.new_invite_code

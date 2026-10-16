@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_180744) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_16_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -204,6 +204,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_180744) do
     t.string "token", null: false
     t.integer "total_qty", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.string "delivery_method"
+    t.boolean "express", default: false, null: false
     t.index ["client_id", "created_at"], name: "index_print_requests_on_client_id_and_created_at"
     t.index ["client_id"], name: "index_print_requests_on_client_id"
     t.index ["confirmation_token"], name: "index_print_requests_on_confirmation_token", unique: true

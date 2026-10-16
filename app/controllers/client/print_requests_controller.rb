@@ -97,7 +97,8 @@ module Client
             contact_email: Current.user.email_address,
             contact_phone: Current.user.phone,
             contact_city: Current.user.city,
-            textile_source: default_textile_source
+            textile_source: default_textile_source,
+            delivery_method: default_delivery_method
           }.merge(attributes.to_h.symbolize_keys)
         )
       end
@@ -107,9 +108,16 @@ module Client
         @printer&.provides_textile? ? "printer" : "client"
       end
 
+      # A shop that does only one of the two leaves nothing to choose.
+      def default_delivery_method
+        methods = @printer&.delivery_methods || []
+        methods.first if methods.one?
+      end
+
       def print_request_params
         params.expect(print_request: [
           :textile_source, :textile_model, :textile_color, :desired_on, :message,
+          :delivery_method, :express,
           :contact_name, :contact_email, :contact_phone, :contact_city,
           { placements: [], sizes: {} }
         ]).merge(consent_attributes)
