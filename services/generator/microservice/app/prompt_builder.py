@@ -124,3 +124,20 @@ def edit_prompt(instruction: str, prompt: str) -> str:
         f"Edit the reference image: {instruction}. Keep the same character, colors and style; "
         f"change only what is asked. The result: {prompt}"
     )
+
+
+def image_edit_prompt(instruction: str, prompt: str) -> str:
+    """Le prompt d'une création qui part de l'image du client.
+
+    Contrairement à une retouche, le style change presque toujours (une photo,
+    une peinture, un croquis deviennent un dessin imprimable) : on garde le
+    sujet et la composition, pas les couleurs ni le rendu.
+    """
+    instruction = (instruction or "").strip().rstrip(".")
+    if not instruction:
+        return prompt
+    return (
+        f"Use the reference image as the base and change it: {instruction}. "
+        f"Keep its subject and composition except for what is asked, and redraw it "
+        f"in the style described here. The result: {prompt}"
+    )
