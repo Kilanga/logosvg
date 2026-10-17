@@ -30,6 +30,11 @@ class ReviewPolicy < ApplicationPolicy
   # Only offered once the chosen designer has gone quiet.
   def reopen? = client? && record.chosen_designer_silent?
 
+  # A payment that failed or was left: the client tries again (H9, recette
+  # du 17/10/2026 — the review stayed « en attente de paiement » with no way
+  # forward). A custom job is paid outside, never here.
+  def pay? = client? && record.awaiting_payment? && !record.off_platform?
+
   # Once per review, on a delivered version (decided on 08/10/2026).
   def dispute? = client? && record.may_dispute?
 

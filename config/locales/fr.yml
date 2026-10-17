@@ -1012,13 +1012,13 @@ fr:
           demande, demandez un retour ou signalez un problème avant.
         action: "Voir la version"
       notify_designers:
-        subject: "Une vérification à prendre"
-        eyebrow: "Nouvelle demande"
-        heading: "Une vérification %{level} attend un graphiste"
-        body: "Ce que demande le client : %{brief}"
+        subject: "Vérification %{reference} en attente de prise en charge"
+        eyebrow: "Vérification %{reference}"
+        heading: "Demande de %{level} en attente"
+        body: "Demande du client : %{brief}"
         no_brief: "aucune précision particulière."
-        action: "Voir la demande"
-        footer: "Votre part si vous la prenez et qu'elle est validée : %{amount}."
+        action: "Ouvrir la vérification"
+        footer: "Rémunération à la validation : %{amount}."
         footer_off_platform: "Création sur mesure : vous la chiffrez et la réglez directement avec le client, sans commission."
       client_contact:
         subject: "Création sur mesure : contactez %{client}"
@@ -1427,6 +1427,11 @@ fr:
           Aucun autre graphiste n'accepte ce niveau pour l'instant. Il vous
           reste à accepter la proposition ou à être remboursé.
         rework_design: "Modifier ou régénérer mon design"
+        awaiting_payment: "Paiement à faire"
+        awaiting_payment_body: >-
+          Votre demande n'est pas encore payée : aucun graphiste ne la voit tant
+          que le paiement n'est pas passé.
+        pay: "Payer %{amount}"
         designer_silent: "Votre graphiste n'a pas répondu"
         designer_silent_body: >-
           %{designer} n'a pas pris votre demande en charge dans les %{hours} h.

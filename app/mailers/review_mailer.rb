@@ -6,12 +6,18 @@ class ReviewMailer < ApplicationMailer
     recipients = addresses_for(review)
     return message.perform_deliveries = false if recipients.empty?
 
+    # Worded as a notice about one file, with its reference, rather than as
+    # an offer (H10, recette du 17/10/2026: « Une vérification à prendre » and
+    # « Votre part si vous la prenez » went to Gmail's Promotions tab, the
+    # site's other emails to Principale).
+    subject = t("mailers.review.notify_designers.subject", reference: review.token.first(8).upcase)
+
     # `bcc` rather than `to` when it goes wide: the designers are competing for
     # the same job and have no business seeing each other's addresses.
     if recipients.one?
-      mail to: recipients.first, subject: t("mailers.review.notify_designers.subject")
+      mail to: recipients.first, subject: subject
     else
-      mail bcc: recipients, to: nil, subject: t("mailers.review.notify_designers.subject")
+      mail bcc: recipients, to: nil, subject: subject
     end
   end
 

@@ -145,6 +145,12 @@ module Client
       redirect_to review_path(@review), notice: t(".reopened")
     end
 
+    def pay
+      authorize @review
+
+      start_checkout(amount_cents: @review.price_cents, cancel_url: review_url(@review))
+    end
+
     # --- Disputes (decided on 08/10/2026) ---------------------------------
 
     def dispute
@@ -216,7 +222,7 @@ module Client
       end
 
       def set_review
-        @review = policy_scope(Review).includes(:review_level, :proposed_level, :design, designer_profile: :user)
+        @review = policy_scope(Review).includes(:client, :review_level, :proposed_level, :design, designer_profile: :user)
                                      .find_by!(token: params[:token])
       end
 
