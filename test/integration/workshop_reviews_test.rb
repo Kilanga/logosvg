@@ -34,6 +34,7 @@ class WorkshopReviewsTest < ActionDispatch::IntegrationTest
   end
 
   test "the client is told on the form that the shop follows the review" do
+    free_of_reviews(designs(:fox_screen))
     sign_in_as users(:client)
 
     get new_design_review_path(designs(:fox_screen))
@@ -42,6 +43,7 @@ class WorkshopReviewsTest < ActionDispatch::IntegrationTest
   end
 
   test "with no designer taking work, there is nothing to pay for" do
+    free_of_reviews(designs(:fox_screen))
     DesignerProfile.update_all(accepting_work: false)
     sign_in_as users(:client)
 
@@ -76,6 +78,7 @@ class WorkshopReviewsTest < ActionDispatch::IntegrationTest
   end
 
   test "the client sees the shop's designer first, marked and selected" do
+    free_of_reviews(designs(:fox_screen))
     recommended = DesignerProfile.listed.accepting.by_reputation.to_a.last
     printers(:rennes).update_column(:recommended_designer_profile_id, recommended.id)
     sign_in_as users(:client)

@@ -46,6 +46,13 @@ module ActiveSupport
       ActiveRecord::Base.strict_loading_by_default = previous
     end
 
+    # The fixtures hang several reviews on one design; a client may ask for a
+    # new one only once none is under way (one review per design, 17/10/2026).
+    def free_of_reviews(design)
+      Review.where(design: design).where.not(status: %w[ awaiting_payment accepted canceled ])
+            .update_all(status: "accepted")
+    end
+
     # A message from each side of a review: the work has begun, and the
     # designer's guaranteed share is owed (decided on 17/10/2026).
     def exchange_messages(review, at: 2.days.ago)

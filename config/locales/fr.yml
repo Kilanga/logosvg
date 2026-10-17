@@ -1329,6 +1329,7 @@ fr:
           que l'atelier sortira sans retouche.
         browse_designs: "Voir mes designs"
       new:
+        already_open: "Une vérification est déjà en cours pour ce design : la voici."
         choose_first: "Choisissez d'abord la proposition à garder : c'est elle que le graphiste vérifiera."
         not_ready: "Ce design n'est pas encore prêt : la vérification se demande une fois le visuel terminé."
         recommended: "Recommandé par votre atelier"
@@ -1375,6 +1376,7 @@ fr:
           que votre atelier attend. Vous validez, ou vous demandez un retour.
       create:
         started: "Votre demande est enregistrée."
+        already_open: "Une vérification est déjà en cours pour ce design : la voici."
         introduced: >-
           Votre demande est transmise aux graphistes. Celui qui la prend vous
           contacte pour la chiffrer.

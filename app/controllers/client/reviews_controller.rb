@@ -20,6 +20,7 @@ module Client
     def new
       @review = build_review
       authorize @review
+      return redirect_to review_path(ongoing_review), notice: t(".already_open") if ongoing_review
       @levels = available_levels
       load_designers
     end
@@ -41,7 +42,10 @@ module Client
         return render :new, status: :unprocessable_entity
       end
 
-      unless @review.save
+      ongoing, saved = save_single_review
+      return redirect_to review_path(ongoing), notice: t(".already_open") if ongoing
+
+      unless saved
         @levels = available_levels
         load_designers
         return render :new, status: :unprocessable_entity
@@ -224,6 +228,37 @@ module Client
       def set_review
         @review = policy_scope(Review).includes(:client, :review_level, :proposed_level, :design, designer_profile: :user)
                                      .find_by!(token: params[:token])
+      end
+
+      # One review at a time per design (seen on 17/10/2026: two clicks on
+      # « Payer » made two reviews, each with its own Checkout, both payable).
+      # The design's row is locked so that two submissions of the form run one
+      # after the other: the second finds what the first made. A review still
+      # waiting for its payment is taken up again, with what the form says
+      # now, rather than left behind with a twin.
+      def save_single_review
+        @design.with_lock do
+          ongoing = ongoing_review(reload: true)
+          next [ ongoing, false ] if ongoing
+
+          pending = @design.reviews.where(status: "awaiting_payment", client_id: Current.user.id)
+                           .order(:created_at).first
+          if pending
+            pending.assign_attributes(@review.attributes.slice(*RETAKEN))
+            pending.brief_required = true
+            @review = pending
+          end
+          [ nil, @review.save ]
+        end
+      end
+
+      RETAKEN = %w[ review_level_id designer_profile_id assignment_mode client_brief brief
+                    price_cents platform_fee_cents revisions_included ].freeze
+
+      # Paid for and not finished: a second one would pay twice for one design.
+      def ongoing_review(reload: false)
+        @ongoing_review = nil if reload
+        @ongoing_review ||= @design.reviews.where.not(status: %w[ awaiting_payment accepted canceled ]).first
       end
 
       def build_review(attributes = {})

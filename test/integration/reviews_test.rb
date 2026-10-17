@@ -13,6 +13,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
   # --- Buying one -----------------------------------------------------------
 
   test "a client opens the form for their own design" do
+    free_of_reviews(designs(:fox_screen))
     sign_in_as users(:client)
 
     get new_design_review_path(designs(:fox_screen))
@@ -89,6 +90,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
   # The price is copied at purchase: a level that changes next month must not
   # rewrite what was paid.
   test "the price and the allowance are copied onto the review" do
+    free_of_reviews(designs(:fox_screen))
     sign_in_as users(:client)
 
     assert_difference "Review.count", 1 do
@@ -105,8 +107,44 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_predicate review, :awaiting_payment?
   end
 
+  # Seen on 17/10/2026: two clicks on « Payer » made two reviews, each with
+  # its own Checkout, both payable.
+  test "a second request for a design still waiting for its payment takes up the first" do
+    free_of_reviews(designs(:fox_screen))
+    sign_in_as users(:client)
+    params = ->(change) { { review: { review_level_id: review_levels(:retouch).id, brief: { change: change } } } }
+
+    assert_difference "Review.count", 1 do
+      post design_reviews_path(designs(:fox_screen)), params: params.call("Nettoyer les tracés.")
+      post design_reviews_path(designs(:fox_screen)), params: params.call("Nettoyer les tracés et épaissir.")
+    end
+
+    review = Review.order(:created_at).last
+
+    assert_predicate review, :awaiting_payment?
+    assert_equal "Nettoyer les tracés et épaissir.", review.brief["change"]
+  end
+
+  test "a design whose review is under way leads to it instead of a second one" do
+    review = reviews(:in_progress_vector)
+    sign_in_as users(:client)
+
+    get new_design_review_path(review.design)
+
+    assert_redirected_to review_path(Review.where(design: review.design)
+                                           .where.not(status: %w[ awaiting_payment accepted canceled ]).first)
+
+    assert_no_difference "Review.count" do
+      post design_reviews_path(review.design), params: { review: {
+        review_level_id: review_levels(:retouch).id, brief: { change: "Encore une." }
+      } }
+    end
+    assert_equal I18n.t("client.reviews.create.already_open"), flash[:notice]
+  end
+
   # Decided on 08/10/2026: the brief in four points, the first required.
   test "the brief is asked point by point, and what must change is required" do
+    free_of_reviews(designs(:fox_screen))
     sign_in_as users(:client)
 
     assert_no_difference "Review.count" do
@@ -128,6 +166,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
   end
 
   test "choosing a designer records that it was a choice" do
+    free_of_reviews(designs(:fox_screen))
     sign_in_as users(:client)
 
     post design_reviews_path(designs(:fox_screen)), params: { review: {
@@ -158,6 +197,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
   end
 
   test "without Stripe configured the client is told rather than shown a 500" do
+    free_of_reviews(designs(:fox_screen))
     sign_in_as users(:client)
 
     post design_reviews_path(designs(:fox_screen)), params: { review: {
@@ -499,6 +539,7 @@ class ReviewsTest < ActionDispatch::IntegrationTest
   end
 
   test "a custom request costs nothing here and goes straight to the designers" do
+    free_of_reviews(designs(:fox_screen))
     sign_in_as users(:client)
 
     assert_enqueued_email_with ReviewMailer, :notify_designers, args: ->(args) { args.first.is_a?(Review) } do
