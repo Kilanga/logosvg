@@ -191,6 +191,8 @@ jobs:
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       GENERATOR_API_KEY: ${{ secrets.GENERATOR_API_KEY }}
       GENERATOR_USER_KEY: ${{ secrets.GENERATOR_USER_KEY }}
+      SMTP_ADDRESS: ${{ secrets.SMTP_ADDRESS }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
       SMTP_USER_NAME: ${{ secrets.SMTP_USER_NAME }}
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
