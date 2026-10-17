@@ -55,10 +55,21 @@ module Payments
           description: I18n.t("payments.transfer_description", reference: @review.token,
                               level: ReviewLevel.where(id: @review.review_level_id).pick(:name)),
           metadata: { review: @review.token, design: Design.where(id: @review.design_id).pick(:token),
-                      outcome: @review.status }
+                      outcome: outcome }
         )
 
         @review.update!(stripe_transfer_id: result.id)
+      end
+
+      # How the review ended, for whoever reads the transfer in Stripe:
+      # validated by the client (or by the week passing), shared by an
+      # administrator after a refund, or closed with the designer's guaranteed
+      # share (reported on 17/10/2026: a split read « accepted »).
+      def outcome
+        return "canceled" if @review.canceled?
+        return "accepted" if @review.settled_at.blank?
+
+        @review.refunded_cents.positive? ? "split" : "settled_by_admin"
       end
 
       # The client's charge, when the transfer fits inside it. Without it, a

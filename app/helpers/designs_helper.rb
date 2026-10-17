@@ -86,7 +86,10 @@ module DesignsHelper
       t("client.dashboards.show.action.review_proposal.hint",
         date: l(action.record.proposal_expires_at, format: :long))
     else
-      t("client.dashboards.show.action.#{action.kind}.hint")
+      hint = t("client.dashboards.show.action.#{action.kind}.hint")
+      return hint if action.tries < 2
+
+      "#{hint} #{t('client.dashboards.show.tries', count: action.tries)}"
     end
   end
 
