@@ -1,8 +1,13 @@
 module Designer
   # The workshop's converter, inside a client's review (asked for on
-  # 17/10/2026): the designer's own PNG or JPEG — the reworked picture — put in
-  # the format the client's workshop prints, by the same route as a shop's
+  # 17/10/2026): a picture put in a file format by the same route as a shop's
   # conversion. Nothing redrawn, no generation counted.
+  #
+  # Two pictures, two directions. The designer's own PNG or JPEG — the
+  # reworked picture — goes to the format the client's workshop prints, to be
+  # delivered. The client's picture (the design under review, or the photo it
+  # was drawn from) goes the other way too: to an editable SVG of up to six
+  # inks, or a high-definition PNG, whichever the designer works in.
   #
   # Only here, never as a tool of its own: the technique, the inks and the
   # width are the review's, and the result is meant to be delivered as a
@@ -17,7 +22,7 @@ module Designer
     def create
       authorize @review, :convert?
 
-      upload = params[:image]
+      upload = picture
       return back_with(t(".missing_image")) if upload.blank?
 
       image = ReferenceImage.call(upload, max_side: ReferenceImage::PRINT_SIDE_PX)
@@ -47,20 +52,45 @@ module Designer
                                filename: "#{@review.token.first(8).downcase}-converti.#{blob.filename.extension}"
     end
 
+    # The formats a designer can ask for besides the workshop's own: a vector
+    # file with every ink it can hold, and a raster at print definition.
+    TARGETS = { "svg" => { technique: "screen_printing", colors_requested: 6 },
+                "png" => { technique: "dtg", colors_requested: nil } }.freeze
+
+    # The client's pictures a designer may convert: the design they sent for
+    # review, and the photo it was drawn from, when there is one.
+    def self.client_pictures(design)
+      drawing = design.source_png.attached? ? design.source_png : design.print_file
+      drawing = nil unless drawing.attached? && ReferenceImage::ACCEPTED.include?(drawing.content_type)
+      start = design.starting_image_holder&.reference_image
+      { "client_design" => drawing, "client_start" => start }.compact
+    end
+
     private
       def set_review
-        @review = policy_scope(Review).includes(:design).find_by!(token: params[:token])
+        @review = policy_scope(Review).includes(design: { source_png_attachment: :blob, print_file_attachment: :blob })
+                                      .find_by!(token: params[:token])
       end
 
       # The review's own design says what the workshop prints: its technique,
       # inks and width, and whether it came out of a model.
+      def picture
+        return params[:image] unless params[:source].to_s.start_with?("client_")
+
+        attachment = self.class.client_pictures(@review.design)[params[:source]]
+        StringIO.new(attachment.download) if attachment
+      end
+
+      def target = TARGETS.fetch(params[:target].to_s) { {} }
+
       def build_conversion
         source = @review.design
         Design.new(
           user: Current.user, printer_id: source.printer_id, conversion_review: @review,
           mode: "upload", style: "illustration",
           prompt: t(".title", reference: @review.token.first(8).upcase),
-          technique: source.technique, colors_requested: source.colors_requested,
+          technique: target.fetch(:technique, source.technique),
+          colors_requested: target.fetch(:colors_requested, source.colors_requested),
           print_width_cm: source.print_width_cm,
           remove_background: params[:remove_background] == "1",
           ai_declared: source.ai_generated?,

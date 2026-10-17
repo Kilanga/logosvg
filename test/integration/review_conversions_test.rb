@@ -34,6 +34,48 @@ class ReviewConversionsTest < ActionDispatch::IntegrationTest
     assert_predicate design.reference_image, :attached?
   end
 
+  test "the client's design converts to an editable SVG" do
+    review = reviews(:in_progress_vector)
+    review.design.source_png.attach(io: StringIO.new(png_bytes), filename: "source.png", content_type: "image/png")
+    sign_in_as users(:designer)
+
+    get designer_review_path(review)
+
+    assert_select "input[type=radio][name=source][value=client_design]"
+
+    assert_difference -> { Design.count }, 1 do
+      post designer_review_conversions_path(review), params: { source: "client_design", target: "svg" }
+    end
+
+    design = Design.strict_loading(false).order(:id).last
+
+    assert_equal "screen_printing", design.technique
+    assert_equal 6, design.colors_requested
+    assert_predicate design.reference_image, :attached?
+  end
+
+  test "the client's starting photo converts to a high-definition PNG" do
+    review = reviews(:in_progress_vector)
+    review.design.reference_image.attach(io: StringIO.new(png_bytes), filename: "photo.png", content_type: "image/png")
+    sign_in_as users(:designer)
+
+    post designer_review_conversions_path(review), params: { source: "client_start", target: "png" }
+
+    design = Design.strict_loading(false).order(:id).last
+
+    assert_equal review.id, design.conversion_review_id
+    assert_equal "dtg", design.technique
+    assert_nil design.colors_requested
+  end
+
+  test "a client picture that is not there converts nothing" do
+    sign_in_as users(:designer)
+
+    assert_no_difference -> { Design.count } do
+      post designer_review_conversions_path(reviews(:in_progress_vector)), params: { source: "client_start" }
+    end
+  end
+
   test "no image, no conversion" do
     sign_in_as users(:designer)
 
@@ -107,9 +149,12 @@ class ReviewConversionsTest < ActionDispatch::IntegrationTest
       %(<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#000"/></svg>)
     end
 
+    def png_bytes
+      Vips::Image.black(300, 200).add(200).cast(:uchar).bandjoin([ 30, 40 ])
+                 .copy(interpretation: :srgb).write_to_buffer(".png")
+    end
+
     def uploaded_png
-      png = Vips::Image.black(300, 200).add(200).cast(:uchar).bandjoin([ 30, 40 ])
-                       .copy(interpretation: :srgb).write_to_buffer(".png")
-      Rack::Test::UploadedFile.new(StringIO.new(png), "image/png", original_filename: "retouche.png")
+      Rack::Test::UploadedFile.new(StringIO.new(png_bytes), "image/png", original_filename: "retouche.png")
     end
 end

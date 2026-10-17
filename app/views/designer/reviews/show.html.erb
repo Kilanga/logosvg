@@ -113,18 +113,40 @@
 
     <%# The workshop's converter, here and only here (asked for on
         17/10/2026): the designer's PNG or JPEG put in the format the client's
-        workshop prints, to deliver above. %>
+        workshop prints, to deliver above; or the client's picture put in a
+        format to work from. %>
     <% if policy(@review).convert? %>
       <section id="conversions" class="panel p-5">
         <p class="label-rule"><%= t(".convert") %></p>
-        <p class="mt-2 text-sm text-muted">
-          <%= t(".convert_hint", technique: @review.design.technique_label,
-                file_format: @review.design.vector? ? "SVG" : "PNG") %>
-        </p>
+        <p class="mt-2 text-sm text-muted"><%= t(".convert_hint") %></p>
         <%= form_with url: designer_review_conversions_path(@review), multipart: true,
-              class: "mt-4 space-y-3" do %>
-          <%= file_field_tag :image, required: true, accept: ReferenceImage::ACCEPTED.join(","),
-                class: "block w-full text-sm", aria: { label: t(".convert_file") } %>
+              class: "mt-4 space-y-4" do %>
+          <fieldset class="space-y-2 text-sm">
+            <legend class="font-medium"><%= t(".convert_source") %></legend>
+            <label class="flex items-start gap-2.5">
+              <%= radio_button_tag :source, "upload", true, class: "mt-0.5 size-4 flex-none" %>
+              <span class="space-y-2">
+                <span class="block"><%= t(".convert_source_upload") %></span>
+                <%= file_field_tag :image, accept: ReferenceImage::ACCEPTED.join(","),
+                      class: "block w-full text-sm", aria: { label: t(".convert_file") } %>
+              </span>
+            </label>
+            <% @client_pictures.each_key do |key| %>
+              <label class="flex items-start gap-2.5">
+                <%= radio_button_tag :source, key, false, class: "mt-0.5 size-4 flex-none" %>
+                <span><%= t(".convert_source_#{key}") %></span>
+              </label>
+            <% end %>
+          </fieldset>
+          <div class="text-sm">
+            <%= label_tag :target, t(".convert_target"), class: "font-medium" %>
+            <%= select_tag :target, options_for_select([
+                  [ t(".convert_target_workshop", technique: @review.design.technique_label,
+                      file_format: @review.design.vector? ? "SVG" : "PNG"), "workshop" ],
+                  [ t(".convert_target_svg"), "svg" ],
+                  [ t(".convert_target_png"), "png" ]
+                ]), class: "mt-1 block w-full rounded-xs border border-line bg-surface px-3 py-2" %>
+          </div>
           <label class="flex items-start gap-2.5 text-sm">
             <%= check_box_tag :remove_background, "1", false, class: "mt-0.5 size-4 flex-none" %>
             <span><%= t(".convert_remove_background") %></span>

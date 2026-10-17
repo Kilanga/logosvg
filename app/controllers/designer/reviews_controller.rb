@@ -29,6 +29,7 @@ module Designer
       @messages = @review.messages.includes(:author)
       @conversions = @review.conversions.where(user: Current.user).with_attached_print_file
                             .newest_first.limit(10)
+      @client_pictures = Designer::ReviewConversionsController.client_pictures(@review.design) if policy(@review).convert?
       mark_client_messages_read
     end
 

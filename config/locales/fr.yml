@@ -2450,9 +2450,17 @@ fr:
         send_version: "Envoyer cette version"
         convert: "Convertir au format de l'atelier"
         convert_hint: >-
-          Déposez votre image retravaillée (PNG ou JPEG) : elle est mise au format
-          que l'atelier imprime (%{technique}, fichier %{file_format}), sans être
-          redessinée. Téléchargez le résultat, puis envoyez-le comme version.
+          Votre image retravaillée (PNG ou JPEG) mise au format que l'atelier
+          imprime, pour l'envoyer ensuite comme version ; ou l'image du client mise
+          dans un format pour travailler dessus. Rien n'est redessiné.
+        convert_source: "Image à convertir"
+        convert_source_upload: "Mon image (PNG ou JPEG)"
+        convert_source_client_design: "Le dessin du client"
+        convert_source_client_start: "La photo de départ du client"
+        convert_target: "Format voulu"
+        convert_target_workshop: "Format de l'atelier : %{technique}, fichier %{file_format}"
+        convert_target_svg: "SVG vectoriel modifiable, 6 couleurs au plus"
+        convert_target_png: "PNG haute définition, couleurs complètes"
         convert_file: "Image à convertir"
         convert_remove_background: "Retirer le fond uni de l'image"
         convert_submit: "Convertir"
