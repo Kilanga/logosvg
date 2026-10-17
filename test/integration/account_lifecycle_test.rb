@@ -115,11 +115,14 @@ class AccountLifecycleTest < ActionDispatch::IntegrationTest
     end
   end
 
-  # B2, decided on 15/10/2026: the emails' open and click measurement is said.
-  test "the privacy policy names Brevo and its email measurement" do
+  # B2, decided on 15/10/2026: who sends the emails is said. Since 17/10/2026
+  # the OVH mailbox sends them, with no open or click measurement left.
+  test "the privacy policy names who sends the emails, and that nothing tracks them" do
     get privacy_path
 
-    assert_match(/Brevo.*r\.contact\.pretatirer\.fr/m, response.body)
+    assert_match "OVHcloud", response.body
+    assert_no_match(/r\.contact\.pretatirer\.fr/, response.body)
+    assert_no_match(/Brevo/, response.body)
   end
 
   test "each one links to the others" do

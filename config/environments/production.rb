@@ -69,18 +69,25 @@ Rails.application.configure do
   # l'hôte se déclare ici, une fois.
   config.action_mailer.default_url_options = { host: app_host, protocol: "https" }
 
-  # Le relais SMTP. Les identifiants viennent de l'environnement plutôt que des
-  # credentials chiffrés : Kamal les injecte depuis .kamal/secrets, et changer
-  # de relais ne demande alors aucun déploiement de code.
+  # Le relais SMTP. L'adresse, le port et les identifiants viennent de
+  # l'environnement plutôt que des credentials chiffrés : Kamal les injecte
+  # depuis .kamal/secrets, et changer de relais ne demande alors aucun
+  # déploiement de code. Depuis le 17/10/2026, la boîte Zimbra d'OVH
+  # (smtp.mail.ovh.net, port 465) : Brevo réécrivait tous les liens et posait
+  # un pixel d'ouverture, sans moyen de le couper, et ses envois tombaient
+  # dans l'onglet Promotions de Gmail. Un secret vide compte comme absent.
+  smtp_port = (ENV["SMTP_PORT"].presence || "587").to_i
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.perform_deliveries = true
   config.action_mailer.smtp_settings = {
-    address: ENV.fetch("SMTP_ADDRESS", "smtp-relay.brevo.com"),
-    port: ENV.fetch("SMTP_PORT", "587").to_i,
+    address: ENV["SMTP_ADDRESS"].presence || "smtp-relay.brevo.com",
+    port: smtp_port,
     user_name: ENV["SMTP_USER_NAME"],
     password: ENV["SMTP_PASSWORD"],
     authentication: :plain,
-    enable_starttls_auto: true
+    # 465 : chiffrement dès la connexion ; 587 : STARTTLS.
+    tls: smtp_port == 465,
+    enable_starttls_auto: smtp_port != 465
   }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to

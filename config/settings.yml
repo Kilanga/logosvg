@@ -175,9 +175,11 @@ shared:
     consent_cookie_months: 6
 
   # --- Emails -------------------------------------------------------------
-  # Décidé le 10/10/2026 : on reste sur le forfait gratuit Brevo, 300 emails
-  # par jour pour tout le site, comptés par destinataire. Le tableau de bord
-  # de l'administration alerte à 80 %.
+  # Décidé le 10/10/2026 : 300 emails par jour pour tout le site, comptés par
+  # destinataire (le forfait gratuit Brevo). Gardé après le passage à la boîte
+  # OVH le 17/10/2026, dont la limite n'est pas publiée (environ 200 par heure
+  # d'après la communauté) : 300 par jour reste prudent. Le tableau de bord de
+  # l'administration alerte à 80 %.
   emails:
     daily_limit: 300
     alert_ratio: 0.8
