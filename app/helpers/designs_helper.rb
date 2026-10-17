@@ -72,7 +72,9 @@ module DesignsHelper
   # that builds URLs cannot be called without a request in hand.
   def dashboard_action_path(action)
     case action.kind
-    when :design_failed then new_design_path
+    # The form opens filled in with what failed (C4), from here as from the
+    # design's own page (seen on 17/10/2026: « Recommencer » opened it blank).
+    when :design_failed then new_design_path(depuis: action.record.token)
     when :proposals_to_choose then design_path(action.record)
     when :design_unsent then new_design_print_request_path(action.record)
     when :print_request_silent then print_request_path(action.record)
