@@ -25,6 +25,8 @@ from .prompt_filter import PromptFilter
 from .raster import rasterize, target_pixels
 from .refine import rewrite
 from .techniques import DEFAULT_PRINT_WIDTH_CM, DEFAULT_TECHNIQUE, resolve
+from .text_check import check as check_text
+from .text_check import expected_texts
 from .translate import instruction_to_english, to_english
 from .vectorizer import vectorize
 
@@ -256,6 +258,42 @@ class JobManager:
             raise GenerationError("L'image de départ a expiré. Relancez la création.")
         return source.read_bytes()
 
+    async def _check_text(self, job: Job, subject: str, png: bytes, drawn_with: str, draw) -> tuple:
+        """Relit le texte demandé et redessine, avec un autre tirage, s'il est mal écrit.
+
+        Jusqu'à `text_check_retries` nouveaux essais (décidé le 17/10/2026) ;
+        le premier dessin exact est gardé, sinon le plus proche, avec un
+        avertissement pour le client. Sans texte à imprimer, ou sans de quoi
+        relire, rien ne change. Le tirage gardé devient celui du design.
+        """
+        texts = expected_texts(subject)
+        if not texts or settings.text_check_retries <= 0:
+            return png, drawn_with, None
+        reading = await asyncio.to_thread(check_text, png, texts)
+        if reading is None or reading.exact:
+            return png, drawn_with, None
+
+        best = (reading.score, png, drawn_with, job.seed)
+        for _ in range(settings.text_check_retries):
+            seed = new_seed()
+            candidate, candidate_with = await draw(seed)
+            again = await asyncio.to_thread(check_text, candidate, texts)
+            if again is None:
+                break
+            log.info("Texte relu (%s) : %r", "exact" if again.exact else f"{again.score:.2f}", again.seen)
+            if again.exact or again.score > best[0]:
+                best = (1.0 if again.exact else again.score, candidate, candidate_with, seed)
+            if again.exact:
+                break
+
+        score, png, drawn_with, job.seed = best
+        if score >= 1.0:
+            return png, drawn_with, None
+        return png, drawn_with, (
+            "Le texte du dessin n'a pas pu être vérifié à la lettre après plusieurs essais : "
+            "relisez-le avant d'envoyer, et demandez une retouche s'il faut le corriger."
+        )
+
     async def _hires(self, png: bytes, prompt: str, seed: int) -> tuple:
         """Redessine l'image plus grande, pour les techniques matricielles.
 
@@ -322,35 +360,40 @@ class JobManager:
         colors = profile.clamp_colors(job.colors)
         job.colors = colors
         prompt = build_prompt(subject, job.style, colors, profile.key, job.flavour)
-        # Ce que le modèle a lu pour ce dessin ; la passe haute définition, elle,
-        # relit la description, pas la consigne d'édition.
-        drawn_with = prompt
+        async def draw(seed: int) -> tuple:
+            """Un dessin, et ce que le modèle a lu pour le faire ; la passe haute
+            définition, elle, relit la description, pas la consigne d'édition."""
+            drawn_with = prompt
 
-        if job.mode == REFINE and job.refine_scope == "layout" and settings.refine_layout_mode == "edit":
-            # Déplacer, agrandir, ajouter, retirer : l'image sert de référence,
-            # la demande est dite au modèle, et le dessin repart de zéro (B4).
-            drawn_with = edit_prompt(job.refine_instruction, prompt)
-            png = await self.generator.edit(drawn_with, job.seed, colors, self._init_image(job))
-        elif job.mode == REFINE:
-            # Une demande qui touche la mise en page s'écarte davantage de
-            # l'image de départ (B4, recette du 14/10/2026).
-            denoise = settings.refine_denoise_layout if job.refine_scope == "layout" else settings.refine_denoise
-            png = await self.generator.refine(
-                prompt, job.seed, colors,
-                self._init_image(job), denoise,
-            )
-        elif job.init_png is not None and settings.upload_mode == "edit":
-            # Une création (ou une variante) qui part de l'image du client :
-            # l'image sert de référence, la demande est dite au modèle.
-            drawn_with = image_edit_prompt(job.refine_instruction or subject, prompt)
-            png = await self.generator.edit(drawn_with, job.seed, colors, job.init_png)
-        elif job.init_png:
-            # Même voie que la retouche, avec un écart plus grand.
-            png = await self.generator.refine(
-                prompt, job.seed, colors, job.init_png, settings.upload_denoise,
-            )
-        else:
-            png = await self.generator.generate(prompt, job.seed, colors)
+            if job.mode == REFINE and job.refine_scope == "layout" and settings.refine_layout_mode == "edit":
+                # Déplacer, agrandir, ajouter, retirer : l'image sert de référence,
+                # la demande est dite au modèle, et le dessin repart de zéro (B4).
+                drawn_with = edit_prompt(job.refine_instruction, prompt)
+                png = await self.generator.edit(drawn_with, seed, colors, self._init_image(job))
+            elif job.mode == REFINE:
+                # Une demande qui touche la mise en page s'écarte davantage de
+                # l'image de départ (B4, recette du 14/10/2026).
+                denoise = settings.refine_denoise_layout if job.refine_scope == "layout" else settings.refine_denoise
+                png = await self.generator.refine(
+                    prompt, seed, colors,
+                    self._init_image(job), denoise,
+                )
+            elif job.init_png is not None and settings.upload_mode == "edit":
+                # Une création (ou une variante) qui part de l'image du client :
+                # l'image sert de référence, la demande est dite au modèle.
+                drawn_with = image_edit_prompt(job.refine_instruction or subject, prompt)
+                png = await self.generator.edit(drawn_with, seed, colors, job.init_png)
+            elif job.init_png:
+                # Même voie que la retouche, avec un écart plus grand.
+                png = await self.generator.refine(
+                    prompt, seed, colors, job.init_png, settings.upload_denoise,
+                )
+            else:
+                png = await self.generator.generate(prompt, seed, colors)
+            return png, drawn_with
+
+        png, drawn_with = await draw(job.seed)
+        png, drawn_with, text_warning = await self._check_text(job, subject, png, drawn_with, draw)
 
         job.directory.mkdir(parents=True, exist_ok=True)
         # L'image de référence gardée pour le client et pour l'atelier est celle que le
@@ -378,6 +421,9 @@ class JobManager:
                 if warning:
                     out["warnings"].append(warning)
 
+
+        if text_warning:
+            out["warnings"].append(text_warning)
 
         if traduction_manquee:
             out["warnings"].append(

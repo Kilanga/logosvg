@@ -33,6 +33,20 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", design_variants_path(designs(:fox_screen)), count: 0
   end
 
+  # Reported on 16/10/2026 (H1): an earlier version kept saying « Il reste 3
+  # reprises » once the lineage had spent one.
+  test "an earlier version counts the reprises its lineage has spent" do
+    root = designs(:fox_screen)
+    root.update!(refinements_left: 3)
+    Design.create!(root.attributes.except("id", "token", "created_at", "updated_at", "batch_token", "chosen_at")
+                       .merge("parent_id" => root.id, "root_id" => root.id, "status" => "ready", "mode" => "refine"))
+    sign_in_as users(:client)
+
+    get design_path(root)
+
+    assert_match I18n.t("client.designs.design.refinements_left", count: 2), response.body
+  end
+
   test "a design with reprises left still offers them" do
     designs(:fox_screen).update!(refinements_left: 2)
     sign_in_as users(:client)

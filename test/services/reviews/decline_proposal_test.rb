@@ -43,6 +43,7 @@ module Reviews
 
     test "handed back after the designer took it on, the guaranteed share is paid out" do
       reviews(:returned).update_column(:claimed_at, 2.days.ago)
+      exchange_messages(reviews(:returned))
 
       review = DeclineProposal.call(review: reviews(:returned)).review
 

@@ -45,5 +45,15 @@ module ActiveSupport
     ensure
       ActiveRecord::Base.strict_loading_by_default = previous
     end
+
+    # A message from each side of a review: the work has begun, and the
+    # designer's guaranteed share is owed (decided on 17/10/2026).
+    def exchange_messages(review, at: 2.days.ago)
+      designer = DesignerProfile.where(id: review.designer_profile_id).pick(:user_id)
+      ReviewMessage.insert_all!([
+        { review_id: review.id, author_id: review.client_id, body: "Bonjour", kind: "message", created_at: at, updated_at: at },
+        { review_id: review.id, author_id: designer, body: "Bonjour, je regarde.", kind: "message", created_at: at, updated_at: at }
+      ])
+    end
   end
 end

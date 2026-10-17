@@ -82,6 +82,9 @@ class Settings:
     # l'écart ci-dessus). En img2img, une grosse modification ne passait pas : le
     # dessin restait collé à l'image (recette du 17/10/2026).
     upload_mode: str = os.getenv("UPLOAD_MODE", "edit")
+    # Texte à imprimer relu sur l'image (app/text_check.py) : combien de
+    # nouveaux tirages au plus quand il est mal écrit. 0 = pas de relecture.
+    text_check_retries: int = _int("TEXT_CHECK_RETRIES", 2)
     # Le visuel d'un client préparé tel quel (POST /convert) : la définition est
     # gardée jusqu'à cette taille. Au-delà, un fichier de 25 cm à 300 dpi n'en
     # demande pas plus, et la vectorisation ralentirait pour rien.

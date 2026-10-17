@@ -73,6 +73,7 @@ module DesignsHelper
   def dashboard_action_path(action)
     case action.kind
     when :design_failed then new_design_path
+    when :proposals_to_choose then design_path(action.record)
     when :design_unsent then new_design_print_request_path(action.record)
     when :print_request_silent then print_request_path(action.record)
     when :review_delivered, :review_proposal then review_path(action.record)

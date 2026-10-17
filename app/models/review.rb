@@ -349,10 +349,28 @@ class Review < ApplicationRecord
   # left unanswered. The usual practice of a kill fee: a share of the whole
   # price, on which the commission applies like on anything paid. A custom
   # job is paid outside the platform, and owes nothing here.
+  #
+  # Owed only once the work has really begun (decided on 17/10/2026): a
+  # version delivered, or an exchange with the client — a message from each
+  # side — before any return. A designer who takes a Retouche and sends it
+  # straight back with a dearer proposal is owed nothing: the share protects
+  # the designer's work, and must not cost a client who saw none.
   def guaranteed_share_cents
     return 0 if claimed_at.nil? || off_platform?
+    return 0 unless work_begun?
 
     (price_cents * Rails.application.config.tshirt.reviews.fetch(:designer_guaranteed_share)).round
+  end
+
+  # A version delivered, or both sides heard in the conversation before any
+  # return. Read by query: the review reaches here bare from jobs and mailers.
+  def work_begun?
+    return true if ReviewVersion.where(review_id: id).exists?
+
+    said = ReviewMessage.where(review_id: id, kind: "message")
+    said = said.where(created_at: ...returned_at) if returned_at
+    designer_user_id = DesignerProfile.where(id: designer_profile_id).pick(:user_id)
+    said.where(author_id: client_id).exists? && said.where(author_id: designer_user_id).exists?
   end
 
   # What may still go back to the client.

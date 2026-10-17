@@ -220,13 +220,18 @@
       </p>
     <% end %>
 
+    <%# Counted on the lineage too, not only read from the design: the figure stored at
+        generation went stale on earlier versions once a reprise was spent
+        (reported on 16/10/2026, H1). The lower of the two: the service may
+        have counted more. Nil for a client's own picture. %>
+    <% reprises_left = design.refinements_left && [ design.refinements_left, design.refinements_remaining ].min %>
     <div class="flex flex-wrap gap-3 border-t border-line p-4">
       <%# The print file never leaves for the client: this is a watermarked
           rendering of it. %>
       <%= link_to t("client.designs.design.download"), design_image_path(design, telecharger: 1),
             class: "btn btn-secondary text-sm" %>
 
-      <% if design.refinements_left.to_i.positive? %>
+      <% if reprises_left.to_i.positive? %>
         <%= button_to t("client.designs.design.variants"), design_variants_path(design),
               class: "btn btn-secondary text-sm" %>
         <%# A designer from the first generation, for a client who wants one
@@ -242,7 +247,7 @@
         the microservice were all there; this form was the missing piece, so the
         client could only ask for other versions. See docs/SPEC.md,
         "Reprise d'un design". %>
-    <% if design.refinements_left.to_i.positive? %>
+    <% if reprises_left.to_i.positive? %>
       <div class="border-t border-line p-4">
         <%# Explicit id: this partial is rendered once per design on the index. %>
         <% champ = "instruction_#{design.token}" %>
@@ -263,7 +268,7 @@
     <%# Budget spent. The two ways of reworking it yourself give way to the
         one that is left: a designer, and it is paid for. See docs/SPEC.md,
         "Reprise d'un design". %>
-    <% if design.refinements_left&.zero? %>
+    <% if reprises_left&.zero? %>
       <div class="border-t border-line bg-emulsion/5 p-4">
         <p class="label-rule flex items-center gap-2.5 text-emulsion">
           <%= registration_mark %><%= t("client.designs.design.budget_spent") %>
@@ -272,9 +277,9 @@
         <%= link_to t("client.designs.design.ask_designer"), new_design_review_path(design),
               class: "btn btn-primary mt-4 text-sm" %>
       </div>
-    <% elsif design.refinements_left %>
+    <% elsif reprises_left %>
       <p class="border-t border-line px-4 py-3 text-sm text-muted">
-        <%= t("client.designs.design.refinements_left", count: design.refinements_left) %>
+        <%= t("client.designs.design.refinements_left", count: reprises_left) %>
       </p>
     <% end %>
   <% end %>
