@@ -28,8 +28,9 @@ module Payments
       end
     end
 
-    # F3, decided on 15/10/2026: no payment that confirms days later.
-    test "a review is paid by card only" do
+    # 17/10/2026: Stripe refuses `payment_method_types` on a new Checkout
+    # session; the methods come from the Dashboard.
+    test "a review checkout leaves the payment methods to the Dashboard" do
       StripeClient.new.create_payment_session(
         amount_cents: 4900, product_name: "Retouche", client_email: "claire@example.invalid",
         success_url: "https://pretatirer.test/ok", cancel_url: "https://pretatirer.test/ko",
@@ -37,7 +38,7 @@ module Payments
       )
 
       assert_requested :post, CHECKOUT do |request|
-        Rack::Utils.parse_nested_query(request.body)["payment_method_types"] == { "0" => "card" }
+        !Rack::Utils.parse_nested_query(request.body).key?("payment_method_types")
       end
     end
 
