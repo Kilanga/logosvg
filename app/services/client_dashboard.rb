@@ -22,7 +22,7 @@ class ClientDashboard
 
   private
     def actions
-      (failed_designs + unsent_designs + silent_print_requests +
+      (failed_designs + proposals_to_choose + unsent_designs + silent_print_requests +
        delivered_reviews + review_proposals).sort_by(&:on).reverse
     end
 
@@ -35,6 +35,19 @@ class ClientDashboard
       failed.where(batch_token: nil).or(failed.where.not(batch_token: came_through))
             .to_a.uniq { |design| design.batch_token || design.token }.map do |design|
         Action.new(kind: :design_failed, record: design, on: design.updated_at)
+      end
+    end
+
+    # Three proposals drawn and none kept yet: nothing goes further until the
+    # client picks one (reported on 17/10/2026, H4 — the dashboard said « Vous
+    # n'avez pas encore créé de design » to a client with two such clicks).
+    # One per click.
+    def proposals_to_choose
+      chosen = designs.where.not(batch_token: nil).where.not(chosen_at: nil).select(:batch_token)
+      designs.where(status: "ready", chosen_at: nil).where.not(batch_token: nil)
+             .where.not(batch_token: chosen).order(:created_at)
+             .to_a.uniq(&:batch_token).map do |design|
+        Action.new(kind: :proposals_to_choose, record: design, on: design.updated_at)
       end
     end
 

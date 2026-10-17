@@ -57,7 +57,10 @@
         </ul>
       <% else %>
         <div class="panel mt-4 p-6 text-center">
-          <p class="text-muted"><%= t(".no_design") %></p>
+          <%# Proposals still to choose are not designs yet: said so, rather than
+              « nothing created » to a client who has drawn some (H4). %>
+          <% choosing = @dashboard[:actions].any? { |action| action.kind == :proposals_to_choose } %>
+          <p class="text-muted"><%= t(choosing ? ".no_design_yet_chosen" : ".no_design") %></p>
           <% if Current.user.attached_to_workshop? %>
             <%= link_to t("nav.create"), new_design_path, class: "btn btn-primary mt-4" %>
           <% end %>

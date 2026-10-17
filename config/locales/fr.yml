@@ -1219,6 +1219,10 @@ fr:
             label: "Génération à relancer"
             hint: "Cet essai ne vous a pas été décompté."
             cta: "Recommencer"
+          proposals_to_choose:
+            label: "Propositions à choisir"
+            hint: "Gardez-en une pour la modifier ou l'envoyer à un atelier."
+            cta: "Choisir"
           design_unsent:
             label: "Design prêt, jamais envoyé"
             hint: "Aucun atelier n'a encore reçu ce visuel."
@@ -1239,6 +1243,7 @@ fr:
         recent_requests: "Dernières demandes"
         see_all: "Tout voir"
         no_design: "Vous n'avez pas encore créé de design."
+        no_design_yet_chosen: "Vos designs apparaîtront ici dès que vous aurez choisi une proposition."
         no_request: "Aucune demande d'impression pour l'instant."
       workshop_panel:
         title: "Votre atelier"
@@ -2441,9 +2446,10 @@ fr:
             facturée.
           claimed: >-
             À faire avant toute livraison, une seule fois, si l'option choisie ne
-            permet pas de travailler correctement. Vous avez pris la demande en
-            charge : si le client refuse votre proposition, la part garantie du
-            prix vous reste acquise.
+            permet pas de travailler correctement. Si le client refuse votre
+            proposition, la part garantie du prix ne vous reste acquise que si
+            vous avez déjà échangé avec lui (un message de chaque côté) ou livré
+            une version.
         reason: "Motif"
         proposed_level: "Niveau proposé"
         proposed_custom_hint: >-
@@ -2524,7 +2530,7 @@ fr:
 
   legal:
     eyebrow: "Informations légales"
-    updated_on: "2026-09-20"
+    updated_on: "2026-10-17"
     updated: "Mise à jour le %{date}"
     draft_title: "Document de travail"
     draft_body: >-
@@ -2579,7 +2585,7 @@ fr:
         body:
           - "La vérification est payée à la commande. Le graphiste n'est réglé qu'à votre validation de son travail, ou à sa validation automatique après %{auto_accept_days} jours sans réponse de votre part."
           - "Si aucun graphiste ne prend votre demande en charge, ou s'il vous la renvoie avant de l'avoir prise en charge, vous êtes remboursé en entier."
-          - "Dès qu'un graphiste a pris votre demande en charge, %{share} du prix lui restent acquis pour le travail commencé, quelle que soit la suite : proposition refusée ou laissée sans réponse, ou signalement tranché en votre faveur. Le remboursement porte alors au plus sur le reste."
+          - "Dès qu'un graphiste a pris votre demande en charge et commencé le travail (une version livrée, ou un échange avec vous : un message de chaque côté), %{share} du prix lui restent acquis, quelle que soit la suite : proposition refusée ou laissée sans réponse, ou signalement tranché en votre faveur. Le remboursement porte alors au plus sur le reste. Sans échange ni version, vous êtes remboursé en entier."
       liability:
         title: "Responsabilités"
         body:
@@ -2628,7 +2634,7 @@ fr:
         body:
           - "Le client paie à la commande. Votre part vous est virée automatiquement dès qu'il valide votre travail, ou à sa validation automatique après le délai prévu."
           - "La plateforme prélève une commission sur le prix du niveau. Son taux est indiqué sur votre écran de paiements."
-          - "Dès que vous avez pris une demande en charge, %{share} du prix vous restent acquis quelle que soit la suite : un signalement tranché en faveur du client, une proposition qu'il refuse ou laisse sans réponse. La commission s'applique sur cette part comme sur tout paiement."
+          - "Dès que vous avez pris une demande en charge et commencé le travail (une version livrée, ou un échange avec le client : un message de chaque côté), %{share} du prix vous restent acquis quelle que soit la suite : un signalement tranché en faveur du client, une proposition qu'il refuse ou laisse sans réponse. Sans échange ni version, le client est remboursé en entier. La commission s'applique sur cette part comme sur tout paiement."
       returns:
         title: "Renvoyer une demande"
         body:
@@ -3233,10 +3239,12 @@ fr:
                   jours ; vous êtes prévenu avant. Un problème ? Signalez-le
                   depuis la vérification, avant de valider.
                 - >-
-                  Dès qu'il a pris votre demande en charge,
-                  %{guaranteed_percent} % du prix lui restent acquis pour le
-                  travail commencé, même si vous refusez sa proposition ou si un
-                  signalement est tranché en votre faveur.
+                  Dès qu'il a pris votre demande en charge et commencé le
+                  travail (une version livrée, ou un message de chaque côté),
+                  %{guaranteed_percent} % du prix lui restent acquis, même si
+                  vous refusez sa proposition ou si un signalement est tranché
+                  en votre faveur. Sans échange ni version, vous êtes remboursé
+                  en entier.
         - title: "Vos données"
           questions:
             - q: "Qui voit mes visuels et mes coordonnées ?"

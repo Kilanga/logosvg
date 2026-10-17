@@ -37,6 +37,7 @@ class ReviewStateMachineTest < ActiveSupport::TestCase
 
   test "once taken on, part of the price stays the designer's, commission applied" do
     review = reviews(:in_progress)
+    exchange_messages(review)
 
     assert_equal 1470, review.guaranteed_share_cents, "30 % of 49 €"
     assert_equal 3430, review.refundable_cents
@@ -46,9 +47,37 @@ class ReviewStateMachineTest < ActiveSupport::TestCase
 
   test "what was already refunded comes off what is left to refund" do
     review = reviews(:in_progress)
+    exchange_messages(review)
     review.refunded_cents = 3000
 
     assert_equal 430, review.refundable_cents
+  end
+
+  # Decided on 17/10/2026: taken on and sent straight back, with nothing said
+  # to the client, a Retouche owes the designer nothing.
+  test "taken on but with no exchange and no version, nothing is guaranteed" do
+    review = reviews(:in_progress)
+
+    assert_equal 0, review.guaranteed_share_cents
+    assert_equal 4900, review.refundable_cents
+  end
+
+  test "one side alone is not an exchange" do
+    review = reviews(:in_progress)
+    ReviewMessage.create!(review: review, author: users(:designer), body: "Je m'en occupe.")
+
+    assert_equal 0, review.guaranteed_share_cents
+  end
+
+  test "messages written after the return do not make an exchange" do
+    review = reviews(:returned)
+    review.update_column(:claimed_at, 3.days.ago)
+    exchange_messages(review, at: 1.hour.ago)
+
+    assert_equal 0, review.guaranteed_share_cents
+
+    exchange_messages(review, at: 2.days.ago)
+    assert_predicate review.guaranteed_share_cents, :positive?
   end
 
   test "a new designer starts the guarantee again from nothing" do

@@ -100,12 +100,19 @@ async def to_english(text: str, keep_warm: bool = False) -> str:
 # majuscules entre guillemets — donc en texte à imprimer —, ou en
 # « PUTSILHOMMES" "SUR" "LE"… (recette du 16/10/2026). Mesurée sur huit demandes
 # avec qwen2.5:7b : huit traductions justes, tailles et places comprises.
+# Les exemples à l'impératif : « passe la scène de nuit » revenait en « put the
+# night scene » (recette du 17/10/2026).
 INSTRUCTION_SYSTEM = (
-    "You translate a French request to change an image into plain English. Write it as a "
-    "short instruction in lowercase, as an English speaker would ask it. Keep the meaning "
-    "exactly and keep every word about size, place, colour and number (big, small, under, "
-    "above, left, right...); do not add anything. Only markers such as [[T1]] stand for text "
-    "to print: keep them unchanged. Do not put anything in quotes or in capitals. "
+    "You translate a French request to change an image into a clear English instruction. "
+    "Write it in the imperative, in lowercase, the way a native English speaker would ask an "
+    "illustrator, for example: 'make it night-time', 'add a black cat on the railing', "
+    "'move the text under the skateboard', 'make the colours softer', 'redraw it in a retro "
+    "style'. French verbs such as passer, mettre, rendre or faire often mean 'make' or 'turn' "
+    "here: « passe la scène de nuit » is 'make the scene night-time', not 'put the night "
+    "scene'. Keep the meaning exactly and keep every word about size, "
+    "place, colour and number (big, small, under, above, left, right...); do not add anything. "
+    "Only markers such as [[T1]] stand for text to print: keep them unchanged. Do not put "
+    "anything in quotes or in capitals. "
     + DOUBLE_MEANINGS
     + "Output only the translation."
 )

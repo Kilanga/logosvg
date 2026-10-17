@@ -60,6 +60,8 @@ def test_une_demande_de_retouche_a_sa_propre_consigne_et_perd_ses_guillemets(mon
 def test_les_deux_consignes_connaissent_les_mots_a_double_sens():
     assert "blaireau (badger" in translate.SYSTEM
     assert "blaireau (badger" in translate.INSTRUCTION_SYSTEM
+    # Recette du 17/10/2026 : une consigne à l'impératif, pas un calque du français.
+    assert "make the scene night-time" in translate.INSTRUCTION_SYSTEM
 
 
 def test_sans_traducteur_la_demande_reste_telle_quelle(monkeypatch):

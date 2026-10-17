@@ -78,6 +78,7 @@ class AdminTest < ActionDispatch::IntegrationTest
       headers: { "Content-Type" => "application/json" },
       body: { id: "pi_test_progress", latest_charge: "ch_1", amount_received: 4900 }.to_json
     )
+    exchange_messages(reviews(:in_progress))
     # 49 € − 25 € refunded = 24 € kept, less 20 % commission: 19,20 €.
     transfer = stub_request(:post, %r{/v1/transfers})
                .with { |request| Rack::Utils.parse_nested_query(request.body)["amount"] == "1920" }

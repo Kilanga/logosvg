@@ -134,6 +134,21 @@ class ClientDashboardTest < ActiveSupport::TestCase
     assert(unsent.none? { |a| (a.record.root_id || a.record.id) == root.id })
   end
 
+  # Reported on 17/10/2026 (H4): three proposals drawn and none kept, and
+  # the dashboard said nothing had been created.
+  test "a click whose proposals are still to choose is brought forward once" do
+    root = designs(:fox_screen)
+    attrs = root.attributes.except("id", "token", "created_at", "updated_at", "chosen_at", "root_id", "parent_id")
+    proposals = Array.new(3) { Design.create!(attrs.merge("batch_token" => "lot-h4", "status" => "ready")) }
+
+    waiting = actions.select { |a| a.kind == :proposals_to_choose }
+    assert_equal 1, waiting.size
+    assert_includes proposals.map(&:id), waiting.first.record.id
+
+    proposals.first.update!(chosen_at: Time.current)
+    assert_not_includes kinds, :proposals_to_choose, "a kept proposal is a design, not a choice"
+  end
+
   private
     def actions = ClientDashboard.call(client: users(:client))[:actions]
 
