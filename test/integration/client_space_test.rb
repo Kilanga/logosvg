@@ -133,6 +133,17 @@ class ClientSpaceTest < ActionDispatch::IntegrationTest
     assert_select "body", text: /#{Regexp.escape(I18n.t('client.dashboards.show.waiting_on_you'))}/i
   end
 
+  test "a failed generation is retried from the dashboard with what was asked" do
+    design = designs(:pending_design)
+    design.fail!("le service n'a pas répondu")
+    design.save!
+    sign_in_as users(:client)
+
+    get client_dashboard_path
+
+    assert_select "#waiting a[href=?]", new_design_path(depuis: design.token)
+  end
+
   test "past ten things to do, the dashboard turns pages" do
     attrs = designs(:fox_screen).attributes.except("id", "token", "created_at", "updated_at", "chosen_at",
                                                    "root_id", "parent_id")
