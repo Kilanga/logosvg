@@ -7,6 +7,7 @@ module Payments
   class HandleWebhook
     HANDLED = %w[
       checkout.session.completed
+      checkout.session.async_payment_succeeded
       customer.subscription.created
       customer.subscription.updated
       customer.subscription.deleted
@@ -43,6 +44,9 @@ module Payments
       def dispatch
         case @event[:type]
         when "checkout.session.completed" then complete_checkout
+        # A payment method that confirms later (Klarna, Bancontact, EPS,
+        # PayPal): the session completed unpaid, the money arrives now.
+        when "checkout.session.async_payment_succeeded" then complete_review_checkout
         when /\Acustomer\.subscription\./ then sync_from_event
         when "invoice.payment_failed", "invoice.paid" then sync_from_invoice
         when "account.updated" then sync_connect_account
@@ -76,6 +80,9 @@ module Payments
         review = Review.find_by(token: review_token) ||
                  Review.find_by(stripe_checkout_session_id: object[:id])
         return if review.nil?
+        # Completed but not yet paid: a method that confirms days later. The
+        # review waits for `async_payment_succeeded` before reaching anyone.
+        return if object[:payment_status].present? && object[:payment_status].to_s != "paid"
 
         review.update!(stripe_payment_intent_id: object[:payment_intent])
 

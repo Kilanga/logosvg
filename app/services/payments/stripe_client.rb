@@ -124,10 +124,11 @@ module Payments
         } ],
         customer_email: client_email,
         client_reference_id: client_reference_id,
-        # Card only — Apple Pay and Google Pay ride on it (decided on
-        # 15/10/2026): Klarna, Bancontact, EPS or PayPal confirm days later,
-        # and a review is opened to designers the moment it is paid.
-        payment_method_types: [ "card" ],
+        # No `payment_method_types`: Stripe refuses it now (17/10/2026, every
+        # Checkout for a review failed with « paiement pas joignable »). The
+        # methods offered are the Dashboard's; one that confirms days later
+        # (Klarna, Bancontact, EPS, PayPal) opens the review only once the
+        # money is there — see HandleWebhook, `checkout.session.async_*`.
         metadata: metadata,
         success_url: success_url,
         cancel_url: cancel_url

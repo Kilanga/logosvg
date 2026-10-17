@@ -562,6 +562,31 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_equal "pi_x", review.stripe_payment_intent_id
   end
 
+  # 17/10/2026: the methods offered are the Dashboard's, some of which
+  # confirm days later. A session completed unpaid reaches nobody until the
+  # money is there.
+  test "a review paid by a method that confirms later waits for the money" do
+    review = Review.create!(design: designs(:fox_screen), client: users(:client),
+                            review_level: review_levels(:check),
+                            price_cents: 1900, platform_fee_cents: 380, revisions_included: 1)
+    session = { id: "cs_z", mode: "payment", payment_intent: "pi_z",
+                metadata: { review_token: review.token, purpose: "review" } }
+
+    assert_no_enqueued_emails do
+      Payments::HandleWebhook.call(event: {
+        id: "evt_rev_3", type: "checkout.session.completed",
+        data: { object: session.merge(payment_status: "unpaid") }
+      })
+    end
+    assert_not_predicate review.reload, :queued?
+
+    Payments::HandleWebhook.call(event: {
+      id: "evt_rev_4", type: "checkout.session.async_payment_succeeded",
+      data: { object: session.merge(payment_status: "paid") }
+    })
+    assert_predicate review.reload, :queued?
+  end
+
   # An upgrade rewrites the level and the price together.
   test "a paid upgrade applies the proposal" do
     Payments::HandleWebhook.call(event: {
