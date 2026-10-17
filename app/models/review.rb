@@ -30,6 +30,10 @@ class Review < ApplicationRecord
   # Who settled a dispute, when the two sides could not.
   belongs_to :settled_by, class_name: "User", optional: true
 
+  # The designer's conversions of files to the workshop's format, made for
+  # this review (17/10/2026). Kept if the review goes: they are the designer's.
+  has_many :conversions, class_name: "Design", foreign_key: :conversion_review_id,
+                         inverse_of: :conversion_review, dependent: :nullify
   has_many :versions, -> { order(:number) }, class_name: "ReviewVersion",
            dependent: :destroy, inverse_of: :review
   has_many :messages, -> { order(:created_at) }, class_name: "ReviewMessage",

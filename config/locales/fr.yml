@@ -2316,6 +2316,11 @@ fr:
         impossible: "Ce changement n'est pas possible depuis cet état."
 
   designer:
+    review_conversions:
+      create:
+        missing_image: "Choisissez une image à convertir."
+        started: "Conversion lancée : le fichier apparaît ci-dessous dans un instant."
+        title: "Conversion pour la vérification %{reference}"
     dashboards:
       show:
         title: "Studio"
@@ -2443,6 +2448,17 @@ fr:
         message: "Message au client"
         message_placeholder: "Ce que vous avez repris, ce qu'il reste à décider…"
         send_version: "Envoyer cette version"
+        convert: "Convertir au format de l'atelier"
+        convert_hint: >-
+          Déposez votre image retravaillée (PNG ou JPEG) : elle est mise au format
+          que l'atelier imprime (%{technique}, fichier %{file_format}), sans être
+          redessinée. Téléchargez le résultat, puis envoyez-le comme version.
+        convert_file: "Image à convertir"
+        convert_remove_background: "Retirer le fond uni de l'image"
+        convert_submit: "Convertir"
+        convert_download: "Télécharger le fichier converti (%{file_format})"
+        convert_pending: "Conversion en cours : actualisez la page dans un instant."
+        convert_failed: "La conversion n'a pas abouti."
         return_title: "Renvoyer la demande"
         return_body:
           queued: >-

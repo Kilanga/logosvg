@@ -111,6 +111,48 @@
       <% end %>
     </section>
 
+    <%# The workshop's converter, here and only here (asked for on
+        17/10/2026): the designer's PNG or JPEG put in the format the client's
+        workshop prints, to deliver above. %>
+    <% if policy(@review).convert? %>
+      <section id="conversions" class="panel p-5">
+        <p class="label-rule"><%= t(".convert") %></p>
+        <p class="mt-2 text-sm text-muted">
+          <%= t(".convert_hint", technique: @review.design.technique_label,
+                file_format: @review.design.vector? ? "SVG" : "PNG") %>
+        </p>
+        <%= form_with url: designer_review_conversions_path(@review), multipart: true,
+              class: "mt-4 space-y-3" do %>
+          <%= file_field_tag :image, required: true, accept: ReferenceImage::ACCEPTED.join(","),
+                class: "block w-full text-sm", aria: { label: t(".convert_file") } %>
+          <label class="flex items-start gap-2.5 text-sm">
+            <%= check_box_tag :remove_background, "1", false, class: "mt-0.5 size-4 flex-none" %>
+            <span><%= t(".convert_remove_background") %></span>
+          </label>
+          <button type="submit" class="btn btn-secondary text-sm"><%= t(".convert_submit") %></button>
+        <% end %>
+
+        <% if @conversions.any? %>
+          <ul class="mt-4 space-y-2 text-sm">
+            <% @conversions.each do |conversion| %>
+              <li class="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-2">
+                <span class="text-muted"><%= l(conversion.created_at, format: :short) %></span>
+                <% if conversion.ready? && conversion.print_file.attached? %>
+                  <%= link_to t(".convert_download", file_format: conversion.print_file.filename.extension.upcase),
+                        designer_review_conversion_file_path(@review, design_token: conversion.token),
+                        class: "underline underline-offset-4" %>
+                <% elsif conversion.failed? %>
+                  <span class="text-warning"><%= conversion.error_message.presence || t(".convert_failed") %></span>
+                <% else %>
+                  <span><%= t(".convert_pending") %></span>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </section>
+    <% end %>
+
     <%# Handing the job back. Once per review, never after a delivery, and the
         work done is not billed. %>
     <% if @review.may_return_to_client? %>

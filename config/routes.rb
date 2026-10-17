@@ -221,6 +221,10 @@ Rails.application.routes.draw do
        as: :designer_review_version_file
   post "studio/revues/:token/prendre",   to: "designer/reviews#claim",    as: :claim_designer_review
   post "studio/revues/:token/versions",  to: "designer/reviews#deliver",  as: :deliver_designer_review
+  post "studio/revues/:token/conversions", to: "designer/review_conversions#create",
+       as: :designer_review_conversions
+  get  "studio/revues/:token/conversions/:design_token/fichier", to: "designer/review_conversions#download",
+       as: :designer_review_conversion_file
   post "studio/revues/:token/renvoyer",  to: "designer/reviews#return_to_client",
        as: :return_designer_review
   post "studio/revues/:token/messages",  to: "designer/reviews#message", as: :designer_review_messages
