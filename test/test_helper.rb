@@ -48,7 +48,14 @@ module ActiveSupport
 
     # A message from each side of a review: the work has begun, and the
     # designer's guaranteed share is owed (decided on 17/10/2026).
-    def exchange_messages(review, at: 2.days.ago)
+    # The fixtures hang several reviews on one design; a client may ask for a
+  # new one only once none is under way (one review per design, 17/10/2026).
+  def free_of_reviews(design)
+    Review.where(design: design).where.not(status: %w[ awaiting_payment accepted canceled ])
+          .update_all(status: "accepted")
+  end
+
+  def exchange_messages(review, at: 2.days.ago)
       designer = DesignerProfile.where(id: review.designer_profile_id).pick(:user_id)
       ReviewMessage.insert_all!([
         { review_id: review.id, author_id: review.client_id, body: "Bonjour", kind: "message", created_at: at, updated_at: at },
