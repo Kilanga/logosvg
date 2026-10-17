@@ -133,6 +133,23 @@ class ClientSpaceTest < ActionDispatch::IntegrationTest
     assert_select "body", text: /#{Regexp.escape(I18n.t('client.dashboards.show.waiting_on_you'))}/i
   end
 
+  test "past ten things to do, the dashboard turns pages" do
+    attrs = designs(:fox_screen).attributes.except("id", "token", "created_at", "updated_at", "chosen_at",
+                                                   "root_id", "parent_id")
+    12.times { |i| Design.create!(attrs.merge("batch_token" => "lot-p#{i}", "status" => "ready", "prompt" => "idée #{i}")) }
+    sign_in_as users(:client)
+
+    get client_dashboard_path
+
+    assert_select "#waiting > ul > li", 10
+    assert_select "a[href=?]", client_dashboard_path(page: 2, anchor: "waiting")
+
+    get client_dashboard_path(page: 2)
+
+    assert_response :success
+    assert_select "a[href=?]", client_dashboard_path(page: 1, anchor: "waiting")
+  end
+
   # --- Deleting a design ---------------------------------------------------
 
   test "a client deletes their own design, and it is only soft-deleted" do

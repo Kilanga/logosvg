@@ -149,6 +149,42 @@ class ClientDashboardTest < ActiveSupport::TestCase
     assert_not_includes kinds, :proposals_to_choose, "a kept proposal is a design, not a choice"
   end
 
+  # Decided on 17/10/2026: « PIZZA CLUB » tried three times is one line, the
+  # newest, saying how many tries it stands for.
+  test "several tries at the same idea are one line" do
+    attrs = designs(:fox_screen).attributes.except("id", "token", "created_at", "updated_at", "chosen_at",
+                                                   "root_id", "parent_id")
+    tries = Array.new(3) do |i|
+      Design.create!(attrs.merge("batch_token" => "lot-#{i}", "status" => "ready",
+                                 "prompt" => (i.even? ? "Un chat  PIZZA club" : "un chat pizza CLUB"),
+                                 "updated_at" => i.hours.from_now))
+    end
+
+    lines = actions.select { |a| a.record.is_a?(Design) && a.record.prompt.downcase.squish == "un chat pizza club" }
+
+    assert_equal 1, lines.size
+    assert_equal tries.last.id, lines.first.record.id
+    assert_equal 3, lines.first.tries
+  end
+
+  test "ten lines to a page, then more pages" do
+    attrs = designs(:fox_screen).attributes.except("id", "token", "created_at", "updated_at", "chosen_at",
+                                                   "root_id", "parent_id")
+    12.times { |i| Design.create!(attrs.merge("batch_token" => "lot-p#{i}", "status" => "ready", "prompt" => "idée #{i}")) }
+
+    first = ClientDashboard.call(client: users(:client))
+    total = first[:actions_total]
+
+    assert_operator total, :>, 10
+    assert_equal 10, first[:actions].size
+    assert_equal (total / 10.0).ceil, first[:actions_pages]
+
+    last = ClientDashboard.call(client: users(:client), page: 99)
+
+    assert_equal first[:actions_pages], last[:actions_page], "a page past the end is the last one"
+    assert_equal total - (10 * (last[:actions_page] - 1)), last[:actions].size
+  end
+
   private
     def actions = ClientDashboard.call(client: users(:client))[:actions]
 

@@ -160,10 +160,10 @@ module Payments
       request(nil) { @stripe.v1.payment_intents.retrieve(id).to_hash }
     end
 
-    def create_refund(payment_intent:, amount_cents: nil, idempotency_key:)
+    def create_refund(payment_intent:, amount_cents: nil, idempotency_key:, metadata: {})
       request(idempotency_key) do
         @stripe.v1.refunds.create(
-          { payment_intent: payment_intent, amount: amount_cents }.compact,
+          { payment_intent: payment_intent, amount: amount_cents, metadata: metadata.presence }.compact,
           { idempotency_key: idempotency_key }
         )
       end

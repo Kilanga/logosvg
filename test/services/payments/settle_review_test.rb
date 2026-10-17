@@ -35,6 +35,27 @@ module Payments
       end
     end
 
+    # Reported on 17/10/2026: a split read « accepted » in Stripe.
+    test "the transfer says how the review ended" do
+      stub_transfer
+      review = accepted_review
+      review.update_columns(settled_at: Time.current, refunded_cents: 2000, designer_payout_cents: 1000)
+      SettleReview.call(review: review)
+
+      assert_requested :post, %r{/v1/transfers} do |request|
+        Rack::Utils.parse_nested_query(request.body).dig("metadata", "outcome") == "split"
+      end
+    end
+
+    test "a review the client validated is « accepted » in Stripe" do
+      stub_transfer
+      SettleReview.call(review: accepted_review)
+
+      assert_requested :post, %r{/v1/transfers} do |request|
+        Rack::Utils.parse_nested_query(request.body).dig("metadata", "outcome") == "accepted"
+      end
+    end
+
     test "a review closed with a guaranteed share pays it out" do
       stub_transfer
       review = reviews(:delivered)
@@ -169,6 +190,15 @@ module Payments
 
       assert_equal 1900, reviews(:delivered).reload.refunded_cents,
                    "capped at what is left, not at what was asked"
+    end
+
+    test "the refund names the review, like the transfer" do
+      stub_refund
+      RefundReview.call(review: reviews(:delivered), amount_cents: 500)
+
+      assert_requested :post, %r{/v1/refunds} do |request|
+        Rack::Utils.parse_nested_query(request.body).dig("metadata", "review") == reviews(:delivered).token
+      end
     end
 
     test "a review that was never paid refunds nothing" do

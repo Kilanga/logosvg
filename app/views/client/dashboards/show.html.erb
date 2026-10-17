@@ -7,7 +7,7 @@
 
   <%# What is waiting on the client leads. Anything else on this page is
       history, and history can wait. %>
-  <section>
+  <section id="waiting">
     <h2 class="label-rule flex items-center gap-2.5 text-emulsion">
       <%= registration_mark %><%= t(".waiting_on_you") %>
     </h2>
@@ -30,6 +30,27 @@
           </li>
         <% end %>
       </ul>
+      <% if @dashboard[:actions_pages] > 1 %>
+        <% page = @dashboard[:actions_page] %>
+        <nav class="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm"
+             aria-label="<%= t(".pages_label") %>">
+          <% if page > 1 %>
+            <%= link_to t(".newer"), client_dashboard_path(page: page - 1, anchor: "waiting"),
+                  class: "underline underline-offset-4 hover:text-emulsion" %>
+          <% else %>
+            <span></span>
+          <% end %>
+          <span class="text-muted">
+            <%= t(".page_of", page: page, pages: @dashboard[:actions_pages], total: @dashboard[:actions_total]) %>
+          </span>
+          <% if page < @dashboard[:actions_pages] %>
+            <%= link_to t(".older"), client_dashboard_path(page: page + 1, anchor: "waiting"),
+                  class: "underline underline-offset-4 hover:text-emulsion" %>
+          <% else %>
+            <span></span>
+          <% end %>
+        </nav>
+      <% end %>
     <% else %>
       <div class="panel mt-4 flex items-center gap-4 p-5">
         <span class="text-success" aria-hidden="true"><%= registration_mark %></span>
@@ -59,8 +80,7 @@
         <div class="panel mt-4 p-6 text-center">
           <%# Proposals still to choose are not designs yet: said so, rather than
               « nothing created » to a client who has drawn some (H4). %>
-          <% choosing = @dashboard[:actions].any? { |action| action.kind == :proposals_to_choose } %>
-          <p class="text-muted"><%= t(choosing ? ".no_design_yet_chosen" : ".no_design") %></p>
+          <p class="text-muted"><%= t(@dashboard[:choosing] ? ".no_design_yet_chosen" : ".no_design") %></p>
           <% if Current.user.attached_to_workshop? %>
             <%= link_to t("nav.create"), new_design_path, class: "btn btn-primary mt-4" %>
           <% end %>

@@ -50,7 +50,10 @@ module Payments
         StripeClient.new.create_refund(
           payment_intent: @review.stripe_payment_intent_id,
           amount_cents: amount,
-          idempotency_key: "refund-#{@review.token}-#{@review.refunded_cents}-#{amount}"
+          idempotency_key: "refund-#{@review.token}-#{@review.refunded_cents}-#{amount}",
+          # The same reference as the transfer's, so both sides of one review
+          # are found by one search in the Stripe dashboard.
+          metadata: { review: @review.token }
         )
 
         @review.update!(refunded_cents: @review.refunded_cents + amount)

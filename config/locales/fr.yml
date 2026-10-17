@@ -1244,6 +1244,13 @@ fr:
         see_all: "Tout voir"
         no_design: "Vous n'avez pas encore créé de design."
         no_design_yet_chosen: "Vos designs apparaîtront ici dès que vous aurez choisi une proposition."
+        tries:
+          one: "(%{count} essai pour cette idée)"
+          other: "(%{count} essais pour cette idée)"
+        pages_label: "Pages de « Ce qui vous attend »"
+        newer: "← Plus récentes"
+        older: "Plus anciennes →"
+        page_of: "Page %{page} sur %{pages} · %{total} au total"
         no_request: "Aucune demande d'impression pour l'instant."
       workshop_panel:
         title: "Votre atelier"

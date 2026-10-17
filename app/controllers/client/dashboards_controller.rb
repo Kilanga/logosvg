@@ -8,7 +8,7 @@ module Client
     skip_after_action :verify_policy_scoped
 
     def show
-      @dashboard = ClientDashboard.call(client: Current.user)
+      @dashboard = ClientDashboard.call(client: Current.user, page: params[:page] || 1)
       # Whose client this is, and any request still waiting: an account with no
       # shop yet can do nothing else, so this leads the page.
       @workshop = Printer.find_by(id: Current.user.active_workshop_id) if Current.user.active_workshop_id

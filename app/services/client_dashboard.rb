@@ -8,22 +8,49 @@ class ClientDashboard
   # One pending action, whatever kind it is. `kind` names the sentence to show;
   # where acting on it happens is the view's business, not this object's — a
   # service that builds URLs needs a request to exist before it can be called.
-  Action = Data.define(:kind, :record, :on)
+  #
+  # `tries`: how many attempts at the same idea this one line stands for.
+  Action = Data.define(:kind, :record, :on, :tries) do
+    def initialize(kind:, record:, on:, tries: 1) = super
+  end
 
   RECENT_LIMIT = 6
+  # Decided on 17/10/2026: ten lines, then pages.
+  ACTIONS_PER_PAGE = 10
 
   def self.call(...) = new(...).call
 
-  def initialize(client:)
+  def initialize(client:, page: 1)
     @client = client
+    @page = page.to_i
   end
 
-  def call = { actions: actions, designs: recent_designs, print_requests: recent_print_requests }
+  def call
+    all = actions
+    pages = [ (all.size.to_f / ACTIONS_PER_PAGE).ceil, 1 ].max
+    page = @page.clamp(1, pages)
+    { actions: all.slice((page - 1) * ACTIONS_PER_PAGE, ACTIONS_PER_PAGE) || [],
+      actions_page: page, actions_pages: pages, actions_total: all.size,
+      choosing: all.any? { |action| action.kind == :proposals_to_choose },
+      designs: recent_designs, print_requests: recent_print_requests }
+  end
 
   private
     def actions
-      (failed_designs + proposals_to_choose + unsent_designs + silent_print_requests +
+      (one_per_idea(failed_designs + proposals_to_choose + unsent_designs) + silent_print_requests +
        delivered_reviews + review_proposals).sort_by(&:on).reverse
+    end
+
+    # Several tries at the same idea are one line, the newest (decided on
+    # 17/10/2026: a client who tried « PIZZA CLUB » three times saw three
+    # « Propositions à choisir » and a « Design prêt, jamais envoyé »). The
+    # idea is the description, without case or extra spaces; what the newest
+    # try asks of the client is what the line says.
+    def one_per_idea(design_actions)
+      design_actions.group_by { |action| action.record.prompt.to_s.downcase.squish }.map do |_, tries|
+        newest = tries.max_by(&:on)
+        newest.with(tries: tries.size)
+      end
     end
 
     # A generation that failed cost nothing: trying again is one click. A
