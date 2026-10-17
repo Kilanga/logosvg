@@ -14,6 +14,9 @@ class Design < ApplicationRecord
   belongs_to :parent, class_name: "Design", optional: true
   belongs_to :root, class_name: "Design", optional: true
   belongs_to :source_review, class_name: "Review", optional: true
+  # A designer's conversion of a file to the workshop's format, made from inside
+  # a client's review (17/10/2026). Owned by the designer, never by the client.
+  belongs_to :conversion_review, class_name: "Review", optional: true
 
   has_many :children, class_name: "Design", foreign_key: :parent_id,
            dependent: :nullify, inverse_of: :parent

@@ -56,6 +56,11 @@ class ReviewPolicy < ApplicationPolicy
   # client only ever sees watermarked previews.
   def download_files? = designer? && record.claimed_at.present?
 
+  # The workshop's converter, for the designer working on this review and
+  # only here (asked for on 17/10/2026): their PNG or JPEG put in the format
+  # the client's workshop prints, while a version can still be delivered.
+  def convert? = designer? && record.may_deliver?
+
   def return_to_client? = designer? && record.may_return_to_client?
 
   # A dispute answered by one more go, at no cost to the client. Offered once.
