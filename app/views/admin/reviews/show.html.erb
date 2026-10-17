@@ -97,7 +97,9 @@
         <% if @review.stripe_transfer_id %>
           <div class="flex justify-between gap-4">
             <dt class="text-muted"><%= t(".transferred") %></dt>
-            <dd class="text-success"><%= t(".yes") %></dd>
+            <%# The amount, not a « Yes » (seen on 17/10/2026: the key was missing
+                and Rails printed it in English). %>
+            <dd class="font-medium text-success"><%= money(@review.payout_cents) %></dd>
           </div>
         <% end %>
       </dl>

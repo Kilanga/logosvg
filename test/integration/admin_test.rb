@@ -301,4 +301,18 @@ class AdminTest < ActionDispatch::IntegrationTest
   ensure
     ENV.delete("GENERATOR_URL")
   end
+
+  # Seen on 17/10/2026: « Versé au graphiste : Yes » — a `yes:` key is a
+  # boolean in YAML, so the translation was never found.
+  test "a settled review shows the amount paid to the designer" do
+    review = reviews(:in_progress)
+    review.update_columns(status: "canceled", stripe_transfer_id: "tr_test", designer_payout_cents: 1249)
+    sign_in_as users(:admin)
+
+    get admin_review_path(review)
+
+    assert_select "dd", text: /12,49/
+    assert_no_match(/>\s*Yes\s*</, response.body)
+  end
+
 end
