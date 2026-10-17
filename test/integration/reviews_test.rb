@@ -321,6 +321,38 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     assert_predicate reviews(:returned).reload, :canceled?
   end
 
+  # H9, recette du 17/10/2026: a review left unpaid had no way forward.
+  test "a review not yet paid offers to pay, and the button opens Checkout" do
+    ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
+    review = Review.create!(design: designs(:fox_screen), client: users(:client),
+                            review_level: review_levels(:check),
+                            price_cents: 1900, platform_fee_cents: 380, revisions_included: 1)
+    stub_request(:post, %r{/v1/checkout/sessions})
+      .to_return(headers: { "Content-Type" => "application/json" },
+                 body: { id: "cs_retry", url: "https://checkout.stripe.com/c/pay/cs_retry" }.to_json)
+    sign_in_as users(:client)
+
+    get review_path(review)
+    assert_select "#review_payment form[action=?][data-turbo=false]", pay_review_path(review)
+
+    post pay_review_path(review)
+    assert_redirected_to "https://checkout.stripe.com/c/pay/cs_retry"
+    assert_equal "cs_retry", review.reload.stripe_checkout_session_id
+  ensure
+    ENV.delete("STRIPE_SECRET_KEY")
+  end
+
+  test "a paid review offers no payment" do
+    sign_in_as users(:client)
+
+    get review_path(reviews(:queued))
+    assert_select "#review_payment", count: 0
+
+    post pay_review_path(reviews(:queued))
+    assert_response :redirect
+    assert_not_equal "https://checkout.stripe.com", URI(response.location).then { |u| "#{u.scheme}://#{u.host}" }
+  end
+
   # Reported on 16/10/2026: the refund was not checked.
   test "declining a proposal whose refund fails keeps it open, and says so" do
     ENV["STRIPE_SECRET_KEY"] = "sk_test_not_a_real_key_placeholder"
@@ -460,6 +492,8 @@ class ReviewsTest < ActionDispatch::IntegrationTest
     mail = ReviewMailer.notify_designers(reviews(:queued))
 
     assert_equal [ users(:designer_maya).email_address ], [ mail.to, mail.bcc ].flatten.compact
+    # H10: a notice about one file, not an offer.
+    assert_includes mail.subject, reviews(:queued).token.first(8).upcase
   ensure
     settings[:notify_designers_max] = previous
   end

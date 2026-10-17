@@ -104,6 +104,7 @@ Rails.application.routes.draw do
   post "verifications/:token/proposition/graphiste", to: "client/reviews#pick_designer",
        as: :pick_review_designer
   post "verifications/:token/relancer",  to: "client/reviews#reopen", as: :reopen_review
+  post "verifications/:token/payer",     to: "client/reviews#pay",    as: :pay_review
   post "verifications/:token/note",      to: "client/reviews#rate",   as: :rate_review
   post "verifications/:token/messages",  to: "client/reviews#message", as: :review_messages
   # Litiges (08/10/2026) : le client signale, accepte la correction offerte

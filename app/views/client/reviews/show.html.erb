@@ -93,6 +93,16 @@
       </section>
     <% end %>
 
+    <%# Not paid yet: Checkout failed, or the client left it (H9). %>
+    <% if policy(@review).pay? %>
+      <section id="review_payment" class="panel border-l-2 border-l-warning p-6">
+        <p class="label-rule text-warning"><%= t(".awaiting_payment") %></p>
+        <p class="mt-2 text-muted"><%= t(".awaiting_payment_body") %></p>
+        <%= button_to t(".pay", amount: money(@review.price_cents)), pay_review_path(@review),
+              class: "btn btn-primary mt-4 text-sm", form: { data: { turbo: false } } %>
+      </section>
+    <% end %>
+
     <%# The chosen designer went quiet. Three ways out, and the client picks. %>
     <% if @review.chosen_designer_silent? %>
       <section class="panel border-l-2 border-l-warning p-6">
