@@ -314,5 +314,4 @@ class AdminTest < ActionDispatch::IntegrationTest
     assert_select "dd", text: /12,49/
     assert_no_match(/>\s*Yes\s*</, response.body)
   end
-
 end
