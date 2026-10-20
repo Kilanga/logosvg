@@ -1,13 +1,14 @@
 module PrintRequestsHelper
   # The statuses a request walks through, in order. Drawn as a rail rather than
   # written as a word: a client wants to know where the job is, not to read a
-  # noun. Cancelled and expired are not on it — they are ends, not steps.
+  # noun. Cancelled, expired and declined are not on it — they are ends, not
+  # steps.
   TIMELINE = %w[ sent acknowledged quoted in_production completed ].freeze
 
   def print_request_status_pill(print_request)
     style = case print_request.status
     when "completed" then "pill-success"
-    when "canceled", "expired" then "pill-warning"
+    when "canceled", "expired", "declined" then "pill-warning"
     else "border border-line text-muted"
     end
 

@@ -10,15 +10,16 @@ class SubscriptionMailer < ApplicationMailer
          subject: t("mailers.subscription.payment_failed.subject")
   end
 
-  # The workshop's clients have used the month's generations of its plan. Said
-  # once a month, with the way out: Atelier+ has no ceiling.
-  def generation_quota_reached(printer)
+  # The workshop has used the month's print requests of its plan. Said once a
+  # month, with the way out: Atelier+ has no ceiling. Nothing is blocked —
+  # the email says so, lest the workshop think its clients are turned away.
+  def request_quota_reached(printer)
     # Reloaded with what the email reads: a mailer job gets a bare record.
     @printer = Printer.includes(:user, :subscription).find(printer.id)
-    @limit = PrinterGenerationQuota.for(@printer).limit
+    @limit = PrinterRequestQuota.for(@printer).limit
     @reset_on = Time.zone.today.next_month.beginning_of_month
 
     mail to: @printer.user.email_address,
-         subject: t("mailers.subscription.generation_quota_reached.subject", count: @limit)
+         subject: t("mailers.subscription.request_quota_reached.subject", count: @limit)
   end
 end

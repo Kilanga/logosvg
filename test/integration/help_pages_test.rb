@@ -30,7 +30,7 @@ class HelpPagesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "ol li h3", count: 6
     assert_select "details summary", minimum: 10
-    assert_match "100 générations par mois", response.body
+    assert_match "25 dossiers pris en charge par mois", response.body
     assert_select "a[href=?]", workshop_link_share_path
     assert_no_match(/%\{/, response.body)
   end

@@ -230,6 +230,65 @@ class PrintRequestsTest < ActionDispatch::IntegrationTest
     assert_predicate print_requests(:waiting).reload, :sent?
   end
 
+  # Decided on 20/10/2026: the other answer to a request just received.
+  test "a shop declines a request, the client is told, and it costs nothing within the share" do
+    sign_in_as users(:printer)
+    request = print_requests(:waiting)
+
+    get workshop_print_request_path(request)
+    assert_select "#decline button", text: I18n.t("workshop.print_requests.show.event.decline")
+
+    assert_emails 1 do
+      patch workshop_print_request_path(request), params: { event: "decline" }
+      perform_enqueued_jobs
+    end
+
+    assert_predicate request.reload, :declined?
+    assert_not_nil request.declined_at
+    assert_includes ActionMailer::Base.deliveries.last.text_part.body.to_s,
+                    I18n.t("print_requests.status_body.declined")
+  end
+
+  test "a request already taken on offers no way to decline it" do
+    sign_in_as users(:printer)
+    request = print_requests(:waiting)
+    request.acknowledge!
+    request.save!
+
+    get workshop_print_request_path(request)
+    assert_select "#decline", count: 0
+
+    patch workshop_print_request_path(request), params: { event: "decline" }
+    assert_predicate request.reload, :acknowledged?
+  end
+
+  test "the workshop's list has a tab for the requests it did not keep" do
+    sign_in_as users(:printer)
+    print_requests(:waiting).tap(&:decline!).save!
+
+    get workshop_print_requests_path(statut: "declined")
+
+    assert_response :success
+    assert_select "body", text: /#{Regexp.escape(print_requests(:waiting).token.first(8).upcase)}/
+  end
+
+  test "the confirmation that uses up the month's allowance tells the shop" do
+    sign_in_as users(:printer)
+    rennes = printers(:rennes)
+    filler = Array.new(PrinterRequestQuota.for(rennes).remaining - 1) do
+      copy = print_requests(:waiting).dup
+      copy.assign_attributes(status: "acknowledged", sent_at: Time.current,
+                             token: PrintRequest.generate_unique_secure_token,
+                             confirmation_token: PrintRequest.generate_unique_secure_token)
+      copy.save!(validate: false)
+    end
+    assert filler.all?
+
+    assert_enqueued_email_with SubscriptionMailer, :request_quota_reached, args: [ rennes ] do
+      patch workshop_print_request_path(print_requests(:waiting)), params: { event: "acknowledge" }
+    end
+  end
+
   # `cancel` is the client's; a workshop must not reach it through this action.
   test "a shop cannot cancel on the client's behalf" do
     sign_in_as users(:printer)

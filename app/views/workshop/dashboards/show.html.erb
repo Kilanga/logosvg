@@ -66,11 +66,11 @@
             <dt class="label-rule"><%= t(".garments") %></dt>
             <dd class="mt-1 font-display text-3xl font-bold"><%= @month[:garments] %></dd>
           </div>
-          <% if @generation_quota %>
-            <div id="generations_this_month" class="panel p-4">
-              <dt class="label-rule"><%= t(".generations") %></dt>
-              <dd class="mt-1 font-display text-3xl font-bold <%= 'text-warning' if @generation_quota.exceeded? %>">
-                <%= @generation_quota.used %><% if @generation_quota.limited? %><span class="text-lg text-muted"> / <%= @generation_quota.limit %></span><% end %>
+          <% if @request_quota %>
+            <div id="allowance_this_month" class="panel p-4">
+              <dt class="label-rule"><%= t(".allowance") %></dt>
+              <dd class="mt-1 font-display text-3xl font-bold <%= 'text-warning' if @request_quota.reached? %>">
+                <%= @request_quota.used %><% if @request_quota.limited? %><span class="text-lg text-muted"> / <%= @request_quota.limit %></span><% end %>
               </dd>
             </div>
           <% end %>

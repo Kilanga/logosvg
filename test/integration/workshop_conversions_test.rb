@@ -20,7 +20,7 @@ class WorkshopConversionsTest < ActionDispatch::IntegrationTest
     sign_in_as users(:printer)
 
     assert_difference "Design.count", 1 do
-      assert_no_difference -> { PrinterGenerationQuota.new(printers(:rennes)).used } do
+      assert_no_difference -> { PrinterRequestQuota.new(printers(:rennes)).used } do
         assert_enqueued_with(job: GenerateDesignJob) do
           post workshop_conversions_path, params: { design: valid_conversion }
         end

@@ -89,6 +89,23 @@ class PrintRequestsTest < ApplicationSystemTestCase
     assert_predicate print_requests(:waiting).reload, :quoted?
   end
 
+  # Decided on 20/10/2026: the workshop's other answer to a request it has just
+  # received, which does not count against its month within the share.
+  test "a workshop sets a request aside, and finds it under its own tab" do
+    sign_in users(:printer)
+    visit workshop_print_request_path(print_requests(:waiting))
+    assert_design_preview_loaded
+
+    accept_confirm { click_on I18n.t("workshop.print_requests.show.event.decline") }
+
+    assert_text displayed("enums.print_request.status.declined")
+    assert_no_button I18n.t("workshop.print_requests.show.event.acknowledge")
+    assert_predicate print_requests(:waiting).reload, :declined?
+
+    visit workshop_print_requests_path(statut: "declined")
+    assert_text shown(print_requests(:waiting).token.first(8).upcase)
+  end
+
   # The empty state is drawn, not left to the browser.
   test "a workshop with no request sees a drawn empty state" do
     sign_in users(:printer_lyon)

@@ -88,7 +88,7 @@ Un client appartient à un atelier, et seulement avec son accord — voir « Rat
 
 ### Rattachement d'un client à un atelier (décidé le 09/10/2026)
 
-**Pourquoi.** L'offre Référencement compte 100 générations par mois pour les clients d'un atelier. Si n'importe qui pouvait s'en déclarer client, un inconnu épuiserait ce forfait sans que l'atelier le sache. Un compte client n'existe donc qu'à travers un atelier, et seulement avec son accord. L'accueil `/` s'adresse aux ateliers ; la page d'accueil d'un client est celle de son atelier.
+**Pourquoi.** Les générations d'un client tournent sur la machine de la plateforme au nom de son atelier. Si n'importe qui pouvait s'en déclarer client, un inconnu générerait au nom d'un atelier sans que celui-ci le sache. (Le forfait mensuel de l'atelier se compte en dossiers depuis le 20/10/2026, voir « Forfait en dossiers ».) Un compte client n'existe donc qu'à travers un atelier, et seulement avec son accord. L'accueil `/` s'adresse aux ateliers ; la page d'accueil d'un client est celle de son atelier.
 
 **Deux portes.**
 
@@ -119,7 +119,7 @@ Ici comme ailleurs, « le lien de l'atelier » vaut aussi pour son QR code : c'e
 - Le rôle client n'est proposé à l'inscription que si la visite connaît un atelier (code, page de l'atelier, ou cookie accepté) ; sans atelier, le formulaire renvoie vers l'annuaire. Un rôle inconnu, `admin` compris, est refusé plutôt que converti.
 - L'écran de création, le dépôt d'un visuel et `POST /designs` exigent un atelier référencé ; sinon retour au tableau de bord, qui dit où en est la demande.
 - Une reprise (variantes, retouche) n'est possible que sur un design fait pour l'atelier **actuel** du client : un atelier quitté ne paie plus les reprises de ses anciens clients.
-- Les générations comptent toujours sur l'atelier porté par le design, lui-même pris sur le compte au moment de la création.
+- Un design porte l'atelier pris sur le compte au moment de la création ; c'est lui qui décide des reprises. Une demande d'impression, elle, compte dans le forfait de l'atelier qui la reçoit, s'il la prend en charge.
 
 **Mise en place.** Tous les comptes clients créés avant cette décision étaient des comptes de test : `bin/rails clients:purge_unattached` les liste, `CONFIRM=1` les supprime avec leurs designs, demandes et vérifications. Un client en attente de réponse est conservé. La tâche est à lancer une fois, pas à planifier : le jour où de vrais clients existent, un compte sans atelier est un client qu'un atelier a laissé partir.
 
@@ -266,7 +266,7 @@ flowchart LR
 | `ReviewVersion` | review\_id, number, message, checks (jsonb), inks\_count ; pièce jointe file | Numérotation continue ; la version déposée respecte le `print_format` du design (un graphiste ne renvoie pas un PNG là où l'atelier attend un SVG) ; un SVG est contrôlé avant enregistrement, un PNG est vérifié en type, en dimensions et en résolution ; une version faite à partir de l'aperçu filigrané est signalée (`WatermarkCheck`, comparaison avec l'aperçu avec et sans filigrane, là où le filigrane est dessiné), sans être refusée (16/10/2026) |
 | `ReviewMessage` | review\_id, author\_id, body, read\_at | Visible par le client, le graphiste et l'admin |
 | `Rating` | review\_id, score (1 à 5), comment | Un seul par revue, après validation |
-| `PrintRequest` | design\_id, review\_version\_id (facultatif), client\_id, printer\_id, status, textile\_source (printer, client), textile\_model, textile\_color, placements (tableau), delivery\_method (pickup, shipping ; nil si l'atelier n'en déclare aucun), express (booléen), print\_width\_cm, sizes (jsonb, taille vers quantité), total\_qty, desired\_on, message, contact\_name, contact\_email, contact\_phone, contact\_city, consent\_text\_version, consented\_at, confirmation\_token, sent\_at, acknowledged\_at, quoted\_at, reminded\_at ; pièces jointes final\_file et preview\_png | Copie des fichiers à l'envoi ; la technique du design est reprise dans l'email et la fiche technique ; `total_qty` calculé ; textile, emplacements, retrait ou livraison et express limités à ce que l'atelier propose, vérifié côté serveur (16/10/2026) : une seule façon déclarée est retenue sans question ; la livraison ne demande pas d'adresse (l'atelier contacte le client) et affiche « frais d'envoi en supplément » avec le texte de l'atelier |
+| `PrintRequest` | design\_id, review\_version\_id (facultatif), client\_id, printer\_id, status, textile\_source (printer, client), textile\_model, textile\_color, placements (tableau), delivery\_method (pickup, shipping ; nil si l'atelier n'en déclare aucun), express (booléen), print\_width\_cm, sizes (jsonb, taille vers quantité), total\_qty, desired\_on, message, contact\_name, contact\_email, contact\_phone, contact\_city, consent\_text\_version, consented\_at, confirmation\_token, sent\_at, acknowledged\_at, quoted\_at, declined\_at, reminded\_at ; pièces jointes final\_file et preview\_png | Copie des fichiers à l'envoi ; la technique du design est reprise dans l'email et la fiche technique ; `total_qty` calculé ; textile, emplacements, retrait ou livraison et express limités à ce que l'atelier propose, vérifié côté serveur (16/10/2026) : une seule façon déclarée est retenue sans question ; la livraison ne demande pas d'adresse (l'atelier contacte le client) et affiche « frais d'envoi en supplément » avec le texte de l'atelier |
 
 **Quota de génération.** Table `generation_counters` (user\_id, day, count), index unique sur user\_id et day. Une génération échouée ne consomme pas de quota.
 
@@ -298,6 +298,7 @@ stateDiagram-v2
   sent --> canceled: annulation client
   acknowledged --> canceled: annulation client
   sent --> expired: sans réponse sous 7 jours
+  sent --> declined: l'atelier ne la retient pas
 ```
 
 - À l'envoi, l'atelier reçoit l'email avec les fichiers joints et un lien portant `confirmation_token`.
@@ -305,6 +306,18 @@ stateDiagram-v2
 - Le lien ouvre une page de confirmation ; seul le bouton de cette page (POST) change le statut, car les antivirus de messagerie ouvrent les liens automatiquement.
 - Sans confirmation après 48 h : relance à l'atelier. Après 7 jours : statut `expired`, et le client est invité à choisir un autre atelier.
 - L'atelier met aussi à jour les statuts depuis `/atelier/demandes`.
+- **Ne pas retenir** (décidé le 20/10/2026) : tant qu'il ne l'a pas confirmée, l'atelier peut écarter une demande sans suite possible. Le client est prévenu et invité à choisir un autre atelier, comme à l'expiration. Le bouton est sur la page de la demande, à côté de « Confirmer la réception », avec le nombre de refus gratuits restant dans le mois.
+
+#### Forfait en dossiers (décidé le 20/10/2026)
+
+Le forfait mensuel d'un atelier se compte en **dossiers**, plus en générations : l'atelier paie pour des demandes reçues, pas pour les essais d'un client indécis. `PrinterRequestQuota` en fait le compte.
+
+- Un dossier est une demande que l'atelier **prend en charge** (`acknowledged` et au-delà) ou qu'il **laisse expirer** sans réponse ; sinon, ignorer toutes ses demandes ne coûterait rien.
+- Ne comptent pas : une demande **annulée** par le client ; une demande **non retenue** par l'atelier, dans la limite de `declined_free_share` (30 %) des demandes du mois hors annulations. Au-delà, un refus compte comme un dossier.
+- Une demande appartient au mois de son envoi (`sent_at`), quel que soit le jour de la réponse.
+- Référencement : `monthly_print_requests.listing` (25) ; Atelier+ : illimité.
+- **Atteindre le plafond ne bloque rien.** Les clients continuent de créer, les demandes continuent d'arriver. L'atelier reçoit un email une fois par mois (`request_quota_notified_on`) qui le dit et propose Atelier+. Couper l'envoi en cours de mois ferait perdre un client à l'atelier.
+- Les générations ne sont plus limitées par l'atelier ; seul le quota par client (`generation.quota_per_day`) et le budget de reprises les bornent.
 
 ### Revue graphiste
 
@@ -393,7 +406,7 @@ Un design `ready` ne se modifie pas : le client le reprend, et chaque reprise cr
 | **Variantes** | Même description, **trois** autres tirages, chacun étant un design complet (SVG et PNG) | Un bouton « proposez-moi d'autres versions », puis les trois propositions côte à côte |
 
 - **Budget : trois reprises par design**, variantes et retouches confondues. Une reprise est une **action du client**, pas une image : le clic « proposez-moi d'autres versions » produit trois tirages et ne coûte qu'une reprise. Compter les images consommait tout le budget d'un seul geste, et rendait le chat de retouche inaccessible à qui demandait des variantes en premier. Le budget est compté par le microservice sur la lignée, et jamais recalculé par Rails : `refinements_left`, renvoyé par chaque appel, fait foi et s'affiche en permanence sous l'aperçu.
-- Une reprise ne consomme pas le quota journalier de génération (décidé le 16/10/2026) : les trois reprises du design la bornent déjà. Elle compte toujours dans le forfait mensuel de l'atelier. La charge de la machine de génération se suit sur le tableau de bord de l'administration.
+- Une reprise ne consomme pas le quota journalier de génération (décidé le 16/10/2026) : les trois reprises du design la bornent déjà. Elle ne compte pas dans le forfait de l'atelier, qui se compte en dossiers depuis le 20/10/2026. La charge de la machine de génération se suit sur le tableau de bord de l'administration.
 - Budget épuisé : le service répond 429 avec `reason: "refine_budget"`. L'écran remplace alors les deux actions par l'entrée dans le parcours de **vérification par un graphiste** : c'est la suite naturelle, et elle est payante.
 - Les variantes sont produites en pleine taille, pas en vignettes : avec un modèle de diffusion, un même `seed` à une autre résolution ne redonne pas la même image, donc une vignette choisie puis re-rendue dériverait sous les yeux du client.
 - La lignée est navigable : le client revoit chaque version et repart de celle qu'il veut. Le graphiste, lui, voit toute la lignée.
@@ -534,6 +547,7 @@ Stripe gère deux flux : les abonnements des imprimeurs et le paiement des revue
 | Aucune confirmation après 48 h | Atelier | Relance |
 | Demande expirée après 7 jours | Client | Proposition de choisir un autre atelier |
 | Statut de demande changé | Client | Nouveau statut |
+| Dossiers du mois utilisés | Imprimeur | Une fois par mois ; rien n'est bloqué, proposition d'Atelier+ |
 | Revue payée | Graphiste choisi ou graphistes disponibles | Nouvelle revue à prendre |
 | Graphiste choisi silencieux après 24 h | Client | Choix : premier disponible, autre graphiste, remboursement |
 | Version livrée | Client | Lien vers la version à valider |
@@ -622,7 +636,7 @@ Onze étapes, chacune livrable et testée seule ; Claude Code s'arrête après c
 Ces points bloquent la mise en production, pas la construction : Claude Code utilise une valeur de configuration en attendant.
 
 - [x] Nom de la plateforme et nom de domaine (décidé le 21/09/2026 : **Prêt-à-tirer**, domaine `pretatirer.fr`. Le nom joue sur « prêt-à-porter » et sur « tirer » — lancer une série. Il évite « IA », qui date vite et désigne le moyen plutôt que la promesse, et « t-shirt », que le catalogue dépasse déjà avec la broderie, le flex et la sublimation. Réserve : le nom est descriptif, donc faible comme marque déposée)
-- [x] Prix des deux abonnements et période d'essai (décidé le 06/10/2026 : **Référencement 29 € HT/mois avec 100 générations par mois pour les clients de l'atelier, Atelier+ 59 € HT/mois Référencement compris et générations illimitées, 30 jours d'essai**. Le quota par client, 5 par jour, s'applique en plus. Prix affichés HT aux ateliers, TTC aux clients ; la TVA s'ajoute par un taux Stripe, `STRIPE_TAX_RATE`)
+- [x] Prix des deux abonnements et période d'essai (décidé le 06/10/2026 : **Référencement 29 € HT/mois avec 100 générations par mois pour les clients de l'atelier, Atelier+ 59 € HT/mois Référencement compris et générations illimitées, 30 jours d'essai**. Le quota par client, 5 par jour, s'applique en plus. **Révisé le 20/10/2026** : prix inchangés, mais le forfait se compte en **dossiers** — 25 par mois au Référencement, illimités en Atelier+ — et ne bloque plus rien une fois atteint. Voir « Forfait en dossiers ». Prix affichés HT aux ateliers, TTC aux clients ; la TVA s'ajoute par un taux Stripe, `STRIPE_TAX_RATE`)
 - [x] Prix des niveaux de revue (décidé le 06/10/2026 : fixés par la plateforme — **Retouche 49 € TTC**. La **création sur mesure** n'a ni prix ni paiement ici : c'est une mise en relation. Le graphiste qui la prend reçoit les coordonnées du client, ils chiffrent et règlent entre eux, sans commission ; le site garde le suivi, et un fichier déposé devient un design envoyable à l'atelier)
 - [x] Rendu du graphiste vers l'atelier (décidé le 06/10/2026 : la dernière version acceptée devient un design `reviewed` de la même lignée, que le client envoie à son atelier comme les autres — `CreateReviewedDesign`)
 - [x] Taux de commission sur les revues (décidé le 06/10/2026 : **15 %**, sur la Retouche ; rien sur le sur-mesure)

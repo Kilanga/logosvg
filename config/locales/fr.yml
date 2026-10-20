@@ -492,6 +492,7 @@ fr:
         completed: "Terminée"
         canceled: "Annulée"
         expired: "Sans réponse"
+        declined: "Non retenue"
       textile_source:
         printer: "L'atelier fournit le textile"
         client: "Je fournis le textile"
@@ -709,6 +710,7 @@ fr:
       completed: "Votre commande est terminée."
       canceled: "Vous avez annulé cette demande. L'atelier ne la traitera pas."
       expired: "L'atelier n'a pas répondu dans les délais. Votre design est intact : choisissez un autre atelier."
+      declined: "L'atelier ne donnera pas suite à cette demande. Votre design est intact : vous pouvez l'envoyer à un autre atelier."
     # Read by the workshop, on the confirmation page its email leads to
     # (reported on 14/10/2026: it said « Vous avez annulé » to the workshop).
     workshop_status_body:
@@ -719,6 +721,7 @@ fr:
       completed: "Cette commande est terminée."
       canceled: "Le client a annulé cette demande : il n'y a plus rien à confirmer ni à préparer."
       expired: "Cette demande a expiré faute de réponse dans les délais : le client a été invité à choisir un autre atelier."
+      declined: "Vous n'avez pas retenu cette demande : le client a été invité à choisir un autre atelier."
 
   sessions:
     new:
@@ -839,8 +842,8 @@ fr:
         heading: "Une demande attend votre réponse"
         body: >-
           %{client} (%{email}) souhaite créer ses visuels avec %{name}. Tant
-          que vous n'avez pas accepté, son compte ne peut rien générer, et
-          rien n'est décompté de votre forfait. Répondez depuis votre espace
+          que vous n'avez pas accepté, son compte ne peut rien générer.
+          Répondez depuis votre espace
           atelier.
         action: "Voir la demande"
       accepted:
@@ -1191,18 +1194,18 @@ fr:
         requests_kept: >-
           Vos demandes d'impression en cours ne sont pas affectées : vous
           gardez l'accès à votre espace et aux fichiers déjà reçus.
-      generation_quota_reached:
-        subject: "Vos clients ont utilisé les %{count} générations du mois"
+      request_quota_reached:
+        subject: "Vous avez utilisé les %{count} dossiers du mois"
         eyebrow: "Abonnement"
-        heading: "Les générations du mois sont épuisées"
+        heading: "Les dossiers du mois sont utilisés"
         body: >-
-          Les clients arrivés par le lien de %{printer} ont utilisé les
-          %{count} générations comprises dans le Référencement ce mois-ci.
-          Jusqu'au %{date}, ils voient un message qui leur demande de revenir
-          plus tard.
+          %{printer} a utilisé les %{count} dossiers compris dans le
+          Référencement ce mois-ci. Rien n'est bloqué : vos clients continuent
+          de créer et leurs demandes continuent de vous arriver. Le compteur
+          repart le %{date}.
         upgrade: >-
-          Atelier+ n'a pas de plafond de générations, et ajoute la mise en
-          avant et les statistiques de votre lien.
+          Atelier+ n'a pas de plafond de dossiers, et ajoute la mise en avant
+          et les statistiques de votre lien.
         action: "Voir les formules"
 
   # Un seul bloc `client:` — deux clés de même niveau en YAML, et la seconde
@@ -1685,10 +1688,6 @@ fr:
           too_large: "L'image de départ dépasse 10 Mo."
           wrong_type: "L'image de départ doit être un PNG, un JPEG ou un WebP."
           unreadable: "L'image de départ est illisible."
-      workshop_quota_reached: >-
-        Ce mois-ci, %{printer} a utilisé toutes les générations de sa formule.
-        L'atelier en est prévenu ; vous pourrez créer votre design dès le mois
-        prochain, ou le lui demander directement.
       workshop_required: >-
         Votre compte n'est rattaché à aucun atelier pour le moment : vous
         pourrez créer dès qu'un atelier vous aura accepté.
@@ -1849,14 +1848,13 @@ fr:
         empty: "Aucune conversion pour l'instant"
         empty_body: >-
           Déposez un JPEG ou un PNG : il est préparé en quelques secondes pour
-          l'une de vos techniques, sans compter dans vos générations du mois.
+          l'une de vos techniques, gratuitement.
       new:
         title: "Convertir une image"
         heading: "Convertir une image"
         intro: >-
           Rien n'est redessiné : l'image est préparée au format de la technique
-          choisie, comme celles que vos clients déposent. Gratuit, et sans
-          compter dans vos générations du mois.
+          choisie, comme celles que vos clients déposent. Gratuit.
         no_techniques: >-
           Votre fiche ne déclare encore aucune technique : c'est elle qui décide
           du format préparé.
@@ -1871,7 +1869,7 @@ fr:
         name: "Un nom pour la retrouver (facultatif)"
         name_placeholder: "Logo du club de foot, commande Martin…"
         submit: "Lancer la conversion"
-        free: "Gratuit : la conversion ne compte pas dans vos générations du mois."
+        free: "Gratuit : la conversion ne compte pas dans vos dossiers du mois."
       create:
         missing_image: "Ajoutez l'image à convertir."
         unknown_technique: "Choisissez l'une des techniques de votre fiche."
@@ -1921,7 +1919,7 @@ fr:
         this_month: "Ce mois-ci"
         to_confirm: "À confirmer"
         garments: "Pièces"
-        generations: "Générations"
+        allowance: "Dossiers du forfait"
         no_request: "Aucune demande reçue pour l'instant."
         your_link: "Votre lien client"
         share_link: "Partager mon lien"
@@ -1946,9 +1944,9 @@ fr:
           Sans abonnement actif, votre atelier n'apparaît ni dans l'annuaire,
           ni sur la carte, ni parmi les ateliers compatibles avec un design.
         includes_listing: "Référencement inclus"
-        generations_this_month: "Générations ce mois-ci"
-        generations_used: "%{used} sur %{limit}"
-        generations_unlimited: "%{used}, sans plafond"
+        requests_this_month: "Dossiers ce mois-ci"
+        requests_used: "%{used} sur %{limit}"
+        requests_unlimited: "%{used}, sans plafond"
         plan_pitch:
           listing: "Votre atelier dans l'annuaire, avec ses techniques et ses limites."
           atelier_plus: "Le référencement, plus la mise en avant et les statistiques."
@@ -1958,10 +1956,10 @@ fr:
             - "Filtre par technique d'impression"
             - "Lien client, QR code et affiche comptoir"
             - "Demandes d'impression par email"
-            - "%{generations} générations par mois pour vos clients"
+            - "%{requests} dossiers pris en charge par mois"
           atelier_plus:
             - "Tout le Référencement"
-            - "Générations illimitées pour vos clients"
+            - "Dossiers illimités"
             - "Mise en avant en tête d'annuaire"
             - "Votre couleur de marque sur l'écran de création"
             - "Statistiques du lien sur 30 jours"
@@ -1988,8 +1986,7 @@ fr:
           body: >-
             Ces personnes vous ont trouvé dans l'annuaire, ou sont d'anciens
             clients revenus par votre affiche ou votre lien. Tant que vous
-            n'avez pas accepté, leur compte ne peut rien générer, et rien
-            n'est décompté de votre forfait.
+            n'avez pas accepté, leur compte ne peut rien générer.
           asked_on: "Demande du %{date}"
           returning: "Ancien client, revenu par : %{source}"
           accept: "Accepter"
@@ -2007,7 +2004,7 @@ fr:
           suspended: "délai suspendu, vérification en cours"
           came_by: "arrivé par : %{source}"
           confirm: >-
-            %{name} ne pourra plus créer de visuels sur votre forfait. Ses
+            %{name} ne pourra plus créer de visuels avec votre atelier. Ses
             visuels déjà créés lui restent. Continuer ?
           none: >-
             Pas encore de client. Ils arrivent par votre affiche, votre lien ou
@@ -2289,6 +2286,7 @@ fr:
           completed: "Terminées"
           canceled: "Annulées"
           expired: "Sans réponse"
+          declined: "Non retenues"
         quantity:
           one: "%{count} exemplaire"
           other: "%{count} exemplaires"
@@ -2314,6 +2312,25 @@ fr:
           quote: "J'ai envoyé mon devis"
           start_production: "Passer en production"
           complete: "Marquer comme terminée"
+          decline: "Ne pas retenir"
+        decline_body:
+          limited:
+            zero: >-
+              Demande sans suite possible ? Vous pouvez ne pas la retenir, mais
+              vos refus gratuits du mois sont utilisés : celle-ci comptera dans
+              votre forfait. Sans réponse, elle compterait aussi à l'expiration.
+            one: >-
+              Demande sans suite possible ? Ne la retenez pas : elle ne comptera
+              pas dans votre forfait. Il vous reste %{count} refus gratuit ce
+              mois-ci. Sans réponse, elle compterait à l'expiration.
+            other: >-
+              Demande sans suite possible ? Ne la retenez pas : elle ne comptera
+              pas dans votre forfait. Il vous reste %{count} refus gratuits ce
+              mois-ci. Sans réponse, elle compterait à l'expiration.
+          unlimited: >-
+            Demande sans suite possible ? Ne la retenez pas : le client est
+            prévenu et invité à choisir un autre atelier.
+        decline_confirm: "Ne pas retenir cette demande ? Le client en sera prévenu."
         files: "Fichiers"
         files_body: >-
           Le fichier d'impression et l'aperçu vous ont été envoyés en pièces
@@ -2637,7 +2654,7 @@ fr:
         body:
           - "Référencement donne à un atelier sa fiche publique, sa place dans l'annuaire et sur la carte, son lien client et la réception des demandes d'impression."
           - "Atelier+ y ajoute la mise en avant en tête d'annuaire, la couleur de marque sur l'écran de création et les statistiques du lien."
-          - "Prix : Référencement %{listing} HT par mois, avec %{generations} générations par mois pour les clients arrivés par l'atelier ; Atelier+ %{atelier_plus} HT par mois, Référencement compris et générations illimitées. La TVA au taux en vigueur s'ajoute à ces montants. Chaque client reste limité à quelques générations par jour, quelle que soit la formule."
+          - "Prix : Référencement %{listing} HT par mois, avec %{requests} dossiers par mois ; Atelier+ %{atelier_plus} HT par mois, Référencement compris et dossiers illimités. La TVA au taux en vigueur s'ajoute à ces montants. Un dossier est une demande d'impression que l'atelier prend en charge ou laisse expirer sans réponse ; une demande annulée par le client n'en est pas un, ni, dans une limite mensuelle, une demande que l'atelier ne retient pas. Atteindre le nombre de dossiers de la formule ne bloque pas la réception des demandes. Chaque client reste limité à quelques générations par jour, quelle que soit la formule."
       billing:
         title: "Facturation"
         body:
@@ -3338,8 +3355,8 @@ fr:
             - >-
               Un client qui vous trouve dans l'annuaire n'a pas ce code : il
               vous adresse une demande, que vous acceptez ou refusez dans
-              « Mes clients ». Tant que vous n'avez pas accepté, il ne génère
-              rien sur votre forfait.
+              « Mes clients ». Tant que vous n'avez pas accepté, il ne peut
+              rien générer.
             - >-
               Un client vous est rattaché %{attachment_days} jours. Ils repartent
               quand vous confirmez l'une de ses demandes d'impression, ou quand
@@ -3389,32 +3406,40 @@ fr:
           body:
             - >-
               Référencement, %{listing_price} HT par mois : votre fiche et
-              %{listing_generations} générations par mois pour vos clients.
-              Atelier+, %{atelier_plus_price} HT par mois : générations
-              illimitées, liens nommés et statistiques.
+              %{listing_requests} dossiers pris en charge par mois.
+              Atelier+, %{atelier_plus_price} HT par mois : dossiers
+              illimités, liens nommés et statistiques.
             - "Chaque client reste limité à %{quota_per_day} créations par jour, quelle que soit votre formule."
       groups:
-        - title: "Clients et générations"
+        - title: "Clients et dossiers"
           questions:
-            - q: "Qu'est-ce qui compte comme une génération ?"
+            - q: "Qu'est-ce qui compte comme un dossier ?"
               a:
                 - >-
-                  Un clic de votre client : une création, une retouche ou une
-                  demande d'autres versions, quel que soit le nombre de
-                  propositions dessinées. Les essais qui échouent et les images
-                  déposées telles quelles ne comptent pas.
-            - q: "Que se passe-t-il quand mes générations du mois sont épuisées ?"
+                  Une demande d'impression que vous confirmez, ou que vous
+                  laissez expirer sans réponse. Les créations et retouches de
+                  vos clients ne comptent pas : vous ne payez que pour des
+                  demandes reçues.
+                - >-
+                  Une demande annulée par le client ne compte pas. Une demande
+                  que vous ne retenez pas non plus, dans la limite de
+                  %{free_decline_percent} % des demandes du mois ; au-delà, elle
+                  compte comme les autres.
+            - q: "Que se passe-t-il quand mes dossiers du mois sont utilisés ?"
               a:
                 - >-
-                  Vos clients ne peuvent plus lancer de création jusqu'au 1er du
-                  mois suivant, et le message leur dit pourquoi. Vous êtes
-                  prévenu par email. Atelier+ n'a pas de plafond.
+                  Rien n'est bloqué : vos clients continuent de créer, et leurs
+                  demandes continuent de vous arriver. Vous êtes prévenu par
+                  email, et le compteur repart le 1er du mois suivant.
+                  Atelier+ n'a pas de plafond.
             - q: "Un inconnu peut-il utiliser mon forfait ?"
               a:
                 - >-
-                  Non. Sans votre lien ou votre QR code, il ne peut que vous
-                  demander, et vous décidez. Vous pouvez aussi retirer un
-                  client de votre liste à tout moment.
+                  Non. Seules les demandes que vous confirmez, ou laissez
+                  expirer, comptent dans votre forfait : une demande sans
+                  suite, vous ne la retenez pas. Et sans votre lien ou votre
+                  QR code, un inconnu ne peut que vous demander à devenir
+                  client ; vous décidez.
             - q: "Mon lien ou mon affiche a circulé trop loin. Que faire ?"
               a:
                 - >-
@@ -3445,8 +3470,8 @@ fr:
               a:
                 - >-
                   Oui, la demande d'impression peut partir vers tout atelier
-                  capable de l'imprimer. Les générations, elles, restent
-                  comptées sur l'atelier du client au moment de la création.
+                  capable de l'imprimer. Elle compte dans le forfait de
+                  l'atelier qui la reçoit, s'il la prend en charge.
         - title: "Demandes et fichiers"
           questions:
             - q: "Le fichier reçu ne convient pas à ma machine."
@@ -3913,11 +3938,11 @@ fr:
                 - "Affiche comptoir imprimable"
                 - "Demandes d'impression par email, fichiers joints"
                 - "Suivi des statuts dans votre espace"
-                - "%{generations} générations par mois pour vos clients"
+                - "%{requests} dossiers pris en charge par mois"
             - name: "Atelier+"
               summary: "Tout le Référencement, sans plafond, plus la visibilité et les chiffres."
               features:
-                - "Générations illimitées pour vos clients"
+                - "Dossiers illimités"
                 - "Mis en avant dans l'annuaire et sur la carte, dans un rayon de 50 km autour de votre atelier"
                 - "Votre couleur de marque sur l'écran de création"
                 - "Statistiques de votre lien client"

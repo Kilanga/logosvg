@@ -109,14 +109,6 @@ class UploadsTest < ActionDispatch::IntegrationTest
     assert_not_requested :post, %r{generator\.test}
   end
 
-  test "it does not count against the workshop's monthly generations" do
-    printer = printers(:rennes)
-    used = PrinterGenerationQuota.for(printer).used
-    upload_design.update_columns(printer_id: printer.id)
-
-    assert_equal used, PrinterGenerationQuota.for(printer).used
-  end
-
   private
     def valid_upload
       { prompt: "Logo du club", technique: "dtf", print_width_cm: 25, remove_background: "1",

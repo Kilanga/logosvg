@@ -92,6 +92,11 @@ class PrintRequest < ApplicationRecord
     state :completed
     state :canceled
     state :expired
+    # Set aside by the workshop as not worth quoting (decided on 20/10/2026):
+    # a curious visitor, an impossible job. It does not count against the
+    # month's allowance, up to a share of the month's requests — see
+    # PrinterRequestQuota.
+    state :declined
 
     # The shop confirming a client's request is what keeps the client theirs:
     # thirty more days (decided on 09/10/2026), so a client who prints keeps
@@ -126,6 +131,13 @@ class PrintRequest < ApplicationRecord
     event :expire do
       transitions from: :sent, to: :expired
     end
+
+    # The workshop's other answer to a request it has just received. Only
+    # then: once it has taken the job on, it has judged it worth quoting.
+    event :decline do
+      transitions from: :sent, to: :declined
+      after { self.declined_at = Time.current }
+    end
   end
 
   # Public URLs carry the token, never the sequential id.
@@ -136,6 +148,8 @@ class PrintRequest < ApplicationRecord
   # rather than sent: no method name is ever built from a string.
   #
   # `cancel` is not among them — calling a job off is the client's to do.
+  # Neither is `decline`: it is the alternative to the first step, offered
+  # beside it, not a step of its own.
   def next_workshop_event
     return :acknowledge if may_acknowledge?
     return :quote if may_quote?

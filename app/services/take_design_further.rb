@@ -7,8 +7,8 @@
 # on 16/10/2026): the three reprises of a design already bound it, and a client
 # who retouched once found « 2 créations » left after two. The load it puts on
 # the generation machine is followed on the admin dashboard instead
-# (GenerationLoad). The shop's monthly allowance still counts it: that one is
-# what the shop pays for.
+# (GenerationLoad). The shop's monthly allowance counts print requests, not
+# generations, since 20/10/2026: a reprise spends nothing of it.
 #
 # `request` is the call to the service — a refinement or variants — run once,
 # and once more after the design has been revived if the service had
@@ -31,11 +31,6 @@ class TakeDesignFurther
     refusal = refusal_before_spending
     return failure(refusal) if refusal
 
-    workshop_quota = PrinterGenerationQuota.for(@design.printer)
-    unless workshop_quota.allows?
-      return failure(t("client.designs.workshop_quota_reached", printer: @design.printer.name))
-    end
-
     begin
       children = CreateDesignChildren.call(parent: @design, instruction: @instruction) do
         @request.call
@@ -56,7 +51,6 @@ class TakeDesignFurther
     # Retouched or varied straight from the choice screen: the proposal it
     # started from is the one kept.
     ChooseProposal.call(@design) if @design.awaiting_choice?
-    workshop_quota.notify_if_reached!
     Result.new(design: children.first, error: nil)
   end
 
