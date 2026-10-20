@@ -271,7 +271,8 @@ Elles vivent **uniquement** dans `config/settings.yml`, lues par
 | `design_retention_days`            | `180`             | **durée de conservation à fixer**      |
 | `print_request_anonymize_days`     | `365`             | **durée de conservation à fixer**      |
 | `price_listing_cents` / `price_atelier_plus_cents` | `2900` / `5900` HT | **décidé** — Atelier+ inclut le Référencement |
-| `monthly_generations`              | `listing: 100`, `atelier_plus: null` | **décidé** — par atelier et par mois |
+| `monthly_print_requests`           | `listing: 25`, `atelier_plus: null` | **décidé** (20/10/2026) — dossiers par atelier et par mois, remplace `monthly_generations` |
+| `declined_free_share`              | `0.3`             | **décidé** (20/10/2026) — part des demandes du mois qu'un atelier peut ne pas retenir sans qu'elles comptent |
 | `trial_period_days`                | `30`              | **décidé** (06/10/2026)                |
 | `emails.daily_limit` / `alert_ratio` | `300` / `0.8`  | **décidé** (10/10/2026) — forfait gratuit Brevo, alerte à 80 % |
 | `reviews.notify_designers_max`     | `10`              | **décidé** (10/10/2026) — graphistes prévenus par email |
