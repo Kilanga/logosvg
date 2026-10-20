@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_17_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_133037) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -210,6 +210,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_170000) do
     t.datetime "updated_at", null: false
     t.string "delivery_method"
     t.boolean "express", default: false, null: false
+    t.datetime "declined_at"
     t.index ["client_id", "created_at"], name: "index_print_requests_on_client_id_and_created_at"
     t.index ["client_id"], name: "index_print_requests_on_client_id"
     t.index ["confirmation_token"], name: "index_print_requests_on_confirmation_token", unique: true
@@ -250,7 +251,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_170000) do
     t.boolean "express_available", default: false, null: false
     t.integer "express_lead_hours"
     t.boolean "featured", default: false, null: false
-    t.date "generation_quota_notified_on"
+    t.date "request_quota_notified_on"
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
     t.integer "max_print_height_cm"

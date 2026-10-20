@@ -128,12 +128,22 @@ shared:
     # STRIPE_TAX_RATE ; ceux-ci ne servent qu'à l'affichage.
     price_listing_cents: 2900
     price_atelier_plus_cents: 5900
-    # Générations par mois et par atelier, comptées sur les designs qui le
-    # portent. null = illimité. Le quota par client (generation.quota_per_day)
-    # s'applique en plus, quelle que soit la formule.
-    monthly_generations:
-      listing: 100
+    # Décidé le 20/10/2026 : le forfait se compte en dossiers, plus en
+    # générations. Un dossier compte quand l'atelier le prend en charge, ou
+    # quand il le laisse expirer sans réponse ; pas quand il l'écarte comme
+    # « non pertinent », ni quand le client l'annule. Compté sur le mois
+    # d'envoi de la demande. null = illimité. Atteindre le plafond ne bloque
+    # rien : l'atelier est prévenu et se voit proposer Atelier+.
+    # Le quota par client (generation.quota_per_day) reste la seule limite
+    # posée aux générations.
+    monthly_print_requests:
+      listing: 25
       atelier_plus: null
+    # Part des demandes du mois qu'un atelier peut écarter sans qu'elles
+    # comptent (décidé le 20/10/2026). Au-delà, un refus compte comme un
+    # dossier pris en charge : sans plafond, tout refuser viderait le forfait
+    # de son sens.
+    declined_free_share: 0.3
     # 30 jours d'essai gratuit à l'inscription.
     trial_period_days: 30
     # Une fiche en past_due reste visible 7 jours, puis elle est masquée.

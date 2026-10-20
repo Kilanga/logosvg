@@ -34,15 +34,16 @@ class HomePageTest < ActionDispatch::IntegrationTest
   end
 
   # Decided on 06/10/2026, read from config/settings.yml: Atelier+ includes
-  # the listing and lifts the monthly generation ceiling, and both start with
+  # the listing and lifts the monthly ceiling — counted in print requests
+  # since 20/10/2026 — and both start with
   # a free trial. Prices are excluding VAT: the buyers are businesses.
   test "the two plans show their monthly price and the free trial" do
     get root_path
 
     assert_includes response.body, "29 € HT / mois"
     assert_includes response.body, "59 € HT / mois"
-    assert_includes response.body, "100 générations par mois pour vos clients"
-    assert_includes response.body, "Générations illimitées pour vos clients"
+    assert_includes response.body, "25 dossiers pris en charge par mois"
+    assert_includes response.body, "Dossiers illimités"
     assert_includes response.body, I18n.t("public.home.show.plans.includes_listing")
     assert_includes response.body, ERB::Util.html_escape(I18n.t("subscriptions.trial", count: 30))
   end
@@ -51,8 +52,8 @@ class HomePageTest < ActionDispatch::IntegrationTest
     get subscription_terms_path
 
     assert_response :success
-    assert_includes response.body, "29 € HT par mois, avec 100 générations"
-    assert_includes response.body, "59 € HT par mois, Référencement compris et générations illimitées"
+    assert_includes response.body, "29 € HT par mois, avec 25 dossiers par mois"
+    assert_includes response.body, "59 € HT par mois, Référencement compris et dossiers illimités"
     assert_includes response.body, "La TVA au taux en vigueur"
     assert_includes response.body, "Les 30 premiers jours sont gratuits"
   end

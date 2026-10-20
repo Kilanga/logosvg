@@ -55,12 +55,6 @@ module Client
         return render :new, status: :unprocessable_entity
       end
 
-      # The workshop's monthly generations, when its plan has a ceiling.
-      unless PrinterGenerationQuota.for(context_printer).allows?
-        flash.now[:alert] = t("client.designs.workshop_quota_reached", printer: context_printer.name)
-        return render :new, status: :unprocessable_entity
-      end
-
       # The allowance is taken before the job is queued, not after: two
       # submissions in the same instant must not both get through.
       unless GenerationQuota.for(Current.user).consume!
@@ -72,7 +66,6 @@ module Client
         # The other proposals of the click, waiting for the same job.
         SpawnProposals.call(@design)
         GenerateDesignJob.perform_later(@design)
-        PrinterGenerationQuota.for(context_printer).notify_if_reached!
         redirect_to design_path(@design)
       else
         GenerationQuota.for(Current.user).refund!

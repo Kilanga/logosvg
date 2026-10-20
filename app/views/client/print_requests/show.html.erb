@@ -29,7 +29,7 @@
         <p class="mt-4 text-muted"><%= t("print_requests.status_body.#{@print_request.status}") %></p>
       <% end %>
 
-      <% if @print_request.expired? %>
+      <% if @print_request.expired? || @print_request.declined? %>
         <%= link_to t(".choose_another"), printers_path(techniques: [ @print_request.design.technique ]),
               class: "btn btn-primary mt-6" %>
       <% end %>

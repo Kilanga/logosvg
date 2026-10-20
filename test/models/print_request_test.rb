@@ -350,4 +350,48 @@ class PrintRequestTest < ActiveSupport::TestCase
         consented_at: Time.current
       }.merge(attributes))
     end
+
+  # --- Declining (decided on 20/10/2026) ---------------------------------
+
+  test "a workshop declines a request it has just received, and the moment is kept" do
+    request = print_requests(:waiting)
+
+    assert request.may_decline?
+    request.decline!
+    request.save!
+
+    assert_predicate request.reload, :declined?
+    assert_not_nil request.declined_at
+  end
+
+  test "a request the workshop has taken on can no longer be declined" do
+    request = print_requests(:acknowledged)
+
+    assert_not request.may_decline?
+    assert_raises(AASM::InvalidTransition) { request.decline! }
+  end
+
+  test "an expired or canceled request cannot be declined" do
+    expired = print_requests(:waiting).tap(&:expire!)
+    assert_not expired.may_decline?
+    assert_raises(AASM::InvalidTransition) { expired.decline! }
+
+    canceled = print_requests(:found_in_directory).tap(&:cancel!)
+    assert_not canceled.may_decline?
+    assert_raises(AASM::InvalidTransition) { canceled.decline! }
+  end
+
+  test "a declined request is an end, not a step" do
+    request = print_requests(:waiting).tap(&:decline!)
+
+    assert_not request.may_acknowledge?
+    assert_not request.may_cancel?
+    assert_not request.may_expire?
+    assert_not request.open?
+    assert_nil request.next_workshop_event
+
+    assert_raises(AASM::InvalidTransition) { request.acknowledge! }
+    assert_raises(AASM::InvalidTransition) { request.cancel! }
+    assert_raises(AASM::InvalidTransition) { request.expire! }
+  end
 end

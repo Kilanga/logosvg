@@ -1,0 +1,10 @@
+<%= t("mailers.subscription.request_quota_reached.eyebrow") %>
+
+<%= t("mailers.subscription.request_quota_reached.heading") %>
+
+<%= t("mailers.subscription.request_quota_reached.body", printer: @printer.name, count: @limit, date: l(@reset_on, format: :long)) %>
+
+<%= t("mailers.subscription.request_quota_reached.upgrade") %>
+
+<%= t("mailers.subscription.request_quota_reached.action") %> :
+<%= workshop_subscription_url %>

@@ -27,12 +27,15 @@ class SweepPrintRequestsJob < ApplicationJob
     end
 
     # After seven days the client is told to choose another workshop, rather than
-    # left waiting on a shop that never looked.
+    # left waiting on a shop that never looked. The request counts against the
+    # shop's month all the same (decided on 20/10/2026), so the shop may hear
+    # its allowance is used.
     def expire
-      PrintRequest.expiry_due.find_each do |print_request|
+      PrintRequest.expiry_due.includes(printer: :subscription).find_each do |print_request|
         print_request.expire!
         print_request.save!
         PrintRequestMailer.expired(print_request).deliver_later
+        PrinterRequestQuota.for(print_request.printer).notify_if_reached!
       end
     end
 end

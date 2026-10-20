@@ -3,7 +3,7 @@ module Workshop
   class PrintRequestsController < BaseController
     before_action :set_print_request, only: %i[ show update ]
 
-    STATUS_FILTERS = %w[ open sent acknowledged quoted in_production completed canceled expired ].freeze
+    STATUS_FILTERS = %w[ open sent acknowledged quoted in_production completed canceled expired declined ].freeze
 
     def index
       authorize PrintRequest
@@ -17,6 +17,8 @@ module Workshop
     def show
       authorize @print_request
       @sheet = PrintRequestSheet.call(print_request: @print_request)
+      # What setting this one aside would cost, said before the button.
+      @request_quota = PrinterRequestQuota.for(@print_request.printer) if @print_request.may_decline?
     end
 
     def update
@@ -28,15 +30,16 @@ module Workshop
 
       @print_request.save!
       PrintRequestMailer.status_changed(@print_request).deliver_later
+      PrinterRequestQuota.for(@print_request.printer).notify_if_reached!
 
       redirect_to workshop_print_request_path(@print_request), notice: t(".updated")
     end
 
     private
       # The event names a form field, so it is dispatched by hand rather than
-      # sent. Four literal calls read better than a guarded `public_send`, and
-      # they leave no doubt — for a reader or for Brakeman — that nothing a
-      # client types ever names a method.
+      # sent. Literal calls read better than a guarded `public_send`, and they
+      # leave no doubt — for a reader or for Brakeman — that nothing a client
+      # types ever names a method.
       #
       # `cancel` is deliberately absent: calling a job off is the client's.
       def advance
@@ -45,13 +48,14 @@ module Workshop
         when "quote"            then @print_request.may_quote? && @print_request.quote!
         when "start_production" then @print_request.may_start_production? && @print_request.start_production!
         when "complete"         then @print_request.may_complete? && @print_request.complete!
+        when "decline"          then @print_request.may_decline? && @print_request.decline!
         else false
         end
       end
 
       def set_print_request
         @print_request = policy_scope(PrintRequest)
-                         .includes(:client, :printer, { final_file_attachment: :blob },
+                         .includes(:client, { printer: :subscription }, { final_file_attachment: :blob },
                                    design: { print_file_attachment: :blob })
                          .find_by!(token: params[:token])
       end

@@ -56,6 +56,24 @@
         <%= button_to t(".event.#{next_event}"), workshop_print_request_path(@print_request),
               method: :patch, params: { event: next_event },
               class: "btn btn-primary mt-4" %>
+
+        <%# The other answer to a request just received (20/10/2026): set it
+            aside rather than let it expire, which would count it. %>
+        <% if @print_request.may_decline? %>
+          <div id="decline" class="mt-6 border-t border-line pt-5">
+            <p class="text-sm text-muted">
+              <% if @request_quota.limited? %>
+                <%= t(".decline_body.limited", count: @request_quota.free_declines_left) %>
+              <% else %>
+                <%= t(".decline_body.unlimited") %>
+              <% end %>
+            </p>
+            <%= button_to t(".event.decline"), workshop_print_request_path(@print_request),
+                  method: :patch, params: { event: "decline" },
+                  class: "btn btn-secondary mt-3",
+                  form: { data: { turbo_confirm: t(".decline_confirm") } } %>
+          </div>
+        <% end %>
       </div>
     <% end %>
   </div>

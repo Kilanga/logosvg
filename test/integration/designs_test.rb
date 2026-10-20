@@ -220,43 +220,23 @@ class DesignsTest < ActionDispatch::IntegrationTest
     assert_equal printers(:rennes).id, design.printer_id
   end
 
-  # The Référencement plan's monthly ceiling, counted on the workshop.
-  test "a workshop that used its month's generations stops new ones, and the client is told why" do
+  # Since 20/10/2026 the workshop's allowance counts print requests: however
+  # many designs its clients have made this month, a new one goes through.
+  test "a workshop's clients keep creating, however many designs the month has seen" do
     sign_in_as users(:client)
     get workshop_link_path(slug: printers(:rennes).slug)
-    quota = PrinterGenerationQuota.for(printers(:rennes))
-    rows = Array.new(quota.limit - quota.used) do
+    rows = Array.new(120) do
       { user_id: users(:deleted_client).id, printer_id: printers(:rennes).id, prompt: "un renard",
         technique: "screen_printing", print_width_cm: 25, status: "ready",
         token: SecureRandom.base58(24), created_at: Time.current, updated_at: Time.current }
     end
     Design.insert_all!(rows)
 
-    assert_no_difference "Design.count" do
+    proposals = Rails.application.config.tshirt.generation.fetch(:proposals_per_request)
+    assert_difference "Design.count", proposals do
       post designs_path, params: { design: valid_design }
     end
-
-    assert_response :unprocessable_entity
-    assert_includes response.body, ERB::Util.html_escape(
-      I18n.t("client.designs.workshop_quota_reached", printer: printers(:rennes).name)
-    ).split(",").first
-    assert_equal 0, GenerationQuota.for(users(:client)).used, "the client's own allowance is untouched"
-  end
-
-  test "the last generation of the month tells the workshop" do
-    sign_in_as users(:client)
-    get workshop_link_path(slug: printers(:rennes).slug)
-    quota = PrinterGenerationQuota.for(printers(:rennes))
-    rows = Array.new(quota.limit - quota.used - 1) do
-      { user_id: users(:deleted_client).id, printer_id: printers(:rennes).id, prompt: "un renard",
-        technique: "screen_printing", print_width_cm: 25, status: "ready",
-        token: SecureRandom.base58(24), created_at: Time.current, updated_at: Time.current }
-    end
-    Design.insert_all!(rows) if rows.any?
-
-    assert_enqueued_email_with SubscriptionMailer, :generation_quota_reached, args: [ printers(:rennes) ] do
-      post designs_path, params: { design: valid_design }
-    end
+    assert_response :redirect
   end
 
   test "scanning another shop's poster moves the client to that shop" do
