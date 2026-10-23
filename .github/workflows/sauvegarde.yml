@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Même bloc que .github/workflows/ci.yml, étape « Déployer » : la clé et
       # la vérification de l'hôte sont documentées là-bas. Dupliqué plutôt que
@@ -96,7 +96,7 @@ jobs:
       # faits pour ça ; une fois un stockage hors-site choisi (S3 compatible,
       # par exemple l'Object Storage d'OVH), cette étape doit y être remplacée.
       - name: Conserver la sauvegarde
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sauvegarde-${{ github.run_id }}
           path: tmp/sauvegarde
