@@ -40,6 +40,40 @@ class SvgInspectorTest < ActiveSupport::TestCase
     assert_equal :external_reference, SvgInspector.call(svg(%(<a href="javascript:alert(1)"><rect/></a>))).reason
   end
 
+  # Found on 23/10/2026: the parser decodes the character reference into a tab,
+  # the browser drops the tab, and the link runs.
+  test "a javascript URL hidden behind a tab or a newline is refused" do
+    assert_equal :external_reference,
+                 SvgInspector.call(svg(%(<a href="jav&#x09;ascript:alert(1)"><rect/></a>))).reason
+    assert_equal :external_reference,
+                 SvgInspector.call(svg(%(<a href="&#x0A;javascript:alert(1)"><rect/></a>))).reason
+  end
+
+  test "a javascript URL further along a value is refused" do
+    assert_equal :external_reference,
+                 SvgInspector.call(svg(%(<rect fill="#000" data-x="x;javascript:alert(1)"/>))).reason
+  end
+
+  test "an animation is refused: it can rewrite a link after the check" do
+    assert_equal :forbidden_element,
+                 SvgInspector.call(svg(%(<a><set attributeName="href" to="https://ailleurs.example"/><rect/></a>))).reason
+    assert_equal :forbidden_element,
+                 SvgInspector.call(svg(%(<a><animate attributeName="href" values="a;b"/><rect/></a>))).reason
+  end
+
+  test "an xml-stylesheet instruction is refused" do
+    source = %(<?xml version="1.0"?><?xml-stylesheet type="text/css" href="https://ailleurs.example/x.css"?>) +
+             %(<svg xmlns="http://www.w3.org/2000/svg"><rect fill="#000"/></svg>)
+
+    assert_equal :external_reference, SvgInspector.call(source).reason
+  end
+
+  test "an embedded PNG stays accepted" do
+    result = SvgInspector.call(svg(%(<rect fill="url(#g)"/><pattern id="g"><rect fill="#000" data-src="data:image/png;base64,iVBORw0KGgo="/></pattern>)))
+
+    assert_predicate result, :valid?
+  end
+
   test "a remote reference is refused: it would call out from the visitor's browser" do
     assert_equal :forbidden_element,
                  SvgInspector.call(svg(%(<image href="https://ailleurs.example/pixel.png"/>))).reason
