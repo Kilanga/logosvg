@@ -9,6 +9,11 @@ on:
     - cron: "21 3 * * *"
   workflow_dispatch: {}
 
+# Le jeton GitHub de chaque job ne lit que le dépôt : le déploiement passe
+# par ses propres secrets (registre, SSH), jamais par GITHUB_TOKEN.
+permissions:
+  contents: read
+
 jobs:
   sauvegarder:
     runs-on: ubuntu-24.04

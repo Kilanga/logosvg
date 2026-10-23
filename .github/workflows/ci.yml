@@ -10,6 +10,11 @@ on:
 # version change quand nous le décidons, pas au milieu d'une semaine de travail.
 # Retour possible à `ubuntu-24.04` en cas de souci. Même choix dans
 # sauvegarde.yml.
+# Le jeton GitHub de chaque job ne lit que le dépôt : le déploiement passe
+# par ses propres secrets (registre, SSH), jamais par GITHUB_TOKEN.
+permissions:
+  contents: read
+
 jobs:
   scan_ruby:
     runs-on: ubuntu-24.04
