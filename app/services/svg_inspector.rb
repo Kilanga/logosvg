@@ -9,7 +9,12 @@
 class SvgInspector
   MAX_BYTES = 5.megabytes
 
-  FORBIDDEN_ELEMENTS = %w[ script foreignObject iframe embed object use image ].freeze
+  # Animation elements included: a print file never moves, and `<set>` or
+  # `<animate>` can rewrite a link's href after every attribute was checked.
+  FORBIDDEN_ELEMENTS = %w[
+    script foreignObject iframe embed object use image
+    animate animateColor animateMotion animateTransform set
+  ].freeze
 
   # Anything that reaches outside the document: a remote stylesheet, a tracking
   # pixel, a javascript: URL.
@@ -19,6 +24,13 @@ class SvgInspector
   # `url(...)` or an `@import`. Checked because the renderer that rasterises the
   # file — librsvg, through libvips — honours stylesheets.
   STYLE_EXTERNAL_URL = /@import|url\(\s*["']?\s*(?:https?:|\/\/|file:)/i
+
+  # A script scheme anywhere in a value, once the characters a browser skips
+  # inside a URL are gone: `jav&#x09;ascript:` reaches us as "jav\tascript:",
+  # which a browser reads as javascript:. Anywhere, not only at the start,
+  # because some attributes hold lists (`values="a;javascript:…"`).
+  SCRIPT_SCHEME = /(?:java|vb)script:/i
+  IGNORED_IN_URLS = /[\u0000-\u0020\u007F]/
 
   Result = Data.define(:valid, :reason, :inks, :fills) do
     def valid? = valid
@@ -59,6 +71,8 @@ class SvgInspector
       return :entity if @source.include?("<!ENTITY") || @source.include?("<!DOCTYPE")
 
       document.traverse do |node|
+        # `<?xml-stylesheet href="…"?>` is not an element, but librsvg reads it.
+        return :external_reference if node.processing_instruction? && node.name == "xml-stylesheet"
         next unless node.element?
 
         return :forbidden_element if FORBIDDEN_ELEMENTS.include?(node.name)
@@ -66,13 +80,18 @@ class SvgInspector
 
         node.attribute_nodes.each do |attribute|
           return :event_handler if attribute.name.downcase.start_with?("on")
-          return :external_reference if attribute.value.to_s.match?(EXTERNAL_URL)
+          return :external_reference if url_reaching_out?(attribute.value.to_s)
           return :external_reference if attribute.name == "style" &&
                                         attribute.value.to_s.match?(STYLE_EXTERNAL_URL)
         end
       end
 
       nil
+    end
+
+    def url_reaching_out?(value)
+      squeezed = value.gsub(IGNORED_IN_URLS, "")
+      value.match?(EXTERNAL_URL) || squeezed.match?(EXTERNAL_URL) || squeezed.match?(SCRIPT_SCHEME)
     end
 
     # One distinct fill is one ink, which is one screen. Counted here rather

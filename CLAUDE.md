@@ -343,8 +343,10 @@ Règles côté Rails :
 - Une génération échouée **ne consomme pas** de quota.
 - Chaque changement d'état diffuse un **Turbo Stream** vers la page du design.
 - Tout SVG — généré ou déposé par un graphiste — passe par `SvgInspector` :
-  racine `<svg>`, aucun `script`, `foreignObject`, attribut `on*`, URL
-  `javascript:`, entité XML ni lien externe. Refus sinon.
+  racine `<svg>`, aucun `script`, `foreignObject`, animation (`animate`,
+  `set`…), attribut `on*`, URL `javascript:` (même coupée par une tabulation
+  ou plus loin dans la valeur), instruction `xml-stylesheet`, entité XML ni
+  lien externe. Refus sinon.
 
 ---
 
